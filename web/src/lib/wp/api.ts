@@ -7,6 +7,7 @@ import {
   QUERY_CATEGORIES,
   QUERY_TAGS,
 } from './queries'
+import { opts, REVALIDATE, CACHE_TAGS } from '../cache'
 
 type PageInfo = { hasNextPage: boolean; endCursor?: string | null }
 type Term = { id: string; name: string; slug: string; count?: number | null }
@@ -17,7 +18,16 @@ export type PostListItem = {
   title: string
   date: string
   excerpt: string
-  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null
+  featuredImage?:
+    | {
+        node?:
+          | {
+              sourceUrl?: string | null
+              altText?: string | null
+            }
+          | null
+      }
+    | null
   categories?: { nodes: Term[] }
   tags?: { nodes: Term[] }
 }
@@ -32,28 +42,36 @@ export async function getPosts(params: {
   tagIn?: string[]
 }) {
   type Data = { posts: { pageInfo: PageInfo; nodes: PostListItem[] } }
-  return fetchGraphQL<Data>(QUERY_LIST_POSTS, params, {
-    next: { revalidate: 300, tags: ['posts'] }, // 5 min ISR + tag
-  })
+  return fetchGraphQL<Data>(
+    QUERY_LIST_POSTS,
+    params,
+    opts(REVALIDATE.posts, CACHE_TAGS.posts),
+  )
 }
 
 export async function getPostBySlug(slug: string) {
   type Data = { post: PostFull | null }
-  return fetchGraphQL<Data>(QUERY_SINGLE_POST, { slug }, {
-    next: { revalidate: 300, tags: [`post:${slug}`, 'posts'] },
-  })
+  return fetchGraphQL<Data>(
+    QUERY_SINGLE_POST,
+    { slug },
+    opts(REVALIDATE.posts, CACHE_TAGS.posts, CACHE_TAGS.post(slug)),
+  )
 }
 
 export async function getAllCategories(params: { first?: number; after?: string } = {}) {
   type Data = { categories: { pageInfo: PageInfo; nodes: Term[] } }
-  return fetchGraphQL<Data>(QUERY_CATEGORIES, params, {
-    next: { revalidate: 3600, tags: ['categories'] }, // 1h
-  })
+  return fetchGraphQL<Data>(
+    QUERY_CATEGORIES,
+    params,
+    opts(REVALIDATE.taxonomies, CACHE_TAGS.categories),
+  )
 }
 
 export async function getAllTags(params: { first?: number; after?: string } = {}) {
   type Data = { tags: { pageInfo: PageInfo; nodes: Term[] } }
-  return fetchGraphQL<Data>(QUERY_TAGS, params, {
-    next: { revalidate: 3600, tags: ['tags'] }, // 1h
-  })
+  return fetchGraphQL<Data>(
+    QUERY_TAGS,
+    params,
+    opts(REVALIDATE.taxonomies, CACHE_TAGS.tags),
+  )
 }
