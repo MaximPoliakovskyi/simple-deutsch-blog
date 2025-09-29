@@ -243,3 +243,41 @@ export const GET_POSTS = /* GraphQL */ `
   }
 `;
 
+//
+
+export const POSTS_CONNECTION = /* GraphQL */ `
+  query PostsConnection($first: Int!, $after: String) {
+    posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}}) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          slug
+          title
+          excerpt
+          date
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+              mediaDetails {
+                width
+                height
+              }
+            }
+          }
+          author {
+            node {
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+`;

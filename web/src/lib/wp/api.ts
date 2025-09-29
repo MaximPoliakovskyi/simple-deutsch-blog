@@ -1,5 +1,6 @@
 // src/lib/wp/api.ts
 import { fetchGraphQL } from './client';
+import { POSTS_CONNECTION } from './queries';
 import {
   GET_TAG_BY_SLUG,
   GET_CATEGORY_BY_SLUG,
@@ -141,4 +142,45 @@ export async function getAllTags({
     first,
     after,
   });
+}
+
+//
+
+export type WPImage = {
+  sourceUrl: string;
+  altText: string | null;
+  mediaDetails?: { width?: number; height?: number } | null;
+};
+
+export type WPAuthor = { name: string; slug: string };
+
+export type WPPostCard = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  featuredImage?: { node: WPImage } | null;
+  author?: { node: WPAuthor } | null;
+};
+
+export type PostsConnectionResponse = {
+  posts: {
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    edges: Array<{ cursor: string; node: WPPostCard }>;
+  };
+};
+
+export async function getPostsPage(params: { first: number; after?: string | null }) {
+  const { first, after } = params;
+  const data = await fetchGraphQL<PostsConnectionResponse>(POSTS_CONNECTION, { first, after }, {
+    // Server-side fetch caching: tune to your needs; 5 minutes example
+    next: { revalidate: 300 },
+  });
+
+  const edges = data.posts?.edges ?? [];
+  const nodes = edges.map((e) => e.node);
+  const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+
+  return { posts: nodes, pageInfo };
 }
