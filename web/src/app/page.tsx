@@ -1,34 +1,34 @@
-// src/app/page.tsx
-import 'server-only'
-import PostCard from '@/components/PostCard'
-import { getPostList } from '@/lib/wp/api' // use the lightweight list helper
+import { getPostList } from "@/lib/wp/api";
+import type { WpPostListItem } from "@/lib/wp/types";
 
-export const revalidate = 300
+export const revalidate = 300; // revalidate homepage every 5 minutes (ISR). :contentReference[oaicite:1]{index=1}
 
 export default async function HomePage() {
-  const { posts } = await getPostList({ first: 12 })
-  const items = posts.nodes
+  const { nodes } = await getPostList({ first: 10 });
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-semibold">Latest posts</h1>
-      <section className="space-y-6">
-        {items.map((p) => (
-          <PostCard
-            key={p.slug}
-            slug={p.slug}
-            title={p.title}
-            date={p.date}
-            excerpt={p.excerpt}
-            image={{
-              url: p.featuredImage?.node?.sourceUrl ?? undefined,
-              alt: p.featuredImage?.node?.altText ?? undefined,
-              width: p.featuredImage?.node?.mediaDetails?.width ?? undefined,
-              height: p.featuredImage?.node?.mediaDetails?.height ?? undefined,
-            }}
-          />
+    <main className="mx-auto max-w-3xl p-4">
+      <h1 className="text-2xl font-bold mb-6">Latest posts</h1>
+
+      <ul className="space-y-6">
+        {nodes.map((p: WpPostListItem) => (
+          <li key={p.slug} className="border-b pb-4">
+            <a href={`/posts/${p.slug}`} className="text-lg font-semibold hover:underline">
+              {p.title}
+            </a>
+            <p className="text-sm text-gray-500">
+              {new Date(p.date).toLocaleDateString()}
+            </p>
+            {p.excerpt && (
+              <div
+                className="prose mt-2"
+                // Excerpt is HTML from WP; safe render (can additionally sanitize if desired)
+                dangerouslySetInnerHTML={{ __html: p.excerpt }}
+              />
+            )}
+          </li>
         ))}
-      </section>
+      </ul>
     </main>
-  )
+  );
 }

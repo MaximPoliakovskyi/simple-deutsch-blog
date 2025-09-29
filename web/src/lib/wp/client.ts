@@ -1,46 +1,31 @@
-import 'server-only' // Next: server-only module guard. https://nextjs.org/docs/app/api-reference/functions/fetch
+// Lightweight GraphQL client with generics and basic error handling.
 
-// ---- Types
-type GraphQLError = { message: string }
-type GraphQLResponse<T> = { data?: T; errors?: GraphQLError[] } // TS type alias. https://www.typescriptlang.org/docs/handbook/advanced-types.html#type-aliases
-
-export type FetchOptions = {
-  next?: { revalidate?: number; tags?: string[] } // Next.js extends fetch with `next`. https://nextjs.org/docs/app/api-reference/functions/fetch
-  cache?: RequestCache
-}
-
-// ---- Env
-const WP_ENDPOINT = process.env.WP_GRAPHQL_URL
-if (!WP_ENDPOINT) {
-  throw new Error('Missing WP_GRAPHQL_URL in environment')
-}
-
-// ---- Client
-export async function fetchGraphQL<T>(
+export async function fetchGraphQL<TData = unknown>(
   query: string,
-  variables: Record<string, unknown> = {},
-  opts: FetchOptions = {}
-): Promise<T> {
-  const res = await fetch(WP_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query, variables }),
-    cache: opts.cache,
-    next: opts.next,
-  })
-
-  if (!res.ok) {
-    throw new Error(`GraphQL HTTP error ${res.status}`)
+  variables?: Record<string, unknown>
+): Promise<TData> {
+  if (!process.env.WP_GRAPHQL_URL) {
+    throw new Error("WP_GRAPHQL_URL is not set. Define it in .env.local");
   }
 
-  const json: GraphQLResponse<T> = await res.json()
+  const res = await fetch(process.env.WP_GRAPHQL_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, variables }),
+    // You can also add { next: { revalidate: 600 } } to individual fetches if needed
+  });
+
+  const json = (await res.json()) as {
+    data?: TData;
+    errors?: Array<{ message: string }>;
+  };
+
   if (json.errors?.length) {
-    // Type the callback param to avoid implicit any.
-    const msgs = json.errors.map((e: GraphQLError) => e.message).join(' | ')
-    throw new Error(`GraphQL errors: ${msgs}`)
+    const msgs = json.errors.map((e) => e.message).join(" | ");
+    throw new Error(`GraphQL errors: ${msgs}`);
   }
   if (!json.data) {
-    throw new Error('GraphQL: empty response data')
+    throw new Error("GraphQL: empty response data");
   }
-  return json.data
+  return json.data;
 }
