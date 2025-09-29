@@ -8,7 +8,8 @@
     "start": "next start",
     "format": "biome format --write .",
     "lint": "biome check .",
-    "lint:fix": "biome check --write ."
+    "lint:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "autoprefixer": "^10.4.21",
@@ -20,10 +21,10 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@tailwindcss/postcss": "^4.1.13",
-    "@types/node": "^20",
+    "@types/node": "^20.19.17",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "tailwindcss": "^4.1.13",
-    "typescript": "^5"
+    "typescript": "^5.9.2"
   }
 }
