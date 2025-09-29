@@ -1,31 +1,41 @@
-// Lightweight GraphQL client with generics and basic error handling.
+// src/lib/wp/client.ts
 
-export async function fetchGraphQL<TData = unknown>(
-  query: string,
-  variables?: Record<string, unknown>
-): Promise<TData> {
-  if (!process.env.WP_GRAPHQL_URL) {
-    throw new Error("WP_GRAPHQL_URL is not set. Define it in .env.local");
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    throw new Error(
+      `Missing environment variable: ${name}. ` +
+        `Set it in web/.env.local, e.g. WP_GRAPHQL_ENDPOINT=https://cms.simple-deutsch.de/graphql`
+    );
   }
+  return v; // <- typed as string
+}
 
-  const res = await fetch(process.env.WP_GRAPHQL_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+const ENDPOINT: string = requireEnv('WP_GRAPHQL_ENDPOINT');
+
+type GraphQLResponse<T> = {
+  data?: T;
+  errors?: Array<{ message: string }>;
+};
+
+export async function fetchGraphQL<T>(
+  query: string,
+  variables?: Record<string, unknown>,
+  init?: RequestInit & { next?: { revalidate?: number } }
+): Promise<T> {
+  const res = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query, variables }),
-    // You can also add { next: { revalidate: 600 } } to individual fetches if needed
+    next: { revalidate: 600, ...(init?.next ?? {}) },
+    ...init,
   });
 
-  const json = (await res.json()) as {
-    data?: TData;
-    errors?: Array<{ message: string }>;
-  };
-
+  const json = (await res.json()) as GraphQLResponse<T>;
   if (json.errors?.length) {
-    const msgs = json.errors.map((e) => e.message).join(" | ");
+    const msgs = json.errors.map(e => e.message).join(' | ');
     throw new Error(`GraphQL errors: ${msgs}`);
   }
-  if (!json.data) {
-    throw new Error("GraphQL: empty response data");
-  }
+  if (!json.data) throw new Error('GraphQL: empty response data');
   return json.data;
 }

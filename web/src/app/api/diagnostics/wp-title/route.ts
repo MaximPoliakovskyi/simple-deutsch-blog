@@ -1,9 +1,9 @@
-// app/api/diagnostics/wp-title/route.ts
-import { fetchGraphQL } from '@/lib/wp/client'
+// src/app/api/diagnostics/wp-title/route.ts
+import { fetchGraphQL } from '@/lib/wp/client';
 
-export const revalidate = 0 // always fresh for this diagnostic
+export const revalidate = 0;
 
-type SiteTitleData = { generalSettings: { title: string } }
+type SiteTitleData = { generalSettings: { title: string } };
 
 export async function GET() {
   const query = /* GraphQL */ `
@@ -12,7 +12,10 @@ export async function GET() {
         title
       }
     }
-  `
-  const data = await fetchGraphQL<SiteTitleData>(query, {}, { cache: 'no-store' })
-  return Response.json({ title: data.generalSettings.title })
+  `;
+  // Uncached for diagnostics
+  const data = await fetchGraphQL<SiteTitleData>(query, undefined, {
+    next: { revalidate: 0 },
+  });
+  return Response.json({ title: data.generalSettings.title });
 }

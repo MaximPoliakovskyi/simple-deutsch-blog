@@ -1,53 +1,61 @@
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
-import { getPostBySlug } from "@/lib/wp/api";
-import DOMPurify from "isomorphic-dompurify";
+// src/app/posts/[slug]/page.tsx
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getPostBySlug } from '@/lib/wp/api';
 
-type Props = { params: Promise<{ slug: string }> };
+export const revalidate = 600;
 
-// Dynamic metadata for SEO (await params in Next.js 15).
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = await params; // <-- await is required in Next.js 15
+type Params = { slug: string };
+
+export async function generateMetadata(
+  { params }: { params: Promise<Params> }
+): Promise<Metadata> {
+  const { slug } = await params;
   const post = await getPostBySlug(slug);
-
-  if (!post) return { title: "Not found" };
-
+  if (!post) return { title: 'Beitrag nicht gefunden' };
   return {
-    title: post.seo?.title || post.title,
-    description: post.seo?.metaDesc || "",
+    title: post.seo?.title ?? post.title,
+    description: post.seo?.metaDesc ?? undefined,
   };
 }
 
-export default async function PostPage({ params }: Props) {
-  const { slug } = await params; // <-- await is required in Next.js 15
+export default async function PostPage(
+  { params }: { params: Promise<Params> }
+) {
+  const { slug } = await params;
+
   const post = await getPostBySlug(slug);
-
-  if (!post) {
-    return notFound(); // official App Router 404 pattern
-  }
-
-  const safeContent = DOMPurify.sanitize(post.content);
+  if (!post) return notFound();
 
   return (
-    <main className="prose mx-auto p-4">
-      <h1>{post.title}</h1>
-      <p className="text-sm text-gray-500">
-        {new Date(post.date).toLocaleDateString()} — by {post.author?.node?.name}
-      </p>
+    <main className="mx-auto max-w-3xl px-4 py-10">
+      <article>
+        <header className="mb-6">
+          <h1 className="text-3xl font-semibold">{post.title}</h1>
+          <div className="mt-2 text-sm text-gray-500">
+            <time dateTime={post.date}>{post.date?.slice(0, 10)}</time>
+            {post.author?.node?.name ? <> • {post.author.node.name}</> : null}
+            {post.categories?.nodes?.length ? (
+              <>
+                {' • '}
+                {post.categories.nodes.map((c: { name: string; slug: string }, i: number) => (
+                  <span key={c.slug}>
+                    {i > 0 ? ', ' : ''}
+                    {c.name}
+                  </span>
+                ))}
+              </>
+            ) : null}
+          </div>
+        </header>
 
-      <div className="mt-6" dangerouslySetInnerHTML={{ __html: safeContent }} />
-
-      {!!post.categories?.nodes?.length && (
-        <p className="mt-6 text-sm text-gray-600">
-          Categories:{" "}
-          {post.categories.nodes.map((c) => (
-            <span key={c.slug} className="mr-2">#{c.name}</span>
-          ))}
-        </p>
-      )}
+        {/* If you already sanitize elsewhere, keep it.
+           Otherwise consider adding a sanitizer before rendering. */}
+        <div
+          className="prose max-w-none prose-img:rounded-xl"
+          dangerouslySetInnerHTML={{ __html: post.content ?? '' }}
+        />
+      </article>
     </main>
   );
 }
-
-// Revalidate post pages every 10 minutes (ISR)
-export const revalidate = 600;

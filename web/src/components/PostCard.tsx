@@ -1,49 +1,55 @@
-import Image from "next/image";
-import Link from "next/link";
+// src/components/PostCard.tsx
+import Link from 'next/link';
 
-type Props = {
+export type PostCardPost = {
+  id: string;
   slug: string;
   title: string;
-  date: string;           // ISO from WP
+  date?: string | null;
   excerpt?: string | null;
-  image?: {
-    url?: string | null;
-    alt?: string | null;
-    width?: number | null;
-    height?: number | null;
-  };
+  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  author?: { node?: { name?: string | null } | null } | null;
+  categories?: { nodes: Array<{ name: string; slug: string }> };
 };
 
-function stripHtml(html: string) {
-  return html.replace(/<[^>]+>/g, "").trim();
-}
+export type PostCardProps = {
+  post: PostCardPost;
+  className?: string;
+};
 
-export default function PostCard({ slug, title, date, excerpt, image }: Props) {
-  const plain = excerpt ? stripHtml(excerpt) : "";
+export default function PostCard({ post, className }: PostCardProps) {
+  const img = post.featuredImage?.node?.sourceUrl ?? null;
+  const alt = post.featuredImage?.node?.altText ?? '';
+
   return (
-    <article className="grid grid-cols-[120px_1fr] gap-4">
-      {image?.url && image?.width && image?.height ? (
-        <Link href={`/posts/${slug}`} className="block aspect-[4/3] relative">
-          <Image
-            src={image.url}
-            alt={image.alt || ""}
-            width={image.width}
-            height={image.height}
-            className="rounded-xl object-cover"
-            sizes="(max-width: 640px) 40vw, 120px"
-            priority={false}
+    <article className={className}>
+      <Link href={`/posts/${post.slug}`} className="group block overflow-hidden rounded-2xl border">
+        {img ? (
+          // Next/Image is fine too if you already use it; this keeps it simple.
+          <img
+            src={img}
+            alt={alt}
+            className="aspect-[16/9] w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+            loading="lazy"
           />
-        </Link>
-      ) : (
-        <div className="bg-gray-100 rounded-xl" aria-hidden />
-      )}
-      <div>
-        <h2 className="text-lg font-medium leading-snug">
-          <Link href={`/posts/${slug}`} className="hover:underline">{title}</Link>
-        </h2>
-        <p className="text-sm text-gray-500 mt-1">{new Date(date).toLocaleDateString()}</p>
-        {plain && <p className="text-sm mt-2 line-clamp-3">{plain}</p>}
-      </div>
+        ) : (
+          <div className="aspect-[16/9] w-full bg-gray-100" />
+        )}
+        <div className="space-y-2 p-4">
+          <h3 className="line-clamp-2 text-lg font-semibold">{post.title}</h3>
+          {post.excerpt ? (
+            <div
+              className="line-clamp-3 text-sm text-gray-600"
+              // Carefully render the short WP excerpt
+              dangerouslySetInnerHTML={{ __html: post.excerpt }}
+            />
+          ) : null}
+          <div className="flex items-center justify-between text-xs text-gray-500">
+            <span>{post.author?.node?.name ?? '—'}</span>
+            <time dateTime={post.date ?? undefined}>{post.date?.slice(0, 10) ?? ''}</time>
+          </div>
+        </div>
+      </Link>
     </article>
   );
 }
