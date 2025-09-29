@@ -1,16 +1,26 @@
 // src/lib/wp/api.ts
 import 'server-only'
+
 import { fetchGraphQL } from './client'
 import {
   QUERY_LIST_POSTS,
   QUERY_SINGLE_POST,
   QUERY_CATEGORIES,
   QUERY_TAGS,
+  QUERY_POST_LIST,
 } from './queries'
 import { opts, REVALIDATE, CACHE_TAGS } from '../cache'
 
 type PageInfo = { hasNextPage: boolean; endCursor?: string | null }
 type Term = { id: string; name: string; slug: string; count?: number | null }
+
+type PostImage = {
+  node?: {
+    sourceUrl?: string | null
+    altText?: string | null
+    mediaDetails?: { width?: number | null; height?: number | null } | null
+  } | null
+}
 
 export type PostListItem = {
   id: string
@@ -18,22 +28,14 @@ export type PostListItem = {
   title: string
   date: string
   excerpt: string
-  featuredImage?:
-    | {
-        node?:
-          | {
-              sourceUrl?: string | null
-              altText?: string | null
-            }
-          | null
-      }
-    | null
+  featuredImage?: PostImage | null
   categories?: { nodes: Term[] }
   tags?: { nodes: Term[] }
 }
 
 export type PostFull = PostListItem & { content: string }
 
+// Filterable/paginated post list
 export async function getPosts(params: {
   first?: number
   after?: string
@@ -44,6 +46,16 @@ export async function getPosts(params: {
   type Data = { posts: { pageInfo: PageInfo; nodes: PostListItem[] } }
   return fetchGraphQL<Data>(
     QUERY_LIST_POSTS,
+    params,
+    opts(REVALIDATE.posts, CACHE_TAGS.posts),
+  )
+}
+
+// Lightweight post list (e.g., homepage), still paginated
+export async function getPostList(params: { first?: number; after?: string } = {}) {
+  type Data = { posts: { pageInfo: PageInfo; nodes: PostListItem[] } }
+  return fetchGraphQL<Data>(
+    QUERY_POST_LIST,
     params,
     opts(REVALIDATE.posts, CACHE_TAGS.posts),
   )
