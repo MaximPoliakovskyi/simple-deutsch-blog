@@ -1,42 +1,67 @@
-// src/components/SearchBox.tsx
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useDeferredValue, startTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 type Props = {
   placeholder?: string;
   className?: string;
   autoFocus?: boolean;
+  debounceMs?: number;
 };
 
-export default function SearchBox({ placeholder = 'Search posts…', className = '', autoFocus = false }: Props) {
+export default function SearchBox({
+  placeholder = 'Search posts…',
+  className = '',
+  autoFocus = false,
+  debounceMs = 400,
+}: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initial = (searchParams.get('q') ?? '').trim();
-  const [value, setValue] = useState(initial);
-  const [isPending, startTransition] = useTransition();
+  const inputRef = useRef<HTMLInputElement>(null);
 
+  // Read initial value from URL only once on mount.
+  const initial = useMemo(() => (searchParams.get('q') ?? '').trim(), [/* mount only */]);
+  const [value, setValue] = useState(initial);
+
+  // Defer the value so typing stays responsive even if the page below is heavy.
+  const deferredValue = useDeferredValue(value);
+
+  // If the URL changes (back/forward, pagination click), update the input
+  // BUT ONLY when the input is NOT focused — to avoid clobbering keystrokes.
   useEffect(() => {
-    const next = (searchParams.get('q') ?? '').trim();
-    setValue(next);
+    const nextUrlValue = (searchParams.get('q') ?? '').trim();
+    if (document.activeElement !== inputRef.current) {
+      // Only update if different to avoid useless renders
+      if (nextUrlValue !== value) setValue(nextUrlValue);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Debounced navigation when the (deferred) value changes.
   useEffect(() => {
     const t = setTimeout(() => {
-      const q = value.trim();
+      const q = deferredValue.trim();
+      const nextUrl = q ? `/search?q=${encodeURIComponent(q)}` : `/search`;
+
+      // Guard: avoid pushing the same URL repeatedly
+      const currentQ = (searchParams.get('q') ?? '').trim();
+      if (currentQ === q) return;
+
+      // Mark as a transition so React prioritizes typing over navigation
       startTransition(() => {
-        const url = q ? `/search?q=${encodeURIComponent(q)}` : `/search`;
-        router.replace(url);
+        router.replace(nextUrl);
       });
-    }, 300);
+    }, debounceMs);
+
     return () => clearTimeout(t);
-  }, [value, router, startTransition]);
+    // Intentionally depend on deferredValue and searchParams
+  }, [deferredValue, debounceMs, router, searchParams]);
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <input
+        ref={inputRef}
         type="search"
         inputMode="search"
         autoFocus={autoFocus}
@@ -57,7 +82,7 @@ export default function SearchBox({ placeholder = 'Search posts…', className =
           Clear
         </button>
       ) : null}
-      {isPending ? <span className="text-sm opacity-70">Searching…</span> : null}
+      {/* Removed the “Searching…” message */}
     </div>
   );
 }
