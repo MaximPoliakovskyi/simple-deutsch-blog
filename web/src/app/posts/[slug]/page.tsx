@@ -1,61 +1,56 @@
-// src/app/posts/[slug]/page.tsx
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { getPostBySlug } from '@/lib/wp/api';
+import PostContent from '@/components/PostContent';
+import { getPostBySlug } from '@/lib/wp/api'; // adjust path if yours differs
 
-export const revalidate = 600;
+// Optional: keep your ISR setting if you use it
+export const revalidate = 300; // 5 minutes
 
-type Params = { slug: string };
+// 👇 In Next 15, params is async. Type it as a Promise and ALWAYS await it.
+type ParamsPromise = Promise<{ slug: string }>;
 
 export async function generateMetadata(
-  { params }: { params: Promise<Params> }
+  { params }: { params: ParamsPromise }
 ): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug } = await params; // ✅ must await
+
   const post = await getPostBySlug(slug);
   if (!post) return { title: 'Beitrag nicht gefunden' };
+
+  const title = post.seo?.title ?? post.title ?? 'Simple Deutsch';
+  const description = post.seo?.metaDesc ?? undefined;
+
   return {
-    title: post.seo?.title ?? post.title,
-    description: post.seo?.metaDesc ?? undefined,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type: 'article',
+    },
   };
 }
 
 export default async function PostPage(
-  { params }: { params: Promise<Params> }
+  { params }: { params: ParamsPromise }
 ) {
-  const { slug } = await params;
+  const { slug } = await params; // ✅ must await
 
   const post = await getPostBySlug(slug);
   if (!post) return notFound();
 
-  return (
-    <main className="mx-auto max-w-3xl px-4 py-10">
-      <article>
-        <header className="mb-6">
-          <h1 className="text-3xl font-semibold">{post.title}</h1>
-          <div className="mt-2 text-sm text-gray-500">
-            <time dateTime={post.date}>{post.date?.slice(0, 10)}</time>
-            {post.author?.node?.name ? <> • {post.author.node.name}</> : null}
-            {post.categories?.nodes?.length ? (
-              <>
-                {' • '}
-                {post.categories.nodes.map((c: { name: string; slug: string }, i: number) => (
-                  <span key={c.slug}>
-                    {i > 0 ? ', ' : ''}
-                    {c.name}
-                  </span>
-                ))}
-              </>
-            ) : null}
-          </div>
-        </header>
+  // ✅ normalize null/undefined -> ''
+  const safeHtml: string =
+    typeof post.content === 'string' ? post.content : '';
 
-        {/* If you already sanitize elsewhere, keep it.
-           Otherwise consider adding a sanitizer before rendering. */}
-        <div
-          className="prose max-w-none prose-img:rounded-xl"
-          dangerouslySetInnerHTML={{ __html: post.content ?? '' }}
-        />
-      </article>
+  const title = post.title ?? 'Simple Deutsch';
+
+  return (
+    <main className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-semibold tracking-tight mb-6">
+        {title}
+      </h1>
+      <PostContent html={safeHtml} />
     </main>
   );
 }

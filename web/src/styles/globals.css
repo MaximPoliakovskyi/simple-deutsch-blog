@@ -1,19 +1,166 @@
-/* Tailwind layers + our tokens */
+/* ── Project tokens + Tailwind ─────────────────────────────────────────────── */
 @import "./theme.css";
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
-/* Global element tweaks driven by tokens */
-html, body {
+/* ── Design tokens ────────────────────────────────────────────────────────── */
+/* Keep/customize these; values are examples */
+:root {
+  /* Hue/Sat/Light tokens for easy theming with hsl() */
+  --brand: 222 47% 11%;
+  --fg: 222 22% 12%;
+  --muted: 222 8% 45%;
+  --bg: 0 0% 100%;
+  --radius: 12px;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+
+  /* Back-compat aliases (mapped to new tokens) */
+  --sd-bg: hsl(var(--bg));
+  --sd-fg: hsl(var(--fg));
+}
+
+/* Optional dark theme hook (toggle via [data-theme="dark"]) */
+[data-theme="dark"] {
+  /* Example only — set your actual dark values */
+  --bg: 222 47% 8%;
+  --fg: 210 15% 96%;
+  --muted: 220 9% 65%;
+}
+
+/* ── Base / Globals ───────────────────────────────────────────────────────── */
+html,
+body {
   height: 100%;
 }
 
-body {
-  background: var(--sd-bg);
-  color: var(--sd-fg);
+:root {
+  color-scheme: light dark; /* improves form controls in supporting UAs */
 }
 
-/* Utility helpers (optional) */
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Content container helper */
 .container-content {
-  @media (min-width: 40rem) { max-width: 65ch; }
   margin-inline: auto;
   padding-inline: clamp(1rem, 4vw, 2rem);
+  /* Wide reading width on larger breakpoints */
+  @media (min-width: 40rem) {
+    max-width: 65ch;
+  }
+}
+
+/* ── Typography (Prose) tweaks ───────────────────────────────────────────── */
+.prose {
+  /* Let images breathe */
+  --tw-prose-images-margin-top: 1.25em;
+  --tw-prose-images-margin-bottom: 1.25em;
+}
+
+/* Unbound prose when needed */
+.prose.max-w-none { max-width: none; }
+
+/* Lower specificity via :where() and avoid fighting Tailwind */
+.prose :where(img):not(:where([class~="not-prose"] *)) {
+  border-radius: 0.75rem;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Code blocks: wrap on small screens, allow scroll if needed */
+.prose :where(pre code) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Tables: horizontal scroll on narrow viewports */
+.prose :where(table) {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius);
+}
+
+/* Blockquotes: subtle, token-aware */
+.prose :where(blockquote) {
+  border-inline-start: 4px solid hsl(var(--muted));
+  padding-inline-start: 1em;
+  color: hsl(var(--muted));
+}
+
+/* Figures, code, tables respect your radius token */
+.prose :where(figure, pre, table) { border-radius: var(--radius); }
+
+/* Focus rings for links inside prose */
+.prose :where(a):focus-visible {
+  outline: 2px solid hsl(var(--brand));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ── WordPress / Gutenberg alignment helpers ──────────────────────────────── */
+/* “alignwide” breaks out a bit from the text column */
+.prose :where(.alignwide) {
+  /* Centers an element wider than the content without full-bleed */
+  margin-inline: calc(50% - min(50%, 48rem));
+  max-width: 96rem;
+  width: auto;
+}
+
+/* “alignfull” goes truly edge-to-edge */
+.prose :where(.alignfull) {
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+/* ── Responsive embeds ───────────────────────────────────────────────────── */
+.embed {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;             /* modern */
+  background: color-mix(in hsl, hsl(var(--fg)) 8%, transparent);
+  border-radius: var(--radius);
+}
+
+.embed > iframe,
+.embed > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: inherit;
+}
+
+/* Fallback for older browsers that lack aspect-ratio */
+@supports not (aspect-ratio: 1) {
+  .embed { padding-bottom: 56.25%; height: 0; }
+}
+
+/* ── Utility polish ──────────────────────────────────────────────────────── */
+/* Make sure background uses tokens everywhere */
+html, body { background-color: hsl(var(--bg)); }
+
+/* Optional: smooth scrolling with respect for reduced-motion */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
 }

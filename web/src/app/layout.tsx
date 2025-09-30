@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 const themeInit = `
 (function () {
   try {
-    const ls = localStorage.getItem('sd-theme'); // 'dark' | 'light' | null
+      const ls = localStorage.getItem('sd-theme'); // 'dark' | 'light' | null
     const mql = window.matchMedia('(prefers-color-scheme: dark)');
     const shouldDark = ls ? (ls === 'dark') : mql.matches;
     const el = document.documentElement;
