@@ -13,7 +13,7 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   const titleId = "mobile-menu-title";
 
-  // lock scroll when menu open
+  // lock scroll when menu open (modal pattern guidance)
   useEffect(() => {
     const root = document.documentElement;
     if (!open) return;
@@ -95,15 +95,15 @@ export default function Header() {
             simple-deutsch.de
           </Link>
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-6 md:flex">
-            <Link href="/posts" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+          {/* Desktop nav (give it an accessible name) */}
+          <nav aria-label="Primäre Navigation" className="hidden items-center gap-6 md:flex">
+            <Link href="/posts" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Posts
             </Link>
-            <Link href="/categories" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+            <Link href="/categories" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Categories
             </Link>
-            <Link href="/tags" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+            <Link href="/tags" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Tags
             </Link>
 
@@ -116,7 +116,7 @@ export default function Header() {
 
           {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <SearchButton ariaLabel="Find an article" variant="icon" />
+            <SearchButton ariaLabel="Artikel finden" variant="icon" />
             <ThemeToggle />
             <button
               ref={toggleRef}
@@ -125,8 +125,8 @@ export default function Header() {
               aria-controls="mobile-fullscreen-menu"
               onClick={() => setOpen((v) => !v)}
               className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-              aria-label={open ? "Close menu" : "Open menu"}
-              title={open ? "Close menu" : "Open menu"}
+              aria-label={open ? "Menü schließen" : "Menü öffnen"}
+              title={open ? "Menü schließen" : "Menü öffnen"}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
                 {open ? (
@@ -186,9 +186,9 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded p-2 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
-              aria-label="Close menu"
-              title="Close menu"
+              className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+              aria-label="Menü schließen"
+              title="Menü schließen"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
                 <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
@@ -197,13 +197,13 @@ export default function Header() {
           </div>
 
           {/* Menu links */}
-          <nav className="mx-auto w-full max-w-5xl px-4 py-4">
+          <nav aria-label="Mobile Navigation" className="mx-auto w-full max-w-5xl px-4 py-4">
             <ul className="space-y-1">
               <li>
                 <Link
                   href="/posts"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   Posts
                 </Link>
@@ -212,7 +212,7 @@ export default function Header() {
                 <Link
                   href="/categories"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   Categories
                 </Link>
@@ -221,7 +221,7 @@ export default function Header() {
                 <Link
                   href="/tags"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   Tags
                 </Link>
@@ -230,7 +230,7 @@ export default function Header() {
                 <Link
                   href="/search"
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   Search
                 </Link>

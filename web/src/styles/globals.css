@@ -4,7 +4,6 @@
 @plugin "@tailwindcss/typography";
 
 /* ── Design tokens ────────────────────────────────────────────────────────── */
-/* Keep/customize these; values are examples */
 :root {
   /* Hue/Sat/Light tokens for easy theming with hsl() */
   --brand: 222 47% 11%;
@@ -12,6 +11,9 @@
   --muted: 222 8% 45%;
   --bg: 0 0% 100%;
   --radius: 12px;
+
+  /* Accent used for focus rings, etc. (referenced in Header.tsx classes) */
+  --sd-accent: hsl(222 80% 56%);
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -48,6 +50,13 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus baseline for everything, then refine with Tailwind where needed */
+:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* Content container helper */
@@ -102,7 +111,7 @@ body {
 /* Figures, code, tables respect your radius token */
 .prose :where(figure, pre, table) { border-radius: var(--radius); }
 
-/* Focus rings for links inside prose */
+/* Focus rings for links inside prose (works with keyboard focus) */
 .prose :where(a):focus-visible {
   outline: 2px solid hsl(var(--brand));
   outline-offset: 2px;
@@ -115,7 +124,6 @@ body {
 }
 
 /* ── WordPress / Gutenberg alignment helpers ──────────────────────────────── */
-/* “alignwide” breaks out a bit from the text column */
 .prose :where(.alignwide) {
   /* Centers an element wider than the content without full-bleed */
   margin-inline: calc(50% - min(50%, 48rem));
