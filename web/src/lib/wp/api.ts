@@ -2,13 +2,10 @@
 import { fetchGraphQL } from '@/lib/wp/client';
 import {
   POSTS_CONNECTION,
-  GET_TAG_BY_SLUG,
   GET_CATEGORY_BY_SLUG,
-  GET_POSTS_BY_TAG_SLUG,
   GET_POSTS_BY_CATEGORY_SLUG,
   GET_POST_BY_SLUG,
   GET_ALL_CATEGORIES,
-  GET_ALL_TAGS,
   GET_POSTS,
   SEARCH_POSTS,
 } from '@/lib/wp/queries';
@@ -49,12 +46,7 @@ type Connection<TNode> = {
   nodes: Array<TNode>;
 };
 
-// ---------- Single terms ----------
-export async function getTagBySlug(slug: string) {
-  const data = await fetchGraphQL<{ tag: Term | null }>(GET_TAG_BY_SLUG, { slug });
-  return data.tag ?? null;
-}
-
+// ---------- Single terms (category) ----------
 export async function getCategoryBySlug(slug: string) {
   const data = await fetchGraphQL<{ category: Term | null }>(
     GET_CATEGORY_BY_SLUG,
@@ -64,13 +56,6 @@ export async function getCategoryBySlug(slug: string) {
 }
 
 // ---------- Posts (filtered) ----------
-export async function getPostsByTagSlug(slug: string, first = 12, after?: string) {
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
-    GET_POSTS_BY_TAG_SLUG,
-    { slug, first, after }
-  );
-}
-
 export async function getPostsByCategorySlug(
   slug: string,
   first = 12,
@@ -78,7 +63,7 @@ export async function getPostsByCategorySlug(
 ) {
   return fetchGraphQL<{ posts: Connection<PostListItem> }>(
     GET_POSTS_BY_CATEGORY_SLUG,
-    { slug, first, after }
+    { slug, first, after: after ?? null }
   );
 }
 
@@ -108,7 +93,7 @@ export async function getPosts(
   const after = typeof arg1 === 'number' ? maybeAfter : arg1.after;
   // NOTE: search/categoryIn/tagIn are accepted for compatibility with callers,
   // but the current GET_POSTS query ignores them. We can wire them in later.
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, { first, after });
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, { first, after: after ?? null });
 }
 
 // ---------- Single post ----------
@@ -135,21 +120,7 @@ export async function getAllCategories({
 }) {
   return fetchGraphQL<{ categories: Connection<Term> }>(GET_ALL_CATEGORIES, {
     first,
-    after,
-  });
-}
-
-// --- All tags (connection) ---
-export async function getAllTags({
-  first,
-  after,
-}: {
-  first: number;
-  after?: string;
-}) {
-  return fetchGraphQL<{ tags: Connection<Term> }>(GET_ALL_TAGS, {
-    first,
-    after,
+    after: after ?? null,
   });
 }
 
@@ -177,7 +148,7 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   const { first, after } = params;
   const data = await fetchGraphQL<PostsConnectionResponse>(
     POSTS_CONNECTION,
-    { first, after },
+    { first, after: after ?? null },
     {
       // Server-side fetch caching: tune to your needs; 5 minutes example
       next: { revalidate: 300 },
@@ -223,4 +194,101 @@ export async function searchPosts({
   );
 
   return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
+}
+
+// ================== TAG QUERIES (consolidated, no duplicates) ==================
+
+// --- TAG FIELDS FRAGMENT (local to this file) ---
+const TAG_FIELDS = /* GraphQL */ `
+  fragment TagFields on Tag {
+    id
+    databaseId
+    name
+    slug
+    description
+    count
+    uri
+  }
+`;
+
+// --- 1) All Tags (index page) ---
+export async function getAllTags({ first, after }: { first: number; after?: string }) {
+  const query = /* GraphQL */ `
+    ${TAG_FIELDS}
+    query AllTags($first: Int!, $after: String) {
+      tags(first: $first, after: $after) {
+        nodes {
+          ...TagFields
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  `;
+  const variables = { first, after: after ?? null };
+  const data = await fetchGraphQL<{
+    tags?: { nodes: unknown[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
+  }>(query, variables);
+  return { tags: data?.tags ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } } };
+}
+
+// --- 2) Single Tag by slug (detail page header/meta) ---
+export async function getTagBySlug(slug: string) {
+  const query = /* GraphQL */ `
+    ${TAG_FIELDS}
+    query TagBySlug($slug: ID!) {
+      tag(id: $slug, idType: SLUG) {
+        ...TagFields
+      }
+    }
+  `;
+  const data = await fetchGraphQL<{ tag: unknown | null }>(query, { slug });
+  return (data?.tag ?? null) as unknown;
+}
+
+// --- 3) Posts filtered by tag slug (for /tags/[tag]) ---
+export async function getPostsByTagSlug(slug: string, first = 12, after?: string) {
+  const query = /* GraphQL */ `
+    query PostsByTagSlug($slug: ID!, $first: Int!, $after: String) {
+      tag(id: $slug, idType: SLUG) {
+        name
+        slug
+        posts(first: $first, after: $after) {
+          nodes {
+            id
+            slug
+            title
+            date
+            excerpt
+            featuredImage {
+              node {
+                sourceUrl
+                altText
+              }
+            }
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+        }
+      }
+    }
+  `;
+  const variables = { slug, first, after: after ?? null };
+  const data = await fetchGraphQL<{
+    tag?: {
+      name: string;
+      slug: string;
+      posts?: { nodes: PostListItem[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
+    } | null;
+  }>(query, variables);
+
+  const tag = data?.tag ?? null;
+  return {
+    tag,
+    posts: tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } },
+  };
 }

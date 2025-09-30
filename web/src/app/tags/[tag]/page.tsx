@@ -8,9 +8,17 @@ export const revalidate = 600;
 
 type Params = { tag: string };
 
+// Minimal Tag shape we use on this page
+type TagNode = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+};
+
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { tag } = await params;
-  const term = await getTagBySlug(tag);
+  const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
   if (!term) return { title: "Tag not found" };
   return {
     title: `Tag: ${term.name} — Simple Deutsch`,
@@ -21,11 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 export default async function TagPage({ params }: { params: Promise<Params> }) {
   const { tag } = await params;
 
-  const term = await getTagBySlug(tag);
+  const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
   if (!term) return notFound();
 
   const { posts } = await getPostsByTagSlug(tag, 12);
-  const nodes = posts?.nodes ?? [];
+  const nodes = (posts as any)?.nodes ?? [];
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
