@@ -3,21 +3,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import type { ReactNode } from "react";
-import ThemeToggle from "@/components/ThemeToggle";
+import Header from "@/components/Header";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "simple-deutsch.de",
-  description: "Einfaches Deutsch, verständlich erklärt.",
+  description: "Simple German, clearly explained.",
 };
 
 // Runs before first paint to set dark/light without flash.
@@ -38,28 +31,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
       </head>
-      <body
-        className={[
-          geistSans.variable,
-          geistMono.variable,
-          "min-h-dvh antialiased",
-        ].join(" ")}
-      >
-        {/* Header */}
-        <header className="sticky top-0 z-10 border-b border-neutral-200/60 bg-[var(--sd-bg)]/90 backdrop-blur">
-          <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-            <a href="/" className="text-xl font-semibold tracking-tight">
-              simple-deutsch.de
-            </a>
-            {/* Client component is safe here */}
-            <ThemeToggle />
-          </div>
-        </header>
+      <body className={[geistSans.variable, geistMono.variable, "min-h-dvh antialiased"].join(" ")}>
+        <a href="#main" className="sr-only focus:not-sr-only">
+          Skip to content
+        </a>
 
-        {/* Main */}
-        <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
+        <Header />
 
-        {/* Footer */}
+        <main id="main" className="mx-auto max-w-5xl px-4 py-6">
+          {children}
+        </main>
+
         <footer className="mx-auto max-w-5xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400">
           © {new Date().getFullYear()} simple-deutsch.de
         </footer>

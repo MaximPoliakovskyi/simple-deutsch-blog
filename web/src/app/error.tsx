@@ -11,29 +11,25 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  // Optional: log to your observability tool
   useEffect(() => {
     // console.error(error);
   }, [error]);
 
-  // Hide raw error in production; show digest if available
   const isDev = process.env.NODE_ENV === "development";
-  const message = isDev
-    ? error.message
-    : "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.";
+  const message = isDev ? error.message : "Something went wrong. Please try again.";
 
   return (
     <StatusPage
-      code="Fehler"
-      title="Unerwarteter Fehler"
+      code="Error"
+      title="Unexpected Error"
       message={message}
       actions={[
-        { type: "button", onClick: () => reset(), label: "Erneut versuchen" },
-        { type: "link", href: "/", label: "Zur Startseite" },
+        { type: "button", onClick: () => reset(), label: "Try again" },
+        { type: "link", href: "/", label: "Back to home" },
       ]}
     >
       {!isDev && error.digest ? (
-        <p className="mt-4 text-xs opacity-70">Fehler-ID: {error.digest}</p>
+        <p className="mt-4 text-xs opacity-70">Error ID: {error.digest}</p>
       ) : null}
     </StatusPage>
   );
