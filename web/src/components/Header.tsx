@@ -2,19 +2,20 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { SearchButton } from "@/components/SearchOverlay";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
-  // Close the menu on route change
+  // Close the menu on route change (back/forward)
   useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+    const close = () => setOpen(false);
+    window.addEventListener("popstate", close);
+    return () => window.removeEventListener("popstate", close);
+  }, []);
 
   // Close when clicking outside
   useEffect(() => {
@@ -28,51 +29,40 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [open]);
 
-  // Close on Escape
-  useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, []);
-
-  const links = [
-    { href: "/posts", label: "Posts" },
-    { href: "/categories", label: "Categories" },
-    { href: "/tags", label: "Tags" },
-  ];
-
-  const menuId = "mobile-menu";
-
   return (
     <header className="sticky top-0 z-10 border-b border-neutral-200/60 bg-[var(--sd-bg)]/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-        <Link href="/" className="text-xl font-semibold tracking-tight">
+        <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
           simple-deutsch.de
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="text-sm text-neutral-700 hover:underline dark:text-neutral-300"
-            >
-              {l.label}
-            </Link>
-          ))}
+        <nav className="hidden items-center gap-6 md:flex">
+          <Link href="/posts" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+            Posts
+          </Link>
+          <Link href="/categories" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+            Categories
+          </Link>
+          <Link href="/tags" className="text-sm text-neutral-700 hover:underline dark:text-neutral-300">
+            Tags
+          </Link>
+
+          {/* Search button (overlay) */}
+          <SearchButton className="ml-2" />
+
           <ThemeToggle />
         </nav>
 
         {/* Mobile controls */}
         <div className="flex items-center gap-2 md:hidden">
+          {/* Small search trigger for mobile */}
+          <SearchButton className="rounded-md px-3 py-2" />
           <ThemeToggle />
           <button
             type="button"
             aria-expanded={open}
-            aria-controls={menuId}
+            aria-controls="mobile-menu"
             onClick={() => setOpen((v) => !v)}
             className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
             aria-label={open ? "Close menu" : "Open menu"}
@@ -91,27 +81,45 @@ export default function Header() {
 
       {/* Mobile menu panel */}
       <div
-        id={menuId}
+        id="mobile-menu"
         ref={menuRef}
         className={[
           "md:hidden",
           "border-t border-neutral-200/60 bg-[var(--sd-bg)]",
           "transition-[max-height] duration-300 overflow-hidden",
-          open ? "max-h-48" : "max-h-0",
+          open ? "max-h-64" : "max-h-0",
         ].join(" ")}
-        aria-hidden={!open}
       >
-        <nav className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3" aria-label="Mobile Primary">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className="rounded px-2 py-2 text-sm hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
-              onClick={() => setOpen(false)}
-            >
-              {l.label}
-            </Link>
-          ))}
+        <nav className="mx-auto flex max-w-5xl flex-col gap-2 px-4 py-3">
+          <Link
+            href="/posts"
+            className="rounded px-2 py-2 text-sm hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+            onClick={() => setOpen(false)}
+          >
+            Posts
+          </Link>
+          <Link
+            href="/categories"
+            className="rounded px-2 py-2 text-sm hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+            onClick={() => setOpen(false)}
+          >
+            Categories
+          </Link>
+          <Link
+            href="/tags"
+            className="rounded px-2 py-2 text-sm hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+            onClick={() => setOpen(false)}
+          >
+            Tags
+          </Link>
+          {/* Fallback link to dedicated page in case JS is disabled */}
+          <Link
+            href="/search"
+            className="rounded px-2 py-2 text-sm hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+            onClick={() => setOpen(false)}
+          >
+            Search
+          </Link>
         </nav>
       </div>
     </header>
