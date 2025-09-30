@@ -210,7 +210,7 @@ export async function searchPosts({
     };
   }
 
-  // Ensure dynamic, uncached fetching for search results.
+  // Dynamic, per-request fetch. Do not also set cache: 'no-store' to avoid conflicts.
   const data = await fetchGraphQL<{
     posts: {
       pageInfo: { endCursor: string | null; hasNextPage: boolean };
@@ -219,7 +219,7 @@ export async function searchPosts({
   }>(
     SEARCH_POSTS,
     { search: query, first, after },
-    { cache: 'no-store' }
+    { next: { revalidate: 0 } }
   );
 
   return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
