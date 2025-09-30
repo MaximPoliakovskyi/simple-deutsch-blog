@@ -1,1 +1,78 @@
 @import "tailwindcss";
+
+/* Design tokens that become Tailwind utilities (v4 @theme) */
+@theme {
+  --color-brand-50:  oklch(0.98 0.01 220);
+  --color-brand-100: oklch(0.96 0.02 220);
+  --color-brand-200: oklch(0.92 0.04 220);
+  --color-brand-300: oklch(0.87 0.07 220);
+  --color-brand-400: oklch(0.80 0.10 220);
+  --color-brand-500: oklch(0.74 0.12 220);
+  --color-brand-600: oklch(0.67 0.12 220);
+  --color-brand-700: oklch(0.58 0.12 220);
+  --color-brand-800: oklch(0.46 0.10 220);
+  --color-brand-900: oklch(0.40 0.09 220);
+
+  --color-neutral-25:  oklch(0.985 0.002 260);
+  --color-neutral-50:  oklch(0.97  0.003 260);
+  --color-neutral-100: oklch(0.94  0.004 260);
+  --color-neutral-200: oklch(0.89  0.006 260);
+  --color-neutral-300: oklch(0.82  0.008 260);
+  --color-neutral-400: oklch(0.70  0.01  260);
+  --color-neutral-500: oklch(0.60  0.02  260);
+  --color-neutral-600: oklch(0.48  0.03  260);
+  --color-neutral-700: oklch(0.38  0.03  260);
+  --color-neutral-800: oklch(0.30  0.03  260);
+  --color-neutral-900: oklch(0.22  0.03  260);
+
+  --spacing: 4px;
+
+  --radius-sm: 0.25rem;
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+  --font-inter: ui-sans-serif, system-ui, "Segoe UI", Inter, Arial, sans-serif;
+}
+
+/* Semantic variables */
+:root {
+  --sd-bg: var(--color-neutral-25);
+  --sd-fg: var(--color-neutral-900);
+  --sd-accent: var(--color-brand-600);
+  --sd-accent-contrast: white;
+}
+html.dark {
+  --sd-bg: oklch(0.16 0.03 260);
+  --sd-fg: oklch(0.93 0.02 260);
+  --sd-accent: var(--color-brand-500);
+  --sd-accent-contrast: white;
+}
+
+/* Base page styles */
+html, body { height: 100%; }
+body { background: var(--sd-bg); color: var(--sd-fg); }
+
+/* Small helpers/components */
+:where(.card) {
+  background: var(--sd-bg);
+  color: var(--sd-fg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+:where(.btn-accent) {
+  background: var(--sd-accent);
+  color: var(--sd-accent-contrast);
+  border-radius: var(--radius);
+}
+.container-content {
+  @media (min-width: 40rem) { max-width: 65ch; }
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 4vw, 2rem);
+}
