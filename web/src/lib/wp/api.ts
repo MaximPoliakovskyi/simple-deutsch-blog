@@ -1,7 +1,7 @@
 // src/lib/wp/api.ts
-import { fetchGraphQL } from './client';
-import { POSTS_CONNECTION } from './queries';
+import { fetchGraphQL } from '@/lib/wp/client';
 import {
+  POSTS_CONNECTION,
   GET_TAG_BY_SLUG,
   GET_CATEGORY_BY_SLUG,
   GET_POSTS_BY_TAG_SLUG,
@@ -10,7 +10,8 @@ import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,
   GET_POSTS,
-} from './queries';
+  SEARCH_POSTS,
+} from '@/lib/wp/queries';
 
 // ---------- Shared types ----------
 export type Term = {
@@ -21,6 +22,15 @@ export type Term = {
   count: number;
 };
 
+export type WPImage = {
+  sourceUrl: string;
+  altText: string | null;
+  mediaDetails?: { width?: number; height?: number } | null;
+};
+
+export type WPAuthor = { name: string; slug: string };
+
+// For simple lists pulled from tag/category queries etc.
 export type PostListItem = {
   id: string;
   slug: string;
@@ -89,17 +99,16 @@ export async function getPosts(opts: {
 
 // Implementation
 export async function getPosts(
-  arg1: number | { first: number; after?: string; search?: string; categoryIn?: string[]; tagIn?: string[] },
+  arg1:
+    | number
+    | { first: number; after?: string; search?: string; categoryIn?: string[]; tagIn?: string[] },
   maybeAfter?: string
 ): Promise<{ posts: Connection<PostListItem> }> {
   const first = typeof arg1 === 'number' ? arg1 : arg1.first;
   const after = typeof arg1 === 'number' ? maybeAfter : arg1.after;
   // NOTE: search/categoryIn/tagIn are accepted for compatibility with callers,
   // but the current GET_POSTS query ignores them. We can wire them in later.
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, {
-    first,
-    after,
-  });
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, { first, after });
 }
 
 // ---------- Single post ----------
@@ -144,24 +153,17 @@ export async function getAllTags({
   });
 }
 
-//
-
-export type WPImage = {
-  sourceUrl: string;
-  altText: string | null;
-  mediaDetails?: { width?: number; height?: number } | null;
-};
-
-export type WPAuthor = { name: string; slug: string };
-
+// ---------- Posts (paged connection for cards/grid) ----------
 export type WPPostCard = {
   id: string;
+  databaseId?: number; // present on search results; optional elsewhere
   slug: string;
   title: string;
   excerpt: string;
   date: string;
-  featuredImage?: { node: WPImage } | null;
-  author?: { node: WPAuthor } | null;
+  featuredImage?: { node?: WPImage | null } | null;
+  author?: { node?: WPAuthor | null } | null;
+  categories?: { nodes: { id?: string; name: string; slug: string }[] };
 };
 
 export type PostsConnectionResponse = {
@@ -173,14 +175,52 @@ export type PostsConnectionResponse = {
 
 export async function getPostsPage(params: { first: number; after?: string | null }) {
   const { first, after } = params;
-  const data = await fetchGraphQL<PostsConnectionResponse>(POSTS_CONNECTION, { first, after }, {
-    // Server-side fetch caching: tune to your needs; 5 minutes example
-    next: { revalidate: 300 },
-  });
+  const data = await fetchGraphQL<PostsConnectionResponse>(
+    POSTS_CONNECTION,
+    { first, after },
+    {
+      // Server-side fetch caching: tune to your needs; 5 minutes example
+      next: { revalidate: 300 },
+    }
+  );
 
   const edges = data.posts?.edges ?? [];
   const nodes = edges.map((e) => e.node);
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return { posts: nodes, pageInfo };
+}
+
+// ---------- Search ----------
+export type SearchPostsArgs = {
+  query: string;
+  first?: number;
+  after?: string | null;
+};
+
+export async function searchPosts({
+  query,
+  first = 10,
+  after = null,
+}: SearchPostsArgs) {
+  if (!query?.trim()) {
+    return {
+      posts: [] as WPPostCard[],
+      pageInfo: { endCursor: null as string | null, hasNextPage: false },
+    };
+  }
+
+  // Ensure dynamic, uncached fetching for search results.
+  const data = await fetchGraphQL<{
+    posts: {
+      pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      nodes: WPPostCard[];
+    };
+  }>(
+    SEARCH_POSTS,
+    { search: query, first, after },
+    { cache: 'no-store' }
+  );
+
+  return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
 }

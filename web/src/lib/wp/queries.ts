@@ -281,3 +281,44 @@ export const POSTS_CONNECTION = /* GraphQL */ `
     }
   }
 `;
+
+//
+
+// ...keep your existing exports above
+
+
+export const SEARCH_POSTS = /* GraphQL */ `
+  query SearchPosts($search: String!, $first: Int!, $after: String) {
+    posts(where: { search: $search, status: PUBLISH }, first: $first, after: $after) {
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      nodes {
+        id
+        databaseId
+        slug
+        title
+        excerpt
+        date
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+            mediaDetails {
+              width
+              height
+            }
+          }
+        }
+        categories {
+          nodes {
+            id
+            name
+            slug
+          }
+        }
+      }
+    }
+  }
+`;
