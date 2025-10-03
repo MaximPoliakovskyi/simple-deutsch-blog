@@ -8,11 +8,10 @@ export type PostCardPost = {
   id?: string;
   slug: string;
   title: string;
-  date?: string | null; // ISO
-  excerpt?: string | null; // may contain HTML from WP
+  date?: string | null;
+  excerpt?: string | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> } | null;
-
   featuredImage?:
     | {
         node?: {
@@ -28,13 +27,14 @@ export type PostCardPost = {
         height?: number | null;
       }
     | null;
-
   readingMinutes?: number | null;
 };
 
 export type PostCardProps = {
   post: PostCardPost;
   className?: string;
+  priority?: boolean;
+  safeExcerpt?: boolean;
 };
 
 function extractImage(p: PostCardPost) {
@@ -42,7 +42,7 @@ function extractImage(p: PostCardPost) {
   if (n?.sourceUrl) {
     return {
       url: n.sourceUrl as string,
-      alt: (n.altText ?? "") as string,
+      alt: n.altText ?? "",
       width: n.mediaDetails?.width ?? undefined,
       height: n.mediaDetails?.height ?? undefined,
     };
@@ -51,12 +51,12 @@ function extractImage(p: PostCardPost) {
   if (flat?.url) {
     return {
       url: flat.url as string,
-      alt: (flat.alt ?? "") as string,
+      alt: flat.alt ?? "",
       width: flat.width ?? undefined,
       height: flat.height ?? undefined,
     };
   }
-  return { url: "", alt: "" };
+  return { url: "", alt: "", width: undefined, height: undefined };
 }
 
 function estimateReadingMinutes(post: PostCardPost) {
@@ -67,11 +67,15 @@ function estimateReadingMinutes(post: PostCardPost) {
   return Math.max(1, Math.round(words / 200));
 }
 
-export default function PostCard({ post, className }: PostCardProps) {
+export default function PostCard({
+  post,
+  className,
+  priority = false,
+  safeExcerpt = false,
+}: PostCardProps) {
   const img = extractImage(post);
   const minutes = estimateReadingMinutes(post);
 
-  // deterministic date string: pin locale + timezone
   const dateText = post.date
     ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(
         new Date(post.date)
@@ -82,25 +86,41 @@ export default function PostCard({ post, className }: PostCardProps) {
     post.categories?.nodes?.[0]?.name ??
     (post.author?.node?.name ? post.author.node.name : "News");
 
+  const imageAlt = img.alt?.trim() || post.title || "";
+
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
-      <Link href={`/posts/${post.slug}`} className="block">
+      <Link href={`/posts/${post.slug}`} className="block" aria-label={post.title}>
         {/* Media */}
-        <div className="relative overflow-hidden rounded-2xl">
-          <div className="aspect-video">
-            {img.url ? (
+        <div className="overflow-hidden rounded-2xl">
+          {img.url ? (
+            img.width && img.height ? (
+              // ✅ Intrinsic sizing (preferred)
               <Image
                 src={img.url}
-                alt={img.alt}
-                fill
+                alt={imageAlt}
+                width={img.width}
+                height={img.height}
+                className="h-auto w-full rounded-2xl object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                priority={priority}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                priority={false}
               />
             ) : (
-              <div className="h-full w-full bg-gray-100" />
-            )}
-          </div>
+              // ✅ Fallback to fill when no dimensions
+              <div className="relative aspect-video">
+                <Image
+                  src={img.url}
+                  alt={imageAlt}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-[1.03] rounded-2xl"
+                  priority={priority}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                />
+              </div>
+            )
+          ) : (
+            <div className="aspect-video w-full bg-gray-100 rounded-2xl" />
+          )}
         </div>
 
         {/* Meta + title + excerpt */}
@@ -117,10 +137,16 @@ export default function PostCard({ post, className }: PostCardProps) {
           </h3>
 
           {post.excerpt ? (
-            <div
-              className="prose prose-sm text-neutral-600 line-clamp-3"
-              dangerouslySetInnerHTML={{ __html: post.excerpt }}
-            />
+            safeExcerpt ? (
+              <p className="prose prose-sm text-neutral-600 line-clamp-3">
+                {post.excerpt.replace(/<[^>]+>/g, "").trim()}
+              </p>
+            ) : (
+              <div
+                className="prose prose-sm text-neutral-600 line-clamp-3"
+                dangerouslySetInnerHTML={{ __html: post.excerpt }}
+              />
+            )
           ) : null}
 
           <div className="pt-2">

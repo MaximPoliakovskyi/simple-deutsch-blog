@@ -90,7 +90,7 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[var(--sd-bg)]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
             simple-deutsch.de
           </Link>

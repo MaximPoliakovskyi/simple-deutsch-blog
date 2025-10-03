@@ -29,7 +29,7 @@ export default function GlobalError({
           ]}
         >
           {!isDev && error.digest ? (
-            <p className="mt-4 text-xs opacity-70">Fehler-ID: {error.digest}</p>
+            <p className="mt-4 text-xs opacity-70">Error ID: {error.digest}</p>
           ) : null}
         </StatusPage>
       </body>

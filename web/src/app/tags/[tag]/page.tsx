@@ -36,7 +36,7 @@ export default async function TagPage({ params }: { params: Promise<Params> }) {
   const nodes = (posts as any)?.nodes ?? [];
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-semibold">Tag: {term.name}</h1>
 
       {nodes.length === 0 ? (

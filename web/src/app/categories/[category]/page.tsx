@@ -27,7 +27,7 @@ export default async function CategoryPage({ params }: { params: Promise<Params>
   const { posts } = await getPostsByCategorySlug(category, 12);
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10">
+    <main className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-semibold">Category: {term.name}</h1>
 
       {posts.nodes.length === 0 ? (

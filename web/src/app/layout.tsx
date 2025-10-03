@@ -37,14 +37,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)]"
         >
-          Zum Inhalt springen
+          Skip to content
         </a>
 
         {/* Site header (implicit banner landmark via <header>) */}
         <Header />
 
         {/* Primary content area (explicit role helps some ATs) */}
-        <main id="main" role="main" className="mx-auto max-w-5xl px-4 py-6">
+        <main id="main" role="main" className="mx-auto max-w-7xl px-4 py-6">
           {children}
         </main>
 
