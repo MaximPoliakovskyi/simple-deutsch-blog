@@ -13,74 +13,39 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   const titleId = "mobile-menu-title";
 
-  // lock scroll when menu open (modal pattern guidance)
   useEffect(() => {
     const root = document.documentElement;
     if (!open) return;
-    const prevOverflow = root.style.overflow;
+    const prev = root.style.overflow;
     root.style.overflow = "hidden";
-    return () => {
-      root.style.overflow = prevOverflow;
-    };
+    return () => { root.style.overflow = prev; };
   }, [open]);
 
-  // Esc to close + focus trap when open
   useEffect(() => {
     if (!open) return;
-
-    // move focus into the panel
     const toFocus =
       firstFocusRef.current ||
-      panelRef.current?.querySelector<HTMLElement>(
-        'a, button, [href], [tabindex]:not([tabindex="-1"])'
-      );
+      panelRef.current?.querySelector<HTMLElement>('a, button, [href], [tabindex]:not([tabindex="-1"])');
     toFocus?.focus();
 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         setOpen(false);
-        // return focus to toggle
         toggleRef.current?.focus();
-        return;
-      }
-
-      // simple focus trap
-      if (e.key === "Tab" && panelRef.current) {
-        const focusables = Array.from(
-          panelRef.current.querySelectorAll<HTMLElement>(
-            'a, button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-          )
-        ).filter((el) => !el.hasAttribute("disabled"));
-
-        if (focusables.length === 0) return;
-
-        const first = focusables[0];
-        const last = focusables[focusables.length - 1];
-        const active = document.activeElement as HTMLElement | null;
-
-        if (!e.shiftKey && active === last) {
-          e.preventDefault();
-          first.focus();
-        } else if (e.shiftKey && active === first) {
-          e.preventDefault();
-          last.focus();
-        }
       }
     };
-
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // click outside (ignore clicks on the toggle button)
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       if (!open) return;
       const t = e.target as Node | null;
       const onToggle = !!(toggleRef.current && t && toggleRef.current.contains(t));
-      const insidePanel = !!(panelRef.current && t && panelRef.current.contains(t));
-      if (onToggle || insidePanel) return;
+      const inside = !!(panelRef.current && t && panelRef.current.contains(t));
+      if (onToggle || inside) return;
       setOpen(false);
     }
     document.addEventListener("mousedown", onDocMouseDown);
@@ -89,13 +54,13 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[var(--sd-bg)]/90 backdrop-blur">
+      {/* Header follows theme (no hard-coded white) */}
+      <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[hsl(var(--bg))]/90 backdrop-blur dark:border-white/10">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
             simple-deutsch.de
           </Link>
 
-          {/* Desktop nav (give it an accessible name) */}
           <nav aria-label="Primäre Navigation" className="hidden items-center gap-6 md:flex">
             <Link href="/posts" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Posts
@@ -107,14 +72,10 @@ export default function Header() {
               Tags
             </Link>
 
-            {/* Desktop search button */}
             <SearchButton className="ml-2" variant="default" />
-
-            {/* Theme toggle */}
             <ThemeToggle />
           </nav>
 
-          {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
             <SearchButton ariaLabel="Artikel finden" variant="icon" />
             <ThemeToggle />
@@ -140,25 +101,13 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Scrim + Drawer (single instance) */}
-      <div
-        className={[
-          "md:hidden",
-          "fixed inset-0 z-[90]",
-          open ? "" : "pointer-events-none",
-        ].join(" ")}
-      >
-        {/* Scrim */}
+      {/* Mobile drawer */}
+      <div className={["md:hidden","fixed inset-0 z-[90]", open ? "" : "pointer-events-none"].join(" ")}>
         <div
-          className={[
-            "absolute inset-0 bg-black/40 transition-opacity",
-            open ? "opacity-100" : "opacity-0",
-          ].join(" ")}
+          className={["absolute inset-0 bg-black/40 transition-opacity", open ? "opacity-100" : "opacity-0"].join(" ")}
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
-
-        {/* Drawer */}
         <div
           id="mobile-fullscreen-menu"
           ref={panelRef}
@@ -167,13 +116,12 @@ export default function Header() {
           aria-labelledby={titleId}
           className={[
             "absolute inset-0",
-            "bg-[var(--sd-bg)]",
+            "bg-[hsl(var(--bg))]",
             "transition-transform duration-300 will-change-transform",
             open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
         >
-          {/* Top bar in panel */}
-          <div className="flex items-center justify-between border-b border-neutral-200/60 px-4 py-3">
+          <div className="flex items-center justify-between border-b border-neutral-200/60 px-4 py-3 dark:border-white/10">
             <Link
               href="/"
               onClick={() => setOpen(false)}
@@ -196,45 +144,12 @@ export default function Header() {
             </button>
           </div>
 
-          {/* Menu links */}
           <nav aria-label="Mobile Navigation" className="mx-auto w-full max-w-5xl px-4 py-4">
             <ul className="space-y-1">
-              <li>
-                <Link
-                  href="/posts"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-                >
-                  Posts
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/categories"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-                >
-                  Categories
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/tags"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-                >
-                  Tags
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/search"
-                  onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-                >
-                  Search
-                </Link>
-              </li>
+              <li><Link href="/posts" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Posts</Link></li>
+              <li><Link href="/categories" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Categories</Link></li>
+              <li><Link href="/tags" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Tags</Link></li>
+              <li><Link href="/search" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Search</Link></li>
             </ul>
           </nav>
         </div>

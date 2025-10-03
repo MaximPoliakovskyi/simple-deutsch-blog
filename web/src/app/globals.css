@@ -1,78 +1,49 @@
 @import "tailwindcss";
 
-/* Design tokens that become Tailwind utilities (v4 @theme) */
-@theme {
-  --color-brand-50:  oklch(0.98 0.01 220);
-  --color-brand-100: oklch(0.96 0.02 220);
-  --color-brand-200: oklch(0.92 0.04 220);
-  --color-brand-300: oklch(0.87 0.07 220);
-  --color-brand-400: oklch(0.80 0.10 220);
-  --color-brand-500: oklch(0.74 0.12 220);
-  --color-brand-600: oklch(0.67 0.12 220);
-  --color-brand-700: oklch(0.58 0.12 220);
-  --color-brand-800: oklch(0.46 0.10 220);
-  --color-brand-900: oklch(0.40 0.09 220);
-
-  --color-neutral-25:  oklch(0.985 0.002 260);
-  --color-neutral-50:  oklch(0.97  0.003 260);
-  --color-neutral-100: oklch(0.94  0.004 260);
-  --color-neutral-200: oklch(0.89  0.006 260);
-  --color-neutral-300: oklch(0.82  0.008 260);
-  --color-neutral-400: oklch(0.70  0.01  260);
-  --color-neutral-500: oklch(0.60  0.02  260);
-  --color-neutral-600: oklch(0.48  0.03  260);
-  --color-neutral-700: oklch(0.38  0.03  260);
-  --color-neutral-800: oklch(0.30  0.03  260);
-  --color-neutral-900: oklch(0.22  0.03  260);
-
-  --spacing: 4px;
-
-  --radius-sm: 0.25rem;
-  --radius: 0.5rem;
-  --radius-lg: 0.75rem;
-  --radius-xl: 1rem;
-  --radius-2xl: 1.25rem;
-
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow:    0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-
-  --font-inter: ui-sans-serif, system-ui, "Segoe UI", Inter, Arial, sans-serif;
-}
-
-/* Semantic variables */
+/* Theme tokens */
 :root {
-  --sd-bg: var(--color-neutral-25);
-  --sd-fg: var(--color-neutral-900);
-  --sd-accent: var(--color-brand-600);
-  --sd-accent-contrast: white;
+  /* light */
+  --bg: 0 0% 100%;
+  --fg: 222 22% 12%;
+  --muted: 222 8% 45%;
+  --sd-accent: hsl(222 80% 56%);
+  --radius: 12px;
+
+  /* Let UA know we support both; no JS toggling needed */
+  color-scheme: light dark; /* MDN */
 }
+
+/* Flip tokens in dark mode */
 html.dark {
-  --sd-bg: oklch(0.16 0.03 260);
-  --sd-fg: oklch(0.93 0.02 260);
-  --sd-accent: var(--color-brand-500);
-  --sd-accent-contrast: white;
+  --bg: 222 47% 8%;
+  --fg: 210 15% 96%;
+  --muted: 220 9% 65%;
 }
 
-/* Base page styles */
+/* Page-wide binding */
 html, body { height: 100%; }
-body { background: var(--sd-bg); color: var(--sd-fg); }
+body {
+  background: hsl(var(--bg));
+  color: hsl(var(--fg));
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
 
-/* Small helpers/components */
-:where(.card) {
-  background: var(--sd-bg);
-  color: var(--sd-fg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+/* Smooth theme transitions — exclude text color to prevent flicker */
+@media (prefers-reduced-motion: no-preference) {
+  .theme-transition * {
+    transition:
+      background-color 200ms,
+      border-color 200ms,
+      fill 200ms,
+      stroke 200ms; /* no 'color' here */
+  }
 }
-:where(.btn-accent) {
-  background: var(--sd-accent);
-  color: var(--sd-accent-contrast);
-  border-radius: var(--radius);
-}
-.container-content {
-  @media (min-width: 40rem) { max-width: 65ch; }
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 2rem);
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--sd-accent);
+  outline-offset: 2px;
+  border-radius: 6px;
 }

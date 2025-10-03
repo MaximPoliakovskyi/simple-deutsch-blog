@@ -1,74 +1,49 @@
 // src/components/ThemeToggle.tsx
-"use client";
+'use client';
+import { useEffect, useState } from 'react';
 
-import { useEffect, useState } from "react";
+type Theme = 'light' | 'dark';
 
-/**
- * Icon-only theme toggle using the same storage key your layout uses ("sd-theme").
- * Works without next-themes; it just flips the 'dark' class on <html>.
- */
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
+    const root = document.documentElement;
+    root.classList.add('theme-transition'); // enables smooth fade (CSS below)
+    setIsDark(root.classList.contains('dark'));
     setMounted(true);
-    try {
-      const ls = localStorage.getItem("sd-theme");
-      const mql = window.matchMedia("(prefers-color-scheme: dark)");
-      const dark = ls ? ls === "dark" : mql.matches;
-      setIsDark(dark);
-    } catch {}
+    return () => { root.classList.remove('theme-transition'); };
   }, []);
 
-  if (!mounted) {
-    return (
-      <button
-        aria-label="Toggle theme"
-        title="Toggle theme"
-        className="rounded p-2 hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
-      >
-        {/* placeholder circle */}
-        <div className="h-5 w-5 rounded-full border" />
-      </button>
-    );
+  function setTheme(next: Theme) {
+    const root = document.documentElement;
+    if (next === 'dark') root.classList.add('dark');
+    else root.classList.remove('dark');
+    try { localStorage.setItem('sd-theme', next); } catch {}
+    setIsDark(next === 'dark'); // update icon immediately
   }
+
+  if (!mounted) return null;
 
   return (
     <button
       type="button"
-      aria-label="Toggle theme"
-      title="Toggle theme"
-      onClick={() => {
-        const next = !isDark;
-        setIsDark(next);
-        try {
-          const el = document.documentElement;
-          if (next) el.classList.add("dark");
-          else el.classList.remove("dark");
-          localStorage.setItem("sd-theme", next ? "dark" : "light");
-        } catch {}
-      }}
-      className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      aria-pressed={isDark}
+      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={isDark ? 'Light mode' : 'Dark mode'}
+      className="rounded-lg p-2 ring-1 ring-neutral-300 hover:bg-neutral-100
+                 dark:hover:bg-white/5 dark:ring-white/20 transition-colors"
     >
       {isDark ? (
-        // Moon
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"
-            fill="currentColor"
-          />
+        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="currentColor" />
         </svg>
       ) : (
-        // Sun
-        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M12 4V2m0 20v-2m8-8h2M2 12h2m12.95 6.95l1.41 1.41M4.64 4.64l1.41 1.41m0 11.31l-1.41 1.41m12.31-12.31l1.41-1.41M12 8a4 4 0 100 8 4 4 0 000-8z"
-            stroke="currentColor"
-            strokeWidth="2"
-            fill="none"
-            strokeLinecap="round"
-          />
+        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       )}
     </button>
