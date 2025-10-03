@@ -1,41 +1,50 @@
 // src/app/page.tsx
 import PostCard from "@/components/PostCard";
+import { headers } from "next/headers";
 
-// If you already have a fetcher, replace this with your real data call.
-async function getPosts() {
-  // Example shape; swap for your CMS call.
-  // Must return an array where each item has: id|slug, title, image, excerpt, date, etc.
-  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ""}/api/posts`, {
-    next: { revalidate: 60 }, // cache as you prefer
+/** Build an absolute base URL from the incoming request (local + prod). */
+async function getBaseUrl() {
+  const h = await headers();
+  const host =
+    h.get("x-forwarded-host") ||
+    h.get("host") ||
+    process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "");
+  const proto = h.get("x-forwarded-proto") || (process.env.VERCEL ? "https" : "http");
+  if (!host) throw new Error("Cannot determine host for API fetch");
+  return `${proto}://${host}`;
+}
+
+/** Fetch posts from /api/posts and always return an array. */
+async function getPosts(): Promise<any[]> {
+  const base = await getBaseUrl();
+  const res = await fetch(new URL("/api/posts", base), {
+    next: { revalidate: 60 }, // adjust caching to taste
   });
-  if (!res.ok) {
-    // Fallback to empty list on error
-    return [] as any[];
-  }
-  return (await res.json()) as any[];
+
+  if (!res.ok) return [];
+  const json = await res.json();
+
+  // Some APIs return { posts: [...] }, others return []. Normalize to [].
+  if (Array.isArray(json)) return json;
+  if (json && Array.isArray(json.posts)) return json.posts;
+
+  return [];
 }
 
 export default async function HomePage() {
   const posts = await getPosts();
 
-  // How many cards are truly visible above the fold on your layout?
-  // If your first viewport shows 2 cards, set this to 2, etc.
+  // How many cards are actually above the fold? (Tune for your layout)
   const FIRST_ROW_COUNT = 3;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-6">
-      {/* Optional: a hero could go here. If you have a hero image, give it priority as well. */}
-      {/* <Hero priority /> */}
-
-      <section
-        aria-label="Latest posts"
-        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"
-      >
+      <section aria-label="Latest posts" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {posts.map((post: any, i: number) => (
           <PostCard
             key={post.id ?? post.slug ?? i}
             post={post}
-            // ✅ Only the first row is priority (preloaded, not lazy)
+            // Preload images likely to be LCP (first row)
             priority={i < FIRST_ROW_COUNT}
           />
         ))}

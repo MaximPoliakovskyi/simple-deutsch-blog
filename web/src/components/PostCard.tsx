@@ -9,7 +9,7 @@ export type PostCardPost = {
   slug: string;
   title: string;
   date?: string | null;
-  excerpt?: string | null;
+  excerpt?: string | null; // intentionally unused
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> } | null;
   featuredImage?:
@@ -33,30 +33,18 @@ export type PostCardPost = {
 export type PostCardProps = {
   post: PostCardPost;
   className?: string;
+  /** Pass true for above-the-fold cards to improve LCP */
   priority?: boolean;
+  /** Ignored (we removed excerpt rendering) */
   safeExcerpt?: boolean;
 };
 
 function extractImage(p: PostCardPost) {
   const n = (p.featuredImage as any)?.node;
-  if (n?.sourceUrl) {
-    return {
-      url: n.sourceUrl as string,
-      alt: n.altText ?? "",
-      width: n.mediaDetails?.width ?? undefined,
-      height: n.mediaDetails?.height ?? undefined,
-    };
-  }
+  if (n?.sourceUrl) return { url: n.sourceUrl as string, alt: n.altText ?? "" };
   const flat = p.featuredImage as any;
-  if (flat?.url) {
-    return {
-      url: flat.url as string,
-      alt: flat.alt ?? "",
-      width: flat.width ?? undefined,
-      height: flat.height ?? undefined,
-    };
-  }
-  return { url: "", alt: "", width: undefined, height: undefined };
+  if (flat?.url) return { url: flat.url as string, alt: flat.alt ?? "" };
+  return { url: "", alt: "" };
 }
 
 function estimateReadingMinutes(post: PostCardPost) {
@@ -71,7 +59,6 @@ export default function PostCard({
   post,
   className,
   priority = false,
-  safeExcerpt = false,
 }: PostCardProps) {
   const img = extractImage(post);
   const minutes = estimateReadingMinutes(post);
@@ -86,75 +73,74 @@ export default function PostCard({
     post.categories?.nodes?.[0]?.name ??
     (post.author?.node?.name ? post.author.node.name : "News");
 
-  const imageAlt = img.alt?.trim() || post.title || "";
+  const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
 
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
       <Link href={`/posts/${post.slug}`} className="block" aria-label={post.title}>
-        {/* Media */}
-        <div className="overflow-hidden rounded-2xl">
-          {img.url ? (
-            img.width && img.height ? (
-              // ✅ Intrinsic sizing (preferred)
+        {/* Media — smoother zoom wrapper */}
+        <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-neutral-200 dark:bg-neutral-800">
+          <div
+            className="
+              absolute inset-0
+              transform-gpu will-change-transform origin-center
+              group-hover:scale-[1.06] group-focus-within:scale-[1.06]
+            "
+            style={{
+              transitionProperty: "transform, scale",
+              transitionDuration: "1200ms",
+              transitionTimingFunction: "cubic-bezier(.22,1,.36,1)",
+            }}
+          >
+            {img.url ? (
               <Image
                 src={img.url}
                 alt={imageAlt}
-                width={img.width}
-                height={img.height}
-                className="h-auto w-full rounded-2xl object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                fill
+                className="object-cover pointer-events-none select-none [backface-visibility:hidden]"
                 priority={priority}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               />
             ) : (
-              // ✅ Fallback to fill when no dimensions
-              <div className="relative aspect-video">
-                <Image
-                  src={img.url}
-                  alt={imageAlt}
-                  fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.03] rounded-2xl"
-                  priority={priority}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                />
-              </div>
-            )
-          ) : (
-            <div className="aspect-video w-full bg-gray-100 rounded-2xl" />
-          )}
+              <div className="absolute inset-0" />
+            )}
+          </div>
         </div>
 
-        {/* Meta + title + excerpt */}
-        <div className="mt-4 space-y-2">
-          {(dateText || minutes) && (
-            <p className="text-sm text-neutral-500">
-              {dateText} {dateText && minutes ? <span aria-hidden>·</span> : null}{" "}
-              {minutes ? `${minutes} min read` : null}
-            </p>
-          )}
+        {/* Meta (date • reading time) */}
+        {(dateText || minutes) && (
+          <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+            {dateText} {dateText && minutes ? <span aria-hidden>·</span> : null}{" "}
+            {minutes ? `${minutes} min read` : null}
+          </p>
+        )}
 
-          <h3 className="text-xl font-semibold leading-snug tracking-tight line-clamp-2">
+        {/* Title */}
+        <h3
+          className="
+            mt-1 text-[clamp(1.25rem,2.2vw,1.75rem)] font-semibold leading-snug tracking-tight
+          "
+        >
+          <span
+            className="
+              transition-colors duration-300
+              text-[hsl(var(--fg))]
+              group-hover:text-slate-600 group-focus-within:text-slate-600
+              dark:group-hover:text-slate-300 dark:group-focus-within:text-slate-300
+            "
+          >
             {post.title}
-          </h3>
+          </span>
+        </h3>
 
-          {post.excerpt ? (
-            safeExcerpt ? (
-              <p className="prose prose-sm text-neutral-600 line-clamp-3">
-                {post.excerpt.replace(/<[^>]+>/g, "").trim()}
-              </p>
-            ) : (
-              <div
-                className="prose prose-sm text-neutral-600 line-clamp-3"
-                dangerouslySetInnerHTML={{ __html: post.excerpt }}
-              />
-            )
-          ) : null}
-
-          <div className="pt-2">
-            <span className="inline-flex items-center rounded-full border px-3 py-1 text-sm leading-none text-neutral-600">
+        {/* Category chip (optional) */}
+        {pill ? (
+          <div className="pt-3">
+            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200">
               {pill}
             </span>
           </div>
-        </div>
+        ) : null}
       </Link>
     </article>
   );
