@@ -14,7 +14,7 @@ type SlimPost = {
   image: string | null;
 };
 
-function classNames(...a: Array<string | false | null | undefined>) {
+function cn(...a: Array<string | false | null | undefined>) {
   return a.filter(Boolean).join(' ');
 }
 
@@ -46,8 +46,7 @@ export function SearchButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className={classNames(
-          // Light theme vs dark theme styles
+        className={cn(
           'flex items-center gap-2 rounded-full border text-sm transition-colors',
           'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100',
           'dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10',
@@ -83,32 +82,50 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const [after, setAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const close = useCallback(() => onClose(), [onClose]);
-
-  // Mount portal & lock scroll
+  // --- mount/unmount animation state ---
   const [mounted, setMounted] = useState(false);
+  const [show, setShow] = useState(false); // drives enter/exit transitions
+  const EXIT_MS = 400; // keep in sync with CSS below
+
+  // Lock scroll and trigger **smooth enter animation**
   useEffect(() => {
     setMounted(true);
     const prev = document.documentElement.style.overflow;
     document.documentElement.style.overflow = 'hidden';
+
+    // Use double rAF to ensure initial styles are committed before we flip to "show"
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setShow(true));
+    });
+
     return () => {
+      cancelAnimationFrame(id);
       document.documentElement.style.overflow = prev;
     };
   }, []);
 
+  const requestClose = useCallback(() => {
+    setShow(false); // play exit animation
+    const t = setTimeout(() => onClose(), EXIT_MS);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
   // Global key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') requestClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [close]);
+  }, [requestClose]);
 
-  // Focus input on mount
+  // Focus input after the panel is visible to avoid flash
   useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+    if (show) {
+      const id = setTimeout(() => inputRef.current?.focus(), 10);
+      return () => clearTimeout(id);
+    }
+  }, [show]);
 
   // Debounced search with cancellation
   useEffect(() => {
@@ -164,14 +181,14 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         e.preventDefault();
         const current = items[highlight];
         if (current) {
-          close();
+          requestClose();
           router.push(`/posts/${current.slug}`);
         }
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [items, highlight, router, close]);
+  }, [items, highlight, router, requestClose]);
 
   // Ensure highlighted item is scrolled into view
   useEffect(() => {
@@ -205,7 +222,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   }, [after, hasNext, q]);
 
   const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) close();
+    if (e.target === e.currentTarget) requestClose();
   };
 
   const empty = q.trim().length > 0 && !loading && items.length === 0;
@@ -214,23 +231,42 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-label="Search articles"
       onMouseDown={onBackdrop}
+      className={cn(
+        'fixed inset-0 z-[100] backdrop-blur-[2px]', // tiny blur for polish
+        // Respect prefers-reduced-motion by letting OS disable transitions
+        'motion-reduce:transition-none motion-reduce:backdrop-blur-0',
+        show ? 'bg-black/40' : 'bg-black/0'
+      )}
+      style={{
+        transitionProperty: 'background-color, opacity, filter',
+        transitionDuration: `${EXIT_MS}ms`,
+        transitionTimingFunction: 'cubic-bezier(.16,1,.3,1)', // silkier ease
+      }}
     >
       <div
-        className="
-          mx-auto w-full
-          max-w-[min(40rem,calc(100vw-2rem))]
-          rounded-2xl bg-[hsl(var(--bg))] p-2 shadow-2xl
-          text-neutral-900 dark:text-neutral-100
-          mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]
-          sm:mt-[calc(env(safe-area-inset-top)+5rem)]
-        "
+        className={cn(
+          'mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]',
+          'rounded-2xl bg-[hsl(var(--bg))] p-2 shadow-2xl',
+          'text-neutral-900 dark:text-neutral-100',
+          'mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]',
+          'sm:mt-[calc(env(safe-area-inset-top)+5rem)]',
+          // panel enter/exit states
+          show
+            ? 'opacity-100 scale-100 translate-y-0'
+            : 'opacity-0 scale-[0.98] translate-y-1',
+          'motion-reduce:transition-none'
+        )}
+        style={{
+          transitionProperty: 'opacity, transform',
+          transitionDuration: `${EXIT_MS}ms`,
+          transitionTimingFunction: 'cubic-bezier(.16,1,.3,1)',
+        }}
       >
-        {/* Input row – pure white in light; theme bg in dark */}
+        {/* Input row */}
         <div
           className="
             flex items-center gap-2 rounded-xl border px-3 py-2
@@ -282,7 +318,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Results */}
-        <div className="max-h-[60vh] overflow-auto py-2">
+        <div className="max-h[60vh] max-h-[60vh] overflow-auto py-2">
           {loading && (
             <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">
               Loading…
@@ -301,10 +337,10 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                   type="button"
                   onMouseEnter={() => setHighlight(i)}
                   onClick={() => {
-                    close();
+                    requestClose();
                     router.push(`/posts/${it.slug}`);
                   }}
-                  className={classNames(
+                  className={cn(
                     'flex w-full items-start gap-3 px-3 py-3 text-left',
                     'hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
                     i === highlight && 'bg-neutral-50 dark:bg-neutral-800/60'

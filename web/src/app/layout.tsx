@@ -53,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <footer
           role="contentinfo"
-          className="mx-auto max-w-5xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400"
+          className="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400"
         >
           © {new Date().getFullYear()} simple-deutsch.de
         </footer>

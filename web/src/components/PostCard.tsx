@@ -69,11 +69,10 @@ export default function PostCard({
       )
     : "";
 
-  const pill =
-    post.categories?.nodes?.[0]?.name ??
-    (post.author?.node?.name ? post.author.node.name : "News");
-
   const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
+
+  // First category (if present)
+  const firstCategory = post.categories?.nodes?.[0];
 
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
@@ -132,16 +131,22 @@ export default function PostCard({
             {post.title}
           </span>
         </h3>
-
-        {/* Category chip (optional) */}
-        {pill ? (
-          <div className="pt-3">
-            <span className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200">
-              {pill}
-            </span>
-          </div>
-        ) : null}
       </Link>
+
+      {/* Category chip (clickable) */}
+      {firstCategory ? (
+        <div className="pt-3">
+          <Link
+            href={`/categories/${firstCategory.slug}`}
+            aria-label={`View category ${firstCategory.name}`}
+            className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
+                       dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
+                       hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+          >
+            {firstCategory.name}
+          </Link>
+        </div>
+      ) : null}
     </article>
   );
 }
