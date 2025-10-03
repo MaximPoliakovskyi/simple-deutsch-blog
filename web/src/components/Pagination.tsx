@@ -1,9 +1,10 @@
 // src/components/Pagination.tsx
-'use client';
+"use client";
 
-import * as React from 'react';
-import type { WPPostCard } from 'src/lib/wp/api';
-import PostCard from './PostCard';
+import * as React from "react";
+import PostCard from "@/components/PostCard";
+// ✅ Use the exact post type from your API layer
+import type { WPPostCard } from "@/lib/wp/api";
 
 type Props = {
   initialPosts: WPPostCard[];
@@ -16,66 +17,77 @@ export default function Pagination({
   initialPosts,
   initialEndCursor,
   initialHasNextPage,
-  pageSize = 10,
+  pageSize = 12,
 }: Props) {
-  const [posts, setPosts] = React.useState<WPPostCard[]>(initialPosts);
+  const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
-  const [hasNextPage, setHasNextPage] = React.useState<boolean>(initialHasNextPage);
+  const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
   const [loading, setLoading] = React.useState(false);
-  const seen = React.useRef<Set<string>>(new Set(initialPosts.map((p) => p.id)));
+
+  // Avoid duplicate posts when pages overlap
+  const seen = React.useRef<Set<string>>(
+    new Set(initialPosts.map((p) => (p as any).id ?? p.slug))
+  );
 
   const loadMore = async () => {
-    if (!hasNextPage || loading) return;
+    if (!hasNext || loading) return;
     setLoading(true);
     try {
-      const url = new URL('/api/posts', window.location.origin);
-      if (after) url.searchParams.set('after', after);
-      url.searchParams.set('first', String(pageSize));
+      const url = new URL("/api/posts", window.location.origin);
+      if (after) url.searchParams.set("after", after);
+      url.searchParams.set("first", String(pageSize));
 
-      const res = await fetch(url.toString(), { method: 'GET' });
+      const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json: { posts: WPPostCard[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } } =
-        await res.json();
 
-      // Deduplicate by post.id to avoid duplicates on fast clicks or WP reordering.
+      const json: {
+        posts: WPPostCard[];
+        pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      } = await res.json();
+
       const next: WPPostCard[] = [];
       for (const p of json.posts) {
-        if (!seen.current.has(p.id)) {
-          seen.current.add(p.id);
+        const key = (p as any).id ?? p.slug;
+        if (!seen.current.has(key)) {
+          seen.current.add(key);
           next.push(p);
         }
       }
-      setPosts((prev) => prev.concat(next));
+
+      setItems((prev) => prev.concat(next));
       setAfter(json.pageInfo.endCursor);
-      setHasNextPage(json.pageInfo.hasNextPage);
-    } catch (e) {
-      console.error('Load more failed', e);
+      setHasNext(json.pageInfo.hasNextPage);
+    } catch (err) {
+      console.error("Load more failed", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <ul className="grid gap-6 md:grid-cols-2">
-        {posts.map((post) => (
-          <li key={post.id}>
+    <div>
+      {/* Single render: 1 → 2 → 3 columns responsively */}
+      <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+        {items.map((post) => (
+          <li key={(post as any).id ?? post.slug}>
             <PostCard post={post} />
           </li>
         ))}
       </ul>
 
-      <div className="flex justify-center">
-        <button
-          type="button"
-          onClick={loadMore}
-          disabled={!hasNextPage || loading}
-          aria-disabled={!hasNextPage || loading}
-          className="rounded-xl border px-4 py-2 text-sm font-medium hover:bg-gray-50 disabled:opacity-50"
-        >
-          {loading ? 'Loading…' : hasNextPage ? 'Load more' : 'No more posts'}
-        </button>
-      </div>
+      {hasNext && (
+        <div className="mt-12 flex justify-center">
+          <button
+            type="button"
+            onClick={loadMore}
+            disabled={loading}
+            aria-disabled={loading}
+            className="rounded-full border px-5 py-2 text-sm disabled:opacity-50"
+          >
+            {loading ? "Loading…" : "Load more"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

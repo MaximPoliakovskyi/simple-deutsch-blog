@@ -1,3 +1,4 @@
+// src/lib/wp/queries.ts
 // Core GraphQL queries used by the app
 
 export const GET_POST_BY_SLUG = /* GraphQL */ `
@@ -49,6 +50,12 @@ export const GET_POST_LIST = /* GraphQL */ `
         date
         featuredImage {
           node { sourceUrl altText }
+        }
+        categories {
+          nodes {
+            name
+            slug
+          }
         }
       }
     }
@@ -170,8 +177,7 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
   }
 `;
 
-// src/lib/wp/queries.ts
-
+// --- Taxonomy collections ---
 export const GET_ALL_CATEGORIES = /* GraphQL */ `
   query AllCategories($first: Int!, $after: String) {
     categories(first: $first, after: $after) {
@@ -208,6 +214,7 @@ export const GET_ALL_TAGS = /* GraphQL */ `
   }
 `;
 
+// --- Feed with categories included ---
 export const GET_POSTS = /* GraphQL */ `
   query PostsFeed($first: Int!, $after: String) {
     posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC } }) {
@@ -243,8 +250,7 @@ export const GET_POSTS = /* GraphQL */ `
   }
 `;
 
-//
-
+// --- Cursor-based connection (edges) with categories included ---
 export const POSTS_CONNECTION = /* GraphQL */ `
   query PostsConnection($first: Int!, $after: String) {
     posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}}) {
@@ -276,17 +282,19 @@ export const POSTS_CONNECTION = /* GraphQL */ `
               slug
             }
           }
+          categories {
+            nodes {
+              name
+              slug
+            }
+          }
         }
       }
     }
   }
 `;
 
-//
-
-// ...keep your existing exports above
-
-
+// --- Search posts with categories included ---
 export const SEARCH_POSTS = /* GraphQL */ `
   query SearchPosts($search: String!, $first: Int!, $after: String) {
     posts(where: { search: $search, status: PUBLISH }, first: $first, after: $after) {
