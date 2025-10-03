@@ -1,4 +1,6 @@
 @import "tailwindcss";
+/* Make `dark:` utilities follow the `.dark` class on <html> (Tailwind v4) */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Theme tokens */
 :root {
@@ -10,7 +12,7 @@
   --radius: 12px;
 
   /* Let UA know we support both; no JS toggling needed */
-  color-scheme: light dark; /* MDN */
+  color-scheme: light dark;
 }
 
 /* Flip tokens in dark mode */
@@ -21,7 +23,10 @@ html.dark {
 }
 
 /* Page-wide binding */
-html, body { height: 100%; }
+html,
+body {
+  height: 100%;
+}
 body {
   background: hsl(var(--bg));
   color: hsl(var(--fg));
@@ -37,7 +42,7 @@ body {
       background-color 200ms,
       border-color 200ms,
       fill 200ms,
-      stroke 200ms; /* no 'color' here */
+      stroke 200ms;
   }
 }
 
@@ -46,4 +51,19 @@ body {
   outline: 2px solid var(--sd-accent);
   outline-offset: 2px;
   border-radius: 6px;
+}
+
+/* Remove Safari's native search halo */
+input[type="search"] {
+  -webkit-appearance: none;
+}
+input[type="search"]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  display: none;
 }

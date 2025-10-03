@@ -1,7 +1,7 @@
 // src/components/SearchOverlay.tsx
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createPortal } from 'react-dom';
 
@@ -47,14 +47,16 @@ export function SearchButton({
         type="button"
         onClick={() => setOpen(true)}
         className={classNames(
-          'flex items-center gap-2 rounded-full border px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50',
-          variant === 'icon' && 'px-2 py-2 rounded-md',
+          // Light theme vs dark theme styles
+          'flex items-center gap-2 rounded-full border text-sm transition-colors',
+          'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100',
+          'dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10',
+          variant === 'icon' ? 'px-2 py-2 rounded-md' : 'px-4 py-2',
           className
         )}
         aria-label={ariaLabel}
         title={`${ariaLabel} (Ctrl+K)`}
       >
-        {/* magnifier icon */}
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M11 4a7 7 0 015.29 11.71l3.5 3.5-1.41 1.41-3.5-3.5A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z"
@@ -68,7 +70,7 @@ export function SearchButton({
   );
 }
 
-/** The overlay itself — rendered in a portal to <body> so it covers the entire page */
+/** The overlay itself */
 export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -83,7 +85,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
 
   const close = useCallback(() => onClose(), [onClose]);
 
-  // Mount portal & lock scroll
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -94,7 +95,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
-  // Global key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close();
@@ -103,12 +103,11 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [close]);
 
-  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  // Debounced search with cancellation
+  // Debounced search
   useEffect(() => {
     const term = q.trim();
     const ac = new AbortController();
@@ -136,7 +135,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         setHasNext(json.pageInfo.hasNextPage);
         setHighlight(0);
       } catch {
-        // ignore aborted/failed fetch
       } finally {
         setLoading(false);
       }
@@ -148,7 +146,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     };
   }, [q]);
 
-  // Keyboard navigation
+  // Arrow keys navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (items.length === 0) return;
@@ -171,7 +169,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [items, highlight, router, close]);
 
-  // Ensure highlighted item is scrolled into view
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
@@ -196,7 +193,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
       setAfter(json.pageInfo.endCursor);
       setHasNext(json.pageInfo.hasNextPage);
     } catch {
-      // ignore
     } finally {
       setLoading(false);
     }
@@ -220,17 +216,30 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     >
       <div
         className="
-          mx-auto
-          w-full
+          mx-auto w-full
           max-w-[min(40rem,calc(100vw-2rem))]
-          rounded-2xl bg-white p-2 shadow-2xl
+          rounded-2xl bg-white dark:bg-neutral-900 p-2 shadow-2xl
+          text-neutral-900 dark:text-neutral-100
           mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]
           sm:mt-[calc(env(safe-area-inset-top)+5rem)]
         "
       >
-        {/* Input row */}
-        <div className="flex items-center gap-2 rounded-xl border px-3 py-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden className="opacity-60">
+        {/* Input row – adapts to theme; no blue outline */}
+        <div
+          className="
+            flex items-center gap-2 rounded-xl border px-3 py-2
+            bg-neutral-100 text-neutral-900 border-neutral-200
+            dark:bg-neutral-800 dark:text-neutral-100 dark:border-white/10
+            focus-within:ring-2 focus-within:ring-[var(--sd-accent)]
+          "
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            aria-hidden
+            className="opacity-60 text-neutral-500 dark:text-neutral-400"
+          >
             <path
               d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
               fill="none"
@@ -239,12 +248,17 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
             />
           </svg>
           <input
+            type="search"
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Find an article"
             aria-label="Search"
-            className="w-full bg-transparent py-2 outline-none"
+            className="
+              w-full bg-transparent py-2 text-inherit
+              placeholder-neutral-500 dark:placeholder-neutral-400
+              appearance-none focus:outline-none focus:ring-0 focus:shadow-none
+            "
           />
           {q ? (
             <button
@@ -253,7 +267,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                 setQ('');
                 inputRef.current?.focus();
               }}
-              className="text-xs text-neutral-500 hover:text-neutral-800"
+              className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
               aria-label="Clear search"
             >
               CLEAR
@@ -263,10 +277,18 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
 
         {/* Results */}
         <div className="max-h-[60vh] overflow-auto py-2">
-          {loading && <div className="px-3 py-3 text-sm text-neutral-500">Loading…</div>}
-          {empty && <div className="px-3 py-3 text-sm text-neutral-600">No results. Try a different term.</div>}
+          {loading && (
+            <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">
+              Loading…
+            </div>
+          )}
+          {empty && (
+            <div className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
+              No results. Try a different term.
+            </div>
+          )}
 
-          <ul ref={listRef} className="divide-y">
+          <ul ref={listRef} className="divide-y divide-neutral-200 dark:divide-white/10">
             {items.map((it, i) => (
               <li key={it.id}>
                 <button
@@ -277,8 +299,9 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                     router.push(`/posts/${it.slug}`);
                   }}
                   className={classNames(
-                    'flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-neutral-50',
-                    i === highlight && 'bg-neutral-50'
+                    'flex w-full items-start gap-3 px-3 py-3 text-left',
+                    'hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
+                    i === highlight && 'bg-neutral-50 dark:bg-neutral-800/60'
                   )}
                   aria-current={i === highlight ? 'true' : undefined}
                 >
@@ -291,12 +314,17 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                       className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
                     />
                   ) : (
-                    <div className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200" aria-hidden="true" />
+                    <div
+                      className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
+                      aria-hidden="true"
+                    />
                   )}
                   <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-neutral-900">{it.title}</div>
+                    <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      {it.title}
+                    </div>
                     <div
-                      className="line-clamp-1 text-sm text-neutral-600"
+                      className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
                       dangerouslySetInnerHTML={{ __html: it.excerpt }}
                     />
                   </div>
@@ -310,7 +338,9 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 onClick={loadMore}
-                className="rounded-lg border px-3 py-1.5 text-sm hover:bg-neutral-50"
+                className="rounded-lg border px-3 py-1.5 text-sm
+                           border-neutral-200 hover:bg-neutral-50
+                           dark:border-white/10 dark:hover:bg-neutral-800/60"
               >
                 Load more
               </button>

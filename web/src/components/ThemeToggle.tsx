@@ -1,4 +1,3 @@
-// src/components/ThemeToggle.tsx
 'use client';
 import { useEffect, useState } from 'react';
 
@@ -10,7 +9,7 @@ export default function ThemeToggle() {
 
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.add('theme-transition'); // enables smooth fade (CSS below)
+    root.classList.add('theme-transition');
     setIsDark(root.classList.contains('dark'));
     setMounted(true);
     return () => { root.classList.remove('theme-transition'); };
@@ -21,7 +20,7 @@ export default function ThemeToggle() {
     if (next === 'dark') root.classList.add('dark');
     else root.classList.remove('dark');
     try { localStorage.setItem('sd-theme', next); } catch {}
-    setIsDark(next === 'dark'); // update icon immediately
+    setIsDark(next === 'dark');
   }
 
   if (!mounted) return null;
@@ -33,8 +32,9 @@ export default function ThemeToggle() {
       aria-pressed={isDark}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       title={isDark ? 'Light mode' : 'Dark mode'}
-      className="rounded-lg p-2 ring-1 ring-neutral-300 hover:bg-neutral-100
-                 dark:hover:bg-white/5 dark:ring-white/20 transition-colors"
+      className="rounded-lg p-2 transition-colors
+                 hover:bg-neutral-100 dark:hover:bg-white/5
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]"
     >
       {isDark ? (
         <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">

@@ -21,7 +21,7 @@ export default function SearchBox({
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Read initial value from URL only once on mount.
-  const initial = useMemo(() => (searchParams.get('q') ?? '').trim(), [/* mount only */]);
+  const initial = useMemo(() => (searchParams.get('q') ?? '').trim(), []);
   const [value, setValue] = useState(initial);
 
   // Defer the value so typing stays responsive even if the page below is heavy.
@@ -32,7 +32,6 @@ export default function SearchBox({
   useEffect(() => {
     const nextUrlValue = (searchParams.get('q') ?? '').trim();
     if (document.activeElement !== inputRef.current) {
-      // Only update if different to avoid useless renders
       if (nextUrlValue !== value) setValue(nextUrlValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,14 +47,12 @@ export default function SearchBox({
       const currentQ = (searchParams.get('q') ?? '').trim();
       if (currentQ === q) return;
 
-      // Mark as a transition so React prioritizes typing over navigation
       startTransition(() => {
         router.replace(nextUrl);
       });
     }, debounceMs);
 
     return () => clearTimeout(t);
-    // Intentionally depend on deferredValue and searchParams
   }, [deferredValue, debounceMs, router, searchParams]);
 
   return (
@@ -69,20 +66,32 @@ export default function SearchBox({
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         aria-label="Search posts"
-        className="w-full rounded-xl border border-neutral-300 px-4 py-2 text-base outline-none
-                   focus-visible:ring-2 focus-visible:ring-blue-500"
+        className={[
+          // layout
+          'w-full rounded-xl px-4 py-2 text-base',
+          // theme-aware colors
+          'bg-neutral-100 text-neutral-900 placeholder-neutral-500 border border-neutral-300',
+          'dark:bg-neutral-800 dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-white/10',
+          // focus: remove UA outline, use accent ring
+          'appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)] focus:ring-offset-0',
+        ].join(' ')}
       />
+
       {value ? (
         <button
           type="button"
           onClick={() => setValue('')}
           aria-label="Clear search"
-          className="rounded-lg border px-3 py-2 text-sm hover:bg-neutral-100"
+          className={[
+            'rounded-lg px-3 py-2 text-sm transition-colors border',
+            // theme-aware colors
+            'text-neutral-700 border-neutral-300 hover:bg-neutral-100',
+            'dark:text-neutral-300 dark:border-white/10 dark:hover:bg-white/5',
+          ].join(' ')}
         >
           Clear
         </button>
       ) : null}
-      {/* Removed the “Searching…” message */}
     </div>
   );
 }
