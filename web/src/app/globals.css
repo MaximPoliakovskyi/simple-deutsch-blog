@@ -55,8 +55,10 @@ body {
 
 /* Remove Safari's native search halo */
 input[type="search"] {
-  -webkit-appearance: none;
+  appearance: none;          /* standard */
+  -webkit-appearance: none;  /* Safari/WebKit */
 }
+
 input[type="search"]:focus {
   outline: none !important;
   box-shadow: none !important;

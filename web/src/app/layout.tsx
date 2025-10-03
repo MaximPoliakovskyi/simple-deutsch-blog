@@ -38,12 +38,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        <a
+        {/* <a
           href="#main"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)]"
         >
           Zum Inhalt springen
-        </a>
+        </a> */}
 
         <Header />
 

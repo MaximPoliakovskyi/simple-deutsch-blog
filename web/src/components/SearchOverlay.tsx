@@ -70,7 +70,7 @@ export function SearchButton({
   );
 }
 
-/** The overlay itself */
+/** The overlay itself — rendered in a portal to <body> so it covers the entire page */
 export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,6 +85,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
 
   const close = useCallback(() => onClose(), [onClose]);
 
+  // Mount portal & lock scroll
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     setMounted(true);
@@ -95,6 +96,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  // Global key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') close();
@@ -103,11 +105,12 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [close]);
 
+  // Focus input on mount
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  // Debounced search
+  // Debounced search with cancellation
   useEffect(() => {
     const term = q.trim();
     const ac = new AbortController();
@@ -135,6 +138,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         setHasNext(json.pageInfo.hasNextPage);
         setHighlight(0);
       } catch {
+        // ignore aborted/failed fetch
       } finally {
         setLoading(false);
       }
@@ -146,7 +150,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     };
   }, [q]);
 
-  // Arrow keys navigation
+  // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (items.length === 0) return;
@@ -169,6 +173,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [items, highlight, router, close]);
 
+  // Ensure highlighted item is scrolled into view
   useEffect(() => {
     const list = listRef.current;
     if (!list) return;
@@ -193,6 +198,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
       setAfter(json.pageInfo.endCursor);
       setHasNext(json.pageInfo.hasNextPage);
     } catch {
+      // ignore
     } finally {
       setLoading(false);
     }
@@ -218,18 +224,18 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         className="
           mx-auto w-full
           max-w-[min(40rem,calc(100vw-2rem))]
-          rounded-2xl bg-white dark:bg-neutral-900 p-2 shadow-2xl
+          rounded-2xl bg-[hsl(var(--bg))] p-2 shadow-2xl
           text-neutral-900 dark:text-neutral-100
           mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]
           sm:mt-[calc(env(safe-area-inset-top)+5rem)]
         "
       >
-        {/* Input row – adapts to theme; no blue outline */}
+        {/* Input row – pure white in light; theme bg in dark */}
         <div
           className="
             flex items-center gap-2 rounded-xl border px-3 py-2
-            bg-neutral-100 text-neutral-900 border-neutral-200
-            dark:bg-neutral-800 dark:text-neutral-100 dark:border-white/10
+            bg-white text-neutral-900 border-neutral-200
+            dark:bg-[hsl(var(--bg))] dark:text-neutral-100 dark:border-white/10
             focus-within:ring-2 focus-within:ring-[var(--sd-accent)]
           "
         >
