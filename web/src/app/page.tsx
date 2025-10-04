@@ -1,6 +1,6 @@
 // src/app/page.tsx
+import Header from "@/components/Header";
 import PostCard from "@/components/PostCard";
-import PageHeader from "@/components/PageHeader";
 import { headers } from "next/headers";
 
 /** Build an absolute base URL from the incoming request (local + prod). */
@@ -38,17 +38,20 @@ export default async function HomePage() {
 
   return (
     <>
-      <PageHeader title="Simple Deutsch Blog" subtitle="Simple German, clearly explained." />
+      {/* Header is outside <main> and exists only on this page */}
+      <Header />
 
-      <section aria-label="Latest posts" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {posts.map((post: any, i: number) => (
-          <PostCard
-            key={post.id ?? post.slug ?? i}
-            post={post}
-            priority={i < FIRST_ROW_COUNT}
-          />
-        ))}
-      </section>
+      <main id="main" role="main" className="mx-auto max-w-7xl px-4 py-6">
+        <section aria-label="Latest posts" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {posts.map((post: any, i: number) => (
+            <PostCard
+              key={post.id ?? post.slug ?? i}
+              post={post}
+              priority={i < FIRST_ROW_COUNT}
+            />
+          ))}
+        </section>
+      </main>
     </>
   );
 }

@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import Header from "@/components/Navigation";
+import Navigation from "@/components/Navigation";
 import "@/styles/globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -35,7 +35,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html
       lang="de"
       suppressHydrationWarning
-      data-scroll-behavior="smooth" // ✅ fixes Next.js warning
+      data-scroll-behavior="smooth"
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInit }} />
@@ -47,19 +47,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        {/* Accessible skip link (optional)
-        <a
-          href="#main"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:px-3 focus:py-2 focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)]"
-        >
-          Zum Inhalt springen
-        </a> */}
+        {/* Global navigation, visible on all pages */}
+        <Navigation />
 
-        <Header />
-
-        <main id="main" role="main" className="mx-auto max-w-7xl px-4 py-6">
-          {children}
-        </main>
+        {/* Pages control their own <main> wrappers */}
+        {children}
 
         <footer
           role="contentinfo"
