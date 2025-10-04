@@ -1,7 +1,7 @@
 // app/global-error.tsx
 "use client";
 
-import "./globals.css"; // must import styles because this replaces the root layout
+import "@/styles/globals.css"; // must import styles because this replaces the root layout
 import StatusPage from "@/components/StatusPage";
 
 export default function GlobalError({
