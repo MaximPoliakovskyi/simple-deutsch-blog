@@ -13,6 +13,7 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   const titleId = "mobile-menu-title";
 
+  // Lock body scroll when mobile menu is open
   useEffect(() => {
     const root = document.documentElement;
     if (!open) return;
@@ -21,6 +22,7 @@ export default function Header() {
     return () => { root.style.overflow = prev; };
   }, [open]);
 
+  // Focus trap + Escape to close
   useEffect(() => {
     if (!open) return;
     const toFocus =
@@ -39,6 +41,7 @@ export default function Header() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Click outside to close
   useEffect(() => {
     function onDocMouseDown(e: MouseEvent) {
       if (!open) return;
@@ -54,28 +57,33 @@ export default function Header() {
 
   return (
     <>
-      {/* Header follows theme (no hard-coded white) */}
-      <header className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[hsl(var(--bg))]/90 backdrop-blur dark:border-white/10">
+      {/* Semantic navigation landmark */}
+      <nav
+        className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[hsl(var(--bg))]/90 backdrop-blur dark:border-white/10"
+        aria-label="Main navigation"
+      >
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
           <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
             simple-deutsch.de
           </Link>
 
-          <nav aria-label="Primäre Navigation" className="hidden items-center gap-6 md:flex">
-            <Link href="/posts" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+          {/* Desktop links */}
+          <div className="hidden items-center gap-6 md:flex">
+            <Link href="/posts" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Posts
             </Link>
-            <Link href="/categories" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+            <Link href="/categories" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Categories
             </Link>
-            <Link href="/tags" className="text-sm text-neutral-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+            <Link href="/tags" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
               Tags
             </Link>
 
             <SearchButton className="ml-2" variant="default" />
             <ThemeToggle />
-          </nav>
+          </div>
 
+          {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
             <SearchButton ariaLabel="Artikel finden" variant="icon" />
             <ThemeToggle />
@@ -99,7 +107,7 @@ export default function Header() {
             </button>
           </div>
         </div>
-      </header>
+      </nav>
 
       {/* Mobile drawer */}
       <div className={["md:hidden","fixed inset-0 z-[90]", open ? "" : "pointer-events-none"].join(" ")}>
@@ -144,7 +152,7 @@ export default function Header() {
             </button>
           </div>
 
-          <nav aria-label="Mobile Navigation" className="mx-auto w-full max-w-5xl px-4 py-4">
+          <nav aria-label="Mobile navigation" className="mx-auto w-full max-w-5xl px-4 py-4">
             <ul className="space-y-1">
               <li><Link href="/posts" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Posts</Link></li>
               <li><Link href="/categories" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Categories</Link></li>
