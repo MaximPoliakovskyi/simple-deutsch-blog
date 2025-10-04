@@ -12,7 +12,7 @@
   --bg: 0 0% 100%;
   --radius: 12px;
 
-  /* Accent used for focus rings, etc. (referenced in Header.tsx classes) */
+  /* Accent used for focus rings, etc. (referenced in Navigation.tsx classes) */
   --sd-accent: hsl(222 80% 56%);
 
   /* Spacing scale */
