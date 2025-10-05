@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Global navigation, visible on all pages */}
         <Navigation />
 
-        {/* Pages control their own <main> wrappers */}
+        {/* Main page content */}
         {children}
 
         <footer

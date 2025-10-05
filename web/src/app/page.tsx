@@ -2,6 +2,7 @@
 import Header from "@/components/Header";
 import PostCard from "@/components/PostCard";
 import { headers } from "next/headers";
+import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
 
 /** Build an absolute base URL from the incoming request (local + prod). */
 async function getBaseUrl() {
@@ -15,7 +16,7 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
-/** Fetch posts from /api/posts and always return an array. */
+/** Fetch posts from /api/posts and normalize to an array. */
 async function getPosts(): Promise<any[]> {
   const base = await getBaseUrl();
   const res = await fetch(new URL("/api/posts", base), {
@@ -52,6 +53,9 @@ export default async function HomePage() {
           ))}
         </section>
       </main>
+
+      {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
+      <SuccessStoriesSliderServer />
     </>
   );
 }
