@@ -71,8 +71,8 @@ export default function PostCard({
 
   const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
 
-  // First category (if present)
-  const firstCategory = post.categories?.nodes?.[0];
+  // All categories (instead of only the first)
+  const categories = post.categories?.nodes ?? [];
 
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
@@ -133,18 +133,21 @@ export default function PostCard({
         </h3>
       </Link>
 
-      {/* Category chip (clickable) */}
-      {firstCategory ? (
-        <div className="pt-3">
-          <Link
-            href={`/categories/${firstCategory.slug}`}
-            aria-label={`View category ${firstCategory.name}`}
-            className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
-                       dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
-                       hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
-          >
-            {firstCategory.name}
-          </Link>
+      {/* Category chips (clickable, multiple) */}
+      {categories.length > 0 ? (
+        <div className="pt-3 flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <Link
+              key={cat.slug}
+              href={`/categories/${cat.slug}`}
+              aria-label={`View category ${cat.name}`}
+              className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
+                         dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
+                         hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+            >
+              {cat.name}
+            </Link>
+          ))}
         </div>
       ) : null}
     </article>
