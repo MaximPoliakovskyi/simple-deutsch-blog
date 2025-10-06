@@ -176,15 +176,14 @@ export default function SuccessStoriesSlider({
           "
           style={{ scrollBehavior: "smooth" }}
         >
+          {/* ✅ Updated only this section */}
           <style>{`
             [data-stories-scroller]::-webkit-scrollbar { display: none; }
-            [data-card] { flex: 0 0 100%; }
-            @media (min-width: 640px) {
-              /* 2 columns with one 32px gap */
+            [data-card] { flex: 0 0 100%; } /* 1 column (mobile) */
+            @media (min-width: 768px) {      /* md: 2 columns */
               [data-card] { flex: 0 0 calc((100% - 32px) / 2); }
             }
-            @media (min-width: 1024px) {
-              /* 3 columns with two 32px gaps (64px total) */
+            @media (min-width: 1280px) {     /* xl: 3 columns */
               [data-card] { flex: 0 0 calc((100% - 64px) / 3); }
             }
           `}</style>
