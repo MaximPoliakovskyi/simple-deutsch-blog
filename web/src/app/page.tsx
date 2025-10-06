@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import PostCard from "@/components/PostCard";
 import { headers } from "next/headers";
 import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
+import LatestPostsSliderServer from "@/components/LatestPosts/LatestPostsSliderServer";
 
 /** Build an absolute base URL from the incoming request (local + prod). */
 async function getBaseUrl() {
@@ -56,6 +57,10 @@ export default async function HomePage() {
 
       {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
       <SuccessStoriesSliderServer />
+      
+      {/* ✅ Homepage “Latest posts” slider */}
+      <LatestPostsSliderServer />
+
     </>
   );
 }

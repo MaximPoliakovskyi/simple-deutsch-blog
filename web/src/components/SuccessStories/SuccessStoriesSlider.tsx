@@ -55,14 +55,13 @@ export default function SuccessStoriesSlider({
 
   if (!posts?.length) return null;
 
-  // ✅ Filter only posts that have the "Success stories" category
+  // Only posts in “Success stories”; hide that chip from list
   const filteredPosts = posts
     .filter((post: any) =>
       post?.categories?.nodes?.some(
         (cat: any) => cat?.name?.toLowerCase() === "success stories"
       )
     )
-    // ✅ Remove "Success stories" from category list for each post
     .map((post: any) => ({
       ...post,
       categories: {
@@ -87,27 +86,57 @@ export default function SuccessStoriesSlider({
         data-slider-scope
         className="mx-auto max-w-7xl px-4 py-10 text-white"
       >
+        {/* Force white titles, but allow smooth color animation on hover/focus */}
         <style>{`
-          [data-slider-scope] .post-title,
-          [data-slider-scope] [data-post-title],
-          [data-slider-scope] h1,
-          [data-slider-scope] h2,
-          [data-slider-scope] h3,
-          [data-slider-scope] h4,
-          [data-slider-scope] h5,
-          [data-slider-scope] h6,
-          [data-slider-scope] h1 a,
-          [data-slider-scope] h2 a,
-          [data-slider-scope] h3 a,
-          [data-slider-scope] h4 a,
-          [data-slider-scope] h5 a,
-          [data-slider-scope] h6 a,
-          [data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6),
-          [data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6) a {
+          /* Base state (high specificity + !important to win) */
+          [data-slider-scope][data-slider-scope] h1,
+          [data-slider-scope][data-slider-scope] h2,
+          [data-slider-scope][data-slider-scope] h3,
+          [data-slider-scope][data-slider-scope] h4,
+          [data-slider-scope][data-slider-scope] h5,
+          [data-slider-scope][data-slider-scope] h6,
+          [data-slider-scope][data-slider-scope] h1 *,
+          [data-slider-scope][data-slider-scope] h2 *,
+          [data-slider-scope][data-slider-scope] h3 *,
+          [data-slider-scope][data-slider-scope] h4 *,
+          [data-slider-scope][data-slider-scope] h5 *,
+          [data-slider-scope][data-slider-scope] h6 *,
+          [data-slider-scope][data-slider-scope] .post-title,
+          [data-slider-scope][data-slider-scope] [data-post-title],
+          [data-slider-scope][data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6),
+          [data-slider-scope][data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6) a {
             color: #ffffff !important;
-            opacity: 1 !important;
-            --tw-text-opacity: 1 !important;
-            -webkit-text-fill-color: #ffffff !important;
+            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
+            will-change: color;
+          }
+
+          /* Hover/focus via .group from PostCard (smooth) */
+          [data-slider-scope][data-slider-scope] .group:hover h1,
+          [data-slider-scope][data-slider-scope] .group:hover h2,
+          [data-slider-scope][data-slider-scope] .group:hover h3,
+          [data-slider-scope][data-slider-scope] .group:hover h4,
+          [data-slider-scope][data-slider-scope] .group:hover h5,
+          [data-slider-scope][data-slider-scope] .group:hover h6,
+          [data-slider-scope][data-slider-scope] .group:focus-within h1,
+          [data-slider-scope][data-slider-scope] .group:focus-within h2,
+          [data-slider-scope][data-slider-scope] .group:focus-within h3,
+          [data-slider-scope][data-slider-scope] .group:focus-within h4,
+          [data-slider-scope][data-slider-scope] .group:focus-within h5,
+          [data-slider-scope][data-slider-scope] .group:focus-within h6,
+          [data-slider-scope][data-slider-scope] .group:hover h1 *,
+          [data-slider-scope][data-slider-scope] .group:hover h2 *,
+          [data-slider-scope][data-slider-scope] .group:hover h3 *,
+          [data-slider-scope][data-slider-scope] .group:hover h4 *,
+          [data-slider-scope][data-slider-scope] .group:hover h5 *,
+          [data-slider-scope][data-slider-scope] .group:hover h6 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h3 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h4 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h5 *,
+          [data-slider-scope][data-slider-scope] .group:focus-within h6 * {
+            color: #d1d5db !important; /* gray-300 */
+            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
           }
         `}</style>
 
@@ -152,12 +181,8 @@ export default function SuccessStoriesSlider({
           <style>{`
             [data-stories-scroller]::-webkit-scrollbar { display: none; }
             [data-card] { flex: 0 0 100%; }
-            @media (min-width: 640px) {
-              [data-card] { flex: 0 0 calc((100% - 24px) / 2); }
-            }
-            @media (min-width: 1024px) {
-              [data-card] { flex: 0 0 calc((100% - 48px) / 3); }
-            }
+            @media (min-width: 640px) { [data-card] { flex: 0 0 calc((100% - 24px) / 2); } }
+            @media (min-width: 1024px) { [data-card] { flex: 0 0 calc((100% - 48px) / 3); } }
           `}</style>
 
           {filteredPosts.map((post: any, i: number) => (
