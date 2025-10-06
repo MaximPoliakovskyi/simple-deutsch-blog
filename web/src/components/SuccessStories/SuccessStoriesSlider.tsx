@@ -1,4 +1,4 @@
-// src/components/SuccessStoriesSlider.tsx
+// src/components/SuccessStories/SuccessStoriesSlider.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -26,7 +26,8 @@ export default function SuccessStoriesSlider({
     setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - EPS);
   };
 
-  const GAP_PX = 24;
+  // ✅ Align with site grid gap-x-8 (32px)
+  const GAP_PX = 32;
 
   const scrollByOneColumn = (dir: "prev" | "next") => {
     const el = scrollerRef.current;
@@ -86,9 +87,8 @@ export default function SuccessStoriesSlider({
         data-slider-scope
         className="mx-auto max-w-7xl px-4 py-10 text-white"
       >
-        {/* Force white titles, but allow smooth color animation on hover/focus */}
+        {/* Force white titles; keep smooth hover color */}
         <style>{`
-          /* Base state (high specificity + !important to win) */
           [data-slider-scope][data-slider-scope] h1,
           [data-slider-scope][data-slider-scope] h2,
           [data-slider-scope][data-slider-scope] h3,
@@ -109,8 +109,6 @@ export default function SuccessStoriesSlider({
             transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
             will-change: color;
           }
-
-          /* Hover/focus via .group from PostCard (smooth) */
           [data-slider-scope][data-slider-scope] .group:hover h1,
           [data-slider-scope][data-slider-scope] .group:hover h2,
           [data-slider-scope][data-slider-scope] .group:hover h3,
@@ -173,7 +171,7 @@ export default function SuccessStoriesSlider({
           data-stories-scroller
           className="
             flex snap-x snap-mandatory overflow-x-auto
-            gap-6 pb-4
+            gap-8 pb-4
             [-ms-overflow-style:none] [scrollbar-width:none]
           "
           style={{ scrollBehavior: "smooth" }}
@@ -181,16 +179,18 @@ export default function SuccessStoriesSlider({
           <style>{`
             [data-stories-scroller]::-webkit-scrollbar { display: none; }
             [data-card] { flex: 0 0 100%; }
-            @media (min-width: 640px) { [data-card] { flex: 0 0 calc((100% - 24px) / 2); } }
-            @media (min-width: 1024px) { [data-card] { flex: 0 0 calc((100% - 48px) / 3); } }
+            @media (min-width: 640px) {
+              /* 2 columns with one 32px gap */
+              [data-card] { flex: 0 0 calc((100% - 32px) / 2); }
+            }
+            @media (min-width: 1024px) {
+              /* 3 columns with two 32px gaps (64px total) */
+              [data-card] { flex: 0 0 calc((100% - 64px) / 3); }
+            }
           `}</style>
 
           {filteredPosts.map((post: any, i: number) => (
-            <div
-              key={post.id ?? post.slug ?? i}
-              data-card
-              className="snap-start shrink-0"
-            >
+            <div key={post.id ?? post.slug ?? i} data-card className="snap-start shrink-0">
               <PostCard post={post} priority={i < 3} />
             </div>
           ))}

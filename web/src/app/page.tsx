@@ -1,9 +1,19 @@
 // src/app/page.tsx
 import Header from "@/components/Header";
-import PostCard from "@/components/PostCard";
+import Pagination from "@/components/Pagination";
 import { headers } from "next/headers";
 import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
 import LatestPostsSliderServer from "@/components/LatestPosts/LatestPostsSliderServer";
+
+type PageInfo = {
+  endCursor: string | null;
+  hasNextPage: boolean;
+};
+
+type GetPostsResult = {
+  posts: any[];
+  pageInfo: PageInfo;
+};
 
 /** Build an absolute base URL from the incoming request (local + prod). */
 async function getBaseUrl() {
@@ -17,26 +27,43 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
-/** Fetch posts from /api/posts and normalize to an array. */
-async function getPosts(): Promise<any[]> {
+/** Fetch the first N posts (cursor-based). */
+async function getPosts(first: number, after: string | null = null): Promise<GetPostsResult> {
   const base = await getBaseUrl();
-  const res = await fetch(new URL("/api/posts", base), {
-    next: { revalidate: 60 }, // adjust caching to taste
+  const url = new URL("/api/posts", base);
+  url.searchParams.set("first", String(first));
+  if (after) url.searchParams.set("after", after);
+
+  const res = await fetch(url, {
+    // Cache on the server for a short period; adjust as you like.
+    next: { revalidate: 60 },
   });
 
-  if (!res.ok) return [];
+  if (!res.ok) {
+    // Fallback empty shape so page still renders
+    return { posts: [], pageInfo: { endCursor: null, hasNextPage: false } };
+  }
+
   const json = await res.json();
 
-  // Some APIs return { posts: [...] }, others return []. Normalize to [].
-  if (Array.isArray(json)) return json;
-  if (json && Array.isArray(json.posts)) return json.posts;
+  // Expecting { posts: [...], pageInfo: { endCursor, hasNextPage } }
+  if (json && Array.isArray(json.posts) && json.pageInfo) {
+    return { posts: json.posts, pageInfo: json.pageInfo as PageInfo };
+  }
 
-  return [];
+  // If your API still returns a bare array, adapt it here:
+  if (Array.isArray(json)) {
+    return { posts: json, pageInfo: { endCursor: null, hasNextPage: false } };
+  }
+
+  return { posts: [], pageInfo: { endCursor: null, hasNextPage: false } };
 }
 
+export const revalidate = 300; // optional: revalidate homepage every 5 minutes
+
 export default async function HomePage() {
-  const posts = await getPosts();
-  const FIRST_ROW_COUNT = 3;
+  const PAGE_SIZE = 9;
+  const { posts, pageInfo } = await getPosts(PAGE_SIZE);
 
   return (
     <>
@@ -44,23 +71,19 @@ export default async function HomePage() {
       <Header />
 
       <main id="main" role="main" className="mx-auto max-w-7xl px-4 py-6">
-        <section aria-label="Latest posts" className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post: any, i: number) => (
-            <PostCard
-              key={post.id ?? post.slug ?? i}
-              post={post}
-              priority={i < FIRST_ROW_COUNT}
-            />
-          ))}
-        </section>
+        <Pagination
+          initialPosts={posts}
+          initialEndCursor={pageInfo.endCursor}
+          initialHasNextPage={pageInfo.hasNextPage}
+          pageSize={PAGE_SIZE} // ← guarantees 9 per page including "Load more"
+        />
       </main>
 
       {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
       <SuccessStoriesSliderServer />
-      
+
       {/* ✅ Homepage “Latest posts” slider */}
       <LatestPostsSliderServer />
-
     </>
   );
 }

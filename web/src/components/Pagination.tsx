@@ -3,7 +3,6 @@
 
 import * as React from "react";
 import PostCard from "@/components/PostCard";
-// ✅ Use the exact post type from your API layer
 import type { WPPostCard } from "@/lib/wp/api";
 
 type Props = {
@@ -13,18 +12,41 @@ type Props = {
   pageSize?: number;
 };
 
+// Small helper so each card animates in on mount
+function PostListItem({ post }: { post: WPPostCard }) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  return (
+    <li
+      className={[
+        "transition duration-700 ease-out will-change-transform",
+        "opacity-0 translate-y-2",
+        mounted ? "opacity-100 translate-y-0" : "",
+        "motion-reduce:transition-none motion-reduce:transform-none motion-reduce:opacity-100",
+      ].join(" ")}
+    >
+      <PostCard post={post} />
+    </li>
+  );
+}
+
 export default function Pagination({
   initialPosts,
   initialEndCursor,
   initialHasNextPage,
-  pageSize = 12,
+  pageSize = 9, // 9 posts per page
 }: Props) {
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
   const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
   const [loading, setLoading] = React.useState(false);
 
-  // Avoid duplicate posts when pages overlap
+  // Avoid duplicates if backend overlaps pages
   const seen = React.useRef<Set<string>>(
     new Set(initialPosts.map((p) => (p as any).id ?? p.slug))
   );
@@ -64,14 +86,15 @@ export default function Pagination({
     }
   };
 
+  // Accent color used for border/outline
+  const accent = "oklch(0.371 0 0)";
+
   return (
     <div>
-      {/* Single render: 1 → 2 → 3 columns responsively */}
+      {/* Grid: 1 → 2 → 3 columns responsively */}
       <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
         {items.map((post) => (
-          <li key={(post as any).id ?? post.slug}>
-            <PostCard post={post} />
-          </li>
+          <PostListItem key={(post as any).id ?? post.slug} post={post} />
         ))}
       </ul>
 
@@ -82,9 +105,20 @@ export default function Pagination({
             onClick={loadMore}
             disabled={loading}
             aria-disabled={loading}
-            className="rounded-full border px-5 py-2 text-sm disabled:opacity-50"
+            className={[
+              "rounded-full border px-5 py-2 text-sm",
+              "transition duration-300 ease-out",
+              "hover:scale-[1.02] hover:bg-neutral-50 dark:hover:bg-white/10",
+              "disabled:opacity-50",
+              // ✅ Keep only one outline utility to avoid conflicts:
+              "focus-visible:outline-2 focus-visible:outline-offset-2",
+            ].join(" ")}
+            style={{
+              borderColor: accent,
+              outlineColor: accent,
+            }}
           >
-            {loading ? "Loading…" : "Load more"}
+            {loading ? "Loading…" : "View more"}
           </button>
         </div>
       )}
