@@ -3,15 +3,12 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import Navigation from "@/components/Navigation";
+import PreloaderClient from "@/components/PreloaderClient";
 import "@/styles/globals.css";
+
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "simple-deutsch.de",
-  description: "Simple German, clearly explained.",
-};
 
 /**
  * Runs before paint to set the theme without a flash.
@@ -47,6 +44,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
+        {/* Client-side preloader component (no SSR text mutations) */}
+        <PreloaderClient />
+
         {/* Global navigation, visible on all pages */}
         <Navigation />
 
@@ -62,4 +62,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </body>
     </html>
   );
+                    {/* Client-side preloader component (no SSR text mutations) */}
+                    {/* eslint-disable-next-line @typescript-eslint/consistent-type-imports */}
+                    {/* Imported dynamically as a client component below */}
+                    {/* PreloaderClient will mount only on the client and manage its own lifecycle */}
+                    <script dangerouslySetInnerHTML={{ __html: '/* preloader client will mount on client */' }} />
 }

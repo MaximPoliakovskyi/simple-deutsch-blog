@@ -183,3 +183,86 @@ input[type="search"]::-webkit-search-results-button,
 input[type="search"]::-webkit-search-results-decoration {
   display: none;
 }
+
+/* ── Preloader styles ───────────────────────────────────────────────────── */
+.sd-preloader-hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 500ms ease, visibility 500ms ease;
+}
+
+/* Center content precisely in viewport */
+#sd-preloader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  /* Background follows theme tokens, solid color (no transparency) */
+  background: hsl(var(--bg));
+}
+
+/* No spinner — only flipping text */
+
+.sd-preloader-word {
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  color: hsl(var(--fg));
+  transition: opacity 250ms ease, transform 250ms ease;
+  text-align: center;
+}
+
+/* Flip animation */
+.sd-preloader-word {
+  backface-visibility: hidden;
+  transform-origin: center;
+}
+.sd-word-flip {
+  animation: sd-flip 400ms ease-in-out;
+}
+
+@keyframes sd-flip {
+  0% { transform: rotateX(0deg); opacity: 1; }
+  50% { transform: rotateX(90deg); opacity: 0.2; }
+  100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* Per-letter flip setup */
+.sd-preloader-word {
+  display: inline-flex;
+  gap: 0.02em;
+  perspective: 600px;
+}
+.sd-letter {
+  display: inline-block;
+  transform-origin: center;
+  backface-visibility: hidden;
+  transition: transform 360ms ease, opacity 360ms ease;
+  will-change: transform, opacity;
+}
+
+.sd-letter.flipping {
+  transform: rotateX(90deg);
+  opacity: 0.2;
+}
+
+/* When the letter changes, JS replaces text; to create a flip effect we briefly
+   set transform to rotateX(90deg) and fade, then back to 0deg. Since JS updates the
+   character at mid-flip, the visual is a flipping letter. The timeouts in the
+   component coordinate this. */
+
+
+
+.sd-word-fade {
+  opacity: 0.2;
+  transform: translateY(-6px) scale(0.98);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-letter { transition: none !important; }
+  .sd-preloader-word { transition: none !important; }
+}
