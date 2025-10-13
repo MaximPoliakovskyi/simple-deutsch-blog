@@ -1,8 +1,8 @@
 // src/components/PostCard.tsx
-'use client';
+"use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 
 export type PostCardPost = {
   id?: string;
@@ -40,10 +40,18 @@ export type PostCardProps = {
 };
 
 function extractImage(p: PostCardPost) {
-  const n = (p.featuredImage as any)?.node;
-  if (n?.sourceUrl) return { url: n.sourceUrl as string, alt: n.altText ?? "" };
-  const flat = p.featuredImage as any;
-  if (flat?.url) return { url: flat.url as string, alt: flat.alt ?? "" };
+  const fi = p.featuredImage;
+  // shape: { node: { sourceUrl, altText } }
+  if (fi && typeof fi === "object" && "node" in fi) {
+    const node = (fi as Record<string, unknown>).node as Record<string, unknown> | undefined;
+    if (node && typeof node === "object" && node.sourceUrl)
+      return { url: String(node.sourceUrl), alt: String(node.altText ?? "") };
+  }
+  // shape: { url, alt }
+  if (fi && typeof fi === "object" && "url" in fi && (fi as Record<string, unknown>).url) {
+    const r = fi as Record<string, unknown>;
+    return { url: String(r.url), alt: String(r.alt ?? "") };
+  }
   return { url: "", alt: "" };
 }
 
@@ -55,17 +63,13 @@ function estimateReadingMinutes(post: PostCardPost) {
   return Math.max(1, Math.round(words / 200));
 }
 
-export default function PostCard({
-  post,
-  className,
-  priority = false,
-}: PostCardProps) {
+export default function PostCard({ post, className, priority = false }: PostCardProps) {
   const img = extractImage(post);
   const minutes = estimateReadingMinutes(post);
 
   const dateText = post.date
     ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(
-        new Date(post.date)
+        new Date(post.date),
       )
     : "";
 

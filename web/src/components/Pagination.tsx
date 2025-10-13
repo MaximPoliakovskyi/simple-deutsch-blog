@@ -48,7 +48,7 @@ export default function Pagination({
 
   // Avoid duplicates if backend overlaps pages
   const seen = React.useRef<Set<string>>(
-    new Set(initialPosts.map((p) => (p as any).id ?? p.slug))
+    new Set(initialPosts.map((p) => (p.id ?? p.slug) as string)),
   );
 
   const loadMore = async () => {
@@ -69,7 +69,7 @@ export default function Pagination({
 
       const next: WPPostCard[] = [];
       for (const p of json.posts) {
-        const key = (p as any).id ?? p.slug;
+        const key = p.id ?? p.slug;
         if (!seen.current.has(key)) {
           seen.current.add(key);
           next.push(p);
@@ -94,7 +94,7 @@ export default function Pagination({
       {/* Grid: 1 → 2 → 3 columns responsively */}
       <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
         {items.map((post) => (
-          <PostListItem key={(post as any).id ?? post.slug} post={post} />
+          <PostListItem key={(post.id ?? post.slug) as string} post={post} />
         ))}
       </ul>
 

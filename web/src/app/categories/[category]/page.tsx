@@ -1,8 +1,8 @@
 // app/categories/[category]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getCategoryBySlug, getPostsByCategorySlug } from "@/lib/wp/api";
 import PostCard from "@/components/PostCard";
+import { getCategoryBySlug, getPostsByCategorySlug } from "@/lib/wp/api";
 
 export const revalidate = 600;
 

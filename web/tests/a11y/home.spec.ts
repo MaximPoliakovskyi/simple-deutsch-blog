@@ -1,6 +1,7 @@
 // tests/a11y/home.spec.ts
-import { test, expect } from "@playwright/test";
+
 import AxeBuilder from "@axe-core/playwright";
+import { expect, test } from "@playwright/test";
 
 test("homepage has no serious/critical a11y issues", async ({ page }) => {
   await page.goto("http://localhost:3000/");
@@ -10,6 +11,8 @@ test("homepage has no serious/critical a11y issues", async ({ page }) => {
     .analyze();
 
   // Fail if any serious or critical issues remain
-  const violations = results.violations.filter(v => v.impact === "serious" || v.impact === "critical");
+  const violations = results.violations.filter(
+    (v) => v.impact === "serious" || v.impact === "critical",
+  );
   expect(violations, JSON.stringify(violations, null, 2)).toHaveLength(0);
 });

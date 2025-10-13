@@ -1,7 +1,7 @@
 // src/components/AccessibleImage.tsx
 "use client";
 
-import Image, { ImageProps } from "next/image";
+import Image, { type ImageProps } from "next/image";
 
 type Props = Omit<ImageProps, "alt"> & {
   /** Provide meaningful alt text or "" (if decorative). */
@@ -14,7 +14,7 @@ export default function AccessibleImage(props: Props) {
     const looksGeneric = t.length > 0 && /^(image|bild|photo|foto|graphic|grafik)$/i.test(t);
     if (looksGeneric) {
       console.warn(
-        `AccessibleImage: Provide meaningful alt text (got "${props.alt}"). See Next.js Image docs.`
+        `AccessibleImage: Provide meaningful alt text (got "${props.alt}"). See Next.js Image docs.`,
       );
     }
   }

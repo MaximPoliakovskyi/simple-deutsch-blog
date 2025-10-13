@@ -1,8 +1,28 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
-const WORDS = ['breathe','schön','calm','klar','großartig','gut gemacht','relax','inhale','exhale','strahlend','focus','almost there','brilliant','peaceful','mut','freundlich','sanft'];
+const WORDS = [
+  "Weiter so",
+  "Gut gemacht",
+  "Du schaffst das",
+  "Nicht aufgeben",
+  "Konzentriert",
+  "Fokussiert",
+  "Übung macht den Meister",
+  "Kleiner Schritt",
+  "Stark",
+  "Motiviert",
+  "Neugierig",
+  "Toll",
+  "Großartig",
+  "Dranbleiben",
+  "Mut",
+  "Bravo",
+  "Bereit",
+  "Weiterlernen",
+  "Schritt für Schritt",
+];
 
 function pick() {
   return WORDS[Math.floor(Math.random() * WORDS.length)];
@@ -12,36 +32,53 @@ export default function PreloaderClient() {
   const [mounted, setMounted] = useState(true);
   const [hiding, setHiding] = useState(false);
 
-  // characters currently displayed
-  const [chars, setChars] = useState<string[]>([]);
-  const [flips, setFlips] = useState<boolean[]>([]);
+  // Render no static word on the server; use the CSS rotator for SSR-visible
+  // words and let the JS flipper initialize on the client. This avoids a
+  // visible static first word.
+  const initialArr: string[] = [];
+
+  // characters currently displayed (start empty; client will populate)
+  const [chars, setChars] = useState<string[]>(() => initialArr.slice());
+  const [flips, setFlips] = useState<boolean[]>(() => new Array(initialArr.length).fill(false));
   const charsRef = useRef<string[]>([]);
   const flipsRef = useRef<boolean[]>([]);
   const timeouts = useRef<number[]>([]);
+  const id = useId();
+  const charKeysRef = useRef<Record<number, string>>({});
+  const [jsReady, setJsReady] = useState(false);
 
   // keep refs in sync
-  useEffect(() => { charsRef.current = chars; }, [chars]);
-  useEffect(() => { flipsRef.current = flips; }, [flips]);
+  useEffect(() => {
+    charsRef.current = chars;
+  }, [chars]);
+  useEffect(() => {
+    flipsRef.current = flips;
+  }, [flips]);
 
   useEffect(() => {
-    let intervalId: number | null = null;
-    let hideTimer: number | null = null;
+  let intervalId: number | null = null;
+  let hideTimer: number | null = null;
+  const FLIP_INTERVAL = 5000; // ms between full flip cycles (slower)
+  const QUICK_DELAY = 2500; // ms for the quick follow-up flip
+  const HIDE_AFTER = 6000; // ms after load before hiding (longer to allow slower flips)
 
     function clearAll() {
-      timeouts.current.forEach((t) => window.clearTimeout(t));
+      // use for-of to avoid returning from forEach callback
+      for (const t of timeouts.current) {
+        window.clearTimeout(t);
+      }
       timeouts.current = [];
     }
 
     function start() {
       const initial = pick();
-  const arr = Array.from(initial).map((ch) => (ch === ' ' ? '\u00A0' : ch));
-  setChars(arr);
+      const arr = Array.from(initial).map((ch) => (ch === " " ? "\u00A0" : ch));
+      setChars(arr);
       setFlips(new Array(arr.length).fill(false));
       charsRef.current = arr.slice();
       flipsRef.current = new Array(arr.length).fill(false);
 
-      // change ~30% faster (1400ms)
-      intervalId = window.setInterval(() => {
+  const flipCycle = () => {
         const next = pick();
         const prev = charsRef.current.slice();
         const prevLen = prev.length;
@@ -53,7 +90,7 @@ export default function PreloaderClient() {
         // ensure chars/flips arrays are sized to max to avoid sticking
         setChars((prevState) => {
           const a = prevState.slice();
-          while (a.length < max) a.push('');
+          while (a.length < max) a.push("");
           return a;
         });
         setFlips((prevState) => {
@@ -62,8 +99,12 @@ export default function PreloaderClient() {
           return f;
         });
         // sync refs
-        charsRef.current = charsRef.current.slice().concat(new Array(Math.max(0, max - charsRef.current.length)).fill(''));
-        flipsRef.current = flipsRef.current.slice().concat(new Array(Math.max(0, max - flipsRef.current.length)).fill(false));
+        charsRef.current = charsRef.current
+          .slice()
+          .concat(new Array(Math.max(0, max - charsRef.current.length)).fill(""));
+        flipsRef.current = flipsRef.current
+          .slice()
+          .concat(new Array(Math.max(0, max - flipsRef.current.length)).fill(false));
 
         // schedule flips per letter sequentially
         for (let i = 0; i < max; i++) {
@@ -80,8 +121,8 @@ export default function PreloaderClient() {
             const swap = window.setTimeout(() => {
               setChars((prevC) => {
                 const arr2 = prevC.slice();
-                const ch = next[i] ?? '';
-                arr2[i] = ch === ' ' ? '\u00A0' : ch;
+                const ch = next[i] ?? "";
+                arr2[i] = ch === " " ? "\u00A0" : ch;
                 charsRef.current = arr2.slice();
                 return arr2;
               });
@@ -97,27 +138,51 @@ export default function PreloaderClient() {
           }, startAt);
           timeouts.current.push(t1);
         }
-      }, 1400);
+      };
 
-      // hide 3s after load
+  // run one cycle immediately so words visibly change right away
+  flipCycle();
+  // run another quick cycle shortly after so users see motion during
+  // resource-heavy loads before the regular interval kicks in
+  const quick = window.setTimeout(() => flipCycle(), QUICK_DELAY);
+  timeouts.current.push(quick);
+  // then repeat (slower)
+  intervalId = window.setInterval(flipCycle, FLIP_INTERVAL);
+
+      // hide timer is managed separately once the page load completes
+      hideTimer = null;
+    }
+
+  // Start animating immediately so words update while the page loads.
+  start();
+
+    // Start the hide timer only after the 'load' event to ensure words keep
+    // updating while resources are still loading. If the page is already
+    // loaded, set the timer immediately.
+    const ensureHideTimer = () => {
+      // clear any existing timer first
+      if (hideTimer) window.clearTimeout(hideTimer as number);
+      // reveal the JS flipper (hide CSS rotator) when the page has loaded
+      setJsReady(true);
       hideTimer = window.setTimeout(() => {
         clearAll();
         setHiding(true);
         window.setTimeout(() => setMounted(false), 600);
-      }, 10000);
-    }
+      }, HIDE_AFTER);
+    };
 
-    if (document.readyState === 'complete') {
-      start();
+    let onLoad: (() => void) | null = null;
+    if (document.readyState === "complete") {
+      ensureHideTimer();
     } else {
-      const onLoad = () => start();
-      window.addEventListener('load', onLoad);
-      return () => window.removeEventListener('load', onLoad);
+      onLoad = () => ensureHideTimer();
+      window.addEventListener("load", onLoad);
     }
 
     return () => {
+      if (onLoad) window.removeEventListener("load", onLoad);
       if (intervalId) window.clearInterval(intervalId);
-      if (hideTimer) window.clearTimeout(hideTimer);
+      if (hideTimer) window.clearTimeout(hideTimer as number);
       clearAll();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,13 +191,37 @@ export default function PreloaderClient() {
   if (!mounted) return null;
 
   return (
-    <div id="sd-preloader" aria-hidden={false} className={hiding ? 'sd-preloader-hidden' : ''}>
-      <div className="sd-preloader-word" aria-live="polite">
-        {chars.map((c, i) => (
-          <span key={i} className={`sd-letter ${flips[i] ? 'flipping' : ''}`} data-index={i}>
-            {c}
+    <div id="sd-preloader" aria-hidden={false} className={hiding ? "sd-preloader-hidden" : ""}>
+      {/* CSS-only rotator shown before JS runs; hidden when jsReady === true */}
+      <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
+        {WORDS.slice(0, 8).map((w, idx) => (
+          <span key={`rot-${idx}`} className="sd-rotator-word">
+            {w}
           </span>
         ))}
+      </div>
+
+      {/* JS flipper — hidden initially until jsReady is true to avoid duplicate animation */}
+      <div
+        suppressHydrationWarning
+        className={`sd-preloader-word sd-js-flipper ${jsReady ? "sd-js-active" : "sd-js-hidden"}`}
+        aria-live="polite"
+      >
+        {chars.map((c, i) => {
+            // Use deterministic keys based on `useId()` and index so keys are
+            // stable across server and client renders. Avoid Math.random here
+            // because it causes hydration mismatches.
+            let key = charKeysRef.current[i];
+            if (!key) {
+              key = `${id}-${i}`;
+              charKeysRef.current[i] = key;
+            }
+            return (
+              <span key={key} className={`sd-letter ${flips[i] ? "flipping" : ""}`} data-index={i}>
+                {c}
+              </span>
+            );
+          })}
       </div>
     </div>
   );

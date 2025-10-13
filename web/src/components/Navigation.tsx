@@ -2,16 +2,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import ThemeToggle from "@/components/ThemeToggle";
+import { useEffect, useId, useRef, useState } from "react";
 import { SearchButton } from "@/components/SearchOverlay";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
-  const titleId = "mobile-menu-title";
+  const id = useId();
+  const titleId = `mobile-menu-title-${id}`;
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -19,7 +20,9 @@ export default function Header() {
     if (!open) return;
     const prev = root.style.overflow;
     root.style.overflow = "hidden";
-    return () => { root.style.overflow = prev; };
+    return () => {
+      root.style.overflow = prev;
+    };
   }, [open]);
 
   // Focus trap + Escape to close
@@ -27,7 +30,9 @@ export default function Header() {
     if (!open) return;
     const toFocus =
       firstFocusRef.current ||
-      panelRef.current?.querySelector<HTMLElement>('a, button, [href], [tabindex]:not([tabindex="-1"])');
+      panelRef.current?.querySelector<HTMLElement>(
+        'a, button, [href], [tabindex]:not([tabindex="-1"])',
+      );
     toFocus?.focus();
 
     const onKey = (e: KeyboardEvent) => {
@@ -69,13 +74,22 @@ export default function Header() {
 
           {/* Desktop links */}
           <div className="hidden items-center gap-6 md:flex">
-            <Link href="/posts" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+            <Link
+              href="/posts"
+              className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+            >
               Posts
             </Link>
-            <Link href="/categories" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+            <Link
+              href="/categories"
+              className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+            >
               Categories
             </Link>
-            <Link href="/tags" className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300">
+            <Link
+              href="/tags"
+              className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+            >
               Tags
             </Link>
 
@@ -99,9 +113,19 @@ export default function Header() {
             >
               <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
                 {open ? (
-                  <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M6 6l12 12M6 18L18 6"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 ) : (
-                  <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path
+                    d="M3 6h18M3 12h18M3 18h18"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 )}
               </svg>
             </button>
@@ -110,14 +134,21 @@ export default function Header() {
       </nav>
 
       {/* Mobile drawer */}
-      <div className={["md:hidden","fixed inset-0 z-[90]", open ? "" : "pointer-events-none"].join(" ")}>
+      <div
+        className={["md:hidden", "fixed inset-0 z-[90]", open ? "" : "pointer-events-none"].join(
+          " ",
+        )}
+      >
         <div
-          className={["absolute inset-0 bg-black/40 transition-opacity", open ? "opacity-100" : "opacity-0"].join(" ")}
+          className={[
+            "absolute inset-0 bg-black/40 transition-opacity",
+            open ? "opacity-100" : "opacity-0",
+          ].join(" ")}
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
         <div
-          id="mobile-fullscreen-menu"
+          id={`mobile-fullscreen-menu-${id}`}
           ref={panelRef}
           role="dialog"
           aria-modal="true"
@@ -147,17 +178,54 @@ export default function Header() {
               title="Menü schließen"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" role="img" aria-hidden="true">
-                <path d="M6 6l12 12M6 18L18 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M6 6l12 12M6 18L18 6"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               </svg>
             </button>
           </div>
 
           <nav aria-label="Mobile navigation" className="mx-auto w-full max-w-5xl px-4 py-4">
             <ul className="space-y-1">
-              <li><Link href="/posts" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Posts</Link></li>
-              <li><Link href="/categories" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Categories</Link></li>
-              <li><Link href="/tags" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Tags</Link></li>
-              <li><Link href="/search" onClick={() => setOpen(false)} className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60">Search</Link></li>
+              <li>
+                <Link
+                  href="/posts"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                >
+                  Posts
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/categories"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                >
+                  Categories
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/tags"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                >
+                  Tags
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/search"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                >
+                  Search
+                </Link>
+              </li>
             </ul>
           </nav>
         </div>

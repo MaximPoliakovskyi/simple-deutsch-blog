@@ -1,7 +1,9 @@
-import 'server-only'
-import { sanitize } from '@/lib/sanitize'
+import "server-only";
+import { sanitize } from "@/lib/sanitize";
 
+/* biome-disable */
 export default function SafeHTML({ html }: { html: string }) {
-  const safe = sanitize(html)
-  return <div dangerouslySetInnerHTML={{ __html: safe }} />
+  const safe = sanitize(html);
+  // This HTML is sanitized server-side with DOMPurify prior to rendering.
+  return <div dangerouslySetInnerHTML={{ __html: safe }} />;
 }

@@ -1,10 +1,10 @@
 // app/error.tsx
 "use client";
 
-import StatusPage from "@/components/StatusPage";
 import { useEffect } from "react";
+import StatusPage from "@/components/StatusPage";
 
-export default function Error({
+export default function AppError({
   error,
   reset,
 }: {
@@ -13,7 +13,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // console.error(error);
-  }, [error]);
+  }, []);
 
   const isDev = process.env.NODE_ENV === "development";
   const message = isDev ? error.message : "Something went wrong. Please try again.";

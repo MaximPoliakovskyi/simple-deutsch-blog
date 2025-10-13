@@ -1,9 +1,11 @@
 // src/app/page.tsx
-import Header from "@/components/Header";
-import Pagination from "@/components/Pagination";
+
 import { headers } from "next/headers";
-import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
+import Header from "@/components/Header";
 import LatestPostsSliderServer from "@/components/LatestPosts/LatestPostsSliderServer";
+import Pagination from "@/components/Pagination";
+import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
+import type { PostListItem, WPPostCard } from "@/lib/wp/api";
 
 type PageInfo = {
   endCursor: string | null;
@@ -11,7 +13,7 @@ type PageInfo = {
 };
 
 type GetPostsResult = {
-  posts: any[];
+  posts: PostListItem[];
   pageInfo: PageInfo;
 };
 
@@ -65,14 +67,47 @@ export default async function HomePage() {
   const PAGE_SIZE = 9;
   const { posts, pageInfo } = await getPosts(PAGE_SIZE);
 
+  // The WP API sometimes returns `excerpt` as `null` and other optional
+  // nested properties may be missing. Build a normalized `WPPostCard` for
+  // the UI with safe fallbacks so TypeScript and runtime consumers are happy.
+  const normalizedPosts: WPPostCard[] = posts.map((p) => {
+    const featuredImage = p.featuredImage && p.featuredImage.node && p.featuredImage.node.sourceUrl
+      ? {
+          node: {
+            sourceUrl: String(p.featuredImage.node.sourceUrl),
+            altText: p.featuredImage.node.altText ?? null,
+            // mediaDetails is optional; leave undefined if not present
+          },
+        }
+      : null;
+
+    const author = p.author && p.author.node && p.author.node.name
+      ? { node: { name: String(p.author.node.name), slug: "" } }
+      : null;
+
+    return {
+      id: String(p.id),
+      databaseId: (p as any).databaseId, // optional and may not exist on this shape
+      slug: String(p.slug),
+      title: String(p.title),
+      excerpt: p.excerpt ?? "",
+      date: String(p.date),
+      featuredImage,
+      author,
+      categories: p.categories
+        ? { nodes: (p.categories.nodes || []).map((n) => ({ id: (n as any).id, name: n.name, slug: n.slug })) }
+        : undefined,
+    };
+  });
+
   return (
     <>
       {/* Header is outside <main> and exists only on this page */}
       <Header />
 
-      <main id="main" role="main" className="mx-auto max-w-7xl px-4 py-6">
+      <main className="mx-auto max-w-7xl px-4 py-6">
         <Pagination
-          initialPosts={posts}
+          initialPosts={normalizedPosts}
           initialEndCursor={pageInfo.endCursor}
           initialHasNextPage={pageInfo.hasNextPage}
           pageSize={PAGE_SIZE} // ← guarantees 9 per page including "Load more"

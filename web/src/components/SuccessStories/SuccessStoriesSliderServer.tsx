@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import type { WPPostCard } from "@/lib/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
 /** Build an absolute origin for server-side fetches (local + prod). */
@@ -14,7 +15,7 @@ async function getBaseUrl() {
 }
 
 /** Fetch a small set of recent posts suitable for <PostCard/>. */
-async function getSliderPosts(): Promise<any[]> {
+async function getSliderPosts(): Promise<WPPostCard[]> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base); // adjust path if your API differs
   url.searchParams.set("first", "8");
@@ -22,7 +23,7 @@ async function getSliderPosts(): Promise<any[]> {
   const res = await fetch(url, { next: { revalidate: 300 } });
   if (!res.ok) return [];
   const json = await res.json();
-  return Array.isArray(json) ? json : json?.posts ?? [];
+  return Array.isArray(json) ? json : (json?.posts ?? []);
 }
 
 /** Server wrapper: fetch once, render the client slider. */

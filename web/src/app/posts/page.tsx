@@ -1,6 +1,7 @@
 // app/posts/page.tsx
 import type { Metadata } from "next";
-import PostCard from "@/components/PostCard";
+import PostCard, { type PostCardPost } from "@/components/PostCard";
+import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getPosts } from "@/lib/wp/api";
 
 export const revalidate = 600;
@@ -13,7 +14,15 @@ export const metadata: Metadata = {
 export default async function PostsIndexPage() {
   // Your api.ts exposes getPosts (see TS hint at line 88)
   const { posts } = await getPosts({ first: 12 }); // adjust page size if you like
-  const nodes = posts?.nodes ?? [];
+  type PostNode = {
+    id: string;
+    slug: string;
+    title: string;
+    date?: string;
+    excerpt?: string | null;
+    featuredImage?: unknown;
+  };
+  const nodes = extractConnectionNodes<PostNode>(posts);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -22,9 +31,9 @@ export default async function PostsIndexPage() {
         <p className="text-neutral-600">No posts found.</p>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {nodes.map((post: any) => (
+          {nodes.map((post) => (
             <li key={post.id}>
-              <PostCard post={post} />
+              <PostCard post={post as PostCardPost} />
             </li>
           ))}
         </ul>

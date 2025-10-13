@@ -1,6 +1,6 @@
 // src/components/StatusPage.tsx
 import Link from "next/link";
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 type Action =
   | { type: "link"; href: string; label: string }
@@ -28,13 +28,16 @@ export default function StatusPage({
           </div>
         ) : null}
         <h1 className="text-3xl md:text-4xl font-semibold mb-3">{title}</h1>
-        {message ? <p className="text-balance text-sm md:text-base opacity-80 mb-8">{message}</p> : null}
+        {message ? (
+          <p className="text-balance text-sm md:text-base opacity-80 mb-8">{message}</p>
+        ) : null}
         {children}
         <div className="flex flex-wrap items-center justify-center gap-3">
-          {actions.map((a, i) =>
-            a.type === "link" ? (
+          {actions.map((a, i) => {
+            const key = a.type === "link" ? `link-${a.href}` : `btn-${a.label}-${i}`;
+            return a.type === "link" ? (
               <Link
-                key={i}
+                key={key}
                 href={a.href}
                 className="rounded-lg border px-4 py-2 text-sm hover:bg-foreground/5"
               >
@@ -42,15 +45,15 @@ export default function StatusPage({
               </Link>
             ) : (
               <button
-                key={i}
+                key={key}
                 type="button"
                 onClick={a.onClick}
                 className="rounded-lg border px-4 py-2 text-sm hover:bg-foreground/5"
               >
                 {a.label}
               </button>
-            ),
-          )}
+            );
+          })}
         </div>
       </div>
     </main>

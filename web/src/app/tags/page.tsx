@@ -1,7 +1,10 @@
 // app/tags/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
+import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getAllTags } from "@/lib/wp/api";
+
+// helper removed; using shared `extractConnectionNodes` from utils
 
 export const revalidate = 600;
 
@@ -14,9 +17,8 @@ export default async function TagsIndexPage() {
   // Your API probably has a getAllTags helper similar to getAllCategories
   const { tags } = await getAllTags({ first: 100 });
 
-  const nodes =
-    (tags as any)?.nodes ??
-    ((tags as any)?.edges?.map((e: any) => e?.node).filter(Boolean) ?? []);
+  type TagNode = { id: string; name: string; slug: string };
+  const nodes = extractConnectionNodes<TagNode>(tags);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -25,7 +27,7 @@ export default async function TagsIndexPage() {
         <p className="text-neutral-600">No tags found.</p>
       ) : (
         <ul className="flex flex-wrap gap-3">
-          {nodes.map((tag: any) => (
+          {nodes.map((tag) => (
             <li key={tag.id}>
               <Link
                 href={`/tags/${tag.slug}`}

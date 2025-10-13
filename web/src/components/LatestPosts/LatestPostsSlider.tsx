@@ -1,30 +1,29 @@
 // src/components/LatestPosts/LatestPostsSlider.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import PostCard from "@/components/PostCard";
-
-type PostLike = { id?: string | number; slug?: string; [k: string]: any };
+import type { WPPostCard } from "@/lib/wp/api";
 
 export default function LatestPostsSlider({
   posts = [],
   title = "Latest posts",
 }: {
-  posts: PostLike[];
+  posts: WPPostCard[];
   title?: string;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
 
-  const updateEdgeState = () => {
+  const updateEdgeState = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
     const { scrollLeft, scrollWidth, clientWidth } = el;
     const EPS = 2;
     setIsAtStart(scrollLeft <= EPS);
     setIsAtEnd(scrollLeft + clientWidth >= scrollWidth - EPS);
-  };
+  }, []);
 
   // ✅ Align with site grid gap-x-8 (32px)
   const GAP_PX = 32;
@@ -52,7 +51,7 @@ export default function LatestPostsSlider({
       clearInterval(tm);
       clearTimeout(stopAfter);
     };
-  }, []);
+  }, [updateEdgeState]);
 
   if (!posts?.length) return null;
 
@@ -67,7 +66,6 @@ export default function LatestPostsSlider({
     <div className="-mx-[calc(50vw-50%)] w-screen">
       <section
         aria-label={title}
-        role="region"
         data-latest-slider-scope
         className="mx-auto max-w-7xl px-4 py-10 text-neutral-900 dark:text-white"
       >
@@ -142,7 +140,7 @@ export default function LatestPostsSlider({
             }
           `}</style>
 
-          {posts.map((post: any, i: number) => (
+          {posts.map((post: WPPostCard, i: number) => (
             <div key={post.id ?? post.slug ?? i} data-card className="snap-start shrink-0">
               <PostCard post={post} priority={i < 3} />
             </div>

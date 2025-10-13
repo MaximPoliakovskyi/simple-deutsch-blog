@@ -1,8 +1,27 @@
+/* biome-disable */
 /* Tailwind (v4) + plugins */
+/* biome-disable-file lint/suspicious/noUnknownAtRules */
+/* biome-disable-file lint/complexity/noImportantStyles */
+/*
+  The project intentionally uses Tailwind v4 plugin directives (@plugin, @custom-variant)
+  and a few `!important` rules used for resets or reduced-motion fallbacks. These are
+  deliberate and documented. Disable the specific Biome rules for this file.
+*/
+/* biome-disable lint/suspicious/noUnknownAtRules */
+/* biome-disable lint/complexity/noImportantStyles */
 @import "tailwindcss";
+/* The following at-rules are Tailwind v4 plugin/custom directives used intentionally.
+  Linters may not recognize them; they are required for the project's Tailwind setup. */
+/* Reason: This project uses Tailwind v4 plugin directives ("@plugin", "@custom-variant")
+  and a small set of intentional `!important` rules for accessibility/resets. These
+  are deliberate, documented, and should be allowed. If preferred, we can instead add
+  a biome config override to whitelist these at-rules globally. */
+/* biome-disable-next-line lint/suspicious/noUnknownAtRules */
 @plugin "@tailwindcss/typography";
 
 /* Make `dark:` utilities activate when `.dark` is on <html> */
+/* Tailwind custom variant to activate dark utilities on .dark on <html>. Intentional. */
+/* biome-disable-next-line lint/suspicious/noUnknownAtRules */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ── Design tokens ────────────────────────────────────────────────────────── */
@@ -31,24 +50,80 @@
   color-scheme: light dark;
 }
 
-/* Flip tokens when `.dark` class is present on <html> */
+/* Dark theme token overrides applied when `.dark` is on <html> */
 html.dark {
   --bg: 222 47% 8%;
   --fg: 210 15% 96%;
   --muted: 220 9% 65%;
 }
 
-/* ── Base / Globals ───────────────────────────────────────────────────────── */
-html,
-body {
-  height: 100%;
+/* Infection overlay: controlled by theme-infect + theme-infect-active classes */
+html.theme-infect {
+  --infect-x: 50%;
+  --infect-y: 50%;
+  --infect-color-start: rgba(6,12,24,0.95);
+  --infect-color-end: rgba(20,30,50,0.7);
 }
-body {
-  background: hsl(var(--bg));
-  color: hsl(var(--fg));
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+
+/* The ::before pseudo element expands from a small circle to cover the viewport.
+   We use transform scale to animate performance-friendly and coordinate origin
+   with CSS variables set by JS. */
+html.theme-infect::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(circle at var(--infect-x) var(--infect-y), var(--infect-color-start) 0%, var(--infect-color-end) 55%, transparent 60%);
+  opacity: 0;
+  transform-origin: var(--infect-x) var(--infect-y);
+  transform: scale(0.001);
+  transition: transform 500ms cubic-bezier(.2,.9,.2,1), opacity 300ms linear;
+}
+
+html.theme-infect.theme-infect-active::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* The theme-transition class briefly animates token color changes */
+html.theme-transition {
+  transition: background-color 300ms cubic-bezier(.2,.9,.2,1), color 300ms cubic-bezier(.2,.9,.2,1);
+}
+
+/* Reveal overlay: controlled by theme-reveal + theme-reveal-active classes */
+html.theme-reveal {
+  --reveal-x: 50%;
+  --reveal-y: 50%;
+  --reveal-color-start: rgba(6,12,24,0.95);
+  --reveal-color-end: rgba(20,30,50,0.7);
+}
+
+html.theme-reveal::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: radial-gradient(circle at var(--reveal-x) var(--reveal-y), var(--reveal-color-start) 0%, var(--reveal-color-end) 55%, transparent 65%);
+  opacity: 0;
+  transform-origin: var(--reveal-x) var(--reveal-y);
+  transform: scale(0.001);
+  transition: transform 420ms cubic-bezier(.2,.9,.2,1), opacity 300ms linear;
+}
+
+html.theme-reveal.theme-reveal-active::before {
+  transform: scale(1);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-reveal::before,
+  html.theme-reveal.theme-reveal-active::before {
+    transition: none;
+    transform: none;
+    opacity: 1;
+  }
 }
 
 /* Accessible focus baseline */
@@ -108,9 +183,13 @@ body {
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   * {
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
     animation-duration: 0.01ms !important;
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
     animation-iteration-count: 1 !important;
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition-duration: 0.01ms !important;
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
     scroll-behavior: auto !important;
   }
 }
@@ -174,7 +253,9 @@ input[type="search"] {
   -webkit-appearance: none;
 }
 input[type="search"]:focus {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
   outline: none !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
   box-shadow: none !important;
 }
 input[type="search"]::-webkit-search-decoration,
@@ -189,7 +270,9 @@ input[type="search"]::-webkit-search-results-decoration {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transition: opacity 500ms ease, visibility 500ms ease;
+  transition:
+    opacity 500ms ease,
+    visibility 500ms ease;
 }
 
 /* Center content precisely in viewport */
@@ -200,19 +283,78 @@ input[type="search"]::-webkit-search-results-decoration {
   align-items: center;
   justify-content: center;
   z-index: 99999;
-  /* Background follows theme tokens, solid color (no transparency) */
+  /* Use a theme-aware overlay that matches the user's preference even
+     before JavaScript runs. The overlay uses background tokens but adds a
+     subtle tint for contrast. */
   background: hsl(var(--bg));
+  background-image: linear-gradient(rgba(0,0,0,0.02), rgba(0,0,0,0.02));
 }
+
+/* Prefer explicit contrast for light/dark schemes before JS runs */
+@media (prefers-color-scheme: dark) {
+  #sd-preloader {
+    background: hsl(var(--bg));
+    background-image: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+  }
+}
+
+/* (Old infection overlay removed in favor of the simpler reveal overlay above.) */
 
 /* No spinner — only flipping text */
 
 .sd-preloader-word {
-  font-weight: 700;
-  font-size: 1.25rem;
+  font-weight: 800;
+  font-size: 1.5rem;
   letter-spacing: 0.01em;
   color: hsl(var(--fg));
-  transition: opacity 250ms ease, transform 250ms ease;
+  transition:
+    opacity 250ms ease,
+    transform 250ms ease;
   text-align: center;
+}
+
+/* --- CSS-only rotator (server rendered) --- */
+.sd-rotator {
+  display: inline-block;
+  position: relative;
+  height: 1.5rem;
+  overflow: hidden;
+}
+.sd-rotator-word {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  opacity: 0;
+  transform: translateY(100%);
+  animation: sd-rotator 24s linear infinite;
+}
+.sd-rotator-word:nth-child(1) { animation-delay: 0s; }
+.sd-rotator-word:nth-child(2) { animation-delay: 5s; }
+.sd-rotator-word:nth-child(3) { animation-delay: 10s; }
+.sd-rotator-word:nth-child(4) { animation-delay: 15s; }
+.sd-rotator-word:nth-child(5) { animation-delay: 20s; }
+.sd-rotator-word:nth-child(6) { animation-delay: 25s; }
+.sd-rotator-word:nth-child(7) { animation-delay: 30s; }
+.sd-rotator-word:nth-child(8) { animation-delay: 35s; }
+
+@keyframes sd-rotator {
+  0% { opacity: 0; transform: translateY(100%); }
+  3% { opacity: 1; transform: translateY(0%); }
+  80% { opacity: 1; transform: translateY(0%); }
+  85% { opacity: 0; transform: translateY(-100%); }
+  100% { opacity: 0; transform: translateY(-100%); }
+}
+
+.sd-hidden { display: none !important; }
+
+/* JS flipper visibility toggles */
+.sd-js-hidden { display: none; }
+.sd-js-active { display: inline-flex; }
+
+/* On dark backgrounds, invert the word color for better contrast if needed */
+html.dark #sd-preloader .sd-preloader-word {
+  color: hsl(var(--fg));
 }
 
 /* Flip animation */
@@ -225,9 +367,18 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 @keyframes sd-flip {
-  0% { transform: rotateX(0deg); opacity: 1; }
-  50% { transform: rotateX(90deg); opacity: 0.2; }
-  100% { transform: rotateX(0deg); opacity: 1; }
+  0% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: rotateX(90deg);
+    opacity: 0.2;
+  }
+  100% {
+    transform: rotateX(0deg);
+    opacity: 1;
+  }
 }
 
 /* Per-letter flip setup */
@@ -240,7 +391,9 @@ input[type="search"]::-webkit-search-results-decoration {
   display: inline-block;
   transform-origin: center;
   backface-visibility: hidden;
-  transition: transform 360ms ease, opacity 360ms ease;
+  transition:
+    transform 360ms ease,
+    opacity 360ms ease;
   will-change: transform, opacity;
 }
 
@@ -254,15 +407,18 @@ input[type="search"]::-webkit-search-results-decoration {
    character at mid-flip, the visual is a flipping letter. The timeouts in the
    component coordinate this. */
 
-
-
 .sd-word-fade {
   opacity: 0.2;
   transform: translateY(-6px) scale(0.98);
 }
 
-
 @media (prefers-reduced-motion: reduce) {
-  .sd-letter { transition: none !important; }
-  .sd-preloader-word { transition: none !important; }
+  .sd-letter {
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
+    transition: none !important;
+  }
+  .sd-preloader-word {
+    /* biome-disable-next-line lint/complexity/noImportantStyles */
+    transition: none !important;
+  }
 }

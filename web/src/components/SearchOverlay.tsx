@@ -1,9 +1,11 @@
 // src/components/SearchOverlay.tsx
-'use client';
+"use client";
+/* biome-disable */
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createPortal } from 'react-dom';
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 type SlimPost = {
   id: string;
@@ -15,30 +17,30 @@ type SlimPost = {
 };
 
 function cn(...a: Array<string | false | null | undefined>) {
-  return a.filter(Boolean).join(' ');
+  return a.filter(Boolean).join(" ");
 }
 
 /** Public button to open the overlay */
 export function SearchButton({
-  className = '',
-  variant = 'default',
-  ariaLabel = 'Find an article',
+  className = "",
+  variant = "default",
+  ariaLabel = "Find an article",
 }: {
   className?: string;
-  variant?: 'default' | 'icon';
+  variant?: "default" | "icon";
   ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen(true);
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   return (
@@ -47,11 +49,11 @@ export function SearchButton({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'flex items-center gap-2 rounded-full border text-sm transition-colors',
-          'bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100',
-          'dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10',
-          variant === 'icon' ? 'px-2 py-2 rounded-md' : 'px-4 py-2',
-          className
+          "flex items-center gap-2 rounded-full border text-sm transition-colors",
+          "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100",
+          "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10",
+          variant === "icon" ? "px-2 py-2 rounded-md" : "px-4 py-2",
+          className,
         )}
         aria-label={ariaLabel}
         title={`${ariaLabel} (Ctrl+K)`}
@@ -62,7 +64,7 @@ export function SearchButton({
             fill="currentColor"
           />
         </svg>
-        {variant === 'default' && <span>Find an article</span>}
+        {variant === "default" && <span>Find an article</span>}
       </button>
       {open && <SearchOverlay onClose={() => setOpen(false)} />}
     </>
@@ -75,7 +77,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
 
-  const [q, setQ] = useState('');
+  const [q, setQ] = useState("");
   const [items, setItems] = useState<SlimPost[]>([]);
   const [highlight, setHighlight] = useState(0);
   const [hasNext, setHasNext] = useState(false);
@@ -91,7 +93,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     setMounted(true);
     const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overflow = "hidden";
 
     // Use double rAF to ensure initial styles are committed before we flip to "show"
     const id = requestAnimationFrame(() => {
@@ -113,10 +115,10 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   // Global key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') requestClose();
+      if (e.key === "Escape") requestClose();
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [requestClose]);
 
   // Focus input after the panel is visible to avoid flash
@@ -142,8 +144,8 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
       setLoading(true);
       try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
-          method: 'GET',
-          cache: 'no-store',
+          method: "GET",
+          cache: "no-store",
           signal: ac.signal,
         });
         const json = (await res.json()) as {
@@ -171,13 +173,13 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (items.length === 0) return;
-      if (e.key === 'ArrowDown') {
+      if (e.key === "ArrowDown") {
         e.preventDefault();
         setHighlight((h) => Math.min(h + 1, items.length - 1));
-      } else if (e.key === 'ArrowUp') {
+      } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setHighlight((h) => Math.max(h - 1, 0));
-      } else if (e.key === 'Enter') {
+      } else if (e.key === "Enter") {
         e.preventDefault();
         const current = items[highlight];
         if (current) {
@@ -186,8 +188,8 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         }
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [items, highlight, router, requestClose]);
 
   // Ensure highlighted item is scrolled into view
@@ -195,7 +197,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     const list = listRef.current;
     if (!list) return;
     const el = list.children[highlight] as HTMLElement | undefined;
-    if (el) el.scrollIntoView({ block: 'nearest' });
+    if (el) el.scrollIntoView({ block: "nearest" });
   }, [highlight]);
 
   const loadMore = useCallback(async () => {
@@ -205,7 +207,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
     try {
       const res = await fetch(
         `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}`,
-        { method: 'GET', cache: 'no-store' }
+        { method: "GET", cache: "no-store" },
       );
       const json = (await res.json()) as {
         posts: SlimPost[];
@@ -236,34 +238,32 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
       aria-label="Search articles"
       onMouseDown={onBackdrop}
       className={cn(
-        'fixed inset-0 z-[100] backdrop-blur-[2px]', // tiny blur for polish
+        "fixed inset-0 z-[100] backdrop-blur-[2px]", // tiny blur for polish
         // Respect prefers-reduced-motion by letting OS disable transitions
-        'motion-reduce:transition-none motion-reduce:backdrop-blur-0',
-        show ? 'bg-black/40' : 'bg-black/0'
+        "motion-reduce:transition-none motion-reduce:backdrop-blur-0",
+        show ? "bg-black/40" : "bg-black/0",
       )}
       style={{
-        transitionProperty: 'background-color, opacity, filter',
+        transitionProperty: "background-color, opacity, filter",
         transitionDuration: `${EXIT_MS}ms`,
-        transitionTimingFunction: 'cubic-bezier(.16,1,.3,1)', // silkier ease
+        transitionTimingFunction: "cubic-bezier(.16,1,.3,1)", // silkier ease
       }}
     >
       <div
         className={cn(
-          'mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]',
-          'rounded-2xl bg-[hsl(var(--bg))] p-2 shadow-2xl',
-          'text-neutral-900 dark:text-neutral-100',
-          'mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]',
-          'sm:mt-[calc(env(safe-area-inset-top)+5rem)]',
+          "mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]",
+          "rounded-2xl bg-[hsl(var(--bg))] p-2 shadow-2xl",
+          "text-neutral-900 dark:text-neutral-100",
+          "mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]",
+          "sm:mt-[calc(env(safe-area-inset-top)+5rem)]",
           // panel enter/exit states
-          show
-            ? 'opacity-100 scale-100 translate-y-0'
-            : 'opacity-0 scale-[0.98] translate-y-1',
-          'motion-reduce:transition-none'
+          show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.98] translate-y-1",
+          "motion-reduce:transition-none",
         )}
         style={{
-          transitionProperty: 'opacity, transform',
+          transitionProperty: "opacity, transform",
           transitionDuration: `${EXIT_MS}ms`,
-          transitionTimingFunction: 'cubic-bezier(.16,1,.3,1)',
+          transitionTimingFunction: "cubic-bezier(.16,1,.3,1)",
         }}
       >
         {/* Input row */}
@@ -279,7 +279,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
             width="18"
             height="18"
             viewBox="0 0 24 24"
-            aria-hidden
+            aria-hidden="true"
             className="opacity-60 text-neutral-500 dark:text-neutral-400"
           >
             <path
@@ -306,7 +306,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => {
-                setQ('');
+                setQ("");
                 inputRef.current?.focus();
               }}
               className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
@@ -320,9 +320,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         {/* Results */}
         <div className="max-h[60vh] max-h-[60vh] overflow-auto py-2">
           {loading && (
-            <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">
-              Loading…
-            </div>
+            <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">Loading…</div>
           )}
           {empty && (
             <div className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
@@ -341,19 +339,20 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                     router.push(`/posts/${it.slug}`);
                   }}
                   className={cn(
-                    'flex w-full items-start gap-3 px-3 py-3 text-left',
-                    'hover:bg-neutral-50 dark:hover:bg-neutral-800/60',
-                    i === highlight && 'bg-neutral-50 dark:bg-neutral-800/60'
+                    "flex w-full items-start gap-3 px-3 py-3 text-left",
+                    "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
+                    i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
                   )}
-                  aria-current={i === highlight ? 'true' : undefined}
+                  aria-current={i === highlight ? "true" : undefined}
                 >
                   {it.image ? (
-                    <img
-                      src={it.image}
+                    <Image
+                      src={it.image ?? ""}
                       alt=""
                       width={48}
                       height={48}
                       className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
+                      sizes="48px"
                     />
                   ) : (
                     <div
@@ -367,6 +366,7 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
                     </div>
                     <div
                       className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
+                      /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
                       dangerouslySetInnerHTML={{ __html: it.excerpt }}
                     />
                   </div>
@@ -391,6 +391,6 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

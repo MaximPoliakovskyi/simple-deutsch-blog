@@ -1,23 +1,26 @@
 // src/app/api/search/route.ts
-import { NextResponse } from 'next/server';
-import { searchPosts } from '@/lib/wp/api';
+import { NextResponse } from "next/server";
+import { searchPosts } from "@/lib/wp/api";
 
 // Always dynamic (no cache)
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const q = (searchParams.get('q') ?? '').trim();
-  const after = searchParams.get('after');
+  const q = (searchParams.get("q") ?? "").trim();
+  const after = searchParams.get("after");
 
   if (!q) {
-    return NextResponse.json({ posts: [], pageInfo: { endCursor: null, hasNextPage: false } }, { status: 200 });
+    return NextResponse.json(
+      { posts: [], pageInfo: { endCursor: null, hasNextPage: false } },
+      { status: 200 },
+    );
   }
 
   try {
     const { posts, pageInfo } = await searchPosts({ query: q, first: 8, after });
     // Minimal payload for the overlay
-    const slim = posts.map(p => ({
+    const slim = posts.map((p) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,
@@ -25,8 +28,13 @@ export async function GET(req: Request) {
       date: p.date,
       image: p.featuredImage?.node?.sourceUrl ?? null,
     }));
-    return NextResponse.json({ posts: slim, pageInfo }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? 'Search failed' }, { status: 500 });
+    return NextResponse.json(
+      { posts: slim, pageInfo },
+      { status: 200, headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (e: unknown) {
+    // Narrow the unknown error to an object with message if possible
+    const message = e instanceof Error ? e.message : "Search failed";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -1,14 +1,14 @@
 // src/lib/wp/api.ts
-import { fetchGraphQL } from '@/lib/wp/client';
+import { fetchGraphQL } from "@/lib/wp/client";
 import {
-  POSTS_CONNECTION,
-  GET_CATEGORY_BY_SLUG,
-  GET_POSTS_BY_CATEGORY_SLUG,
-  GET_POST_BY_SLUG,
   GET_ALL_CATEGORIES,
+  GET_CATEGORY_BY_SLUG,
+  GET_POST_BY_SLUG,
   GET_POSTS,
+  GET_POSTS_BY_CATEGORY_SLUG,
+  POSTS_CONNECTION,
   SEARCH_POSTS,
-} from '@/lib/wp/queries';
+} from "@/lib/wp/queries";
 
 // ---------- Shared types ----------
 export type Term = {
@@ -34,9 +34,7 @@ export type PostListItem = {
   title: string;
   date: string;
   excerpt: string | null;
-  featuredImage?:
-    | { node?: { sourceUrl?: string | null; altText?: string | null } | null }
-    | null;
+  featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> };
 };
@@ -48,23 +46,17 @@ type Connection<TNode> = {
 
 // ---------- Single terms (category) ----------
 export async function getCategoryBySlug(slug: string) {
-  const data = await fetchGraphQL<{ category: Term | null }>(
-    GET_CATEGORY_BY_SLUG,
-    { slug }
-  );
+  const data = await fetchGraphQL<{ category: Term | null }>(GET_CATEGORY_BY_SLUG, { slug });
   return data.category ?? null;
 }
 
 // ---------- Posts (filtered) ----------
-export async function getPostsByCategorySlug(
-  slug: string,
-  first = 12,
-  after?: string
-) {
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
-    GET_POSTS_BY_CATEGORY_SLUG,
-    { slug, first, after: after ?? null }
-  );
+export async function getPostsByCategorySlug(slug: string, first = 12, after?: string) {
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS_BY_CATEGORY_SLUG, {
+    slug,
+    first,
+    after: after ?? null,
+  });
 }
 
 // ---------- Posts (generic feed) ----------
@@ -72,14 +64,14 @@ export async function getPostsByCategorySlug(
 // Overload signatures
 export async function getPosts(
   first: number,
-  after?: string
+  after?: string,
 ): Promise<{ posts: Connection<PostListItem> }>;
 export async function getPosts(opts: {
   first: number;
   after?: string;
   search?: string;
   categoryIn?: string[]; // reserved for future use
-  tagIn?: string[];      // reserved for future use
+  tagIn?: string[]; // reserved for future use
 }): Promise<{ posts: Connection<PostListItem> }>;
 
 // Implementation
@@ -87,13 +79,16 @@ export async function getPosts(
   arg1:
     | number
     | { first: number; after?: string; search?: string; categoryIn?: string[]; tagIn?: string[] },
-  maybeAfter?: string
+  maybeAfter?: string,
 ): Promise<{ posts: Connection<PostListItem> }> {
-  const first = typeof arg1 === 'number' ? arg1 : arg1.first;
-  const after = typeof arg1 === 'number' ? maybeAfter : arg1.after;
+  const first = typeof arg1 === "number" ? arg1 : arg1.first;
+  const after = typeof arg1 === "number" ? maybeAfter : arg1.after;
   // NOTE: search/categoryIn/tagIn are accepted for compatibility with callers,
   // but the current GET_POSTS query ignores them. We can wire them in later.
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, { first, after: after ?? null });
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, {
+    first,
+    after: after ?? null,
+  });
 }
 
 // ---------- Single post ----------
@@ -103,21 +98,12 @@ export type PostDetail = PostListItem & {
 };
 
 export async function getPostBySlug(slug: string) {
-  const data = await fetchGraphQL<{ post: PostDetail | null }>(
-    GET_POST_BY_SLUG,
-    { slug }
-  );
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_SLUG, { slug });
   return data.post ?? null;
 }
 
 // --- All categories (connection) ---
-export async function getAllCategories({
-  first,
-  after,
-}: {
-  first: number;
-  after?: string;
-}) {
+export async function getAllCategories({ first, after }: { first: number; after?: string }) {
   return fetchGraphQL<{ categories: Connection<Term> }>(GET_ALL_CATEGORIES, {
     first,
     after: after ?? null,
@@ -152,7 +138,7 @@ export async function getPostsPage(params: { first: number; after?: string | nul
     {
       // Server-side fetch caching: tune to your needs; 5 minutes example
       next: { revalidate: 300 },
-    }
+    },
   );
 
   const edges = data.posts?.edges ?? [];
@@ -169,11 +155,7 @@ export type SearchPostsArgs = {
   after?: string | null;
 };
 
-export async function searchPosts({
-  query,
-  first = 10,
-  after = null,
-}: SearchPostsArgs) {
+export async function searchPosts({ query, first = 10, after = null }: SearchPostsArgs) {
   if (!query?.trim()) {
     return {
       posts: [] as WPPostCard[],
@@ -187,11 +169,7 @@ export async function searchPosts({
       pageInfo: { endCursor: string | null; hasNextPage: boolean };
       nodes: WPPostCard[];
     };
-  }>(
-    SEARCH_POSTS,
-    { search: query, first, after },
-    { next: { revalidate: 0 } }
-  );
+  }>(SEARCH_POSTS, { search: query, first, after }, { next: { revalidate: 0 } });
 
   return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
 }
@@ -282,7 +260,10 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
     tag?: {
       name: string;
       slug: string;
-      posts?: { nodes: PostListItem[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
+      posts?: {
+        nodes: PostListItem[];
+        pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      };
     } | null;
   }>(query, variables);
 

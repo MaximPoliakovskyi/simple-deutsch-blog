@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import type { WPPostCard } from "@/lib/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
 
 async function getBaseUrl() {
@@ -12,7 +13,7 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
-async function getSliderPosts(): Promise<any[]> {
+async function getSliderPosts(): Promise<unknown[]> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base);
   url.searchParams.set("first", "8");
@@ -20,11 +21,11 @@ async function getSliderPosts(): Promise<any[]> {
   const res = await fetch(url, { next: { revalidate: 300 } });
   if (!res.ok) return [];
   const json = await res.json();
-  return Array.isArray(json) ? json : json?.posts ?? [];
+  return Array.isArray(json) ? json : (json?.posts ?? []);
 }
 
 export default async function LatestPostsSliderServer() {
-  const posts = await getSliderPosts();
+  const posts = (await getSliderPosts()) as WPPostCard[];
   if (!posts.length) return null;
   return <LatestPostsSlider posts={posts} title="Latest posts" />;
 }

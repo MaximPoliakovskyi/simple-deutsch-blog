@@ -1,11 +1,9 @@
 // app/layout.tsx
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import Navigation from "@/components/Navigation";
 import PreloaderClient from "@/components/PreloaderClient";
 import "@/styles/globals.css";
-
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -15,27 +13,15 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
  * Reads localStorage 'sd-theme' or falls back to system preference.
  * Applies `.dark` class to <html> for Tailwind v4 @custom-variant dark.
  */
-const themeInit = `
-(function () {
-  try {
-    var ls = localStorage.getItem('sd-theme'); // 'dark' | 'light' | null
-    var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var initial = ls ? ls : (systemDark ? 'dark' : 'light');
-    var root = document.documentElement;
-    if (initial === 'dark') root.classList.add('dark');
-    else root.classList.remove('dark');
-  } catch (_) {}
-})();`;
+/* theme init moved to /public/theme-init.js to avoid inline injection */
 
+/* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang="de"
-      suppressHydrationWarning
-      data-scroll-behavior="smooth"
-    >
+    <html lang="de" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+        {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
+        <script src="/theme-init.js" async />
       </head>
       <body
         className={[
@@ -53,18 +39,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Main page content */}
         {children}
 
-        <footer
-          role="contentinfo"
-          className="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400"
-        >
+        <footer className="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400">
           © {new Date().getFullYear()} simple-deutsch.de
         </footer>
       </body>
     </html>
   );
-                    {/* Client-side preloader component (no SSR text mutations) */}
-                    {/* eslint-disable-next-line @typescript-eslint/consistent-type-imports */}
-                    {/* Imported dynamically as a client component below */}
-                    {/* PreloaderClient will mount only on the client and manage its own lifecycle */}
-                    <script dangerouslySetInnerHTML={{ __html: '/* preloader client will mount on client */' }} />
 }

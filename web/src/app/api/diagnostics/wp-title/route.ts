@@ -1,5 +1,5 @@
 // src/app/api/diagnostics/wp-title/route.ts
-import { fetchGraphQL } from '@/lib/wp/client';
+import { fetchGraphQL } from "@/lib/wp/client";
 
 export const revalidate = 0;
 

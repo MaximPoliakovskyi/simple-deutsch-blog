@@ -1,10 +1,10 @@
 // web/types/env.d.ts
-export {}
+export {};
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      WP_GRAPHQL_URL: string
+      WP_GRAPHQL_URL: string;
     }
   }
 }

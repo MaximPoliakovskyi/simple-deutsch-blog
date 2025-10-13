@@ -4,7 +4,7 @@ const nextConfig = {
   images: {
     remotePatterns: [
       // WP uploads (adjust host if yours differs)
-      { protocol: 'https', hostname: 'cms.simple-deutsch.de', pathname: '/wp-content/uploads/**' },
+      { protocol: "https", hostname: "cms.simple-deutsch.de", pathname: "/wp-content/uploads/**" },
     ],
   },
 };

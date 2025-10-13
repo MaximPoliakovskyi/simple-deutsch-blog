@@ -8,7 +8,12 @@
   },
   "linter": {
     "enabled": true,
-    "rules": { "recommended": true }
+    "rules": {
+      "recommended": true,
+      "security": { "noDangerouslySetInnerHtml": "off" },
+      "suspicious": { "noUnknownAtRules": "off" },
+      "complexity": { "noImportantStyles": "off" }
+    }
   },
   "javascript": { "formatter": { "quoteStyle": "double" } },
   "files": {

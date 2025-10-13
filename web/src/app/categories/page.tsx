@@ -1,7 +1,10 @@
 // app/categories/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
+import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getAllCategories } from "@/lib/wp/api";
+
+// helper removed; using shared `extractConnectionNodes` from utils
 
 export const revalidate = 600;
 
@@ -15,9 +18,14 @@ export default async function CategoriesIndexPage() {
   const { categories } = await getAllCategories({ first: 100 });
 
   // Support either categories.nodes or categories.edges -> node
-  const nodes =
-    (categories as any)?.nodes ??
-    ((categories as any)?.edges?.map((e: any) => e?.node).filter(Boolean) ?? []);
+  type CategoryNode = {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    count?: number;
+  };
+  const nodes = extractConnectionNodes<CategoryNode>(categories);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
@@ -26,7 +34,7 @@ export default async function CategoriesIndexPage() {
         <p className="text-neutral-600">No categories found.</p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {nodes.map((cat: any) => (
+          {nodes.map((cat) => (
             <li
               key={cat.id}
               className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
