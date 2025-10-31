@@ -58,8 +58,10 @@ export default function SearchBox({
         className={[
           // layout
           "w-full rounded-xl px-4 py-2 text-base",
-          // color: pure white in light; theme background in dark
-          "bg-white text-neutral-900 placeholder-neutral-500 border border-neutral-300",
+          // color: light background (#FAFAFA) in light; theme background in dark
+          "bg-[#FAFAFA] text-neutral-900 placeholder-neutral-500 border",
+          // use explicit border color to match header trigger
+          "border-[#E6E7EB]",
           "dark:bg-[hsl(var(--bg))] dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-white/10",
           // focus (no UA blue outline)
           "appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)] focus:ring-offset-0",

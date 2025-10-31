@@ -1,11 +1,13 @@
 // src/app/page.tsx
 
 import { headers } from "next/headers";
-import Header from "@/components/Header";
 import LatestPostsSliderServer from "@/components/LatestPosts/LatestPostsSliderServer";
+import HeroWithFilters from "@/components/HeroWithFilters";
 import Pagination from "@/components/Pagination";
 import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
 import type { PostListItem, WPPostCard } from "@/lib/wp/api";
+import { getAllCategories } from "@/lib/wp/api";
+import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 
 type PageInfo = {
   endCursor: string | null;
@@ -67,6 +69,12 @@ export default async function HomePage() {
   const PAGE_SIZE = 9;
   const { posts, pageInfo } = await getPosts(PAGE_SIZE);
 
+  // Fetch a small set of categories to display as hero pills
+  const { categories } = await getAllCategories({ first: 12 });
+  const categoryNodes = extractConnectionNodes<{ id: string; name: string; slug: string }>(
+    categories,
+  ).slice(0, 7);
+
   // The WP API sometimes returns `excerpt` as `null` and other optional
   // nested properties may be missing. Build a normalized `WPPostCard` for
   // the UI with safe fallbacks so TypeScript and runtime consumers are happy.
@@ -102,15 +110,15 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Header is outside <main> and exists only on this page */}
-      <Header />
+  {/* homepage header removed (replaced by new hero in <main>) */}
 
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        <Pagination
+      <main className="mx-auto max-w-7xl px-4 py-12">
+        <HeroWithFilters
+          categories={categoryNodes}
           initialPosts={normalizedPosts}
           initialEndCursor={pageInfo.endCursor}
           initialHasNextPage={pageInfo.hasNextPage}
-          pageSize={PAGE_SIZE} // ← guarantees 9 per page including "Load more"
+          pageSize={PAGE_SIZE}
         />
       </main>
 

@@ -31,11 +31,24 @@ export function SearchButton({
   ariaLabel?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [openMethod, setOpenMethod] = useState<'click' | 'keyboard' | undefined>(undefined);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        // Only open from the visible button instance. Multiple SearchButton
+        // components are mounted (desktop + mobile), so guard by checking
+        // whether this button is actually visible in the layout.
+        const btn = buttonRef.current;
+        if (!btn) return;
+        // offsetParent is null for display: none (and some other hidden cases).
+        const isVisible = btn.offsetParent !== null;
+        if (!isVisible) return;
         e.preventDefault();
+        // mark that overlay was opened via keyboard so the overlay can
+        // adapt its appearance if desired
+        setOpenMethod('keyboard');
         setOpen(true);
       }
     };
@@ -46,11 +59,17 @@ export function SearchButton({
   return (
     <>
       <button
+        ref={buttonRef}
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setOpenMethod('click');
+          setOpen(true);
+        }}
         className={cn(
-          "flex items-center gap-2 rounded-full border text-sm transition-colors",
-          "bg-white text-neutral-700 border-neutral-300 hover:bg-neutral-100",
+          "flex items-center gap-2 rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none",
+          // light: use requested background color; add subtle border
+          "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0]",
+          // dark: keep subtle styling
           "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10",
           variant === "icon" ? "px-2 py-2 rounded-md" : "px-4 py-2",
           className,
@@ -66,13 +85,27 @@ export function SearchButton({
         </svg>
         {variant === "default" && <span>Find an article</span>}
       </button>
-      {open && <SearchOverlay onClose={() => setOpen(false)} />}
+      {open && (
+        <SearchOverlay
+          onClose={() => {
+            setOpen(false);
+            setOpenMethod(undefined);
+          }}
+          openMethod={openMethod}
+        />
+      )}
     </>
   );
 }
 
 /** The overlay itself — rendered in a portal to <body> so it covers the entire page */
-export default function SearchOverlay({ onClose }: { onClose: () => void }) {
+export default function SearchOverlay({
+  onClose,
+  openMethod,
+}: {
+  onClose: () => void;
+  openMethod?: 'click' | 'keyboard' | undefined;
+}) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -238,10 +271,16 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
       aria-label="Search articles"
       onMouseDown={onBackdrop}
       className={cn(
-        "fixed inset-0 z-[100] backdrop-blur-[2px]", // tiny blur for polish
+        // Backdrop: use a dark backdrop when opened via click, otherwise use
+        // a neutral grey (keyboard opening shows the lighter overlay).
+        "fixed inset-0 z-[100]",
         // Respect prefers-reduced-motion by letting OS disable transitions
-        "motion-reduce:transition-none motion-reduce:backdrop-blur-0",
-        show ? "bg-black/40" : "bg-black/0",
+        "motion-reduce:transition-none",
+        show
+          ? openMethod === 'click'
+            ? "bg-black/70"
+            : "bg-neutral-100/80 dark:bg-neutral-900/80"
+          : "bg-transparent",
       )}
       style={{
         transitionProperty: "background-color, opacity, filter",
@@ -269,11 +308,13 @@ export default function SearchOverlay({ onClose }: { onClose: () => void }) {
         {/* Input row */}
         <div
           className="
-            flex items-center gap-2 rounded-xl border px-3 py-2
-            bg-white text-neutral-900 border-neutral-200
+            flex items-center gap-2 rounded-xl px-3 py-2 border
+            bg-white text-neutral-900
             dark:bg-[hsl(var(--bg))] dark:text-neutral-100 dark:border-white/10
             focus-within:ring-2 focus-within:ring-[var(--sd-accent)]
           "
+          // use a specific light-mode border color (avoid utility conflict)
+          style={{ borderColor: '#E6E7EB' }}
         >
           <svg
             width="18"

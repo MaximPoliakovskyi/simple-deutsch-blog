@@ -26,8 +26,10 @@ export default function PostContent({ html, className = "" }: Props) {
         "prose-img:rounded-xl",
         "prose-pre:rounded-xl",
         "prose-pre:overflow-x-auto",
-        // Optional if you add dark mode later (Phase 5.5):
-        // 'dark:prose-invert',
+  // Enable better dark-mode support for typographic content
+  'dark:prose-invert',
+  // Slightly adjust link color in dark mode if needed
+  'dark:prose-a:text-gray-200',
         className,
       ].join(" ")}
       // HTML content already sanitized on the server side (3.5)

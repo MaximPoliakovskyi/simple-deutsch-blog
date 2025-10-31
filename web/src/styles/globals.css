@@ -46,6 +46,12 @@
   --sd-bg: hsl(var(--bg));
   --sd-fg: hsl(var(--fg));
 
+  /* Card / surface token used for small UI surfaces like the TOC and promo card */
+  --sd-card-bg: hsl(0 0% 98%); /* very light surface */
+  /* Subtle accent gradient used on small cards (promo/TOC) */
+  --sd-card-grad-start: rgba(94, 92, 230, 0.07); /* soft bluish-lavender */
+  --sd-card-grad-end: rgba(94, 92, 230, 0.02);
+
   /* Let UA know we support dark + light native controls */
   color-scheme: light dark;
 }
@@ -55,6 +61,11 @@ html.dark {
   --bg: 222 47% 8%;
   --fg: 210 15% 96%;
   --muted: 220 9% 65%;
+
+  /* Card surface in dark mode: subtle translucent surface */
+  --sd-card-bg: rgb(255 255 255 / 3%);
+  --sd-card-grad-start: rgba(255,255,255,0.02);
+  --sd-card-grad-end: rgba(255,255,255,0.0);
 }
 
 /* Infection overlay: controlled by theme-infect + theme-infect-active classes */
@@ -223,6 +234,29 @@ html.theme-reveal.theme-reveal-active::before {
   height: 100%;
   border: 0;
   border-radius: inherit;
+}
+
+/* Reusable small-surface card helper matching the Table of Contents look.
+   Use this on small UI surfaces (TOC, promo card) to get the same bg + subtle border + rounding.
+   Keep shadows applied by utility classes (shadow-sm / shadow-lg) so we don't override them. */
+.sd-card {
+  position: relative;
+  overflow: hidden; /* contain the gradient pseudo-element */
+  background-color: color-mix(in srgb, var(--sd-card-bg) 100%, transparent);
+  border: none; /* removed subtle border per request */
+  border-radius: 1rem; /* matches rounded-xl-ish curvature */
+}
+
+/* Bottom subtle gradient glow for cards. Uses CSS variables so it's tweakable. */
+.sd-card::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 40%;
+  pointer-events: none;
+  background: radial-gradient( at 50% 100%, var(--sd-card-grad-start), var(--sd-card-grad-end) 60%, transparent 75% );
 }
 @supports not (aspect-ratio: 1) {
   .embed {

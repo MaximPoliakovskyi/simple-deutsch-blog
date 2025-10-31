@@ -40,8 +40,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Global navigation, visible on all pages */}
         <Navigation />
 
-        {/* Main page content */}
-        {children}
+  {/* Main page content - add top spacing so content sits further below the nav */}
+  <div className="mt-8 md:mt-12" aria-hidden />
+  {children}
 
         <footer className="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400">
           © {new Date().getFullYear()} simple-deutsch.de

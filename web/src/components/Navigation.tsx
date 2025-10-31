@@ -3,11 +3,18 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { SearchButton } from "@/components/SearchOverlay";
 import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
+  const [progress, setProgress] = useState<number>(0);
+  const [visible, setVisible] = useState<boolean>(false);
+  const navRef = useRef<HTMLElement | null>(null);
+  const pathname = usePathname();
+  const [progressLeft, setProgressLeft] = useState<number | null>(null);
+  const [progressWidth, setProgressWidth] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
@@ -60,14 +67,85 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, [open]);
 
+  // Reading progress: measure how far through `main article` the user has scrolled
+  useEffect(() => {
+    let rafId = 0;
+    let ticking = false;
+
+    const calculate = () => {
+      // Only run on article pages
+      if (!pathname || !pathname.startsWith("/posts/")) {
+        setProgress(0);
+        setVisible(false);
+        return;
+      }
+
+      const article = document.querySelector("main article") as HTMLElement | null;
+      if (!article) {
+        setProgress(0);
+        setVisible(false);
+        return;
+      }
+
+  const rect = article.getBoundingClientRect();
+  const articleLeft = rect.left;
+  const articleWidth = rect.width;
+      const articleTop = rect.top + window.scrollY;
+      const articleHeight = article.offsetHeight;
+      const scrollY = window.scrollY;
+      const viewportHeight = window.innerHeight;
+
+      const maxScroll = Math.max(0, articleHeight - viewportHeight);
+      let percent = 0;
+
+      if (scrollY < articleTop) {
+        percent = 0;
+      } else if (maxScroll === 0) {
+        percent = 100;
+      } else {
+        percent = Math.min(100, Math.max(0, ((scrollY - articleTop) / maxScroll) * 100));
+      }
+
+      const intersects = rect.bottom > 0 && rect.top < viewportHeight;
+      const isReading = scrollY >= articleTop;
+
+      setProgress(Number(percent.toFixed(2)));
+      setProgressLeft(Math.round(articleLeft));
+      setProgressWidth(Math.round(articleWidth));
+      setVisible(intersects || isReading);
+    };
+
+    const onScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      rafId = requestAnimationFrame(() => {
+        calculate();
+        ticking = false;
+      });
+    };
+
+  // Initialize and attach listeners
+  calculate();
+  window.addEventListener("scroll", onScroll, { passive: true });
+  window.addEventListener("resize", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
+  }, [pathname]);
+
   return (
     <>
       {/* Semantic navigation landmark */}
       <nav
-        className="sticky top-0 z-40 border-b border-neutral-200/60 bg-[hsl(var(--bg))]/90 backdrop-blur dark:border-white/10"
+        ref={navRef}
+        className="sticky top-0 z-40 bg-[hsl(var(--bg))]/90 backdrop-blur"
         aria-label="Main navigation"
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
+        <div>
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:py-5">
           <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
             simple-deutsch.de
           </Link>
@@ -131,6 +209,24 @@ export default function Header() {
             </button>
           </div>
         </div>
+          {/* Reading progress bar (fills as user reads the article)
+              Positioned over the article column and only visible while reading */}
+          <div
+            aria-hidden
+            className="fixed top-0 left-0 z-50 pointer-events-none w-screen transition-opacity duration-300"
+            style={{
+              opacity: visible ? 1 : 0,
+              top: navRef.current ? `${navRef.current.getBoundingClientRect().top}px` : "0px",
+            }}
+          >
+            <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden rounded">
+              <div
+                className="h-full bg-[var(--sd-accent)] transition-transform duration-300 ease-out"
+                style={{ transform: `scaleX(${progress / 100})`, transformOrigin: "left", willChange: "transform" }}
+              />
+            </div>
+          </div>
+        </div>
       </nav>
 
       {/* Mobile drawer */}
@@ -160,7 +256,7 @@ export default function Header() {
             open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
         >
-          <div className="flex items-center justify-between border-b border-neutral-200/60 px-4 py-3 dark:border-white/10">
+          <div className="flex items-center justify-between px-4 py-3">
             <Link
               href="/"
               onClick={() => setOpen(false)}
