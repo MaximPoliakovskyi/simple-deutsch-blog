@@ -24,15 +24,15 @@ export default function HeroWithFilters({
 
   return (
     <>
-      <section className="text-center max-w-4xl mx-auto py-12">
-        <h1 className="font-extrabold text-4xl sm:text-5xl md:text-6xl leading-tight tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
-          Discover <span className="text-blue-600">Blogs</span> websites
-          <br /> built by the Webflow community
-        </h1>
+    <section className="text-center max-w-4xl mx-auto py-12">
+      <h1 className="font-extrabold text-5xl sm:text-6xl md:text-7xl leading-tight tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
+        Discover <span className="text-blue-600">German</span> courses
+        <br /> for learners of all levels
+      </h1>
 
-        <p className="mt-6 text-[hsl(var(--fg-muted))] text-base sm:text-lg">
-          Browse, clone, and customize thousands of websites #MadeinWebflow. <a className="text-blue-600 underline" href="#">Looking for templates?</a>
-        </p>
+      <p className="mt-6 text-[hsl(var(--fg-muted))] text-base sm:text-xl">
+        Learn German online — interactive courses, exercises, etc. <a className="text-blue-600 underline" href="#">Learn more?</a>
+      </p>
 
         <CategoryPills
           categories={categories}
@@ -46,7 +46,11 @@ export default function HeroWithFilters({
         initialEndCursor={initialEndCursor}
         initialHasNextPage={initialHasNextPage}
         pageSize={pageSize}
-        categorySlug={selectedCategory}
+        // This component now supports filtering by tag via `tagSlug`.
+        // The homepage now passes tag nodes into the hero pills so the
+        // `selectedCategory` here is actually a tag slug. Use the tag prop
+        // so the grid will fetch posts by tag.
+        tagSlug={selectedCategory}
       />
     </>
   );

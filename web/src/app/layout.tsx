@@ -2,6 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import Navigation from "@/components/Navigation";
+import Footer from "@/components/Footer";
 import PreloaderClient from "@/components/PreloaderClient";
 import "@/styles/globals.css";
 
@@ -44,9 +45,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   <div className="mt-8 md:mt-12" aria-hidden />
   {children}
 
-        <footer className="mx-auto max-w-7xl px-4 py-8 text-sm text-neutral-600 dark:text-neutral-400">
-          © {new Date().getFullYear()} simple-deutsch.de
-        </footer>
+  {/* Homepage-only components are rendered by their pages now. */}
+        <Footer />
       </body>
     </html>
   );

@@ -98,8 +98,21 @@ html.theme-infect.theme-infect-active::before {
 }
 
 /* The theme-transition class briefly animates token color changes */
-html.theme-transition {
-  transition: background-color 300ms cubic-bezier(.2,.9,.2,1), color 300ms cubic-bezier(.2,.9,.2,1);
+/* When toggling theme we want most visual tokens to interpolate smoothly.
+   Apply transitions broadly while respecting prefers-reduced-motion. */
+html.theme-transition,
+html.theme-transition * {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(.2,.9,.2,1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.theme-transition,
+  html.theme-transition * {
+    /* Avoid forcing transitions for users who prefer reduced motion. */
+    transition: none !important;
+  }
 }
 
 /* Reveal overlay: controlled by theme-reveal + theme-reveal-active classes */
@@ -269,6 +282,15 @@ html.theme-reveal.theme-reveal-active::before {
 html,
 body {
   background-color: hsl(var(--bg));
+}
+
+/* Ensure the root background/color interpolate smoothly when theme tokens change.
+   This targets the highest-level elements so most pages update without needing
+   every child to have an explicit transition. Respects prefers-reduced-motion. */
+html, body {
+  transition-property: background-color, color;
+  transition-duration: 350ms;
+  transition-timing-function: cubic-bezier(.2,.9,.2,1);
 }
 
 /* ✅ Next.js-compliant smooth scrolling */

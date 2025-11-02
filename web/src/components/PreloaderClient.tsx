@@ -209,7 +209,7 @@ export default function PreloaderClient() {
   if (!mounted) return null;
 
   return (
-    <div id="sd-preloader" aria-hidden={false} className={hiding ? "sd-preloader-hidden" : ""}>
+    <div id="sd-preloader" aria-hidden={false} className={`${hiding ? "sd-preloader-hidden" : ""} select-none`}>
       {/* CSS-only rotator shown before JS runs; hidden when jsReady === true */}
       <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
         {WORDS.slice(0, 8).map((w, idx) => (

@@ -17,24 +17,39 @@ export default function ThemeToggle() {
   function setTheme(next: Theme, e?: MouseEvent<HTMLButtonElement>) {
     const root = document.documentElement;
     const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      // Add a short transition class so token-based colors interpolate smoothly.
-      if (!prefersReduce) root.classList.add("theme-transition");
+    // Match CSS transition duration (ms) and avoid stacking timers when toggling quickly.
+    const TRANSITION_MS = 350;
 
-      if (next === "dark") root.classList.add("dark");
-      else root.classList.remove("dark");
-
+    // Add a short transition class so token-based colors interpolate smoothly.
+    if (!prefersReduce) {
+      // Clear any existing timers to avoid removing the class too early/late.
       try {
-        localStorage.setItem("sd-theme", next);
-      } catch {}
-      setIsDark(next === "dark");
+        const existing = (root as any).__sd_theme_timer as number | undefined;
+        if (existing) window.clearTimeout(existing);
+      } catch (_) {}
 
-      // Remove transition class after short duration.
-      if (!prefersReduce) {
-        const t = window.setTimeout(() => root.classList.remove("theme-transition"), 300);
+      root.classList.add("theme-transition");
+    }
+
+    if (next === "dark") root.classList.add("dark");
+    else root.classList.remove("dark");
+
+    try {
+      localStorage.setItem("sd-theme", next);
+    } catch {}
+    setIsDark(next === "dark");
+
+    // Remove transition class after the CSS duration has elapsed.
+    if (!prefersReduce) {
+      const t = window.setTimeout(() => {
         try {
-          (root as any).__sd_theme_timers = [t];
+          root.classList.remove("theme-transition");
         } catch (_) {}
-      }
+      }, TRANSITION_MS);
+      try {
+        (root as any).__sd_theme_timer = t;
+      } catch (_) {}
+    }
   }
 
     if (!mounted) return null;

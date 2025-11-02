@@ -9,8 +9,11 @@ type Props = {
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
   pageSize?: number;
-  // controlled category prop - when provided, component fetches posts for this category
+  // controlled category or tag prop - when provided, component fetches posts for
+  // the given category slug (categorySlug) or tag slug (tagSlug). If both are
+  // provided, tagSlug takes precedence.
   categorySlug?: string | null;
+  tagSlug?: string | null;
 };
 
 export default function PostsGridWithPagination({
@@ -19,27 +22,29 @@ export default function PostsGridWithPagination({
   initialHasNextPage,
   pageSize = 9,
   categorySlug = null,
+  tagSlug = null,
 }: Props) {
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
   const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
   const [loading, setLoading] = React.useState(false);
-  // category is controlled via prop
+  // category or tag is controlled via prop
   const category = categorySlug ?? null;
+  const tag = tagSlug ?? null;
 
   // refs to track seen ids and the initial server-provided posts
   const seen = React.useRef<Set<string>>(new Set(initialPosts.map((p) => (p.id ?? p.slug) as string)));
   const initialRef = React.useRef({ posts: initialPosts, endCursor: initialEndCursor, hasNext: initialHasNextPage });
 
   React.useEffect(() => {
-    // When category changes, fetch fresh posts for that category (or restore initial)
+    // When category or tag changes, fetch fresh posts for that filter (or restore initial)
     let cancelled = false;
 
-  async function fetchForCategory() {
+    async function fetchForFilter() {
       setLoading(true);
       try {
-  if (!category) {
-          // restore initial server render
+        // If neither category nor tag is selected, restore initial server render
+        if (!category && !tag) {
           seen.current = new Set(initialRef.current.posts.map((p) => (p.id ?? p.slug) as string));
           setItems(initialRef.current.posts);
           setAfter(initialRef.current.endCursor);
@@ -47,9 +52,14 @@ export default function PostsGridWithPagination({
           return;
         }
 
-  const url = new URL("/api/posts", window.location.origin);
+        const url = new URL("/api/posts", window.location.origin);
         url.searchParams.set("first", String(pageSize));
-  url.searchParams.set("category", category);
+        // Prefer tag filter when provided
+        if (tag) {
+          url.searchParams.set("tag", tag);
+        } else if (category) {
+          url.searchParams.set("category", category);
+        }
 
         const res = await fetch(url.toString(), { method: "GET" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -63,18 +73,18 @@ export default function PostsGridWithPagination({
         setAfter(json.pageInfo.endCursor);
         setHasNext(json.pageInfo.hasNextPage);
       } catch (err) {
-        console.error("Failed to load posts for category", err);
+        console.error("Failed to load posts for filter", err);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
 
-    fetchForCategory();
+    fetchForFilter();
 
     return () => {
       cancelled = true;
     };
-  }, [category, pageSize]);
+  }, [category, tag, pageSize]);
 
   const loadMore = async () => {
     if (!hasNext || loading) return;
@@ -83,7 +93,11 @@ export default function PostsGridWithPagination({
       const url = new URL("/api/posts", window.location.origin);
       if (after) url.searchParams.set("after", after);
       url.searchParams.set("first", String(pageSize));
-      if (category) url.searchParams.set("category", category);
+      if (tag) {
+        url.searchParams.set("tag", tag);
+      } else if (category) {
+        url.searchParams.set("category", category);
+      }
 
       const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

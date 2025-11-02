@@ -5,8 +5,9 @@ import LatestPostsSliderServer from "@/components/LatestPosts/LatestPostsSliderS
 import HeroWithFilters from "@/components/HeroWithFilters";
 import Pagination from "@/components/Pagination";
 import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
+import CategoriesBlock from "@/components/CategoriesBlock";
 import type { PostListItem, WPPostCard } from "@/lib/wp/api";
-import { getAllCategories } from "@/lib/wp/api";
+import { getAllTags } from "@/lib/wp/api";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 
 type PageInfo = {
@@ -69,10 +70,12 @@ export default async function HomePage() {
   const PAGE_SIZE = 9;
   const { posts, pageInfo } = await getPosts(PAGE_SIZE);
 
-  // Fetch a small set of categories to display as hero pills
-  const { categories } = await getAllCategories({ first: 12 });
+  // Fetch a small set of tags to display as hero pills
+  const { tags } = await getAllTags({ first: 12 });
   const categoryNodes = extractConnectionNodes<{ id: string; name: string; slug: string }>(
-    categories,
+    // reuse the same variable name expected by the Hero component (categories)
+    // but these are tag nodes coming from WP
+    tags,
   ).slice(0, 7);
 
   // The WP API sometimes returns `excerpt` as `null` and other optional
@@ -125,8 +128,11 @@ export default async function HomePage() {
       {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
       <SuccessStoriesSliderServer />
 
-      {/* ✅ Homepage “Latest posts” slider */}
-      <LatestPostsSliderServer />
+  {/* ✅ Homepage “Latest posts” slider */}
+  <LatestPostsSliderServer />
+
+  {/* Homepage-only Categories block — rendered before the global footer */}
+  <CategoriesBlock />
     </>
   );
 }
