@@ -34,7 +34,38 @@ export async function generateMetadata({ params }: { params: ParamsPromise }): P
 export default async function PostPage({ params }: { params: ParamsPromise }) {
   const { slug } = await params; // ✅ must await
 
-  const post = await getPostBySlug(slug);
+  // Try primary lookup by slug. Some WordPress setups or malformed links
+  // (encoding, trailing slashes, unexpected prefixes) may cause the direct
+  // GraphQL lookup to fail. Attempt a small fallback search before returning
+  // a 404 so we can recover in more cases.
+  let post = await getPostBySlug(slug);
+
+  async function findPostFallback(slugToCheck: string) {
+    // try decoding URI components and simple normalizations
+    const candidates = [slugToCheck, decodeURIComponent(slugToCheck || ""), slugToCheck.replace(/^\/+/, ""), slugToCheck.replace(/\.html?$/i, "")];
+    // fetch a modest page of posts and try to match by slug
+    try {
+      const page = await getPostsPage({ first: 50 });
+      const nodes = page.posts ?? [];
+      for (const cand of candidates) {
+        const found = nodes.find((n) => n.slug === cand);
+        if (found) {
+          // fetch full post detail for rendering
+          const full = await getPostBySlug(found.slug);
+          if (full) return full;
+        }
+      }
+    } catch (err) {
+      // ignore and fall through
+      console.error("Fallback post search failed:", err);
+    }
+    return null;
+  }
+
+  if (!post) {
+    post = await findPostFallback(slug);
+  }
+
   if (!post) return notFound();
 
   // We render static article content for this page (screenshot example).
@@ -75,7 +106,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
             <div className="mb-6">
               <Link
                 href={`/categories/${firstCategory.slug}`}
-                className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50"
+                className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
               >
                 {firstCategory.name}
               </Link>

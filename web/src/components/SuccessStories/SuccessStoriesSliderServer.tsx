@@ -19,6 +19,10 @@ async function getSliderPosts(): Promise<WPPostCard[]> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base); // adjust path if your API differs
   url.searchParams.set("first", "8");
+  // Request posts specifically in the "success-stories" category so the
+  // client-side filter has relevant posts to work with. Adjust slug if your
+  // WP category uses a different slug.
+  url.searchParams.set("category", "success-stories");
 
   const res = await fetch(url, { next: { revalidate: 300 } });
   if (!res.ok) return [];

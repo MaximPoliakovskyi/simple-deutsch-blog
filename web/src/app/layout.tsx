@@ -21,9 +21,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
-        {/* Document title and favicon */}
-        <title>Simple Deutsch</title>
-        <link rel="icon" href="/logo.svg" />
+  {/* Document title and favicon */}
+  <title>Simple Deutsch</title>
+  <link rel="icon" href="/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
         <script src="/theme-init.js" async />

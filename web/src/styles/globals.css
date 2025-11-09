@@ -204,6 +204,47 @@ html.theme-reveal.theme-reveal-active::before {
   border-radius: 4px;
 }
 
+/* Author-inserted buttons inside article content (Gutenberg / WP blocks).
+   Ensure these pills are darker and have good contrast in dark/night theme. */
+.prose .wp-block-button__link,
+.prose a.button,
+.prose a.sd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1;
+  transition: background-color 180ms ease, color 180ms ease, transform 120ms ease;
+  border: 1px solid transparent;
+}
+
+/* Light theme: subtle accent fill */
+.prose .wp-block-button__link,
+.prose a.button,
+.prose a.sd-pill {
+  background: color-mix(in srgb, var(--sd-accent) 12%, transparent);
+  color: hsl(0 0% 100% / 0.98);
+}
+
+/* Dark theme: visibly darker pill that reads well on night surfaces */
+html.dark .prose .wp-block-button__link,
+html.dark .prose a.button,
+html.dark .prose a.sd-pill {
+  background: rgba(255,255,255,0.03); /* slightly lighter than page bg */
+  color: hsl(var(--fg));
+  border-color: rgba(255,255,255,0.05);
+  box-shadow: none;
+}
+
+.prose .wp-block-button__link:hover,
+.prose a.button:hover,
+.prose a.sd-pill:hover {
+  transform: translateY(-1px);
+}
+
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   * {

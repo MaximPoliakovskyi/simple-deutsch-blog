@@ -271,16 +271,13 @@ export default function SearchOverlay({
       aria-label="Search articles"
       onMouseDown={onBackdrop}
       className={cn(
-        // Backdrop: use a dark backdrop when opened via click, otherwise use
-        // a neutral grey (keyboard opening shows the lighter overlay).
+        // Backdrop: use a single consistent backdrop regardless of how the
+        // overlay was opened (keyboard or click). This ensures Ctrl+K and
+        // clicking the "Find an article" button look the same.
         "fixed inset-0 z-[100]",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
-        show
-          ? openMethod === 'click'
-            ? "bg-black/70"
-            : "bg-neutral-100/80 dark:bg-neutral-900/80"
-          : "bg-transparent",
+        show ? "bg-black/70" : "bg-transparent",
       )}
       style={{
         transitionProperty: "background-color, opacity, filter",

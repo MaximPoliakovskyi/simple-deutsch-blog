@@ -56,17 +56,17 @@ export default function SuccessStoriesSlider({
   if (!posts?.length) return null;
 
   // Only posts in “Success stories”; hide that chip from list
+  // Use category slug for matching because category name can include emoji or
+  // localized text. The WP slug for this category is `success-stories`.
   const filteredPosts = posts
     .filter((post) =>
-      post?.categories?.nodes?.some((cat) => cat?.name?.toLowerCase() === "success stories"),
+      post?.categories?.nodes?.some((cat) => cat?.slug === "success-stories"),
     )
     .map((post) => ({
       ...post,
       categories: {
         nodes:
-          post?.categories?.nodes?.filter(
-            (cat) => cat?.name?.toLowerCase() !== "success stories",
-          ) ?? [],
+          post?.categories?.nodes?.filter((cat) => cat?.slug !== "success-stories") ?? [],
       },
     }));
 
