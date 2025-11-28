@@ -18,19 +18,19 @@ export async function POST(req: NextRequest) {
   try {
     switch (body.type) {
       case "posts":
-        revalidateTag(CACHE_TAGS.posts);
+        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.posts);
         break;
       case "post":
         if (!body.slug) throw new Error("Missing slug");
-        revalidateTag(CACHE_TAGS.post(body.slug));
+        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.post(body.slug));
         // you can also refresh the listing path if you have one:
         // revalidatePath('/blog')
         break;
       case "categories":
-        revalidateTag(CACHE_TAGS.categories);
+        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.categories);
         break;
       case "tags":
-        revalidateTag(CACHE_TAGS.tags);
+        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.tags);
         break;
       default:
         // no-op
