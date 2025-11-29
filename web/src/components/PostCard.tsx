@@ -4,6 +4,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useI18n } from "@/components/LocaleProvider";
+import { isHiddenCategory } from "@/lib/hiddenCategories";
+import { translateCategory } from "@/lib/categoryTranslations";
 
 export type PostCardPost = {
   id?: string;
@@ -80,7 +82,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
   const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
 
   // All categories (instead of only the first)
-  const categories = post.categories?.nodes ?? [];
+  const categories = (post.categories?.nodes ?? []).filter((c) => !isHiddenCategory(c.name, c.slug));
 
   const prefix = locale === "en" ? "" : `/${locale}`;
 
@@ -150,12 +152,12 @@ export default function PostCard({ post, className, priority = false }: PostCard
             <Link
               key={cat.slug}
               href={`${prefix}/categories/${cat.slug}`}
-              aria-label={`${t("viewCategoryAria")} ${cat.name}`}
+              aria-label={`${t("viewCategoryAria")} ${translateCategory(cat.name, cat.slug, locale)}`}
               className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
                          dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
                          hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
             >
-              {cat.name}
+              {translateCategory(cat.name, cat.slug, locale)}
             </Link>
           ))}
         </div>

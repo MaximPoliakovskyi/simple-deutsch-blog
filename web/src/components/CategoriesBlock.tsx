@@ -2,6 +2,7 @@ import type { ReactElement } from "react";
 import CategoriesBlockClient from "./CategoriesBlockClient";
 import { getAllCategories, getPostsPage } from "@/lib/wp/api";
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { filterHiddenCategories } from "@/lib/hiddenCategories";
 
 /**
  * Server component: fetches categories and a small posts page, then
@@ -14,6 +15,9 @@ export default async function CategoriesBlock({ locale }: { locale?: "en" | "ru"
     name: c.name,
     slug: c.slug,
   }));
+
+  // Remove language/infrastructure categories we don't want to expose in the UI
+  const visibleCategories = filterHiddenCategories(categories);
 
   const postsResp = await getPostsPage({ first: 3 });
   const initialPosts = postsResp.posts ?? [];
@@ -77,7 +81,7 @@ export default async function CategoriesBlock({ locale }: { locale?: "en" | "ru"
 
         {/* Client component gets serializable props only */}
         <CategoriesBlockClient
-          categories={categories}
+          categories={visibleCategories}
           initialPosts={initialPosts}
           initialEndCursor={pageInfo.endCursor}
           initialHasNextPage={pageInfo.hasNextPage}

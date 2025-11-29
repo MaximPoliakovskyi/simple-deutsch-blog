@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useI18n } from "@/components/LocaleProvider";
+import { translateCategory } from "@/lib/categoryTranslations";
 
 type Cat = { id: string; name: string; slug: string };
 
@@ -21,7 +22,7 @@ export default function CategoryPills({
   /** When true, a category must always be selected and cannot be deselected */
   required?: boolean;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   // If `required` is true and no explicit initialSelected was provided, default
   // to the first category's slug when categories are available.
   const defaultSelected = React.useMemo(() => {
@@ -66,7 +67,7 @@ export default function CategoryPills({
                   : "bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-neutral-700"
               }`}
             >
-              {cat.name}
+              {translateCategory(cat.name, cat.slug, locale)}
             </button>
           );
         })

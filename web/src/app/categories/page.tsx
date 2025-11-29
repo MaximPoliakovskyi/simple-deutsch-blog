@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getAllCategories } from "@/lib/wp/api";
+import { filterHiddenCategories } from "@/lib/hiddenCategories";
+import { translateCategory } from "@/lib/categoryTranslations";
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
 // helper removed; using shared `extractConnectionNodes` from utils
@@ -27,24 +29,25 @@ export default async function CategoriesIndexPage({ locale }: { locale?: "en" | 
     count?: number;
   };
   const nodes = extractConnectionNodes<CategoryNode>(categories);
+  const visible = filterHiddenCategories(nodes);
 
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10">
+    <div className="mx-auto max-w-7xl px-4 py-6">
       <h1 className="mb-8 text-3xl font-semibold">{t.categoriesHeading}</h1>
-      {nodes.length === 0 ? (
+      {visible.length === 0 ? (
         <p className="text-neutral-600">{t.noCategories}</p>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {nodes.map((cat) => (
+        <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-8">
+          {visible.map((cat) => (
             <li
               key={cat.id}
               className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
             >
               <Link href={`/categories/${cat.slug}`} className="group block">
                 <div className="mb-1 flex items-baseline justify-between">
-                  <h2 className="text-lg font-medium group-hover:underline">{cat.name}</h2>
+                  <h2 className="text-lg font-medium group-hover:underline">{translateCategory(cat.name, cat.slug, locale ?? "en")}</h2>
                   {typeof cat?.count === "number" && (
                     <span className="text-xs text-neutral-500">
                       {cat.count} {cat.count === 1 ? "post" : "posts"}
@@ -56,7 +59,7 @@ export default async function CategoriesIndexPage({ locale }: { locale?: "en" | 
                     {cat.description}
                   </p>
                 ) : (
-                  <p className="text-sm text-neutral-500">Browse posts in {cat?.name}.</p>
+                  <p className="text-sm text-neutral-500">Browse posts in {translateCategory(cat?.name, cat?.slug, locale ?? "en")}.</p>
                 )}
               </Link>
             </li>

@@ -9,6 +9,7 @@ import CategoriesBlock from "@/components/CategoriesBlock";
 import type { PostListItem, WPPostCard } from "@/lib/wp/api";
 import { getAllTags } from "@/lib/wp/api";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
+import { filterHiddenCategories } from "@/lib/hiddenCategories";
 
 type PageInfo = {
   endCursor: string | null;
@@ -81,10 +82,12 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
 
   // Fetch a small set of tags to display as hero pills
   const { tags } = await getAllTags({ first: 12 });
-  const categoryNodes = extractConnectionNodes<{ id: string; name: string; slug: string }>(
-    // reuse the same variable name expected by the Hero component (categories)
-    // but these are tag nodes coming from WP
-    tags,
+  const categoryNodes = filterHiddenCategories(
+    extractConnectionNodes<{ id: string; name: string; slug: string }>(
+      // reuse the same variable name expected by the Hero component (categories)
+      // but these are tag nodes coming from WP
+      tags,
+    ),
   ).slice(0, 7);
 
   // The WP API sometimes returns `excerpt` as `null` and other optional

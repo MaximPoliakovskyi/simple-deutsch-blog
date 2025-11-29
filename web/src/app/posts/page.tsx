@@ -32,7 +32,7 @@ export default async function PostsIndexPage({ locale }: { locale?: "en" | "ru" 
       {nodes.length === 0 ? (
         <p className="text-neutral-600">{t.noPosts}</p>
       ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
           {nodes.map((post) => (
             <li key={post.id}>
               <PostCard post={post as PostCardPost} />

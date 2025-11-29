@@ -4,6 +4,8 @@ import PostContent from "@/components/PostContent";
 import Link from "next/link";
 import { getPostBySlug, getPostsByCategorySlug, getPostsPage } from "@/lib/wp/api"; // adjust path if yours differs
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { isHiddenCategory } from "@/lib/hiddenCategories";
+import { translateCategory } from "@/lib/categoryTranslations";
 import { generateTocFromHtml } from "@/lib/utils/generateToc";
 
 // Optional: keep your ISR setting if you use it
@@ -32,7 +34,7 @@ export async function generateMetadata({ params }: { params: ParamsPromise }): P
   };
 }
 
-export default async function PostPage({ params }: { params: ParamsPromise }) {
+export default async function PostPage({ params, locale }: { params: ParamsPromise; locale?: "en" | "ru" | "ua" }) {
   const { slug } = await params; // ✅ must await
 
   // Try primary lookup by slug. Some WordPress setups or malformed links
@@ -76,6 +78,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
   const date = post.date ? new Date(post.date) : null;
   const formattedDate = date ? date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
   const firstCategory = post.categories?.nodes?.[0] ?? null;
+  const showFirstCategory = firstCategory ? !isHiddenCategory(firstCategory.name, firstCategory.slug) : false;
 
   // compute read time (approx) from word count (200 wpm)
   const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
@@ -83,19 +86,30 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
 
   // Generate a table-of-contents and inject anchor ids into headings
   const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };
-  const t = TRANSLATIONS["en"];
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   // fetch related / more posts for the sidebar
   let morePosts: { slug: string; title: string }[] = [];
-  if (firstCategory?.slug) {
+  // If the primary category is visible, fetch related posts by that category.
+  if (firstCategory?.slug && !isHiddenCategory(firstCategory.name, firstCategory.slug)) {
     const catRes = await getPostsByCategorySlug(firstCategory.slug, 6);
     const nodes = catRes.posts?.nodes ?? [];
-    morePosts = nodes.filter((p) => p.slug !== post.slug).map((p) => ({ slug: p.slug, title: p.title })).slice(0, 4);
+    morePosts = nodes
+      .filter((p) => p.slug !== post.slug)
+      // Exclude posts that belong only to hidden categories
+      .filter((p) => !(p.categories?.nodes ?? []).every((c) => isHiddenCategory(c.name, c.slug)))
+      .map((p) => ({ slug: p.slug, title: p.title }))
+      .slice(0, 4);
   }
 
   if (morePosts.length === 0) {
     const page = await getPostsPage({ first: 6 });
-    morePosts = page.posts.filter((p) => p.slug !== post.slug).map((p) => ({ slug: p.slug, title: p.title })).slice(0, 4);
+    morePosts = page.posts
+      .filter((p) => p.slug !== post.slug)
+      // Exclude posts that belong only to hidden categories
+      .filter((p) => !(p.categories?.nodes ?? []).every((c) => isHiddenCategory(c.name, c.slug)))
+      .map((p) => ({ slug: p.slug, title: p.title }))
+      .slice(0, 4);
   }
 
   return (
@@ -104,13 +118,13 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
         <article className="md:col-span-3">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">{post.title}</h1>
 
-          {firstCategory ? (
+          {showFirstCategory && firstCategory ? (
             <div className="mb-6">
               <Link
                 href={`/categories/${firstCategory.slug}`}
                 className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
               >
-                {firstCategory.name}
+                {translateCategory(firstCategory.name, firstCategory.slug, locale ?? DEFAULT_LOCALE)}
               </Link>
             </div>
           ) : null}
