@@ -61,9 +61,12 @@ export default function ThemeToggle() {
       aria-pressed={isDark}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
-      className="rounded-lg p-2 transition-colors
-                 hover:bg-neutral-100 dark:hover:bg-white/5
-                 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]"
+      className={
+        "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none " +
+        "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0] " +
+        "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10"
+      }
+      style={{ padding: 0 }}
     >
       {isDark ? (
         <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">

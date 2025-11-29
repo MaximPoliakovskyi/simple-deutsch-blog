@@ -67,14 +67,18 @@ export function SearchButton({
           setOpen(true);
         }}
         className={cn(
-          "flex items-center gap-2 rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none",
-          // light: use requested background color; add subtle border
-          "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0]",
-          // dark: keep subtle styling
-          "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10",
-          variant === "icon" ? "px-2 py-2 rounded-md" : "px-4 py-2",
-          className,
-        )}
+            // base layout — we'll adjust spacing per-variant below
+            "flex transition-colors text-sm focus:outline-none focus-visible:outline-none",
+            // light: use requested background color; add subtle border
+            "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0]",
+            // dark: keep subtle styling
+            "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10",
+            // variant specific
+            variant === "icon"
+              ? "w-[38px] h-[38px] rounded-full p-0 items-center justify-center"
+              : "items-center gap-2 px-4 py-2 rounded-full",
+            className,
+          )}
         aria-label={ariaLabel}
         title={`${ariaLabel} (Ctrl+K)`}
       >

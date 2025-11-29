@@ -7,11 +7,152 @@ import { usePathname, useRouter } from "next/navigation";
 import { SearchButton } from "@/components/SearchOverlay";
 import ThemeToggle from "@/components/ThemeToggle";
 import { useI18n } from "@/components/LocaleProvider";
+// LanguageDropdown uses the hooks imported above
+
+type Lang = "en" | "ru" | "ua";
+
+/**
+ * Compact language switcher button.
+ * Shows short labels (Eng / Укр / Рус) and cycles to the next language on click.
+ * Uses client-side navigation (router.push) to preserve SPA behavior and update the URL.
+ */
+function LanguageDropdown({
+  currentLocale,
+  buildHref,
+  t,
+}: {
+  currentLocale: Lang;
+  buildHref: (target: Lang) => string;
+  t: (k: string) => string;
+}) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLUListElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+
+  // All languages ordered; when rendering we place the selected locale at the top
+  const order: Lang[] = ["en", "ua", "ru"];
+  // Short labels for the pill / stacked items
+  const labelsShort: Record<Lang, string> = { en: "En", ua: "Ук", ru: "Ру" };
+  const labelsFull: Record<Lang, string> = { en: "English", ua: "Українська", ru: "Русский" };
+
+  useEffect(() => {
+    function onDoc(e: MouseEvent) {
+      const t = e.target as Node | null;
+      if (!open) return;
+      if (btnRef.current && t && btnRef.current.contains(t)) return;
+      if (menuRef.current && t && menuRef.current.contains(t)) return;
+      setOpen(false);
+    }
+    window.addEventListener("mousedown", onDoc);
+    return () => window.removeEventListener("mousedown", onDoc);
+  }, [open]);
+
+  // Hover helpers: add a small delay when closing so the user can move
+  // the pointer from the button to the menu without it disappearing.
+  const handleMouseEnter = () => {
+    if (closeTimerRef.current) {
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    }
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    // small delay to prevent flicker when moving the pointer
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+    }, 150);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    };
+  }, []);
+
+  // keyboard handling: open with ArrowDown/Enter/Space, close with Escape
+  const onButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      // focus first menu item after a tick
+      setTimeout(() => {
+        const first = menuRef.current?.querySelector<HTMLAnchorElement>("a");
+        first?.focus();
+      }, 0);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      btnRef.current?.focus();
+    }
+  };
+
+  return (
+    <div className="relative inline-block text-left" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      <button
+        ref={btnRef}
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={onButtonKeyDown}
+        // match SearchButton styling and set exact 38x38 size
+        className={
+          "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none " +
+          "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0] " +
+          "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10"
+        }
+        style={{ padding: 0 }}
+        aria-label={t("language") || `Language (${labelsFull[currentLocale]})`}
+        title={labelsFull[currentLocale]}
+      >
+        <span className="sr-only">{t("language")}</span>
+        <span className="leading-none">{labelsShort[currentLocale]}</span>
+      </button>
+
+      {open && (
+        <ul
+          ref={menuRef}
+          role="menu"
+          aria-label={t("language")}
+          className={
+            "absolute right-0 mt-2 w-[38px] origin-top-right rounded-3xl " +
+            "bg-[#FAFAFA] dark:bg-white/5 border border-[#E6E7EB] dark:border-white/10 " +
+            "overflow-hidden z-50"
+          }
+        >
+          {(() => {
+            // Render only the other languages in the dropdown to avoid
+            // duplicating the selected language (which is shown on the trigger)
+            const display = order.filter((l) => l !== currentLocale);
+            return display.map((l, i) => (
+              <li key={l} role="none">
+                <Link
+                  role="menuitem"
+                  href={buildHref(l)}
+                  aria-current={undefined}
+                  className={`block w-full text-center py-2 text-sm transition-colors duration-200 ease-in-out ${l === currentLocale ? "font-semibold bg-neutral-50 dark:bg-neutral-800/60" : "font-normal"} text-neutral-700 dark:text-neutral-200 hover:bg-[#dcdde0] dark:hover:bg-white/10`}
+                  onClick={() => setOpen(false)}
+                >
+                  <span className="leading-none">{labelsShort[l]}</span>
+                  <span className="sr-only"> — {labelsFull[l]}</span>
+                </Link>
+              </li>
+            ));
+          })()}
+        </ul>
+      )}
+    </div>
+  );
+}
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [visible, setVisible] = useState<boolean>(false);
+  const [isDarkMobile, setIsDarkMobile] = useState<boolean>(false);
   const navRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const [progressLeft, setProgressLeft] = useState<number | null>(null);
@@ -64,6 +205,23 @@ export default function Header() {
     setOpen(false);
     // Let the Link's native navigation run (keeps prefetching & SEO).
     // If we later want a client-only transition we can call `router.push(href)`.
+  };
+
+  // Mobile theme state/toggle for the burger menu textual item
+  useEffect(() => {
+    const root = document.documentElement;
+    setIsDarkMobile(root.classList.contains("dark"));
+  }, []);
+
+  const toggleMobileTheme = () => {
+    const root = document.documentElement;
+    const nextIsDark = !root.classList.contains("dark");
+    if (nextIsDark) root.classList.add("dark");
+    else root.classList.remove("dark");
+    try {
+      localStorage.setItem("sd-theme", nextIsDark ? "dark" : "light");
+    } catch {}
+    setIsDarkMobile(nextIsDark);
   };
 
   // Lock body scroll when mobile menu is open
@@ -216,47 +374,31 @@ export default function Header() {
               {t("tags")}
             </Link>
 
-            {/* Language switcher */}
-            <div className="flex items-center gap-2">
-              <Link
-                href={buildLocaleHref("en")}
-                className={
-                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                }
-                aria-current={currentLocale === "en" ? "page" : undefined}
-                aria-label="Switch language to English"
-              >
-                English
-              </Link>
-              <Link
-                href={buildLocaleHref("ua")}
-                className={
-                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                }
-                aria-current={currentLocale === "ua" ? "page" : undefined}
-                aria-label="Switch language to Ukrainian"
-              >
-                Українська
-              </Link>
-              <Link
-                href={buildLocaleHref("ru")}
-                className={
-                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                }
-                aria-current={currentLocale === "ru" ? "page" : undefined}
-                aria-label="Switch language to Russian"
-              >
-                Русский
-              </Link>
+            {/* Search then language selector (matches screenshot: search first, small language pill to the right) */}
+            <div className="flex items-center gap-4">
+              <SearchButton variant="default" ariaLabel={t("searchPlaceholder")} />
+              <div className="relative">
+                <LanguageDropdown
+                  currentLocale={currentLocale}
+                  buildHref={(target: Lang) => buildLocalePath(stripLocale(pathname), target)}
+                  t={t}
+                />
+              </div>
+              <ThemeToggle />
             </div>
-            <SearchButton className="ml-2" variant="default" ariaLabel={t("searchPlaceholder")} />
-            <ThemeToggle />
           </div>
 
           {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
             <SearchButton ariaLabel={t("searchPlaceholder")} variant="icon" />
-            <ThemeToggle />
+            {/* Add language pill to mobile header (client-side nav) */}
+            <div className="relative">
+              <LanguageDropdown
+                currentLocale={currentLocale}
+                buildHref={(target: Lang) => buildLocaleHref(target)}
+                t={t}
+              />
+            </div>
             <button
               ref={toggleRef}
               type="button"
@@ -334,14 +476,14 @@ export default function Header() {
             open ? "translate-x-0" : "translate-x-full",
           ].join(" ")}
         >
-          <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center justify-between px-4 py-4">
             <Link
               href={buildLocaleRootHref(currentLocale)}
               onClick={() => {
                 // close the menu; allow Link to perform the navigation
                 handleLogoClick();
               }}
-              className="text-lg font-semibold tracking-tight"
+              className="text-xl font-semibold tracking-tight"
               id={titleId}
               ref={firstFocusRef}
             >
@@ -404,36 +546,18 @@ export default function Header() {
                 </Link>
               </li>
               <li>
-                <div className="mt-2 flex gap-3">
-                  <Link
-                    href={buildLocaleHref("en")}
-                    onClick={() => setOpen(false)}
-                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                    aria-current={currentLocale === "en" ? "page" : undefined}
-                    aria-label="Switch language to English"
-                  >
-                    English
-                  </Link>
-                  <Link
-                    href={buildLocaleHref("ua")}
-                    onClick={() => setOpen(false)}
-                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                    aria-current={currentLocale === "ua" ? "page" : undefined}
-                    aria-label="Switch language to Ukrainian"
-                  >
-                    Українська
-                  </Link>
-                  <Link
-                    href={buildLocaleHref("ru")}
-                    onClick={() => setOpen(false)}
-                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
-                    aria-current={currentLocale === "ru" ? "page" : undefined}
-                    aria-label="Switch language to Russian"
-                  >
-                    Русский
-                  </Link>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    toggleMobileTheme();
+                    // keep menu open so user sees the change, or close if preferred
+                  }}
+                  className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                >
+                  {isDarkMobile ? (t("lightMode") ?? "Light theme") : (t("darkMode") ?? "Dark theme")}
+                </button>
               </li>
+              {/* language links removed from mobile drawer — language switch is available via the pill in the header */}
             </ul>
           </nav>
         </div>

@@ -75,6 +75,9 @@ const en: Translations = {
   privacy: "Privacy",
   terms: "Terms",
   contact: "Contact",
+  /* Theme labels */
+  darkMode: "Dark theme",
+  lightMode: "Light theme",
 };
 
 const ua: Translations = {
@@ -149,6 +152,9 @@ const ua: Translations = {
   privacy: "Політика конфіденційності",
   terms: "Умови",
   contact: "Контакти",
+  /* Theme labels */
+  darkMode: "Темна тема",
+  lightMode: "Світла тема",
 };
 
 const ru: Translations = {
@@ -223,6 +229,9 @@ const ru: Translations = {
   privacy: "Политика конфиденциальности",
   terms: "Условия",
   contact: "Контакты",
+  /* Theme labels */
+  darkMode: "Тёмная тема",
+  lightMode: "Светлая тема",
 };
 
 export const TRANSLATIONS: Record<Locale, Translations> = {
