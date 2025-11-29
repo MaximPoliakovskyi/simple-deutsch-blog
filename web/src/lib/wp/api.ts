@@ -72,19 +72,31 @@ export async function getPosts(opts: {
   search?: string;
   categoryIn?: string[]; // reserved for future use
   tagIn?: string[]; // reserved for future use
+  locale?: string; // language category slug (en, ru, ua)
 }): Promise<{ posts: Connection<PostListItem> }>;
 
 // Implementation
 export async function getPosts(
   arg1:
     | number
-    | { first: number; after?: string; search?: string; categoryIn?: string[]; tagIn?: string[] },
+    | { first: number; after?: string; search?: string; categoryIn?: string[]; tagIn?: string[]; locale?: string },
   maybeAfter?: string,
 ): Promise<{ posts: Connection<PostListItem> }> {
   const first = typeof arg1 === "number" ? arg1 : arg1.first;
   const after = typeof arg1 === "number" ? maybeAfter : arg1.after;
-  // NOTE: search/categoryIn/tagIn are accepted for compatibility with callers,
-  // but the current GET_POSTS query ignores them. We can wire them in later.
+  const locale = typeof arg1 === "number" ? undefined : (arg1.locale as string | undefined);
+
+  // If a locale (language category slug) is provided, use the category query
+  // to filter posts by that language category. Otherwise use the generic feed.
+  if (locale) {
+    const res = await fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS_BY_CATEGORY_SLUG, {
+      slug: locale,
+      first,
+      after: after ?? null,
+    });
+    return res;
+  }
+
   return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, {
     first,
     after: after ?? null,
@@ -145,6 +157,21 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   const nodes = edges.map((e) => e.node);
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
+  return { posts: nodes, pageInfo };
+}
+
+export async function getPostsPageByCategory(params: { first: number; after?: string | null; categorySlug: string }) {
+  const { first, after, categorySlug } = params;
+  // Reuse the category-based posts query to fetch nodes (pageInfo + nodes)
+  const res = await fetchGraphQL<{ posts: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: PostListItem[] } }>(
+    GET_POSTS_BY_CATEGORY_SLUG,
+    { slug: categorySlug, first, after: after ?? null },
+    { next: { revalidate: 300 } },
+  );
+
+  // Normalize to the same shape as getPostsPage: a flat posts array
+  const nodes = res.posts?.nodes ?? [];
+  const pageInfo = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
   return { posts: nodes, pageInfo };
 }
 

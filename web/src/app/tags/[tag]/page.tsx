@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import PostCard, { type PostCardPost } from "@/components/PostCard";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getPostsByTagSlug, getTagBySlug } from "@/lib/wp/api";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const revalidate = 600;
 
@@ -20,14 +21,14 @@ type TagNode = {
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { tag } = await params;
   const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
-  if (!term) return { title: "Tag not found" };
+  if (!term) return { title: TRANSLATIONS[DEFAULT_LOCALE].tagNotFound };
   return {
-    title: `Tag: ${term.name} — Simple Deutsch`,
+    title: `Tag: ${term.name} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
     description: term.description ?? `Posts tagged with “${term.name}”`,
   };
 }
 
-export default async function TagPage({ params }: { params: Promise<Params> }) {
+export default async function TagPage({ params, locale }: { params: Promise<Params>; locale?: "en" | "ru" | "ua" }) {
   const { tag } = await params;
 
   const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
@@ -44,12 +45,14 @@ export default async function TagPage({ params }: { params: Promise<Params> }) {
   };
   const nodes = extractConnectionNodes<PostNode>(posts);
 
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">Tag: {term.name}</h1>
+      <h1 className="mb-6 text-3xl font-semibold">{`Tag: ${term.name}`}</h1>
 
       {nodes.length === 0 ? (
-        <p className="text-gray-500">No posts for this tag.</p>
+        <p className="text-gray-500">{t.noResults}</p>
       ) : (
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {nodes.map((post) => (

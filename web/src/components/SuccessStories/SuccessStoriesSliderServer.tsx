@@ -1,6 +1,11 @@
 import { headers } from "next/headers";
 import type { WPPostCard } from "@/lib/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+
+type Props = {
+  locale?: "en" | "ru" | "ua";
+};
 
 /** Build an absolute origin for server-side fetches (local + prod). */
 async function getBaseUrl() {
@@ -31,8 +36,9 @@ async function getSliderPosts(): Promise<WPPostCard[]> {
 }
 
 /** Server wrapper: fetch once, render the client slider. */
-export default async function SuccessStoriesSliderServer() {
+export default async function SuccessStoriesSliderServer({ locale }: Props = {}) {
   const posts = await getSliderPosts();
   if (!posts.length) return null;
-  return <SuccessStoriesSlider posts={posts} title="Success stories" />;
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  return <SuccessStoriesSlider posts={posts} title={t.successStories} />;
 }

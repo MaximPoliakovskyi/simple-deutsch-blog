@@ -1,12 +1,14 @@
 // app/not-found.tsx
 import Link from "next/link";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
 export const metadata = {
-  title: "Page Not Found — Simple Deutsch",
+  title: TRANSLATIONS[DEFAULT_LOCALE].pageNotFoundTitle,
   robots: { index: false },
 };
 
 export default function NotFound() {
+  const t = TRANSLATIONS[DEFAULT_LOCALE];
   return (
     // Fullscreen overlay above everything (including header)
     <div className="fixed inset-0 z-[100] grid place-items-center bg-black text-white">
@@ -30,12 +32,10 @@ export default function NotFound() {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-semibold">Page Not Found</h1>
+        <h1 className="text-2xl font-semibold">{t.pageNotFoundHeading}</h1>
 
         {/* Message */}
-        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">
-          The page you are looking for does not exist or may have been moved.
-        </p>
+        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">{t.pageNotFoundMessage}</p>
 
         {/* CTA */}
         <div className="mt-6">
@@ -43,7 +43,7 @@ export default function NotFound() {
             href="/"
             className="inline-flex items-center rounded-md bg-[#1d9bf0] px-4 py-2 text-sm font-medium text-white hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0]/70"
           >
-            Back to Home
+            {t.backToHome}
           </Link>
         </div>
       </div>

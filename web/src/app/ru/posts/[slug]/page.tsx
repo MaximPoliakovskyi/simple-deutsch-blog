@@ -2,21 +2,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostContent from "@/components/PostContent";
 import Link from "next/link";
-import { getPostBySlug, getPostsByCategorySlug, getPostsPage } from "@/lib/wp/api"; // adjust path if yours differs
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { getPostBySlug, getPostsByCategorySlug, getPostsPageByCategory } from "@/lib/wp/api"; // adjusted to use category-aware page fetch
+import { TRANSLATIONS } from "@/lib/i18n";
 import { generateTocFromHtml } from "@/lib/utils/generateToc";
 
-// Optional: keep your ISR setting if you use it
-export const revalidate = 300; // 5 minutes
+export const revalidate = 300;
 
-// 👇 In Next 15, params is async. Type it as a Promise and ALWAYS await it.
 type ParamsPromise = Promise<{ slug: string }>;
 
 export async function generateMetadata({ params }: { params: ParamsPromise }): Promise<Metadata> {
-  const { slug } = await params; // ✅ must await
-
+  const { slug } = await params;
   const post = await getPostBySlug(slug);
-  if (!post) return { title: TRANSLATIONS[DEFAULT_LOCALE].postNotFound };
+  if (!post) return { title: TRANSLATIONS["ru"].postNotFound };
 
   const title = post.seo?.title ?? post.title ?? "Simple Deutsch";
   const description = post.seo?.metaDesc ?? undefined;
@@ -32,32 +29,24 @@ export async function generateMetadata({ params }: { params: ParamsPromise }): P
   };
 }
 
-export default async function PostPage({ params }: { params: ParamsPromise }) {
-  const { slug } = await params; // ✅ must await
+export default async function RuPostPage({ params }: { params: ParamsPromise }) {
+  const { slug } = await params;
 
-  // Try primary lookup by slug. Some WordPress setups or malformed links
-  // (encoding, trailing slashes, unexpected prefixes) may cause the direct
-  // GraphQL lookup to fail. Attempt a small fallback search before returning
-  // a 404 so we can recover in more cases.
   let post = await getPostBySlug(slug);
 
   async function findPostFallback(slugToCheck: string) {
-    // try decoding URI components and simple normalizations
     const candidates = [slugToCheck, decodeURIComponent(slugToCheck || ""), slugToCheck.replace(/^\/+/, ""), slugToCheck.replace(/\.html?$/i, "")];
-    // fetch a modest page of posts and try to match by slug
     try {
-      const page = await getPostsPage({ first: 50 });
+      const page = await getPostsPageByCategory({ first: 50, categorySlug: "ru" });
       const nodes = page.posts ?? [];
       for (const cand of candidates) {
         const found = nodes.find((n) => n.slug === cand);
         if (found) {
-          // fetch full post detail for rendering
           const full = await getPostBySlug(found.slug);
           if (full) return full;
         }
       }
     } catch (err) {
-      // ignore and fall through
       console.error("Fallback post search failed:", err);
     }
     return null;
@@ -69,23 +58,17 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
 
   if (!post) return notFound();
 
-  // We render static article content for this page (screenshot example).
-
-  // derive dynamic values
   const authorName = post.author?.node?.name ?? "Unknown author";
   const date = post.date ? new Date(post.date) : null;
   const formattedDate = date ? date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
   const firstCategory = post.categories?.nodes?.[0] ?? null;
 
-  // compute read time (approx) from word count (200 wpm)
   const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
   const readMinutes = Math.max(1, Math.round(words / 200));
 
-  // Generate a table-of-contents and inject anchor ids into headings
   const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };
-  const t = TRANSLATIONS["en"];
+  const t = TRANSLATIONS["ru"];
 
-  // fetch related / more posts for the sidebar
   let morePosts: { slug: string; title: string }[] = [];
   if (firstCategory?.slug) {
     const catRes = await getPostsByCategorySlug(firstCategory.slug, 6);
@@ -94,7 +77,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
   }
 
   if (morePosts.length === 0) {
-    const page = await getPostsPage({ first: 6 });
+    const page = await getPostsPageByCategory({ first: 6, categorySlug: "ru" });
     morePosts = page.posts.filter((p) => p.slug !== post.slug).map((p) => ({ slug: p.slug, title: p.title })).slice(0, 4);
   }
 
@@ -107,7 +90,7 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
           {firstCategory ? (
             <div className="mb-6">
               <Link
-                href={`/categories/${firstCategory.slug}`}
+                href={`/ru/categories/${firstCategory.slug}`}
                 className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
               >
                 {firstCategory.name}
@@ -140,13 +123,11 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
             )}
           </div>
 
-          {/* Render the post content using PostContent — content is sanitized server-side. */}
           {contentHtml ? <PostContent html={contentHtml} /> : null}
         </article>
 
   <aside className="md:col-span-1">
           <div className="sticky top-20 space-y-6">
-            {/* Promo rounded card (fill sidebar width) */}
             <div className="sd-card px-6 py-6 w-full text-center">
               <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">{t.promoHeading}</h3>
               <div className="flex justify-center">
@@ -154,13 +135,12 @@ export default async function PostPage({ params }: { params: ParamsPromise }) {
               </div>
             </div>
 
-            {/* More articles (no background/borders, fill sidebar width) */}
             <div className="px-3 py-3 rounded-xl w-full">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">More articles</h4>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t.moreArticles}</h4>
               <ul className="text-sm text-gray-600 dark:text-gray-400">
                 {morePosts.map((p) => (
                   <li key={p.slug} className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
-                    <Link href={`/posts/${p.slug}`} className="hover:underline block">
+                    <Link href={`/ru/posts/${p.slug}`} className="hover:underline block">
                       {p.title}
                     </Link>
                   </li>

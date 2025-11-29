@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useI18n } from "@/components/LocaleProvider";
 
 type Cat = { id: string; name: string; slug: string };
 
@@ -20,6 +21,7 @@ export default function CategoryPills({
   /** When true, a category must always be selected and cannot be deselected */
   required?: boolean;
 }) {
+  const { t } = useI18n();
   // If `required` is true and no explicit initialSelected was provided, default
   // to the first category's slug when categories are available.
   const defaultSelected = React.useMemo(() => {
@@ -40,7 +42,7 @@ export default function CategoryPills({
   return (
     <div className={containerClass}>
       {categories.length === 0 ? (
-        <div className="text-sm text-neutral-500 dark:text-neutral-400">No categories found.</div>
+        <div className="text-sm text-neutral-500 dark:text-neutral-400">{t("noCategories")}</div>
       ) : (
         categories.map((cat) => {
           // active only when the category slug matches the selected value

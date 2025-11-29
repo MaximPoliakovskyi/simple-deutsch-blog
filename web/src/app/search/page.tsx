@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import PostCard from "@/components/PostCard";
 import SearchBox from "@/components/SearchBox";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 import { searchPosts, type WPPostCard } from "@/lib/wp/api";
 
 // Dynamic render for fresh search each request
@@ -22,17 +23,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
+export default async function SearchPage({ searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "ua" } = { searchParams: Promise.resolve({}) }) {
   const sp = await searchParams; // Next 15: must await dynamic APIs
   const q = (sp.q ?? "").trim();
   const after = sp.after ?? null;
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   const { posts, pageInfo } = await searchPosts({ query: q, first: 10, after });
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-4 text-2xl font-semibold">Search</h1>
-      <SearchBox className="mb-6" autoFocus placeholder="Search posts by title or content…" />
+  <h1 className="mb-4 text-2xl font-semibold">{t.search}</h1>
+  <SearchBox className="mb-6" autoFocus placeholder={t.searchPlaceholder} />
 
       {!q && (
         <p className="text-neutral-600">
@@ -54,12 +56,12 @@ export default async function SearchPage({ searchParams }: { searchParams: Searc
 
       {q && pageInfo.hasNextPage ? (
         <div className="mt-8 flex justify-center">
-          <a
-            href={`/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
-          >
-            Load more
-          </a>
+            <a
+              href={`/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
+              className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
+            >
+              {t.loadMore}
+            </a>
         </div>
       ) : null}
     </main>

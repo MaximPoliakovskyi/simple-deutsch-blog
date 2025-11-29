@@ -3,6 +3,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useI18n } from "@/components/LocaleProvider";
 
 export type PostCardPost = {
   id?: string;
@@ -67,10 +68,13 @@ export default function PostCard({ post, className, priority = false }: PostCard
   const img = extractImage(post);
   const minutes = estimateReadingMinutes(post);
 
+  const { t, locale } = useI18n();
+
   const dateText = post.date
-    ? new Intl.DateTimeFormat("en-US", { dateStyle: "long", timeZone: "UTC" }).format(
-        new Date(post.date),
-      )
+    ? new Intl.DateTimeFormat(locale === "ua" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
+        dateStyle: "long",
+        timeZone: "UTC",
+      }).format(new Date(post.date))
     : "";
 
   const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
@@ -78,9 +82,11 @@ export default function PostCard({ post, className, priority = false }: PostCard
   // All categories (instead of only the first)
   const categories = post.categories?.nodes ?? [];
 
+  const prefix = locale === "en" ? "" : `/${locale}`;
+
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
-      <Link href={`/posts/${post.slug}`} className="block" aria-label={post.title}>
+      <Link href={`${prefix}/posts/${post.slug}`} className="block" aria-label={post.title}>
         {/* Media — smoother zoom wrapper */}
         <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-neutral-200 dark:bg-neutral-800">
           <div
@@ -111,12 +117,12 @@ export default function PostCard({ post, className, priority = false }: PostCard
         </div>
 
         {/* Meta (date • reading time) */}
-        {(dateText || minutes) && (
-          <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            {dateText} {dateText && minutes ? <span aria-hidden>·</span> : null}{" "}
-            {minutes ? `${minutes} min read` : null}
-          </p>
-        )}
+            {(dateText || minutes) && (
+              <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
+                {dateText} {dateText && minutes ? <span aria-hidden>·</span> : null}{" "}
+                {minutes ? `${minutes} ${t("minRead")}` : null}
+              </p>
+            )}
 
         {/* Title */}
         <h3
@@ -143,8 +149,8 @@ export default function PostCard({ post, className, priority = false }: PostCard
           {categories.map((cat) => (
             <Link
               key={cat.slug}
-              href={`/categories/${cat.slug}`}
-              aria-label={`View category ${cat.name}`}
+              href={`${prefix}/categories/${cat.slug}`}
+              aria-label={`${t("viewCategoryAria")} ${cat.name}`}
               className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
                          dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
                          hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"

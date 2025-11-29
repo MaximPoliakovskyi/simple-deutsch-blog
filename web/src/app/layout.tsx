@@ -2,6 +2,8 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import Navigation from "@/components/Navigation";
+import { LocaleProvider } from "@/components/LocaleProvider";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 import Footer from "@/components/Footer";
 import PreloaderClient from "@/components/PreloaderClient";
 import "@/styles/globals.css";
@@ -20,9 +22,9 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="de" suppressHydrationWarning data-scroll-behavior="smooth">
-      <head>
+    <head>
   {/* Document title and favicon */}
-  <title>Simple Deutsch</title>
+  <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
   <link rel="icon" href="/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
@@ -39,14 +41,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <PreloaderClient />
 
         {/* Global navigation, visible on all pages */}
-        <Navigation />
+        <LocaleProvider>
+          <Navigation />
 
-  {/* Main page content - add top spacing so content sits further below the nav */}
-  <div className="mt-8 md:mt-12" aria-hidden />
-  {children}
+          {/* Main page content - add top spacing so content sits further below the nav */}
+          <div className="mt-8 md:mt-12" aria-hidden />
+          {children}
 
-  {/* Homepage-only components are rendered by their pages now. */}
-        <Footer />
+          {/* Homepage-only components are rendered by their pages now. */}
+          <Footer />
+        </LocaleProvider>
       </body>
     </html>
   );

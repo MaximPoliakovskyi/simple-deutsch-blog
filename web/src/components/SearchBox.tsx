@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useDeferredValue, useEffect, useRef, useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 
 type Props = {
   placeholder?: string;
@@ -11,7 +12,7 @@ type Props = {
 };
 
 export default function SearchBox({
-  placeholder = "Search posts…",
+  placeholder,
   className = "",
   autoFocus = false,
   debounceMs = 400,
@@ -19,6 +20,7 @@ export default function SearchBox({
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t } = useI18n();
 
   const initial = (searchParams.get("q") ?? "").trim();
   const [value, setValue] = useState(initial);
@@ -44,6 +46,10 @@ export default function SearchBox({
     return () => clearTimeout(t);
   }, [deferredValue, debounceMs, router, searchParams]);
 
+  const finalPlaceholder = placeholder ?? t('searchPlaceholder');
+  const finalAria = t('searchAria');
+  const finalClear = t('clear');
+
   return (
     <div className={`flex items-center gap-2 ${className}`}>
       <input
@@ -53,8 +59,8 @@ export default function SearchBox({
         {...(autoFocus ? { autoFocus: true } : {})}
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder={placeholder}
-        aria-label="Search posts"
+        placeholder={finalPlaceholder}
+        aria-label={finalAria}
         className={[
           // layout
           "w-full rounded-xl px-4 py-2 text-base",
@@ -72,14 +78,14 @@ export default function SearchBox({
         <button
           type="button"
           onClick={() => setValue("")}
-          aria-label="Clear search"
+          aria-label={finalClear}
           className={[
             "rounded-lg px-3 py-2 text-sm transition-colors border",
             "text-neutral-700 border-neutral-300 hover:bg-neutral-100",
             "dark:text-neutral-300 dark:border-white/10 dark:hover:bg-white/5",
           ].join(" ")}
         >
-          Clear
+          {finalClear}
         </button>
       ) : null}
     </div>

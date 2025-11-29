@@ -1,12 +1,13 @@
 import type { ReactElement } from "react";
 import CategoriesBlockClient from "./CategoriesBlockClient";
 import { getAllCategories, getPostsPage } from "@/lib/wp/api";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
 /**
  * Server component: fetches categories and a small posts page, then
  * renders the client component that provides interactivity.
  */
-export default async function CategoriesBlock(): Promise<ReactElement> {
+export default async function CategoriesBlock({ locale }: { locale?: "en" | "ru" | "ua" } = {}): Promise<ReactElement> {
   const catsResp = await getAllCategories({ first: 12 });
   const categories = (catsResp?.categories?.nodes ?? []).map((c) => ({
     id: c.id,
@@ -21,7 +22,7 @@ export default async function CategoriesBlock(): Promise<ReactElement> {
   return (
     // Match success stories slider background (full-bleed dark band)
     <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
-      <section aria-label="Categories" data-categories-scope className="mx-auto max-w-7xl px-4 py-16 text-white">
+      <section aria-label={TRANSLATIONS[locale ?? DEFAULT_LOCALE].categories} data-categories-scope className="mx-auto max-w-7xl px-4 py-16 text-white">
         <style>{`
           [data-categories-scope] h1,
           [data-categories-scope] h2,
@@ -72,7 +73,7 @@ export default async function CategoriesBlock(): Promise<ReactElement> {
           }
         `}</style>
 
-        <h2 className="text-3xl font-extrabold mb-6">Categories</h2>
+  <h2 className="text-3xl font-extrabold mb-6">{TRANSLATIONS[locale ?? DEFAULT_LOCALE].categoriesHeading}</h2>
 
         {/* Client component gets serializable props only */}
         <CategoriesBlockClient

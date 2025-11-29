@@ -33,11 +33,20 @@ async function getBaseUrl() {
 }
 
 /** Fetch the first N posts (cursor-based). */
-async function getPosts(first: number, after: string | null = null): Promise<GetPostsResult> {
+async function getPosts(firstOrOpts: number | { first: number; locale?: string }, after: string | null = null): Promise<GetPostsResult> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base);
+  let first: number | undefined;
+  let locale: string | undefined;
+  if (typeof firstOrOpts === "number") {
+    first = firstOrOpts;
+  } else {
+    first = firstOrOpts.first;
+    locale = firstOrOpts.locale;
+  }
   url.searchParams.set("first", String(first));
   if (after) url.searchParams.set("after", after);
+  if (locale) url.searchParams.set("category", locale);
 
   const res = await fetch(url, {
     // Cache on the server for a short period; adjust as you like.
@@ -66,9 +75,9 @@ async function getPosts(first: number, after: string | null = null): Promise<Get
 
 export const revalidate = 300; // optional: revalidate homepage every 5 minutes
 
-export default async function HomePage() {
+export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
   const PAGE_SIZE = 9;
-  const { posts, pageInfo } = await getPosts(PAGE_SIZE);
+  const { posts, pageInfo } = await getPosts({ first: PAGE_SIZE, locale });
 
   // Fetch a small set of tags to display as hero pills
   const { tags } = await getAllTags({ first: 12 });
@@ -126,13 +135,13 @@ export default async function HomePage() {
       </main>
 
       {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
-      <SuccessStoriesSliderServer />
+  <SuccessStoriesSliderServer locale={locale} />
 
   {/* ✅ Homepage “Latest posts” slider */}
-  <LatestPostsSliderServer />
+  <LatestPostsSliderServer locale={locale} />
 
   {/* Homepage-only Categories block — rendered before the global footer */}
-  <CategoriesBlock />
+  <CategoriesBlock locale={locale} />
     </>
   );
 }

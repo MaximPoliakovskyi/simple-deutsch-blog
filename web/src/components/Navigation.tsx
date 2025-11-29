@@ -3,9 +3,10 @@
 
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { SearchButton } from "@/components/SearchOverlay";
 import ThemeToggle from "@/components/ThemeToggle";
+import { useI18n } from "@/components/LocaleProvider";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
@@ -20,6 +21,50 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   const id = useId();
   const titleId = `mobile-menu-title-${id}`;
+  // determine current locale from pathname
+  const currentLocale = pathname?.startsWith("/ru")
+    ? "ru"
+    : pathname?.startsWith("/ua")
+    ? "ua"
+    : "en";
+
+  const stripLocale = (p: string | null | undefined) => {
+    if (!p) return "/";
+    const stripped = p.replace(/^\/(ru|ua)(?=\/|$)/, "");
+    return stripped === "" ? "/" : stripped;
+  };
+
+  const buildLocaleHref = (target: "en" | "ru" | "ua") => {
+    // For most navigation links we want to preserve the current path,
+    // but the site logo should always go to the locale root (home page).
+    const base = stripLocale(pathname);
+    if (target === "en") return base;
+    return base === "/" ? `/${target}` : `/${target}${base}`;
+  };
+
+  const buildLocaleRootHref = (target: "en" | "ru" | "ua") => {
+    return target === "en" ? "/" : `/${target}`;
+  };
+
+  const buildLocalePath = (path: string, target: "en" | "ru" | "ua" = currentLocale) => {
+    // Ensure leading slash
+    const p = path.startsWith("/") ? path : `/${path}`;
+    return target === "en" ? p : `/${target}${p}`;
+  };
+
+  const { t } = useI18n();
+  // Use router only when needed; keep the logo interaction simple and
+  // reliable by closing the mobile menu and letting Next's Link handle
+  // the navigation (progressive enhancement + prefetching).
+  // We keep router import available for later UX improvements.
+  const router = useRouter();
+
+  const handleLogoClick = (_e?: React.MouseEvent<HTMLAnchorElement>) => {
+    // Close the mobile menu so the UI doesn't remain open during navigation.
+    setOpen(false);
+    // Let the Link's native navigation run (keeps prefetching & SEO).
+    // If we later want a client-only transition we can call `router.push(href)`.
+  };
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -146,38 +191,71 @@ export default function Header() {
       >
         <div>
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:py-5">
-          <Link href="/" className="text-xl font-semibold tracking-tight" aria-label="Home">
+          <Link href={buildLocaleRootHref(currentLocale)} onClick={handleLogoClick} className="text-xl font-semibold tracking-tight" aria-label={t("home") ?? "Home"}>
             simple-deutsch.de
           </Link>
 
           {/* Desktop links */}
           <div className="hidden items-center gap-6 md:flex">
             <Link
-              href="/posts"
+              href={buildLocalePath("/posts")}
               className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
             >
-              Posts
+              {t("posts")}
             </Link>
             <Link
-              href="/categories"
+              href={buildLocalePath("/categories")}
               className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
             >
-              Categories
+              {t("categories")}
             </Link>
             <Link
-              href="/tags"
+              href={buildLocalePath("/tags")}
               className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
             >
-              Tags
+              {t("tags")}
             </Link>
 
-            <SearchButton className="ml-2" variant="default" />
+            {/* Language switcher */}
+            <div className="flex items-center gap-2">
+              <Link
+                href={buildLocaleHref("en")}
+                className={
+                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                }
+                aria-current={currentLocale === "en" ? "page" : undefined}
+                aria-label="Switch language to English"
+              >
+                English
+              </Link>
+              <Link
+                href={buildLocaleHref("ua")}
+                className={
+                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                }
+                aria-current={currentLocale === "ua" ? "page" : undefined}
+                aria-label="Switch language to Ukrainian"
+              >
+                Українська
+              </Link>
+              <Link
+                href={buildLocaleHref("ru")}
+                className={
+                  "text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                }
+                aria-current={currentLocale === "ru" ? "page" : undefined}
+                aria-label="Switch language to Russian"
+              >
+                Русский
+              </Link>
+            </div>
+            <SearchButton className="ml-2" variant="default" ariaLabel={t("searchPlaceholder")} />
             <ThemeToggle />
           </div>
 
           {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <SearchButton ariaLabel="Artikel finden" variant="icon" />
+            <SearchButton ariaLabel={t("searchPlaceholder")} variant="icon" />
             <ThemeToggle />
             <button
               ref={toggleRef}
@@ -258,8 +336,11 @@ export default function Header() {
         >
           <div className="flex items-center justify-between px-4 py-3">
             <Link
-              href="/"
-              onClick={() => setOpen(false)}
+              href={buildLocaleRootHref(currentLocale)}
+              onClick={() => {
+                // close the menu; allow Link to perform the navigation
+                handleLogoClick();
+              }}
               className="text-lg font-semibold tracking-tight"
               id={titleId}
               ref={firstFocusRef}
@@ -292,7 +373,7 @@ export default function Header() {
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  Posts
+                  {t("posts")}
                 </Link>
               </li>
               <li>
@@ -301,7 +382,7 @@ export default function Header() {
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  Categories
+                  {t("categories")}
                 </Link>
               </li>
               <li>
@@ -310,17 +391,48 @@ export default function Header() {
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  Tags
+                  {t("tags")}
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/search"
+                  href={buildLocalePath("/search")}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  Search
+                  {t("search")}
                 </Link>
+              </li>
+              <li>
+                <div className="mt-2 flex gap-3">
+                  <Link
+                    href={buildLocaleHref("en")}
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                    aria-current={currentLocale === "en" ? "page" : undefined}
+                    aria-label="Switch language to English"
+                  >
+                    English
+                  </Link>
+                  <Link
+                    href={buildLocaleHref("ua")}
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                    aria-current={currentLocale === "ua" ? "page" : undefined}
+                    aria-label="Switch language to Ukrainian"
+                  >
+                    Українська
+                  </Link>
+                  <Link
+                    href={buildLocaleHref("ru")}
+                    onClick={() => setOpen(false)}
+                    className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                    aria-current={currentLocale === "ru" ? "page" : undefined}
+                    aria-label="Switch language to Russian"
+                  >
+                    Русский
+                  </Link>
+                </div>
               </li>
             </ul>
           </nav>

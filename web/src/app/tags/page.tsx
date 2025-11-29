@@ -3,28 +3,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { getAllTags } from "@/lib/wp/api";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
 // helper removed; using shared `extractConnectionNodes` from utils
 
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: "Tags — Simple Deutsch",
+  title: `${TRANSLATIONS[DEFAULT_LOCALE].tags} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
   description: "Explore posts by tag.",
 };
 
-export default async function TagsIndexPage() {
+export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
   // Your API probably has a getAllTags helper similar to getAllCategories
   const { tags } = await getAllTags({ first: 100 });
 
   type TagNode = { id: string; name: string; slug: string };
   const nodes = extractConnectionNodes<TagNode>(tags);
 
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-8 text-3xl font-semibold">Tags</h1>
+      <h1 className="mb-8 text-3xl font-semibold">{t.tagsHeading}</h1>
       {nodes.length === 0 ? (
-        <p className="text-neutral-600">No tags found.</p>
+        <p className="text-neutral-600">{t.noResults}</p>
       ) : (
         <ul className="flex flex-wrap gap-3">
           {nodes.map((tag) => (

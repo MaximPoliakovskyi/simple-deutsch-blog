@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import PostCard from "@/components/PostCard";
+import { useI18n } from "@/components/LocaleProvider";
 import type { WPPostCard } from "@/lib/wp/api";
 
 type Props = {
@@ -24,6 +25,7 @@ export default function PostsGridWithPagination({
   categorySlug = null,
   tagSlug = null,
 }: Props) {
+  const { t } = useI18n();
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
   const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
@@ -148,7 +150,7 @@ export default function PostsGridWithPagination({
               "focus-visible:outline-2 focus-visible:outline-offset-2",
             ].join(" ")}
           >
-            {loading ? "Loading…" : "View more"}
+            {loading ? t("loading") : t("loadMore")}
           </button>
         </div>
       )}

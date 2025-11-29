@@ -1,6 +1,11 @@
 import { headers } from "next/headers";
 import type { WPPostCard } from "@/lib/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
+import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+
+type Props = {
+  locale?: "en" | "ru" | "ua";
+};
 
 async function getBaseUrl() {
   const h = await headers();
@@ -24,8 +29,9 @@ async function getSliderPosts(): Promise<unknown[]> {
   return Array.isArray(json) ? json : (json?.posts ?? []);
 }
 
-export default async function LatestPostsSliderServer() {
+export default async function LatestPostsSliderServer({ locale }: Props = {}) {
   const posts = (await getSliderPosts()) as WPPostCard[];
   if (!posts.length) return null;
-  return <LatestPostsSlider posts={posts} title="Latest posts" />;
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  return <LatestPostsSlider posts={posts} title={t.latestPosts} />;
 }

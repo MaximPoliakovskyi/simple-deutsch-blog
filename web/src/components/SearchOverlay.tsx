@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useI18n } from "@/components/LocaleProvider";
 
 type SlimPost = {
   id: string;
@@ -83,7 +84,7 @@ export function SearchButton({
             fill="currentColor"
           />
         </svg>
-        {variant === "default" && <span>Find an article</span>}
+        {variant === "default" && <span>{ariaLabel}</span>}
       </button>
       {open && (
         <SearchOverlay
@@ -106,6 +107,13 @@ export default function SearchOverlay({
   onClose: () => void;
   openMethod?: 'click' | 'keyboard' | undefined;
 }) {
+  const { t } = useI18n();
+  const tPlaceholder = t('searchPlaceholder');
+  const tSearchLabel = t('searchAria');
+  const tClear = t('clear');
+  const tLoading = t('loading');
+  const tNoResults = t('noResults');
+  const tLoadMore = t('loadMore');
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -332,15 +340,15 @@ export default function SearchOverlay({
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Find an article"
-            aria-label="Search"
+              placeholder={tPlaceholder}
+              aria-label={tSearchLabel}
             className="
               w-full bg-transparent py-2 text-inherit
               placeholder-neutral-500 dark:placeholder-neutral-400
               appearance-none focus:outline-none focus:ring-0 focus:shadow-none
             "
           />
-          {q ? (
+            {q ? (
             <button
               type="button"
               onClick={() => {
@@ -348,9 +356,9 @@ export default function SearchOverlay({
                 inputRef.current?.focus();
               }}
               className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
-              aria-label="Clear search"
+                aria-label={tClear}
             >
-              CLEAR
+                {tClear}
             </button>
           ) : null}
         </div>
@@ -358,11 +366,11 @@ export default function SearchOverlay({
         {/* Results */}
         <div className="max-h[60vh] max-h-[60vh] overflow-auto py-2">
           {loading && (
-            <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">Loading…</div>
+            <div className="px-3 py-3 text-sm text-neutral-500 dark:text-neutral-400">{tLoading}</div>
           )}
           {empty && (
             <div className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
-              No results. Try a different term.
+              {tNoResults}
             </div>
           )}
 
@@ -422,7 +430,7 @@ export default function SearchOverlay({
                            border-neutral-200 hover:bg-neutral-50
                            dark:border-white/10 dark:hover:bg-neutral-800/60"
               >
-                Load more
+                {tLoadMore}
               </button>
             </div>
           )}
