@@ -1,4 +1,4 @@
-import CategoryPage from "../../categories/[category]/page";
+import CategoryPage from "../../../categories/[category]/page";
 import { getCategoryBySlug } from "@/lib/wp/api";
 import { TRANSLATIONS } from "@/lib/i18n";
 

@@ -23,6 +23,69 @@ const MAP: Record<string, Translations> = {
   "tips & motivation": { en: "Tips & Motivation", ua: "Поради та мотивація", ru: "Советы и мотивация" },
 };
 
+// Optional longer descriptions per category. Use the same lookup strategy
+// as titles above. If a description is missing for a locale we fall back
+// to the original WP-provided description (handled by callers).
+const DESC_MAP: Record<string, Translations> = {
+  "exercises-practice": {
+    en: "Interactive tasks and quizzes to test your German grammar, vocabulary, and listening skills. Perfect for self-study and daily practice.",
+    ua: "Інтерактивні вправи та тести для перевірки граматики, словникового запасу та навичок аудіювання німецької мови. Ідеально підходить для самостійного вивчення та щоденної практики.",
+    ru: "Интерактивные задания и тесты для проверки вашей немецкой грамматики, словарного запаса и навыков аудирования. Отлично подходит для самостоятельного изучения и ежедневной практики.",
+  },
+  // common alternative slugs
+  exercises: {
+    en: "Interactive tasks and quizzes to test your German grammar, vocabulary, and listening skills. Perfect for self-study and daily practice.",
+    ua: "Інтерактивні вправи та тести для перевірки граматики, словникового запасу та навичок аудіювання німецької мови. Ідеально підходить для самостійного вивчення та щоденної практики.",
+    ru: "Интерактивные задания и тесты для проверки вашей немецкой грамматики, словарного запаса и навыков аудирования. Отлично подходит для самостоятельного изучения и ежедневной практики.",
+  },
+  grammar: {
+    en: "Learn German grammar easily with clear explanations, examples, and simple rules. From articles and cases to tenses and sentence structure — everything you need.",
+    ua: "Вивчайте німецьку граматику з простими поясненнями, прикладами та правилами. Від артиклів і відмінків до часів і структури речення — все необхідне.",
+    ru: "Изучайте немецкую грамматику с понятными объяснениями, примерами и простыми правилами. От артиклей и падежей до времен и структуры предложений — всё, что нужно.",
+  },
+  "success-stories": {
+    en: "Describes the experiences of people who learned German as adults",
+    ua: "Описує досвід людей, які вчили німецьку дорослими",
+    ru: "Описывает опыт людей, которые выучили немецкий во взрослом возрасте",
+  },
+  "tips-motivation": {
+    en: "Advice, strategies, and motivation for learning German effectively. Stay consistent, inspired, and confident on your learning journey.",
+    ua: "Поради, стратегії та мотивація для ефективного вивчення німецької. Залишайтеся послідовними, натхненними та впевненими у своїй подорожі навчання.",
+    ru: "Советы, стратегии и мотивация для эффективного изучения немецкого. Оставайтесь последовательными, вдохновлёнными и уверенными в своём обучении.",
+  },
+  blog: {
+    en: "Your blog category",
+    ua: "Категорія блогу",
+    ru: "Категория блога",
+  },
+  // alternative keys
+  speaking: {
+    en: "Improve your German speaking skills and pronunciation. Learn how to sound natural, practice dialogues, and gain confidence in real conversations.",
+    ua: "Покращуйте свої розмовні навички та вимову німецької. Дізнайтеся, як звучати природно, практикуйте діалоги та набувайте впевненості у розмовах.",
+    ru: "Улучшайте свои навыки разговорной речи и произношения на немецком. Учитесь звучать естественно, практикуйте диалоги и обретайте уверенность в реальных разговорах.",
+  },
+  vocabulary: {
+    en: "Build your German vocabulary through themed word lists, practical expressions, and everyday phrases for travel, work, and daily life.",
+    ua: "Розвивайте свій німецький словниковий запас за допомогою тематичних списків слів, практичних виразів та фраз на кожен день для подорожей, роботи та повсякденного життя.",
+    ru: "Развивайте свой немецкий словарный запас с помощью тематических списков слов, практичных выражений и повседневных фраз для путешествий, работы и жизни.",
+  },
+  "speaking-pronunciation": {
+    en: "Improve your German speaking skills and pronunciation. Learn how to sound natural, practice dialogues, and gain confidence in real conversations.",
+    ua: "Покращуйте свої розмовні навички та вимову німецької. Дізнайтеся, як звучати природно, практикуйте діалоги та набувайте впевненості у розмовах.",
+    ru: "Улучшайте свои навыки разговорной речи и произношения на немецком. Учитесь звучать естественно, практикуйте диалоги и обретайте уверенность в реальных разговорах.",
+  },
+  "tips": {
+    en: "Advice, strategies, and motivation for learning German effectively. Stay consistent, inspired, and confident on your learning journey.",
+    ua: "Поради, стратегії та мотивація для ефективного вивчення німецької. Залишайтеся послідовними, натхненними та впевненими у своїй подорожі навчання.",
+    ru: "Советы, стратегии и мотивация для эффективного изучения немецкого. Оставайтесь последовательными, вдохновлёнными и уверенными в своём обучении.",
+  },
+  "tips-and-motivation": {
+    en: "Advice, strategies, and motivation for learning German effectively. Stay consistent, inspired, and confident on your learning journey.",
+    ua: "Поради, стратегії та мотивація для ефективного вивчення німецької. Залишайтеся послідовними, натхненними та впевненими у своїй подорожі навчання.",
+    ru: "Советы, стратегии и мотивация для эффективного изучения немецкого. Оставайтесь последовательными, вдохновлёнными и уверенными в своём обучении.",
+  },
+};
+
 
 function makeLookupVariants(s: string | undefined | null) {
   if (!s) return [] as string[];
@@ -72,6 +135,21 @@ export function translateCategory(name?: string | null, slug?: string | null, lo
   if (!emojiPrefix) return original;
   const core = original.slice(emojiPrefix.length).trimStart();
   return `${emojiPrefix} ${core}`;
+}
+
+export function translateCategoryDescription(original?: string | null, slug?: string | null, locale: Locale = "en") {
+  const slugCandidates = makeLookupVariants(slug);
+  for (const k of slugCandidates) {
+    if (k && DESC_MAP[k] && DESC_MAP[k][locale]) return String(DESC_MAP[k][locale]).trim();
+  }
+
+  const nameCandidates = makeLookupVariants(original);
+  for (const k of nameCandidates) {
+    if (k && DESC_MAP[k] && DESC_MAP[k][locale]) return String(DESC_MAP[k][locale]).trim();
+  }
+
+  // No translation found — return undefined so callers can fall back to WP description
+  return undefined as string | undefined;
 }
 
 export default MAP;

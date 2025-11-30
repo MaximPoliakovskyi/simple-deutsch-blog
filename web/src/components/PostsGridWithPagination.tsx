@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useI18n } from "@/components/LocaleProvider";
 import PostCard from "@/components/PostCard";
 
 type PageInfo = {
@@ -36,9 +37,12 @@ export function PostsGridWithPagination({
   pageSize,
   query,
 }: Props) {
+  const { t } = useI18n();
   // --- state ---
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [buffer, setBuffer] = useState<Post[]>([]);
+  // Initialize posts/buffer from server-provided initialPosts to avoid
+  // a flash of the empty-state while the client effect hydrates.
+  const [posts, setPosts] = useState<Post[]>(() => (initialPosts ? initialPosts.slice(0, pageSize) : []));
+  const [buffer, setBuffer] = useState<Post[]>(() => (initialPosts ? initialPosts.slice(pageSize) : []));
 
   const safePageInfo: PageInfo = initialPageInfo ?? { hasNextPage: false, endCursor: null };
   const [serverHasNextPage, setServerHasNextPage] = useState<boolean>(safePageInfo.hasNextPage);
@@ -180,7 +184,8 @@ export function PostsGridWithPagination({
   }, [buffer, serverHasNextPage, endCursor, query, pageSize, isLoading]);
 
   if (!posts.length) {
-    return <div>Нет статей.</div>;
+    const { t } = useI18n();
+    return <div>{t("noPosts")}</div>;
   }
 
   return (
@@ -215,7 +220,7 @@ export function PostsGridWithPagination({
           ].join(" ")}
           style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
         >
-          {isLoading ? "Loading…" : "Load more"}
+          {isLoading ? (t("loading") || "Loading…") : (t("loadMore") || "Load more")}
         </button>
       )}
     </div>

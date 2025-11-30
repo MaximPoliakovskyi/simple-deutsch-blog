@@ -651,7 +651,7 @@ export default function Header() {
             <ul className="space-y-1">
               <li>
                 <Link
-                  href="/posts"
+                  href={buildLocalePath("/posts")}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
@@ -660,7 +660,7 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  href="/categories"
+                  href={buildLocalePath("/categories")}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
@@ -669,7 +669,7 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  href="/tags"
+                  href={buildLocalePath("/tags")}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >

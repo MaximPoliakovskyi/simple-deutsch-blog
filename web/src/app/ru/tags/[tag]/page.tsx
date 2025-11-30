@@ -1,4 +1,4 @@
-import TagPage from "../../tags/[tag]/page";
+import TagPage from "../../../tags/[tag]/page";
 import { getTagBySlug } from "@/lib/wp/api";
 import { TRANSLATIONS } from "@/lib/i18n";
 

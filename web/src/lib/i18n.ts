@@ -46,7 +46,9 @@ const en: Translations = {
   categoryNotFound: "Category not found",
   tagNotFound: "Tag not found",
   categoriesHeading: "Categories",
+  categoryLabel: "Category:",
   tagsHeading: "Tags",
+  tagLabel: "Tag:",
   /* Footer links */
   courses: "Courses",
   lessons: "Lessons",
@@ -123,7 +125,9 @@ const ua: Translations = {
   categoryNotFound: "Категорію не знайдено",
   tagNotFound: "Тег не знайдено",
   categoriesHeading: "Категорії",
+  categoryLabel: "Категорія:",
   tagsHeading: "Теги",
+  tagLabel: "Тег:",
   /* Footer links */
   courses: "Курси",
   lessons: "Уроки",
@@ -200,7 +204,9 @@ const ru: Translations = {
   categoryNotFound: "Категория не найдена",
   tagNotFound: "Тег не найден",
   categoriesHeading: "Категории",
+  categoryLabel: "Категория:",
   tagsHeading: "Теги",
+  tagLabel: "Тег:",
   /* Footer links */
   courses: "Курсы",
   lessons: "Уроки",

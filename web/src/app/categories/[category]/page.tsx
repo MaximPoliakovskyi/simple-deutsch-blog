@@ -1,13 +1,31 @@
 // app/categories/[category]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import PostCard from "@/components/PostCard";
-import { getCategoryBySlug, getPostsByCategorySlug } from "@/lib/wp/api";
+import PostsGridWithPagination from "@/components/PostsGridWithPagination";
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { translateCategory } from "@/lib/categoryTranslations";
+import { getCategoryBySlug, getPostsPageByCategory } from "@/lib/wp/api";
 
 export const revalidate = 600;
 
 type Params = { category: string };
+
+const PAGE_SIZE = 6;
+
+// Language detection used across posts/category pages
+const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+
+function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+  const catLang = post.categories?.nodes
+    ?.map((c) => c?.slug)
+    .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
+  if (catLang) return catLang as LanguageSlug;
+
+  const prefix = post.slug?.split("-")[0];
+  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+  return null;
+}
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { category } = await params;
@@ -19,31 +37,39 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
-export default async function CategoryPage({ params, locale }: { params: Promise<Params>; locale?: "en" | "ru" | "ua" } ) {
+export default async function CategoryPage({ params, locale }: { params: Promise<Params>; locale?: "en" | "ru" | "ua" }) {
   const { category } = await params;
 
   const term = await getCategoryBySlug(category);
   if (!term) return notFound();
 
-  const { posts } = await getPostsByCategorySlug(category, 12);
+  // Derive current language for this page. Locale from App Router will be
+  // provided for localized routes (/ru, /ua). Default to English.
+  const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  // Fetch an initial batch larger than PAGE_SIZE so we can filter out posts
+  // in other languages while still filling the first page.
+  const { posts: fetched, pageInfo } = await getPostsPageByCategory({ first: PAGE_SIZE * 2, categorySlug: category });
+
+  // Keep only posts that match the current site language
+  const filtered = (fetched ?? []).filter((p) => getPostLanguage(p) === lang);
+  const initialPosts = filtered.slice(0, PAGE_SIZE);
+
+  const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
+  const translatedName = translateCategory(term.name, term.slug, lang ?? "en");
+  const label = t.categoryLabel ?? "Category:";
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">{`Category: ${term.name}`}</h1>
+      <h1 className="mb-6 text-3xl font-semibold">{`${label} ${translatedName}`}</h1>
 
-      {posts.nodes.length === 0 ? (
-        <p className="text-gray-500">{t.noPosts}</p>
-      ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {posts.nodes.map((post) => (
-            <li key={post.id}>
-              <PostCard post={post} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <PostsGridWithPagination
+        key={`${lang}-${category}`}
+        initialPosts={initialPosts}
+        initialPageInfo={pageInfo}
+        pageSize={PAGE_SIZE}
+        query={{ lang, categorySlug: category, tagSlug: null, level: null }}
+      />
     </main>
   );
 }

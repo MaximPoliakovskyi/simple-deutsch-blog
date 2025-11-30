@@ -1,4 +1,4 @@
-import CategoryPage, { generateMetadata as baseGenerateMetadata } from "../../categories/[category]/page";
+import CategoryPage, { generateMetadata as baseGenerateMetadata } from "../../../categories/[category]/page";
 import { getCategoryBySlug } from "@/lib/wp/api";
 import { TRANSLATIONS } from "@/lib/i18n";
 

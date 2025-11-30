@@ -140,7 +140,7 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
               {visibleCategories.map((cat) => (
                 <Link
                   key={cat!.slug}
-                  href={`/categories/${cat!.slug}`}
+                  href={(locale ?? DEFAULT_LOCALE) === "en" ? `/categories/${cat!.slug}` : `/${locale}/categories/${cat!.slug}`}
                   className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
                 >
                   {translateCategory(cat!.name, cat!.slug, locale ?? DEFAULT_LOCALE)}

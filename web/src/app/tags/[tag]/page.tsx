@@ -1,8 +1,8 @@
 // app/tags/[tag]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import PostCard, { type PostCardPost } from "@/components/PostCard";
-import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
+import PostsGridWithPagination from "@/components/PostsGridWithPagination";
+import type { PostListItem } from "@/lib/wp/api";
 import { getPostsByTagSlug, getTagBySlug } from "@/lib/wp/api";
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 
@@ -33,35 +33,47 @@ export default async function TagPage({ params, locale }: { params: Promise<Para
 
   const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
   if (!term) return notFound();
+  // PAGE_SIZE same as posts/categories
+  const PAGE_SIZE = 6;
 
-  const { posts } = await getPostsByTagSlug(tag, 12);
-  type PostNode = {
-    id: string;
-    slug: string;
-    title: string;
-    date?: string;
-    excerpt?: string | null;
-    featuredImage?: unknown;
-  };
-  const nodes = extractConnectionNodes<PostNode>(posts);
+  // Language detection used across the site (category slug or slug prefix)
+  const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+  type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+    const catLang = post.categories?.nodes
+      ?.map((c) => c?.slug)
+      .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
+    if (catLang) return catLang as LanguageSlug;
+
+    const prefix = post.slug?.split("-")[0];
+    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+    return null;
+  }
+
+  // Determine page language
+  const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
+
+  // Fetch an initial batch and filter to current language
+  const { posts: fetchedPosts } = await getPostsByTagSlug(tag, PAGE_SIZE * 2);
+  const nodes = (fetchedPosts?.nodes ?? []) as PostListItem[];
+  const filtered = nodes.filter((p) => getPostLanguage(p) === lang);
+  const initialPosts = filtered.slice(0, PAGE_SIZE) as any[];
+
+  const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
+  const label = (t.tagLabel as string) ?? "Tag:";
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">{`Tag: ${term.name}`}</h1>
+      <h1 className="mb-6 text-3xl font-semibold">{`${label} ${term.name}`}</h1>
 
-      {nodes.length === 0 ? (
-        <p className="text-gray-500">{t.noResults}</p>
-      ) : (
-        <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {nodes.map((post) => (
-            <li key={post.id}>
-              <PostCard post={post as PostCardPost} />
-            </li>
-          ))}
-        </ul>
-      )}
+      <PostsGridWithPagination
+        key={`${lang}-tag-${tag}`}
+        initialPosts={initialPosts}
+        initialPageInfo={(fetchedPosts?.pageInfo as any) ?? { hasNextPage: false, endCursor: null }}
+        pageSize={PAGE_SIZE}
+        query={{ lang, categorySlug: null, tagSlug: tag, level: null }}
+      />
     </main>
   );
 }

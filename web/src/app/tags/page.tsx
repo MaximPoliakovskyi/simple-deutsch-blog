@@ -23,6 +23,8 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
 
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
+  const prefix = locale && locale !== DEFAULT_LOCALE ? `/${locale}` : "";
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-8 text-3xl font-semibold">{t.tagsHeading}</h1>
@@ -33,7 +35,7 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
           {nodes.map((tag) => (
             <li key={tag.id}>
               <Link
-                href={`/tags/${tag.slug}`}
+                href={`${prefix}/tags/${tag.slug}`}
                 className="inline-block rounded-lg border border-neutral-200/60 px-3 py-1 text-sm hover:bg-neutral-200/60 dark:border-neutral-800/60 dark:hover:bg-neutral-800/60"
               >
                 {tag.name}

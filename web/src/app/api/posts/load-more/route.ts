@@ -39,7 +39,23 @@ async function fetchPostsFromWordPress(params: {
   // Category-specific paged query (preserves pageInfo)
   if (categorySlug) {
     const { posts, pageInfo } = await getPostsPageByCategory({ first, after: after ?? undefined, categorySlug });
-    return { posts: posts as Post[], pageInfo };
+    let filtered = posts as Post[];
+    // If a language slug was provided, filter server-side to ensure we don't
+    // return posts in other languages when both category and lang are requested.
+    if (lang) {
+      // determine post language from either a language category or slug prefix
+      const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+      type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+      function getPostLanguage(post: any): LanguageSlug | null {
+        const catLang = (post?.categories?.nodes ?? []).map((c: any) => c?.slug).find((s: any) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
+        if (catLang) return catLang as LanguageSlug;
+        const prefix = post?.slug?.split("-")[0];
+        if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+        return null;
+      }
+      filtered = filtered.filter((p) => getPostLanguage(p) === (lang as LanguageSlug));
+    }
+    return { posts: filtered, pageInfo };
   }
 
   // Locale-aware feed
