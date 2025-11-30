@@ -7,7 +7,7 @@ import Pagination from "@/components/Pagination";
 import SuccessStoriesSliderServer from "@/components/SuccessStories/SuccessStoriesSliderServer";
 import CategoriesBlock from "@/components/CategoriesBlock";
 import type { PostListItem, WPPostCard } from "@/lib/wp/api";
-import { getAllTags } from "@/lib/wp/api";
+import { getAllCategories } from "@/lib/wp/api";
 import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
 import { filterHiddenCategories } from "@/lib/hiddenCategories";
 
@@ -77,7 +77,7 @@ async function getPosts(firstOrOpts: number | { first: number; locale?: string }
 export const revalidate = 300; // optional: revalidate homepage every 5 minutes
 
 export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
-  const PAGE_SIZE = 9;
+  const PAGE_SIZE = 6;
 
   // If a locale prop was passed (e.g. by app/ru/page.tsx), use it. Otherwise
   // always default to English on the server.
@@ -85,13 +85,12 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
 
   const { posts, pageInfo } = await getPosts({ first: PAGE_SIZE, locale: effectiveLocale });
 
-  // Fetch a small set of tags to display as hero pills
-  const { tags } = await getAllTags({ first: 12 });
+  // Fetch a small set of categories to display as hero pills
+  const catsResp = await getAllCategories({ first: 12 });
   const categoryNodes = filterHiddenCategories(
     extractConnectionNodes<{ id: string; name: string; slug: string }>(
-      // reuse the same variable name expected by the Hero component (categories)
-      // but these are tag nodes coming from WP
-      tags,
+      // pass real category nodes into the Hero component
+      catsResp?.categories,
     ),
   ).slice(0, 7);
 
@@ -139,6 +138,7 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
           initialEndCursor={pageInfo.endCursor}
           initialHasNextPage={pageInfo.hasNextPage}
           pageSize={PAGE_SIZE}
+          locale={effectiveLocale}
         />
       </main>
 

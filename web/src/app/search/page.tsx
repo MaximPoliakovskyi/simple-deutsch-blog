@@ -30,6 +30,12 @@ export default async function SearchPage({ searchParams, locale }: { searchParam
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   const { posts, pageInfo } = await searchPosts({ query: q, first: 10, after });
+  // If a locale is provided, filter search results to posts that include the
+  // language category (slug === locale). This mirrors the language filtering
+  // used in the posts API.
+  const filteredPosts = locale
+    ? posts.filter((p: any) => (p?.categories?.nodes ?? []).some((c: any) => c?.slug === locale))
+    : posts;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -49,9 +55,9 @@ export default async function SearchPage({ searchParams, locale }: { searchParam
       )}
 
       <section className="grid gap-6">
-        {posts.map((p: WPPostCard) => (
-          <PostCard key={p.id} post={p} />
-        ))}
+        {filteredPosts.map((p: WPPostCard) => (
+            <PostCard key={p.id} post={p} />
+          ))}
       </section>
 
       {q && pageInfo.hasNextPage ? (

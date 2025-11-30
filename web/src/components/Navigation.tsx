@@ -100,11 +100,11 @@ function LanguageDropdown({
         onKeyDown={onButtonKeyDown}
         // match SearchButton styling and set exact 38x38 size
         className={
-          "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none " +
-          "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0] " +
-          "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10"
+          "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm " +
+          "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+          "sd-pill"
         }
-        style={{ padding: 0 }}
+        style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
         aria-label={t("language") || `Language (${labelsFull[currentLocale]})`}
         title={labelsFull[currentLocale]}
       >
@@ -119,8 +119,8 @@ function LanguageDropdown({
           aria-label={t("language")}
           className={
             "absolute right-0 mt-2 w-[38px] origin-top-right rounded-3xl " +
-            "bg-[#FAFAFA] dark:bg-white/5 border border-[#E6E7EB] dark:border-white/10 " +
-            "overflow-hidden z-50"
+            "bg-[#FFFFFF] dark:bg-white/5 border border-[#E6E7EB] dark:border-white/10 " +
+            "overflow-hidden z-50 shadow-sm hover:shadow-md transition transform-gpu duration-200 ease-out"
           }
         >
           {(() => {
@@ -133,7 +133,7 @@ function LanguageDropdown({
                   role="menuitem"
                   href={buildHref(l)}
                   aria-current={undefined}
-                  className={`block w-full text-center py-2 text-sm transition-colors duration-200 ease-in-out ${l === currentLocale ? "font-semibold bg-neutral-50 dark:bg-neutral-800/60" : "font-normal"} text-neutral-700 dark:text-neutral-200 hover:bg-[#dcdde0] dark:hover:bg-white/10`}
+                  className={`block w-full text-center py-2 text-sm transition-colors duration-200 ease-in-out ${l === currentLocale ? "font-semibold bg-neutral-50 dark:bg-neutral-800/60" : "font-normal"} text-neutral-700 dark:text-neutral-200 hover:bg-[var(--sd-pill-bg-hover)] dark:hover:bg-white/10`}
                   onClick={() => setOpen(false)}
                 >
                   <span className="leading-none">{labelsShort[l]}</span>

@@ -46,6 +46,14 @@
   --sd-bg: hsl(var(--bg));
   --sd-fg: hsl(var(--fg));
 
+  /* Pill/button surface tokens (used for header/search/load-more pills) */
+  --sd-pill-bg: #ffffff;
+  --sd-pill-fg: #000000;
+  --sd-pill-bg-hover: #f3f4f6; /* light hover */
+  --sd-pill-bg-dark: #1f1f1f;
+  --sd-pill-fg-dark: #ffffff;
+  --sd-pill-bg-dark-hover: #2b2b2b;
+
   /* Card / surface token used for small UI surfaces like the TOC and promo card */
   --sd-card-bg: hsl(0 0% 98%); /* very light surface */
   /* Subtle accent gradient used on small cards (promo/TOC) */
@@ -66,6 +74,27 @@ html.dark {
   --sd-card-bg: rgb(255 255 255 / 3%);
   --sd-card-grad-start: rgba(255,255,255,0.02);
   --sd-card-grad-end: rgba(255,255,255,0.0);
+
+  /* Override pill tokens in dark mode */
+  --sd-pill-bg: #1f1f1f;
+  --sd-pill-fg: #ffffff;
+  --sd-pill-bg-hover: #2b2b2b;
+}
+
+/* Shared pill surface class used by search, header and Load more so they match exactly */
+.sd-pill {
+  background-color: var(--sd-pill-bg);
+  color: var(--sd-pill-fg);
+}
+.sd-pill:hover {
+  background-color: var(--sd-pill-bg-hover);
+}
+.dark .sd-pill {
+  background-color: var(--sd-pill-bg-dark);
+  color: var(--sd-pill-fg-dark);
+}
+.dark .sd-pill:hover {
+  background-color: var(--sd-pill-bg-dark-hover);
 }
 
 /* Infection overlay: controlled by theme-infect + theme-infect-active classes */

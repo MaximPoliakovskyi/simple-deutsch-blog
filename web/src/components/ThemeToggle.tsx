@@ -62,11 +62,11 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
       className={
-        "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm transition-colors focus:outline-none focus-visible:outline-none " +
-        "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0] " +
-        "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10"
+        "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm " +
+        "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+        "sd-pill"
       }
-      style={{ padding: 0 }}
+      style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
     >
       {isDark ? (
         <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">

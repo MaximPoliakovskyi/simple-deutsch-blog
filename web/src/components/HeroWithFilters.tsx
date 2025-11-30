@@ -13,13 +13,15 @@ export default function HeroWithFilters({
   initialPosts,
   initialEndCursor,
   initialHasNextPage,
-  pageSize = 9,
+  pageSize = 6,
+  locale,
 }: {
   categories: Cat[];
   initialPosts: WPPostCard[];
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
   pageSize?: number;
+  locale?: "en" | "ru" | "ua";
 }) {
   const { t } = useI18n();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
@@ -45,14 +47,9 @@ export default function HeroWithFilters({
 
       <PostsGridWithPagination
         initialPosts={initialPosts}
-        initialEndCursor={initialEndCursor}
-        initialHasNextPage={initialHasNextPage}
+        initialPageInfo={{ hasNextPage: initialHasNextPage, endCursor: initialEndCursor }}
         pageSize={pageSize}
-        // This component now supports filtering by tag via `tagSlug`.
-        // The homepage now passes tag nodes into the hero pills so the
-        // `selectedCategory` here is actually a tag slug. Use the tag prop
-        // so the grid will fetch posts by tag.
-        tagSlug={selectedCategory}
+        query={{ lang: locale ?? "en", categorySlug: selectedCategory, tagSlug: null, level: null }}
       />
     </>
   );

@@ -1,180 +1,225 @@
 "use client";
 
-import * as React from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PostCard from "@/components/PostCard";
-import { useI18n } from "@/components/LocaleProvider";
-import type { WPPostCard } from "@/lib/wp/api";
 
-type Props = {
-  initialPosts: WPPostCard[];
-  initialEndCursor: string | null;
-  initialHasNextPage: boolean;
-  pageSize?: number;
-  // controlled category or tag prop - when provided, component fetches posts for
-  // the given category slug (categorySlug) or tag slug (tagSlug). If both are
-  // provided, tagSlug takes precedence.
-  categorySlug?: string | null;
-  tagSlug?: string | null;
+type PageInfo = {
+  hasNextPage: boolean;
+  endCursor: string | null;
 };
 
-export default function PostsGridWithPagination({
+type Post = {
+  id?: string;
+  slug: string;
+  title: string;
+  // other fields used by PostCard
+  [key: string]: any;
+};
+
+type Query = {
+  lang?: string;
+  categorySlug?: string | null;
+  tagSlug?: string | null;
+  level?: string | null;
+};
+
+type Props = {
+  initialPosts: Post[];
+  initialPageInfo?: PageInfo;
+  pageSize: number; // e.g. 6
+  query: Query;
+};
+
+export function PostsGridWithPagination({
   initialPosts,
-  initialEndCursor,
-  initialHasNextPage,
-  pageSize = 9,
-  categorySlug = null,
-  tagSlug = null,
+  initialPageInfo,
+  pageSize,
+  query,
 }: Props) {
-  const { t, locale } = useI18n();
-  const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
-  const [after, setAfter] = React.useState<string | null>(initialEndCursor);
-  const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
-  const [loading, setLoading] = React.useState(false);
-  // category or tag is controlled via prop
-  const category = categorySlug ?? null;
-  const tag = tagSlug ?? null;
+  // --- state ---
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [buffer, setBuffer] = useState<Post[]>([]);
 
-  // refs to track seen ids and the initial server-provided posts
-  const seen = React.useRef<Set<string>>(new Set(initialPosts.map((p) => (p.id ?? p.slug) as string)));
-  const initialRef = React.useRef({ posts: initialPosts, endCursor: initialEndCursor, hasNext: initialHasNextPage });
+  const safePageInfo: PageInfo = initialPageInfo ?? { hasNextPage: false, endCursor: null };
+  const [serverHasNextPage, setServerHasNextPage] = useState<boolean>(safePageInfo.hasNextPage);
+  const [endCursor, setEndCursor] = useState<string | null>(safePageInfo.endCursor);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  React.useEffect(() => {
-    // When category or tag changes, fetch fresh posts for that filter (or restore initial)
+  // key describing filters
+  const resetKey = useMemo(() => JSON.stringify(query), [query]);
+
+  // --- reset when filters or initial data change ---
+  useEffect(() => {
     let cancelled = false;
 
-    async function fetchForFilter() {
-      setLoading(true);
+    async function resetOrFetch() {
+      setIsLoading(true);
+      setError(null);
+
+      // If there are client-side filters (category/tag/level), fetch filtered
+      // posts from the server. Otherwise use the server-provided initialPosts.
+      const hasFilters = Boolean(query.categorySlug || query.tagSlug || query.level);
+
+      if (!hasFilters) {
+        const firstChunk = initialPosts.slice(0, pageSize);
+        const rest = initialPosts.slice(pageSize);
+
+        if (cancelled) return;
+
+        setPosts(firstChunk);
+        setBuffer(rest);
+        setServerHasNextPage((initialPageInfo ?? { hasNextPage: false }).hasNextPage);
+        setEndCursor((initialPageInfo ?? { endCursor: null }).endCursor);
+        setIsLoading(false);
+        setError(null);
+        return;
+      }
+
       try {
-        // If neither category nor tag is selected, restore initial server render
-        if (!category && !tag) {
-          seen.current = new Set(initialRef.current.posts.map((p) => (p.id ?? p.slug) as string));
-          setItems(initialRef.current.posts);
-          setAfter(initialRef.current.endCursor);
-          setHasNext(initialRef.current.hasNext);
-          return;
-        }
+        const u = new URL('/api/posts', window.location.origin);
+        u.searchParams.set('first', String(pageSize));
+        if (query.lang) u.searchParams.set('lang', query.lang);
+        if (query.categorySlug) u.searchParams.set('category', query.categorySlug);
+        if (query.tagSlug) u.searchParams.set('tag', query.tagSlug);
+        if (query.level) u.searchParams.set('level', query.level);
 
-        const url = new URL("/api/posts", window.location.origin);
-        url.searchParams.set("first", String(pageSize));
-        // Prefer tag filter when provided
-        if (tag) {
-          url.searchParams.set("tag", tag);
-        } else if (category) {
-          url.searchParams.set("category", category);
-        }
-        // Always scope client-side fetches to the current locale so all UI
-        // shows language-specific posts.
-        url.searchParams.set("lang", locale ?? "en");
-
-        const res = await fetch(url.toString(), { method: "GET" });
+        const res = await fetch(u.toString(), { method: 'GET' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
         const json = await res.json();
 
         if (cancelled) return;
 
-        // Support both shapes returned by the API:
-        // 1) Plain array of posts (when category-only queries return nodes)
-        // 2) { posts: [...], pageInfo: { ... } }
-        let postsArr: WPPostCard[] = [];
-        let pageInfo = { endCursor: null as string | null, hasNextPage: false };
+        // normalize response shapes
+        let fetchedPosts: Post[] = [];
+        let pageInfo = { hasNextPage: false, endCursor: null } as PageInfo;
 
         if (Array.isArray(json)) {
-          postsArr = json as WPPostCard[];
+          fetchedPosts = json as Post[];
         } else if (json && Array.isArray(json.posts)) {
-          postsArr = json.posts as WPPostCard[];
+          fetchedPosts = json.posts as Post[];
           pageInfo = json.pageInfo ?? pageInfo;
         }
 
-        seen.current = new Set(postsArr.map((p) => (p.id ?? p.slug) as string));
-        setItems(postsArr);
-        setAfter(pageInfo.endCursor);
-        setHasNext(pageInfo.hasNextPage);
-      } catch (err) {
-        console.error("Failed to load posts for filter", err);
+        const firstChunk = fetchedPosts.slice(0, pageSize);
+        const rest = fetchedPosts.slice(pageSize);
+
+        setPosts(firstChunk);
+        setBuffer(rest);
+        setServerHasNextPage(pageInfo.hasNextPage);
+        setEndCursor(pageInfo.endCursor);
+      } catch (err: any) {
+        console.error('Failed to fetch filtered posts', err);
+        if (!cancelled) setError(err?.message ?? 'Failed to load posts');
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
-    fetchForFilter();
+    resetOrFetch();
 
     return () => {
       cancelled = true;
     };
-  }, [category, tag, pageSize]);
+  }, [resetKey, JSON.stringify(initialPosts), JSON.stringify(initialPageInfo ?? {}), pageSize]);
 
-  const loadMore = async () => {
-    if (!hasNext || loading) return;
-    setLoading(true);
-    try {
-      const url = new URL("/api/posts", window.location.origin);
-      if (after) url.searchParams.set("after", after);
-      url.searchParams.set("first", String(pageSize));
-      if (tag) {
-        url.searchParams.set("tag", tag);
-      } else if (category) {
-        url.searchParams.set("category", category);
-      }
-      url.searchParams.set("lang", locale ?? "en");
+  const showLoadMore = buffer.length > 0 || serverHasNextPage;
 
-      const res = await fetch(url.toString(), { method: "GET" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const loadMore = useCallback(async () => {
+    if (isLoading) return;
 
-      const json = await res.json();
+    // 1) Use local buffer first
+    if (buffer.length > 0) {
+      setIsLoading(true);
+      setError(null);
 
-      // Normalize the response shape (array vs {posts, pageInfo})
-      const jsonPosts: WPPostCard[] = Array.isArray(json) ? (json as WPPostCard[]) : (json.posts ?? []);
-      const jsonPageInfo = Array.isArray(json) ? { endCursor: null, hasNextPage: false } : json.pageInfo ?? { endCursor: null, hasNextPage: false };
+      const nextChunk = buffer.slice(0, pageSize);
+      setPosts((prev) => [...prev, ...nextChunk]);
+      setBuffer((prev) => prev.slice(pageSize));
 
-      const next: WPPostCard[] = [];
-      for (const p of jsonPosts) {
-        const key = p.id ?? p.slug;
-        if (!seen.current.has(key)) {
-          seen.current.add(key);
-          next.push(p);
-        }
-      }
-
-      setItems((prev) => prev.concat(next));
-      setAfter(jsonPageInfo.endCursor);
-      setHasNext(jsonPageInfo.hasNextPage);
-    } catch (err) {
-      console.error("Load more failed", err);
-    } finally {
-      setLoading(false);
+      setIsLoading(false);
+      return;
     }
-  };
+
+    // 2) If no buffer and server says no more pages — exit
+    if (!serverHasNextPage) return;
+
+    // 3) Fetch next page from server
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/posts/load-more", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first: pageSize, after: endCursor, ...query }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Request failed: ${res.status} ${res.statusText} – ${text}`);
+      }
+
+      const data: { posts: Post[]; pageInfo: PageInfo } = await res.json();
+
+      // dedupe by id/slug
+      setPosts((prev) => {
+        const ids = new Set(prev.map((p) => p.id ?? p.slug));
+        const fresh = (data.posts ?? []).filter((p) => !ids.has(p.id ?? p.slug));
+        return [...prev, ...fresh];
+      });
+
+      setServerHasNextPage(data.pageInfo.hasNextPage);
+      setEndCursor(data.pageInfo.endCursor);
+    } catch (e: any) {
+      console.error("loadMore error:", e);
+      setError(e?.message ?? "Failed to load more posts");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [buffer, serverHasNextPage, endCursor, query, pageSize, isLoading]);
+
+  if (!posts.length) {
+    return <div>Нет статей.</div>;
+  }
 
   return (
-    <div>
-      <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
-        {items.map((post) => (
-          <li key={(post.id ?? post.slug) as string} className="transition duration-700 ease-out will-change-transform">
+    <div className="flex flex-col gap-8">
+      {/* grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+        {posts.map((post) => (
+          <div key={(post.id ?? post.slug) as string}>
             <PostCard post={post} />
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
 
-      {hasNext && (
-        <div className="mt-12 flex justify-center">
-          <button
-            type="button"
-            onClick={loadMore}
-            disabled={loading}
-            aria-disabled={loading}
-            className={[
-              "rounded-full border px-5 py-2 text-sm",
-              "transition duration-300 ease-out",
-              "hover:scale-[1.02] hover:bg-neutral-50 dark:hover:bg-white/10",
-              "disabled:opacity-50",
-              "focus-visible:outline-2 focus-visible:outline-offset-2",
-            ].join(" ")}
-          >
-            {loading ? t("loading") : t("loadMore")}
-          </button>
-        </div>
+      {/* error */}
+      {error && <p className="text-sm text-red-500">Ошибка при загрузке постов: {error}</p>}
+
+      {/* Load more button */}
+      {showLoadMore && (
+        <button
+          onClick={loadMore}
+          disabled={isLoading}
+          aria-disabled={isLoading}
+          className={[
+            "mx-auto rounded-full px-5 py-2 text-sm font-medium",
+            "transition duration-200 ease-out",
+            "transform-gpu hover:scale-[1.03] motion-reduce:transform-none",
+            "shadow-md hover:shadow-lg disabled:opacity-60",
+            // use shared pill surface token so all pills match
+            "sd-pill",
+            // Focus outline for accessibility
+            "focus-visible:outline-2 focus-visible:outline-offset-2",
+          ].join(" ")}
+          style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
+        >
+          {isLoading ? "Loading…" : "Load more"}
+        </button>
       )}
     </div>
   );
 }
+
+export default PostsGridWithPagination;

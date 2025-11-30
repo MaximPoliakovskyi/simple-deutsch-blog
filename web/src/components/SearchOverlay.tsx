@@ -67,18 +67,24 @@ export function SearchButton({
           setOpen(true);
         }}
         className={cn(
-            // base layout — we'll adjust spacing per-variant below
-            "flex transition-colors text-sm focus:outline-none focus-visible:outline-none",
-            // light: use requested background color; add subtle border
-            "bg-[#FAFAFA] text-neutral-700 border border-[#E6E7EB] hover:bg-[#dcdde0]",
-            // dark: keep subtle styling
-            "dark:bg-white/5 dark:text-neutral-200 dark:border-white/10 dark:hover:bg-white/10",
-            // variant specific
-            variant === "icon"
-              ? "w-[38px] h-[38px] rounded-full p-0 items-center justify-center"
-              : "items-center gap-2 px-4 py-2 rounded-full",
-            className,
-          )}
+          // base layout — pill for default, round for icon
+          "flex text-sm focus:outline-none",
+          // pill appearance (default) / compact circle (icon)
+          variant === "icon"
+            ? "items-center justify-center w-[38px] h-[38px] rounded-full p-0"
+            : "items-center gap-2 rounded-full px-5 py-2",
+          // transitions and micro-interaction (smaller scale for the labeled pill)
+          variant === "icon"
+            ? "transition transform-gpu duration-200 ease-out hover:scale-[1.03]"
+            : "transition transform-gpu duration-200 ease-out hover:scale-[1.02]",
+          "shadow-sm hover:shadow-md disabled:opacity-60",
+          // use shared pill surface token so header/search pills match exactly
+          "sd-pill",
+          // focus outline
+          "focus-visible:outline-2 focus-visible:outline-offset-2",
+          className,
+        )}
+        style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
         aria-label={ariaLabel}
         title={`${ariaLabel} (Ctrl+K)`}
       >
@@ -88,7 +94,7 @@ export function SearchButton({
             fill="currentColor"
           />
         </svg>
-        {variant === "default" && <span>{ariaLabel}</span>}
+            {variant === "default" && <span>{ariaLabel}</span>}
       </button>
       {open && (
         <SearchOverlay
@@ -111,7 +117,7 @@ export default function SearchOverlay({
   onClose: () => void;
   openMethod?: 'click' | 'keyboard' | undefined;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const tPlaceholder = t('searchPlaceholder');
   const tSearchLabel = t('searchAria');
   const tClear = t('clear');
@@ -188,7 +194,7 @@ export default function SearchOverlay({
       }
       setLoading(true);
       try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(term)}`, {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(term)}&lang=${encodeURIComponent(locale)}`, {
           method: "GET",
           cache: "no-store",
           signal: ac.signal,
@@ -251,7 +257,7 @@ export default function SearchOverlay({
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}`,
+        `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}&lang=${encodeURIComponent(locale)}`,
         { method: "GET", cache: "no-store" },
       );
       const json = (await res.json()) as {
@@ -353,17 +359,17 @@ export default function SearchOverlay({
             "
           />
             {q ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQ("");
-                inputRef.current?.focus();
-              }}
-              className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+              <button
+                type="button"
+                onClick={() => {
+                  setQ("");
+                  inputRef.current?.focus();
+                }}
+                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
                 aria-label={tClear}
-            >
+              >
                 {tClear}
-            </button>
+              </button>
           ) : null}
         </div>
 
@@ -425,14 +431,20 @@ export default function SearchOverlay({
             ))}
           </ul>
 
-          {hasNext && (
+          {hasNext && !empty && (
             <div className="p-2 text-center">
               <button
                 type="button"
                 onClick={loadMore}
-                className="rounded-lg border px-3 py-1.5 text-sm
-                           border-neutral-200 hover:bg-neutral-50
-                           dark:border-white/10 dark:hover:bg-neutral-800/60"
+                className={[
+                  "inline-block rounded-full px-5 py-2 text-sm font-medium",
+                  "transition transform-gpu duration-200 ease-out hover:scale-[1.03]",
+                  "shadow-sm hover:shadow-md",
+                  "bg-white text-black hover:bg-neutral-50",
+                  "dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700",
+                  "focus-visible:outline-2 focus-visible:outline-offset-2",
+                ].join(" ")}
+                style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
               >
                 {tLoadMore}
               </button>

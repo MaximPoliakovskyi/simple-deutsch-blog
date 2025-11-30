@@ -9,6 +9,7 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();
   const after = searchParams.get("after");
+  const lang = searchParams.get("lang");
 
   if (!q) {
     return NextResponse.json(
@@ -19,8 +20,13 @@ export async function GET(req: Request) {
 
   try {
     const { posts, pageInfo } = await searchPosts({ query: q, first: 8, after });
+    // If a lang filter was provided, filter posts client-side by category slug
+    const filtered = lang
+      ? posts.filter((post: any) => (post?.categories?.nodes ?? []).some((c: any) => c?.slug === lang))
+      : posts;
+
     // Minimal payload for the overlay
-    const slim = posts.map((p) => ({
+    const slim = filtered.map((p) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,

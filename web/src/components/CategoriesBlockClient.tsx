@@ -12,13 +12,15 @@ export default function CategoriesBlockClient({
   initialPosts,
   initialEndCursor,
   initialHasNextPage,
-  pageSize = 3,
+  pageSize = 6,
+  locale,
 }: {
   categories: Cat[];
   initialPosts: WPPostCard[];
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
   pageSize?: number;
+  locale?: "en" | "ru" | "ua";
 }) {
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
@@ -38,10 +40,9 @@ export default function CategoriesBlockClient({
       <div>
         <PostsGridWithPagination
           initialPosts={initialPosts}
-          initialEndCursor={initialEndCursor}
-          initialHasNextPage={initialHasNextPage}
+          initialPageInfo={{ hasNextPage: initialHasNextPage, endCursor: initialEndCursor }}
           pageSize={pageSize}
-          categorySlug={selectedCategory}
+          query={{ lang: locale ?? "en", categorySlug: null, tagSlug: selectedCategory, level: null }}
         />
       </div>
     </div>
