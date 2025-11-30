@@ -78,7 +78,12 @@ export const revalidate = 300; // optional: revalidate homepage every 5 minutes
 
 export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
   const PAGE_SIZE = 9;
-  const { posts, pageInfo } = await getPosts({ first: PAGE_SIZE, locale });
+
+  // If a locale prop was passed (e.g. by app/ru/page.tsx), use it. Otherwise
+  // always default to English on the server.
+  const effectiveLocale = locale ?? "en";
+
+  const { posts, pageInfo } = await getPosts({ first: PAGE_SIZE, locale: effectiveLocale });
 
   // Fetch a small set of tags to display as hero pills
   const { tags } = await getAllTags({ first: 12 });
@@ -138,13 +143,13 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
       </main>
 
       {/* ✅ Homepage-only Success stories slider — rendered before the global footer */}
-  <SuccessStoriesSliderServer locale={locale} />
+  <SuccessStoriesSliderServer locale={effectiveLocale} />
 
   {/* ✅ Homepage “Latest posts” slider */}
-  <LatestPostsSliderServer locale={locale} />
+  <LatestPostsSliderServer locale={effectiveLocale} />
 
   {/* Homepage-only Categories block — rendered before the global footer */}
-  <CategoriesBlock locale={locale} />
+  <CategoriesBlock locale={effectiveLocale} />
     </>
   );
 }

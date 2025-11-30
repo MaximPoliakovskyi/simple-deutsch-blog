@@ -25,7 +25,7 @@ export default function PostsGridWithPagination({
   categorySlug = null,
   tagSlug = null,
 }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
   const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
@@ -62,18 +62,34 @@ export default function PostsGridWithPagination({
         } else if (category) {
           url.searchParams.set("category", category);
         }
+        // Always scope client-side fetches to the current locale so all UI
+        // shows language-specific posts.
+        url.searchParams.set("lang", locale ?? "en");
 
         const res = await fetch(url.toString(), { method: "GET" });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const json: { posts: WPPostCard[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } } = await res.json();
+        const json = await res.json();
 
         if (cancelled) return;
 
-        seen.current = new Set(json.posts.map((p) => (p.id ?? p.slug) as string));
-        setItems(json.posts);
-        setAfter(json.pageInfo.endCursor);
-        setHasNext(json.pageInfo.hasNextPage);
+        // Support both shapes returned by the API:
+        // 1) Plain array of posts (when category-only queries return nodes)
+        // 2) { posts: [...], pageInfo: { ... } }
+        let postsArr: WPPostCard[] = [];
+        let pageInfo = { endCursor: null as string | null, hasNextPage: false };
+
+        if (Array.isArray(json)) {
+          postsArr = json as WPPostCard[];
+        } else if (json && Array.isArray(json.posts)) {
+          postsArr = json.posts as WPPostCard[];
+          pageInfo = json.pageInfo ?? pageInfo;
+        }
+
+        seen.current = new Set(postsArr.map((p) => (p.id ?? p.slug) as string));
+        setItems(postsArr);
+        setAfter(pageInfo.endCursor);
+        setHasNext(pageInfo.hasNextPage);
       } catch (err) {
         console.error("Failed to load posts for filter", err);
       } finally {
@@ -100,14 +116,19 @@ export default function PostsGridWithPagination({
       } else if (category) {
         url.searchParams.set("category", category);
       }
+      url.searchParams.set("lang", locale ?? "en");
 
       const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json: { posts: WPPostCard[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } } = await res.json();
+      const json = await res.json();
+
+      // Normalize the response shape (array vs {posts, pageInfo})
+      const jsonPosts: WPPostCard[] = Array.isArray(json) ? (json as WPPostCard[]) : (json.posts ?? []);
+      const jsonPageInfo = Array.isArray(json) ? { endCursor: null, hasNextPage: false } : json.pageInfo ?? { endCursor: null, hasNextPage: false };
 
       const next: WPPostCard[] = [];
-      for (const p of json.posts) {
+      for (const p of jsonPosts) {
         const key = p.id ?? p.slug;
         if (!seen.current.has(key)) {
           seen.current.add(key);
@@ -116,8 +137,8 @@ export default function PostsGridWithPagination({
       }
 
       setItems((prev) => prev.concat(next));
-      setAfter(json.pageInfo.endCursor);
-      setHasNext(json.pageInfo.hasNextPage);
+      setAfter(jsonPageInfo.endCursor);
+      setHasNext(jsonPageInfo.hasNextPage);
     } catch (err) {
       console.error("Load more failed", err);
     } finally {

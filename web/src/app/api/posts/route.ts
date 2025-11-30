@@ -1,40 +1,172 @@
-// src/app/api/posts/route.ts
 import { NextResponse } from "next/server";
-import { getPostsPage, getPostsByCategorySlug, getPostsByTagSlug } from "src/lib/wp/api"; // keep this path if your tsconfig maps "@" to project root with /src; otherwise make it a relative import
 
-const PAGE_SIZE = 10;
+const WP_GRAPHQL_ENDPOINT =
+  process.env.WP_GRAPHQL_ENDPOINT ?? "https://cms.simple-deutsch.de/graphql";
+
+// GraphQL chunks
+const CATEGORY_ID_BY_SLUG = `
+  query CategoryIdBySlug($slug: ID!) {
+    category(id: $slug, idType: SLUG) {
+      databaseId
+    }
+  }
+`;
+
+const POSTS_BY_CATEGORY_IDS = `
+  query PostsByCategoryIds($categoryIds: [ID]) {
+    posts(where: { categoryIn: $categoryIds }) {
+      nodes {
+        id
+        slug
+        title
+        excerpt
+        content(format: RENDERED)
+        date
+        featuredImage {
+          node {
+            sourceUrl
+          }
+        }
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+      }
+    }
+  }
+`;
+
+const POSTS_DEFAULT = `
+  query DefaultPosts {
+    posts {
+      nodes {
+        id
+        slug
+        title
+        excerpt
+        content(format: RENDERED)
+        date
+        featuredImage {
+          node {
+            sourceUrl
+          }
+        }
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+      }
+    }
+  }
+`;
+
+async function getCategoryIdBySlug(slug: string): Promise<number | null> {
+  if (!slug) return null;
+
+  const res = await fetch(WP_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      query: CATEGORY_ID_BY_SLUG,
+      variables: { slug },
+    }),
+    cache: "no-store",
+  });
+
+  const json = await res.json();
+  if (json.errors) {
+    console.error("CategoryIdBySlug errors:", json.errors);
+    return null;
+  }
+
+  return json.data?.category?.databaseId ?? null;
+}
 
 export async function GET(req: Request) {
-  try {
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get("category");
-    const after = searchParams.get("after");
-    const firstParam = searchParams.get("first");
-    const first = firstParam ? Math.max(1, Math.min(50, parseInt(firstParam, 10))) : PAGE_SIZE;
-
-    if (category) {
-      // Fetch posts for a specific category slug
-      const data = await getPostsByCategorySlug(category, first, after ?? undefined);
-      // getPostsByCategorySlug returns { posts: { nodes, pageInfo } }
-      const nodes = data?.posts?.nodes ?? [];
-      const pageInfo = data?.posts?.pageInfo ?? { endCursor: null, hasNextPage: false };
-      return NextResponse.json({ posts: nodes, pageInfo }, { status: 200 });
-    }
-
-    const tag = searchParams.get("tag");
-    if (tag) {
-      // Fetch posts for a specific tag slug
-      const data = await getPostsByTagSlug(tag, first, after ?? undefined);
-      // getPostsByTagSlug returns { tag: { name, slug }, posts: { nodes, pageInfo } }
-      const nodes = data?.posts?.nodes ?? [];
-      const pageInfo = data?.posts?.pageInfo ?? { endCursor: null, hasNextPage: false };
-      return NextResponse.json({ posts: nodes, pageInfo }, { status: 200 });
-    }
-
-    const { posts, pageInfo } = await getPostsPage({ first, after });
-    return NextResponse.json({ posts, pageInfo }, { status: 200 });
-  } catch (err) {
-    console.error("[GET /api/posts] error:", err);
-    return NextResponse.json({ error: "Failed to load posts" }, { status: 500 });
+  if (!WP_GRAPHQL_ENDPOINT) {
+    return NextResponse.json(
+      { error: "WP_GRAPHQL_ENDPOINT not configured" },
+      { status: 500 }
+    );
   }
+
+  const { searchParams } = new URL(req.url);
+
+  const langSlug = searchParams.get("lang");
+  const categorySlug = searchParams.get("category");
+
+  const categoryIds = [];
+
+  if (langSlug) {
+    const id = await getCategoryIdBySlug(langSlug);
+    if (id) categoryIds.push(id);
+  }
+
+  if (categorySlug) {
+    const id = await getCategoryIdBySlug(categorySlug);
+    if (id) categoryIds.push(id);
+  }
+
+  if (categoryIds.length > 0) {
+    const postsRes = await fetch(WP_GRAPHQL_ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query: POSTS_BY_CATEGORY_IDS,
+        variables: { categoryIds },
+      }),
+      cache: "no-store",
+    });
+
+    const postsJson = await postsRes.json();
+
+    if (postsJson.errors) {
+      console.error("PostsByCategoryIds errors:", postsJson.errors);
+      return NextResponse.json(
+        { error: "GraphQL posts error", details: postsJson.errors },
+        { status: 500 }
+      );
+    }
+
+    const posts: any[] = postsJson.data?.posts?.nodes ?? [];
+    let filteredPosts = posts;
+    if (langSlug) {
+      filteredPosts = posts.filter((post: any) =>
+        (post?.categories?.nodes ?? []).some((cat: any) => cat?.slug === langSlug),
+      );
+    }
+
+    return NextResponse.json(filteredPosts);
+  }
+
+  const fallbackRes = await fetch(WP_GRAPHQL_ENDPOINT, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query: POSTS_DEFAULT }),
+    cache: "no-store",
+  });
+
+  const fallbackJson = await fallbackRes.json();
+
+  if (fallbackJson.errors) {
+    console.error("DefaultPosts errors:", fallbackJson.errors);
+    return NextResponse.json(
+      { error: "GraphQL default error", details: fallbackJson.errors },
+      { status: 500 }
+    );
+  }
+
+  const posts: any[] = fallbackJson.data?.posts?.nodes ?? [];
+  let filteredPosts = posts;
+  if (langSlug) {
+    filteredPosts = posts.filter((post: any) =>
+      (post?.categories?.nodes ?? []).some((cat: any) => cat?.slug === langSlug),
+    );
+  }
+
+  return NextResponse.json(filteredPosts);
 }

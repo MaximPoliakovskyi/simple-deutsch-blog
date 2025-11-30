@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import PostCard from "@/components/PostCard";
+import { useI18n } from "@/components/LocaleProvider";
 import type { WPPostCard } from "@/lib/wp/api";
 
 type Props = {
@@ -41,6 +42,7 @@ export default function Pagination({
   initialHasNextPage,
   pageSize = 9, // 9 posts per page
 }: Props) {
+  const { locale } = useI18n();
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
   const [after, setAfter] = React.useState<string | null>(initialEndCursor);
   const [hasNext, setHasNext] = React.useState<boolean>(initialHasNextPage);
@@ -55,9 +57,11 @@ export default function Pagination({
     if (!hasNext || loading) return;
     setLoading(true);
     try {
-      const url = new URL("/api/posts", window.location.origin);
+  const url = new URL("/api/posts", window.location.origin);
       if (after) url.searchParams.set("after", after);
       url.searchParams.set("first", String(pageSize));
+  // Scope results to current locale
+  url.searchParams.set("lang", locale ?? "en");
 
       const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
