@@ -2,11 +2,25 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostContent from "@/components/PostContent";
 import Link from "next/link";
-import { getPostBySlug, getPostsByCategorySlug, getPostsPage } from "@/lib/wp/api"; // adjust path if yours differs
+import { getPostBySlug, getPostsByCategorySlug, getPostsPage, getPostsPageByCategory } from "@/lib/wp/api"; // adjust path if yours differs
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
 import { isHiddenCategory } from "@/lib/hiddenCategories";
 import { translateCategory } from "@/lib/categoryTranslations";
 import { generateTocFromHtml } from "@/lib/utils/generateToc";
+
+const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+
+function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+  const catLang = post.categories?.nodes
+    ?.map((c) => c?.slug)
+    .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
+  if (catLang) return catLang as LanguageSlug;
+
+  const prefix = post.slug?.split("-")[0];
+  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+  return null;
+}
 
 // Optional: keep your ISR setting if you use it
 export const revalidate = 300; // 5 minutes
@@ -76,9 +90,17 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
   // derive dynamic values
   const authorName = post.author?.node?.name ?? "Unknown author";
   const date = post.date ? new Date(post.date) : null;
-  const formattedDate = date ? date.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" }) : "";
-  const firstCategory = post.categories?.nodes?.[0] ?? null;
-  const showFirstCategory = firstCategory ? !isHiddenCategory(firstCategory.name, firstCategory.slug) : false;
+  // Format date according to the page locale (map our site locale -> Intl locale)
+  const localeForDate = (locale ?? DEFAULT_LOCALE) === "ua" ? "uk-UA" : (locale ?? DEFAULT_LOCALE);
+  const formattedDate = date
+    ? date.toLocaleDateString(localeForDate, { year: "numeric", month: "long", day: "numeric" })
+    : "";
+  // Show all non-language categories (do not show language category)
+  const visibleCategories = (post.categories?.nodes ?? [])
+    .filter((c) => c && !(LANGUAGE_SLUGS as readonly string[]).includes(c.slug ?? ""))
+    .filter((c) => !isHiddenCategory(c!.name, c!.slug));
+  const showCategories = visibleCategories.length > 0;
+  const firstCategoryForFetch = visibleCategories.length > 0 ? visibleCategories[0] : null;
 
   // compute read time (approx) from word count (200 wpm)
   const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
@@ -88,28 +110,23 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
   const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
-  // fetch related / more posts for the sidebar
-  let morePosts: { slug: string; title: string }[] = [];
-  // If the primary category is visible, fetch related posts by that category.
-  if (firstCategory?.slug && !isHiddenCategory(firstCategory.name, firstCategory.slug)) {
-    const catRes = await getPostsByCategorySlug(firstCategory.slug, 6);
-    const nodes = catRes.posts?.nodes ?? [];
-    morePosts = nodes
-      .filter((p) => p.slug !== post.slug)
-      // Exclude posts that belong only to hidden categories
-      .filter((p) => !(p.categories?.nodes ?? []).every((c) => isHiddenCategory(c.name, c.slug)))
-      .map((p) => ({ slug: p.slug, title: p.title }))
-      .slice(0, 4);
-  }
+  const currentLang = getPostLanguage(post) ?? "en";
 
-  if (morePosts.length === 0) {
-    const page = await getPostsPage({ first: 6 });
-    morePosts = page.posts
+  // fetch related / more posts for the sidebar — LANGUAGE ONLY (no topic/category logic)
+  let moreArticles: { slug: string; title: string }[] = [];
+  try {
+    const allLangRes = await getPostsPageByCategory({ first: 20, categorySlug: currentLang });
+    const nodes = allLangRes.posts ?? [];
+    moreArticles = nodes
       .filter((p) => p.slug !== post.slug)
-      // Exclude posts that belong only to hidden categories
-      .filter((p) => !(p.categories?.nodes ?? []).every((c) => isHiddenCategory(c.name, c.slug)))
+      // safety: ensure post language matches currentLang
+      .filter((p) => getPostLanguage(p) === currentLang)
       .map((p) => ({ slug: p.slug, title: p.title }))
       .slice(0, 4);
+  } catch (err) {
+    // If the language-based fetch fails for some reason, fall back to an empty list.
+    console.error("Failed to fetch language posts for moreArticles:", err);
+    moreArticles = [];
   }
 
   return (
@@ -118,14 +135,17 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
         <article className="md:col-span-3">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">{post.title}</h1>
 
-          {showFirstCategory && firstCategory ? (
-            <div className="mb-6">
-              <Link
-                href={`/categories/${firstCategory.slug}`}
-                className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
-              >
-                {translateCategory(firstCategory.name, firstCategory.slug, locale ?? DEFAULT_LOCALE)}
-              </Link>
+          {showCategories ? (
+            <div className="mb-6 flex flex-wrap gap-2">
+              {visibleCategories.map((cat) => (
+                <Link
+                  key={cat!.slug}
+                  href={`/categories/${cat!.slug}`}
+                  className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
+                >
+                  {translateCategory(cat!.name, cat!.slug, locale ?? DEFAULT_LOCALE)}
+                </Link>
+              ))}
             </div>
           ) : null}
 
@@ -133,7 +153,7 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
             <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">{(authorName || "").charAt(0).toUpperCase()}</div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <div className="font-medium text-gray-900 dark:text-gray-100">{authorName}</div>
-              <div className="dark:text-gray-400">{formattedDate} · {readMinutes} min read</div>
+                <div className="dark:text-gray-400">{formattedDate} · {readMinutes} {t.minRead}</div>
             </div>
           </div>
 
@@ -170,15 +190,15 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
 
             {/* More articles (no background/borders, fill sidebar width) */}
             <div className="px-3 py-3 rounded-xl w-full">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">More articles</h4>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t.moreArticles}</h4>
               <ul className="text-sm text-gray-600 dark:text-gray-400">
-                {morePosts.map((p) => (
-                  <li key={p.slug} className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
-                    <Link href={`/posts/${p.slug}`} className="hover:underline block">
-                      {p.title}
-                    </Link>
-                  </li>
-                ))}
+                  {moreArticles.map((p) => (
+                    <li key={p.slug} className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
+                      <Link href={`/posts/${p.slug}`} className="hover:underline block">
+                        {p.title}
+                      </Link>
+                    </li>
+                  ))}
               </ul>
             </div>
           </div>

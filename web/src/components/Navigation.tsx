@@ -118,33 +118,165 @@ function LanguageDropdown({
           role="menu"
           aria-label={t("language")}
           className={
-            "absolute right-0 mt-2 w-[38px] origin-top-right rounded-3xl " +
+            "absolute left-1/2 -translate-x-1/2 mt-2 w-[38px] origin-top rounded-[9999px] px-0 " +
             "bg-[#FFFFFF] dark:bg-white/5 border border-[#E6E7EB] dark:border-white/10 " +
-            "overflow-hidden z-50 shadow-sm hover:shadow-md transition transform-gpu duration-200 ease-out"
+            "overflow-hidden z-50 shadow-sm transition-colors duration-200 ease-out"
           }
         >
-          {(() => {
-            // Render only the other languages in the dropdown to avoid
-            // duplicating the selected language (which is shown on the trigger)
-            const display = order.filter((l) => l !== currentLocale);
-            return display.map((l, i) => (
-              <li key={l} role="none">
-                <Link
-                  role="menuitem"
-                  href={buildHref(l)}
-                  aria-current={undefined}
-                  className={`block w-full text-center py-2 text-sm transition-colors duration-200 ease-in-out ${l === currentLocale ? "font-semibold bg-neutral-50 dark:bg-neutral-800/60" : "font-normal"} text-neutral-700 dark:text-neutral-200 hover:bg-[var(--sd-pill-bg-hover)] dark:hover:bg-white/10`}
-                  onClick={() => setOpen(false)}
-                >
-                  <span className="leading-none">{labelsShort[l]}</span>
-                  <span className="sr-only"> — {labelsFull[l]}</span>
-                </Link>
-              </li>
-            ));
-          })()}
+          {/* Vertical-pill language switcher: stacked labels displayed as centered rows */}
+          <NavLanguageDropdown closeMenu={() => setOpen(false)} />
         </ul>
       )}
     </div>
+  );
+}
+
+// Small helper hook used by the NavLanguageDropdown.
+// Returns current locale (derived from pathname) and a setter that persists
+// the preference. Navigation decisions (for posts) are performed by the
+// component that calls `setLocale` and `router.push` as needed.
+function useLanguage() {
+  const router = useRouter();
+  const pathname = usePathname() || "/";
+  // Determine locale from either a leading locale prefix (/ru or /ua)
+  // or from post slugs (/posts/{lang}-{rest}). Default to 'en'.
+  const locale: Lang = (() => {
+    if (!pathname) return "en";
+    if (pathname.startsWith("/posts/")) {
+      const slug = pathname.replace("/posts/", "");
+      const maybe = slug.split("-")[0];
+      return (['en', 'ru', 'ua'] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
+    }
+    if (pathname.startsWith("/ru")) return "ru";
+    if (pathname.startsWith("/ua")) return "ua";
+    return "en";
+  })();
+
+  function setLocale(next: Lang) {
+    try {
+      localStorage.setItem("sd-locale", next);
+    } catch {}
+
+    // If we're on a posts page, don't attempt to compute a generic path here.
+    // Post-specific navigation will be handled by callers (NavLanguageDropdown).
+    if (pathname.startsWith("/posts/")) return;
+
+    // For non-post pages preserve the current path but swap locale prefix
+    // strip existing locale prefix (/ru or /ua)
+    const stripped = pathname.replace(/^\/(ru|ua)(?=\/|$)/, "") || "/";
+
+    const newPath = next === "en" ? stripped : stripped === "/" ? `/${next}` : `/${next}${stripped}`;
+
+    if (newPath !== pathname) {
+      try {
+        router.push(newPath);
+      } catch {}
+    }
+  }
+
+  return { locale, setLocale } as { locale: Lang; setLocale: (l: Lang) => void };
+}
+// Hook: usePostLanguageSwitch
+// Parses current pathname to determine siteLang, isPost and slug, and
+// exposes changeLang(targetLang) which updates UI language and navigates
+// to the corresponding post path when applicable.
+function usePostLanguageSwitch() {
+  const router = useRouter();
+  const pathname = usePathname() || "/";
+  const { locale: currentLocale, setLocale } = useLanguage();
+
+  const SITE_LANGS = ["en", "ru", "ua"] as const;
+  type SiteLang = (typeof SITE_LANGS)[number];
+
+  // parse pathname parts
+  const parts = pathname.split("/").filter(Boolean);
+
+  let siteLang: SiteLang = "en";
+  let isPost = false;
+  let slug: string | null = null;
+
+  if (parts[0] === "ru" || parts[0] === "ua") {
+    siteLang = parts[0] as SiteLang;
+    if (parts[1] === "posts") {
+      isPost = true;
+      slug = parts[2] ?? null;
+    }
+  } else {
+    siteLang = "en";
+    if (parts[0] === "posts") {
+      isPost = true;
+      slug = parts[1] ?? null;
+    }
+  }
+
+  function buildPostPath(targetLang: SiteLang, articleId: string) {
+    const slug = `${targetLang}-${articleId}`;
+    if (targetLang === "en") return `/posts/${slug}`;
+    return `/${targetLang}/posts/${slug}`;
+  }
+
+  const changeLang = async (targetLang: SiteLang) => {
+    // If nothing to do, and siteLang equals currentLocale (both match), skip
+    if (targetLang === siteLang && targetLang === currentLocale) return;
+
+    // Always update UI language preference
+    try {
+      setLocale(targetLang as Lang);
+    } catch {}
+
+    // If not on a post page, nothing more to do here
+    if (!isPost || !slug) return;
+
+    const parts = slug.split("-");
+    if (parts.length < 2) return; // invalid slug
+    const articleId = parts.slice(1).join("-");
+    const newPath = buildPostPath(targetLang, articleId);
+
+    try {
+      await router.push(newPath);
+    } catch {}
+  };
+
+  return { currentSiteLang: siteLang as SiteLang, changeLang };
+}
+
+// Component: NavLanguageDropdown
+function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
+  const { currentSiteLang, changeLang } = usePostLanguageSwitch();
+
+  const LANGS = [
+    { code: "en", label: "En" },
+    { code: "ua", label: "Ук" },
+    { code: "ru", label: "Ру" },
+  ] as const;
+
+  // Exclude the currently selected language (it's shown in the closed pill)
+  const visibleLangs = LANGS.filter((l) => l.code !== currentSiteLang);
+
+  return (
+    <>
+      {visibleLangs.map((item, idx) => (
+        <li
+          key={item.code}
+          role="none"
+          className={idx < visibleLangs.length - 1 ? "border-b border-neutral-100 dark:border-white/6" : ""}
+        >
+          <button
+            role="menuitem"
+            onClick={() => {
+              changeLang(item.code as any);
+              closeMenu?.();
+            }}
+            className={
+              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
+              "hover:bg-neutral-100 dark:hover:bg-white/5"
+            }
+          >
+            {item.label}
+          </button>
+        </li>
+      ))}
+    </>
   );
 }
 
@@ -162,12 +294,20 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   const id = useId();
   const titleId = `mobile-menu-title-${id}`;
-  // determine current locale from pathname
-  const currentLocale = pathname?.startsWith("/ru")
-    ? "ru"
-    : pathname?.startsWith("/ua")
-    ? "ua"
-    : "en";
+  // determine current locale from pathname. For post pages the language
+  // is encoded in the post slug (/posts/{lang}-{rest}), otherwise check
+  // for a leading locale prefix (/ru or /ua). Default to 'en'.
+  const currentLocale: Lang = (() => {
+    if (!pathname) return "en";
+    if (pathname.startsWith("/posts/")) {
+      const slug = pathname.replace("/posts/", "");
+      const maybe = slug.split("-")[0];
+      return (['en', 'ru', 'ua'] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
+    }
+    if (pathname.startsWith("/ru")) return "ru";
+    if (pathname.startsWith("/ua")) return "ua";
+    return "en";
+  })();
 
   const stripLocale = (p: string | null | undefined) => {
     if (!p) return "/";
