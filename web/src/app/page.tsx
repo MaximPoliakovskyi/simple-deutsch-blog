@@ -118,6 +118,7 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
       slug: String(p.slug),
       title: String(p.title),
       excerpt: p.excerpt ?? "",
+      content: (p as any).content ?? null,
       date: String(p.date),
       featuredImage,
       author,

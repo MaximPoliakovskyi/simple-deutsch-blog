@@ -361,6 +361,17 @@ html, body {
   transition-property: background-color, color;
   transition-duration: 350ms;
   transition-timing-function: cubic-bezier(.2,.9,.2,1);
+  /* Prevent a site-wide horizontal scrollbar caused by elements that
+     use 100vw or slight overflow (e.g. wide embeds or alignfull blocks).
+     `overflow-x: clip` avoids showing a scrollbar while still clipping
+     content; fall back to `hidden` for browsers that don't support `clip`. */
+  overflow-x: clip;
+}
+
+@supports not (overflow: clip) {
+  html, body {
+    overflow-x: hidden;
+  }
 }
 
 /* ✅ Next.js-compliant smooth scrolling */

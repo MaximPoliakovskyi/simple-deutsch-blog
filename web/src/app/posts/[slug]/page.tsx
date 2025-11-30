@@ -104,7 +104,7 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
 
   // compute read time (approx) from word count (200 wpm)
   const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
-  const readMinutes = Math.max(1, Math.round(words / 200));
+  const readMinutes = Math.max(1, Math.ceil(words / 200));
 
   // Generate a table-of-contents and inject anchor ids into headings
   const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };

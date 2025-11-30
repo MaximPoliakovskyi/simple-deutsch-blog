@@ -119,7 +119,9 @@ function LanguageDropdown({
           aria-label={t("language")}
           className={
             "absolute left-1/2 -translate-x-1/2 mt-2 w-[38px] origin-top rounded-[9999px] px-0 " +
-            "bg-[#FFFFFF] dark:bg-white/5 border border-[#E6E7EB] dark:border-white/10 " +
+            // Keep the original light-theme look but use the provided grey only
+            // when the site is in dark mode so light theme remains unchanged.
+            "bg-[#FFFFFF] dark:bg-[#1f1f1f] border border-[#E6E7EB] dark:border-[#2b2b2b] " +
             "overflow-hidden z-50 shadow-sm transition-colors duration-200 ease-out"
           }
         >
@@ -269,7 +271,9 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
             }}
             className={
               "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
-              "hover:bg-neutral-100 dark:hover:bg-white/5"
+                // Light-theme: slightly bright hover (original behaviour).
+                // Dark-theme: subtle translucent white to gently lighten the grey.
+                "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)]"
             }
           >
             {item.label}

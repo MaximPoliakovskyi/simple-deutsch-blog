@@ -85,7 +85,7 @@ export default async function UaPostPage({ params }: { params: ParamsPromise }) 
   const firstCategoryForFetch = visibleCategories.length > 0 ? visibleCategories[0] : null;
 
   const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
-  const readMinutes = Math.max(1, Math.round(words / 200));
+  const readMinutes = Math.max(1, Math.ceil(words / 200));
 
   const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };
   const t = TRANSLATIONS["ua"];

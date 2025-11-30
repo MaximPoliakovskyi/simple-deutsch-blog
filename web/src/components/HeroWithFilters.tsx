@@ -23,15 +23,34 @@ export default function HeroWithFilters({
   pageSize?: number;
   locale?: "en" | "ru" | "ua";
 }) {
-  const { t } = useI18n();
+  const { t, locale: uiLocale } = useI18n();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
 
   return (
     <>
     <section className="text-center max-w-4xl mx-auto py-12">
       <h1 className="font-extrabold text-5xl sm:text-6xl md:text-7xl leading-tight tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
-        {t("heroTitle")} <br />
-        <span className="text-blue-600">German</span>
+        {
+          (() => {
+            const raw = t("heroTitle");
+            // Words to highlight per locale
+            const highlightMap: Record<"en" | "ua" | "ru", string> = {
+              en: "practical",
+              ua: "практичні",
+              ru: "практичные",
+            };
+            const highlight = highlightMap[uiLocale] ?? "practical";
+            const idx = raw.indexOf(highlight);
+            if (idx === -1) return raw;
+            return (
+              <>
+                {raw.slice(0, idx)}
+                <span className="text-blue-600">{highlight}</span>
+                {raw.slice(idx + highlight.length)}
+              </>
+            );
+          })()
+        }
       </h1>
 
       <p className="mt-6 text-[hsl(var(--fg-muted))] text-base sm:text-xl">

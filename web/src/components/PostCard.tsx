@@ -13,6 +13,7 @@ export type PostCardPost = {
   title: string;
   date?: string | null;
   excerpt?: string | null; // intentionally unused
+  content?: string | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> } | null;
   featuredImage?:
@@ -58,12 +59,24 @@ function extractImage(p: PostCardPost) {
   return { url: "", alt: "" };
 }
 
-function estimateReadingMinutes(post: PostCardPost) {
-  if (post.readingMinutes) return Math.max(1, Math.round(post.readingMinutes));
-  const html = post.excerpt ?? post.title ?? "";
+function estimateReadingMinutes(post: PostCardPost): number | null {
+  // Prefer an explicit readingMinutes field from the API.
+  if (post.readingMinutes != null) return Math.max(1, Math.ceil(post.readingMinutes));
+
+  // If the API didn't provide a value, prefer to estimate from the full
+  // rendered `content` when available (the server-side API includes
+  // content in list endpoints). Fall back to `excerpt`, then `title`.
+  const html = post.content ?? post.excerpt ?? post.title ?? "";
   const text = html.replace(/<[^>]+>/g, " ");
   const words = (text.trim().match(/\S+/g) ?? []).length;
-  return Math.max(1, Math.round(words / 200));
+
+  // Only estimate when there's a meaningful amount of text. This avoids
+  // showing "1 min read" for short titles while still allowing an estimate
+  // when full content is available in the listing payload.
+  const MIN_WORDS_FOR_ESTIMATE = 40;
+  if (words < MIN_WORDS_FOR_ESTIMATE) return null;
+
+  return Math.max(1, Math.ceil(words / 200));
 }
 
 export default function PostCard({ post, className, priority = false }: PostCardProps) {
