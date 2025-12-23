@@ -11,7 +11,7 @@ type Props = {
   debounceMs?: number;
 };
 
-const DEFAULT_DEBOUNCE_MS = 400;
+const DEFAULT_DEBOUNCE_MS = 200; // tighter debounce to reduce jank while typing
 
 export default function SearchBox({
   placeholder,
@@ -50,7 +50,7 @@ export default function SearchBox({
 
   const finalPlaceholder = placeholder ?? t("searchPlaceholder");
   const finalAria = t("searchAria");
-  const finalClear = t("clear");
+  const finalClear = "Clear"; // fixed label across locales per requirement
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -61,6 +61,13 @@ export default function SearchBox({
         {...(autoFocus ? { autoFocus: true } : {})}
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape" && value) {
+            e.preventDefault();
+            setValue("");
+            inputRef.current?.focus();
+          }
+        }}
         placeholder={finalPlaceholder}
         aria-label={finalAria}
         className={[

@@ -3,12 +3,12 @@
 import * as React from "react";
 import CategoryPills from "@/components/features/categories/CategoryPills";
 import PostCard from "@/components/features/posts/PostCard";
+import TypewriterWords from "@/components/ui/TypewriterWords";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
 type Locale = "en" | "ru" | "ua";
 type Category = { id: string; name: string; slug: string };
-type HighlightMap = Record<Locale, string>;
 
 type Props = {
   categories: Category[];
@@ -32,6 +32,22 @@ export default function HeroWithFilters({
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [measuredWidthPx, setMeasuredWidthPx] = React.useState<number | null>(null);
+
+  // Locale-aware animated words for hero headline (line 3)
+  // Each locale provides its own word list
+  const HERO_ANIMATED_WORDS: Record<Locale, string[]> = {
+    en: ["work", "travel", "life", "business"],
+    ua: ["роботи", "подорожей", "життя", "бізнесу"],
+    ru: ["работы", "путешествия", "жизни", "бизнеса"],
+  };
+
+  const animatedWords = HERO_ANIMATED_WORDS[uiLocale] || HERO_ANIMATED_WORDS.en;
+
+  // Calculate the longest animated word length for stable width (prevents horizontal drift)
+  // Each ch unit ≈ one character width; add ~0.2 for cursor space
+  const longestAnimatedWordLength = Math.max(...animatedWords.map((w) => w.length));
+  const stableWidthCh = longestAnimatedWordLength + 0.3; // +0.3ch for cursor space
 
   // Fetch posts when category filter changes
   React.useEffect(() => {
@@ -83,32 +99,38 @@ export default function HeroWithFilters({
 
   return (
     <>
-      <section className="text-center max-w-4xl mx-auto py-12">
-        <h1 className="font-extrabold text-5xl sm:text-6xl md:text-7xl leading-tight tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
-          {(() => {
-            const raw = t("heroTitle");
-            // Words to highlight per locale
-            const highlightMap: HighlightMap = {
-              en: "practical",
-              ua: "практичні",
-              ru: "практичные",
-            };
-            const highlight = highlightMap[uiLocale] ?? "practical";
-            const idx = raw.indexOf(highlight);
-            if (idx === -1) return raw;
-            return (
-              <>
-                {raw.slice(0, idx)}
-                <span className="text-blue-600">{highlight}</span>
-                {raw.slice(idx + highlight.length)}
-              </>
-            );
-          })()}
+      <section className="text-center max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-14 md:pt-16 pb-8 sm:pb-10 md:pb-12">
+        {/* Hero heading: single h1 with manual line breaks and minimal line height */}
+        <h1
+          className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]"
+        >
+          {t("heroLine1")}
+          <br />
+          {t("heroLine2")}
+          <br />
+          <span
+            className="inline-block"
+            style={{
+              width: measuredWidthPx ? `${measuredWidthPx}px` : `${stableWidthCh}ch`,
+            }}
+          >
+            <TypewriterWords
+              words={animatedWords}
+              className="text-blue-600"
+              containerClassName="font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1]"
+              typeMsPerChar={100}
+              deleteMsPerChar={60}
+              pauseAfterTypeMs={2200}
+              pauseAfterDeleteMs={600}
+              showCursor={true}
+              onMaxWidthChange={setMeasuredWidthPx}
+            />
+          </span>
         </h1>
 
-        <p className="mt-6 text-[hsl(var(--fg-muted))] text-base sm:text-xl">
+        <p className="mt-6 sm:mt-8 mx-auto max-w-xl text-center text-[hsl(var(--fg-muted))] text-base sm:text-lg leading-relaxed">
           {t("heroDescription")}{" "}
-          <a className="text-blue-600 underline" href="#">
+          <a className="inline text-blue-600 underline" href="#">
             {t("promoCta")}
           </a>
         </p>

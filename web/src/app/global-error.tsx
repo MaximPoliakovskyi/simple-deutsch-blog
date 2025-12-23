@@ -1,7 +1,15 @@
 // app/global-error.tsx
 "use client";
 
-import "@/styles/globals.css"; // must import styles because this replaces the root layout
+/**
+ * TURBOPACK CSS CHUNK FIX:
+ * Do NOT import globals.css here. Importing the same CSS in both layout.tsx and
+ * global-error.tsx causes Turbopack to generate conflicting chunks, resulting in:
+ * "No link element found for chunk /_next/static/chunks/src_styles_globals_...css"
+ * 
+ * Since global-error.tsx replaces the root layout when an error occurs, the page
+ * has already loaded with styles. We use inline styles for basic layout instead.
+ */
 import StatusPage from "@/components/ui/StatusPage";
 
 export default function GlobalError({
@@ -18,7 +26,16 @@ export default function GlobalError({
 
   return (
     <html lang="de">
-      <body>
+      <body
+        style={{
+          margin: 0,
+          padding: 0,
+          minHeight: "100vh",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          backgroundColor: "#ffffff",
+          color: "#000000",
+        }}
+      >
         <StatusPage
           code="Fehler"
           title="App-Fehler"

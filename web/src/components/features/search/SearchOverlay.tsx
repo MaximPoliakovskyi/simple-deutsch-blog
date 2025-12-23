@@ -4,7 +4,7 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useDeferredValue, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
@@ -123,7 +123,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   const { t, locale } = useI18n();
   const tPlaceholder = t("searchPlaceholder");
   const tSearchLabel = t("searchAria");
-  const tClear = t("clear");
+  const CLEAR_LABEL = "Clear"; // fixed label across locales per requirement
   const tLoading = t("loading");
   const tNoResults = t("noResults");
   const tLoadMore = t("loadMore");
@@ -132,11 +132,13 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   const listRef = useRef<HTMLUListElement>(null);
 
   const [q, setQ] = useState("");
+  const deferredQ = useDeferredValue(q); // keep input responsive while results update
   const [items, setItems] = useState<SlimPost[]>([]);
   const [highlight, setHighlight] = useState(0);
   const [hasNext, setHasNext] = useState(false);
   const [after, setAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   // --- mount/unmount animation state ---
   const [mounted, setMounted] = useState(false);
@@ -169,11 +171,19 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   // Global key handlers
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") requestClose();
+      if (e.key === "Escape") {
+        if (q) {
+          e.preventDefault();
+          setQ("");
+          inputRef.current?.focus();
+          return;
+        }
+        requestClose();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [requestClose]);
+  }, [q, requestClose]);
 
   // Focus input after the panel is visible to avoid flash
   useEffect(() => {
@@ -185,7 +195,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
 
   // Debounced search with cancellation
   useEffect(() => {
-    const term = q.trim();
+    const term = deferredQ.trim();
     const ac = new AbortController();
     const timer = setTimeout(async () => {
       if (!term) {
@@ -206,26 +216,39 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
           },
         );
         const json = (await res.json()) as SearchResponse;
-        setItems(json.posts);
-        setAfter(json.pageInfo.endCursor);
-        setHasNext(json.pageInfo.hasNextPage);
-        setHighlight(0);
+        // use transition to avoid blocking input while results list re-renders
+        startTransition(() => {
+          setItems(json.posts);
+          setAfter(json.pageInfo.endCursor);
+          setHasNext(json.pageInfo.hasNextPage);
+          setHighlight(0);
+        });
       } catch {
         // ignore aborted/failed fetch
       } finally {
         setLoading(false);
       }
-    }, 250);
+    }, 200); // tighter debounce to reduce jank
 
     return () => {
       ac.abort();
       clearTimeout(timer);
     };
-  }, [q, locale]);
+  }, [deferredQ, locale, startTransition]);
 
   // Keyboard navigation
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (q) {
+          e.preventDefault();
+          setQ("");
+          inputRef.current?.focus();
+          return;
+        }
+        requestClose();
+        return;
+      }
       if (items.length === 0) return;
       if (e.key === "ArrowDown") {
         e.preventDefault();
@@ -366,9 +389,9 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
                 inputRef.current?.focus();
               }}
               className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
-              aria-label={tClear}
+              aria-label={CLEAR_LABEL}
             >
-              {tClear}
+              {CLEAR_LABEL}
             </button>
           ) : null}
         </div>
@@ -386,7 +409,14 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
             </div>
           )}
 
-          <ul ref={listRef} className="divide-y divide-neutral-200 dark:divide-white/10">
+          <ul
+            ref={listRef}
+            className="divide-y divide-neutral-200 dark:divide-white/10 transition-all duration-150 ease-out"
+            style={{
+              opacity: loading || isPending ? 0.82 : 1,
+              transform: loading || isPending ? "translateY(2px)" : "translateY(0)",
+            }}
+          >
             {items.map((it, i) => (
               <li key={it.id}>
                 <button

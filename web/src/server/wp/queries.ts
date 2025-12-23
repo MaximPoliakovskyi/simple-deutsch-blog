@@ -72,6 +72,7 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
         title
         date
         excerpt
+        content
         featuredImage {
           node {
             sourceUrl
@@ -131,6 +132,7 @@ export const GET_POSTS = /* GraphQL */ `
         title
         date
         excerpt
+        content
         featuredImage {
           node {
             sourceUrl
@@ -168,6 +170,7 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           slug
           title
           excerpt
+          content
           date
           featuredImage {
             node {
@@ -211,6 +214,7 @@ export const SEARCH_POSTS = /* GraphQL */ `
         slug
         title
         excerpt
+        content
         date
         featuredImage {
           node {
@@ -284,6 +288,7 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
           title
           date
           excerpt
+          content
           featuredImage {
             node {
               sourceUrl

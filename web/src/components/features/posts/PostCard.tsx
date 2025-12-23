@@ -72,19 +72,23 @@ function estimateReadingMinutes(post: PostCardPost): number | null {
   // Prefer an explicit readingMinutes field from the API.
   if (post.readingMinutes != null) return Math.max(1, Math.ceil(post.readingMinutes));
 
-  // If the API didn't provide a value, prefer to estimate from the full
-  // rendered `content` when available (the server-side API includes
-  // content in list endpoints). Fall back to `excerpt`, then `title`.
-  const html = post.content ?? post.excerpt ?? post.title ?? "";
+  // Calculate from the full content for accuracy. With the updated queries,
+  // content should now be available in all list views.
+  const html = post.content ?? post.excerpt ?? "";
+  
+  // If no content or excerpt available, don't show reading time
+  if (!html) return null;
+  
+  // Strip HTML tags and count words
   const text = html.replace(/<[^>]+>/g, " ");
   const words = (text.trim().match(/\S+/g) ?? []).length;
 
-  // Only estimate when there's a meaningful amount of text. This avoids
-  // showing "1 min read" for short titles while still allowing an estimate
-  // when full content is available in the listing payload.
+  // Only show reading time if there's meaningful content (at least 40 words)
+  // This avoids showing "1 min read" for very short posts or excerpts
   const MIN_WORDS_FOR_ESTIMATE = 40;
   if (words < MIN_WORDS_FOR_ESTIMATE) return null;
 
+  // Average reading speed: 200 words per minute
   return Math.max(1, Math.ceil(words / 200));
 }
 

@@ -24,7 +24,8 @@ const en: Translations = {
   resources: "Resources",
   company: "Company",
   legalContact: "Legal & contact",
-  heroTitle: "Master German — practical courses for real life",
+  heroLine1: "Master German",
+  heroLine2: "with real skills for",
   heroDescription:
     "Interactive lessons, real-world exercises, and clear progress tracking — learn German at your pace.",
   promoHeading: "Start speaking German today",
@@ -104,7 +105,8 @@ const ua: Translations = {
   resources: "Ресурси",
   company: "Компанія",
   legalContact: "Правова інформація та контакти",
-  heroTitle: "Опановуйте німецьку — практичні курси для реального життя",
+  heroLine1: "Вивчай німецьку",
+  heroLine2: "із реальними навичками для",
   heroDescription:
     "Інтерактивні уроки, вправи з реальних ситуацій і зручне відстеження прогресу — вивчайте німецьку у власному темпі.",
   promoHeading: "Почніть говорити німецькою сьогодні",
@@ -184,7 +186,8 @@ const ru: Translations = {
   resources: "Ресурсы",
   company: "Компания",
   legalContact: "Юридическая информация и контакты",
-  heroTitle: "Освойте немецкий — практичные курсы для реальной жизни",
+  heroLine1: "Освой немецкий",
+  heroLine2: "с реальными навыками для",
   heroDescription:
     "Интерактивные уроки, упражнения из реальных ситуаций и удобный трекер прогресса — учите немецкий в своем темпе.",
   promoHeading: "Начните говорить по‑немецки уже сегодня",

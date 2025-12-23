@@ -47,6 +47,7 @@ export type PostListItem = {
   title: string;
   date: string;
   excerpt: string | null;
+  content?: string | null;
   featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> };

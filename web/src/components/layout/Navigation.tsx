@@ -429,8 +429,9 @@ export default function Header() {
     let ticking = false;
 
     const calculate = () => {
-      // Only run on article pages
-      if (!pathname || !pathname.startsWith("/posts/")) {
+      // Only run on article pages. Normalize locale prefixes like /ru, /ua, /uk.
+      const normalizedPath = pathname?.replace(/^\/(ru|ua|uk)(?=\/)/, "") ?? pathname;
+      if (!normalizedPath || !normalizedPath.startsWith("/posts/")) {
         setProgress(0);
         setVisible(false);
         return;
