@@ -2,9 +2,17 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-type Action =
-  | { type: "link"; href: string; label: string }
-  | { type: "button"; onClick: () => void; label: string };
+type LinkAction = { type: "link"; href: string; label: string };
+type ButtonAction = { type: "button"; onClick: () => void; label: string };
+type Action = LinkAction | ButtonAction;
+
+type Props = {
+  code?: string;
+  title: string;
+  message?: string;
+  actions?: Action[];
+  children?: ReactNode;
+};
 
 export default function StatusPage({
   code,
@@ -12,13 +20,7 @@ export default function StatusPage({
   message,
   actions = [],
   children,
-}: {
-  code?: string;
-  title: string;
-  message?: string;
-  actions?: Action[];
-  children?: ReactNode;
-}) {
+}: Props) {
   return (
     <main className="min-h-[70vh] grid place-items-center px-6 py-16">
       <div className="text-center max-w-prose">

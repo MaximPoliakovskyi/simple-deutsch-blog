@@ -3,4 +3,4 @@ export const CACHE_TAGS = {
   post: (slug: string) => `post:${slug}`,
   categories: "categories",
   tags: "tags",
-};
+} as const;

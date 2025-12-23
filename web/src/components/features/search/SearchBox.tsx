@@ -11,11 +11,13 @@ type Props = {
   debounceMs?: number;
 };
 
+const DEFAULT_DEBOUNCE_MS = 400;
+
 export default function SearchBox({
   placeholder,
   className = "",
   autoFocus = false,
-  debounceMs = 400,
+  debounceMs = DEFAULT_DEBOUNCE_MS,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();

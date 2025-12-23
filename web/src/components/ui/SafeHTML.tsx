@@ -1,6 +1,8 @@
 import "server-only";
 import { sanitize } from "@/core/content/sanitize";
 
-export default function SafeHTML({ html }: { html: string }) {
+type Props = { html: string };
+
+export default function SafeHTML({ html }: Props) {
   return <div dangerouslySetInnerHTML={{ __html: sanitize(html) }} />;
 }

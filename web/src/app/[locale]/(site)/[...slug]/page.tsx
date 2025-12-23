@@ -4,6 +4,11 @@
 import { notFound } from "next/navigation";
 import HomePage from "../../../page";
 
+const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const isSupportedLocale = (locale: string): locale is SupportedLocale =>
+  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+
 type Props = {
   params: Promise<{ locale: string; slug: string[] }>;
 };
@@ -11,7 +16,7 @@ type Props = {
 export default async function LocalizedCatchAll({ params }: Props) {
   const { locale } = await params;
 
-  if (locale !== "ru" && locale !== "ua") {
+  if (!isSupportedLocale(locale)) {
     notFound();
   }
 

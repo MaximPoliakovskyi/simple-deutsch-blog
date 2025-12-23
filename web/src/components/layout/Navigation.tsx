@@ -12,20 +12,20 @@ import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type Lang = "en" | "ru" | "ua";
 
+type LanguageDropdownProps = {
+  currentLocale: Lang;
+  buildHref: (target: Lang) => string;
+  t: (k: string) => string;
+};
+
+const HOVER_DELAY_MS = 150; // delay before closing menu on mouseleave
+
 /**
  * Compact language switcher button.
  * Shows short labels (Eng / Укр / Рус) and cycles to the next language on click.
  * Uses client-side navigation (router.push) to preserve SPA behavior and update the URL.
  */
-function LanguageDropdown({
-  currentLocale,
-  buildHref,
-  t,
-}: {
-  currentLocale: Lang;
-  buildHref: (target: Lang) => string;
-  t: (k: string) => string;
-}) {
+function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLUListElement | null>(null);
@@ -65,7 +65,7 @@ function LanguageDropdown({
     closeTimerRef.current = window.setTimeout(() => {
       setOpen(false);
       closeTimerRef.current = null;
-    }, 150);
+    }, HOVER_DELAY_MS);
   };
 
   useEffect(() => {
@@ -257,6 +257,8 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
     { code: "ru", label: "Ру" },
   ] as const;
 
+  type LangCode = (typeof LANGS)[number]["code"];
+
   // Exclude the currently selected language (it's shown in the closed pill)
   const visibleLangs = LANGS.filter((l) => l.code !== currentSiteLang);
 
@@ -273,7 +275,7 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
           <button
             role="menuitem"
             onClick={() => {
-              changeLang(item.code as any);
+              changeLang(item.code as LangCode);
               closeMenu?.();
             }}
             className={

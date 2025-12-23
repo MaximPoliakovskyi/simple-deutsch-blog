@@ -6,7 +6,17 @@ import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
-type Cat = { id: string; name: string; slug: string };
+type Locale = "en" | "ru" | "ua";
+type Category = { id: string; name: string; slug: string };
+
+type Props = {
+  categories: Category[];
+  initialPosts: WPPostCard[];
+  initialEndCursor: string | null;
+  initialHasNextPage: boolean;
+  pageSize?: number;
+  locale?: Locale;
+};
 
 export default function CategoriesBlockClient({
   categories,
@@ -15,14 +25,7 @@ export default function CategoriesBlockClient({
   initialHasNextPage,
   pageSize = 3,
   locale,
-}: {
-  categories: Cat[];
-  initialPosts: WPPostCard[];
-  initialEndCursor: string | null;
-  initialHasNextPage: boolean;
-  pageSize?: number;
-  locale?: "en" | "ru" | "ua";
-}) {
+}: Props) {
   const { t } = useI18n();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
     categories.length > 0 ? categories[0].slug : null
@@ -75,7 +78,7 @@ export default function CategoriesBlockClient({
   }, [selectedCategory, locale, pageSize]);
 
   const loadMore = React.useCallback(() => {
-    setDisplayedCount(prev => prev + pageSize);
+    setDisplayedCount((prev) => prev + pageSize);
   }, [pageSize]);
 
   const displayedPosts = allPosts.slice(0, displayedCount);

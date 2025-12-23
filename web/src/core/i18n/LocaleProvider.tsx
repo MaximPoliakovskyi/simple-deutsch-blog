@@ -6,8 +6,10 @@ import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
 
 type I18nContext = {
   locale: Locale;
-  t: (k: string) => string;
+  t: Translator;
 };
+
+type Translator = (k: string) => string;
 
 const Context = createContext<I18nContext>({
   locale: DEFAULT_LOCALE,
@@ -37,9 +39,9 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     }
   }, [locale]);
 
-  const t = useMemo(() => {
+  const t = useMemo<Translator>(() => {
     const dict = TRANSLATIONS[locale] || TRANSLATIONS[DEFAULT_LOCALE];
-    return (k: string) => dict[k] || k;
+    return (k) => dict[k] || k;
   }, [locale]);
 
   return <Context.Provider value={{ locale, t }}>{children}</Context.Provider>;

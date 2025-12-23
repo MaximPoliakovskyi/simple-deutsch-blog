@@ -7,6 +7,23 @@ import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
+type FeaturedImageNode = {
+  node?: {
+    sourceUrl?: string | null;
+    altText?: string | null;
+    mediaDetails?: { width?: number | null; height?: number | null } | null;
+  } | null;
+};
+
+type FeaturedImageFlat = {
+  url?: string | null;
+  alt?: string | null;
+  width?: number | null;
+  height?: number | null;
+};
+
+type Categories = { nodes: Array<{ name: string; slug: string }> } | null;
+
 export type PostCardPost = {
   id?: string;
   slug: string;
@@ -15,22 +32,8 @@ export type PostCardPost = {
   excerpt?: string | null; // intentionally unused
   content?: string | null;
   author?: { node?: { name?: string | null } | null } | null;
-  categories?: { nodes: Array<{ name: string; slug: string }> } | null;
-  featuredImage?:
-    | {
-        node?: {
-          sourceUrl?: string | null;
-          altText?: string | null;
-          mediaDetails?: { width?: number | null; height?: number | null } | null;
-        } | null;
-      }
-    | {
-        url?: string | null;
-        alt?: string | null;
-        width?: number | null;
-        height?: number | null;
-      }
-    | null;
+  categories?: Categories;
+  featuredImage?: FeaturedImageNode | FeaturedImageFlat | null;
   readingMinutes?: number | null;
 };
 
@@ -43,18 +46,24 @@ export type PostCardProps = {
   safeExcerpt?: boolean;
 };
 
+function hasNode(fi: unknown): fi is FeaturedImageNode {
+  return Boolean(fi && typeof fi === "object" && "node" in fi);
+}
+
+function hasFlatUrl(fi: unknown): fi is FeaturedImageFlat {
+  return Boolean(fi && typeof fi === "object" && "url" in fi);
+}
+
 function extractImage(p: PostCardPost) {
   const fi = p.featuredImage;
   // shape: { node: { sourceUrl, altText } }
-  if (fi && typeof fi === "object" && "node" in fi) {
-    const node = (fi as Record<string, unknown>).node as Record<string, unknown> | undefined;
-    if (node && typeof node === "object" && node.sourceUrl)
-      return { url: String(node.sourceUrl), alt: String(node.altText ?? "") };
+  if (hasNode(fi)) {
+    const node = fi.node;
+    if (node?.sourceUrl) return { url: String(node.sourceUrl), alt: String(node.altText ?? "") };
   }
   // shape: { url, alt }
-  if (fi && typeof fi === "object" && "url" in fi && (fi as Record<string, unknown>).url) {
-    const r = fi as Record<string, unknown>;
-    return { url: String(r.url), alt: String(r.alt ?? "") };
+  if (hasFlatUrl(fi) && fi.url) {
+    return { url: String(fi.url), alt: String(fi.alt ?? "") };
   }
   return { url: "", alt: "" };
 }

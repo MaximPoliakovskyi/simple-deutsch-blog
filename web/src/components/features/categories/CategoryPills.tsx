@@ -4,7 +4,7 @@ import * as React from "react";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
-type Cat = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string };
 
 export default function CategoryPills({
   categories,
@@ -13,7 +13,7 @@ export default function CategoryPills({
   alignment = "center",
   required = false,
 }: {
-  categories: Cat[];
+  categories: Category[];
   onSelect: (slug: string | null) => void;
   initialSelected?: string | null;
   /** Layout alignment for the pills: 'left' or 'center' (default: center) */

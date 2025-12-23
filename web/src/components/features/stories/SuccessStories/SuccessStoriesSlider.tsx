@@ -5,13 +5,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import PostCard from "@/components/features/posts/PostCard";
 import type { WPPostCard } from "@/server/wp/api";
 
-export default function SuccessStoriesSlider({
-  posts = [],
-  title = "Success stories",
-}: {
+type Props = {
   posts: WPPostCard[];
   title?: string;
-}) {
+};
+
+type Direction = "prev" | "next";
+
+export default function SuccessStoriesSlider({ posts = [], title = "Success stories" }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
@@ -28,7 +29,7 @@ export default function SuccessStoriesSlider({
   // ✅ Align with site grid gap-x-8 (32px)
   const GAP_PX = 32;
 
-  const scrollByOneColumn = (dir: "prev" | "next") => {
+  const scrollByOneColumn = (dir: Direction) => {
     const el = scrollerRef.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>("[data-card]");

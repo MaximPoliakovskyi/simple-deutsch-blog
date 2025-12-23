@@ -6,7 +6,7 @@ import type { Locale } from "./i18n";
 
 type Translations = Partial<Record<Locale, string>>;
 
-const MAP: Record<string, Translations> = {
+const MAP = {
   // example entries (update slugs to match your WordPress site)
   // keys here should be category slugs where possible
   "exercises-practice": {
@@ -41,12 +41,12 @@ const MAP: Record<string, Translations> = {
     ua: "Поради та мотивація",
     ru: "Советы и мотивация",
   },
-};
+} satisfies Record<string, Translations>;
 
 // Optional longer descriptions per category. Use the same lookup strategy
 // as titles above. If a description is missing for a locale we fall back
 // to the original WP-provided description (handled by callers).
-const DESC_MAP: Record<string, Translations> = {
+const DESC_MAP = {
   "exercises-practice": {
     en: "Interactive tasks and quizzes to test your German grammar, vocabulary, and listening skills. Perfect for self-study and daily practice.",
     ua: "Інтерактивні вправи та тести для перевірки граматики, словникового запасу та навичок аудіювання німецької мови. Ідеально підходить для самостійного вивчення та щоденної практики.",
@@ -104,7 +104,7 @@ const DESC_MAP: Record<string, Translations> = {
     ua: "Поради, стратегії та мотивація для ефективного вивчення німецької. Залишайтеся послідовними, натхненними та впевненими у своїй подорожі навчання.",
     ru: "Советы, стратегии и мотивация для эффективного изучения немецкого. Оставайтесь последовательными, вдохновлёнными и уверенными в своём обучении.",
   },
-};
+} satisfies Record<string, Translations>;
 
 function makeLookupVariants(s: string | undefined | null) {
   if (!s) return [] as string[];
@@ -148,14 +148,16 @@ export function translateCategory(
 
   const slugCandidates = makeLookupVariants(slug);
   for (const k of slugCandidates) {
-    if (k && MAP[k] && MAP[k][locale])
-      return `${emojiPrefix} ${String(MAP[k][locale]).trimStart()}`;
+    const entry = MAP[k as keyof typeof MAP];
+    if (k && entry && entry[locale])
+      return `${emojiPrefix} ${String(entry[locale]).trimStart()}`;
   }
 
   const nameCandidates = makeLookupVariants(name);
   for (const k of nameCandidates) {
-    if (k && MAP[k] && MAP[k][locale])
-      return `${emojiPrefix} ${String(MAP[k][locale]).trimStart()}`;
+    const entry = MAP[k as keyof typeof MAP];
+    if (k && entry && entry[locale])
+      return `${emojiPrefix} ${String(entry[locale]).trimStart()}`;
   }
 
   // No translation found — fall back to the provided name or slug
@@ -172,12 +174,14 @@ export function translateCategoryDescription(
 ) {
   const slugCandidates = makeLookupVariants(slug);
   for (const k of slugCandidates) {
-    if (k && DESC_MAP[k] && DESC_MAP[k][locale]) return String(DESC_MAP[k][locale]).trim();
+    const entry = DESC_MAP[k as keyof typeof DESC_MAP];
+    if (k && entry && entry[locale]) return String(entry[locale]).trim();
   }
 
   const nameCandidates = makeLookupVariants(original);
   for (const k of nameCandidates) {
-    if (k && DESC_MAP[k] && DESC_MAP[k][locale]) return String(DESC_MAP[k][locale]).trim();
+    const entry = DESC_MAP[k as keyof typeof DESC_MAP];
+    if (k && entry && entry[locale]) return String(entry[locale]).trim();
   }
 
   // No translation found — return undefined so callers can fall back to WP description

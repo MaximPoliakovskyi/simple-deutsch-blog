@@ -4,6 +4,11 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import SearchPage from "../../../search/page";
 
+const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const isSupportedLocale = (locale: string): locale is SupportedLocale =>
+  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+
 type SearchParams = Promise<{ q?: string; after?: string }>;
 
 type Props = {
@@ -13,7 +18,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
-  if (locale !== "ru" && locale !== "ua") return {};
+  if (!isSupportedLocale(locale)) return {};
 
   return {
     title: `${TRANSLATIONS[locale].search} — ${TRANSLATIONS[locale].siteTitle}`,
@@ -23,7 +28,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function LocalizedSearchPage({ params, searchParams }: Props) {
   const { locale } = await params;
 
-  if (locale !== "ru" && locale !== "ua") {
+  if (!isSupportedLocale(locale)) {
     notFound();
   }
 

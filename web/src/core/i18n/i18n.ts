@@ -243,10 +243,10 @@ const ru: Translations = {
   lightMode: "Светлая тема",
 };
 
-export const TRANSLATIONS: Record<Locale, Translations> = {
+export const TRANSLATIONS = {
   en,
   ua,
   ru,
-};
+} satisfies Record<Locale, Translations>;
 
 export const DEFAULT_LOCALE: Locale = "en";

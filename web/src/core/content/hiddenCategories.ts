@@ -6,7 +6,8 @@ const HIDDEN_KEYS = [
   "русский",
   "английский",
   "англ",
-];
+  "английский",
+] as const;
 
 export function isHiddenCategory(name?: string | null, slug?: string | null) {
   const nameLower = (name ?? "").toLowerCase();

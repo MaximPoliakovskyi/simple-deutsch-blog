@@ -3,12 +3,14 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { WPPostCard } from "@/server/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
+type Locale = "en" | "ru" | "ua";
+
 type Props = {
-  locale?: "en" | "ru" | "ua";
+  locale?: Locale;
 };
 
 /** Build an absolute origin for server-side fetches (local + prod). */
-async function getBaseUrl() {
+async function getBaseUrl(): Promise<string> {
   // Prefer explicit public base URL when available
   const envBase = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   if (envBase) return envBase.replace(/\/$/, "");
@@ -21,6 +23,14 @@ async function getBaseUrl() {
   const proto = h.get("x-forwarded-proto") || (process.env.VERCEL ? "https" : "http");
   if (!host) throw new Error("Cannot determine host for Success stories slider fetch");
   return `${proto}://${host}`;
+}
+
+function normalizePosts(payload: unknown): WPPostCard[] {
+  if (Array.isArray(payload)) return payload as WPPostCard[];
+  if (payload && typeof payload === "object" && Array.isArray((payload as any).posts)) {
+    return (payload as { posts: WPPostCard[] }).posts;
+  }
+  return [];
 }
 
 /** Fetch a small set of recent posts suitable for <PostCard/>. */
@@ -40,17 +50,7 @@ async function getSliderPosts(locale?: string): Promise<WPPostCard[]> {
   });
   if (!res.ok) return [];
   const json = await res.json();
-  const posts = Array.isArray(json) ? json : (json?.posts ?? []);
-  
-  // Debug: log what we're getting
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[SuccessStories] Fetched ${posts.length} posts for locale="${locale}"`);
-    console.log(`[SuccessStories] Languages in posts:`, posts.map((p: any) => 
-      p.categories?.nodes?.map((c: any) => c.slug).filter((s: string) => ['en', 'ru', 'ua'].includes(s))
-    ));
-  }
-  
-  return posts;
+  return normalizePosts(json);
 }
 
 /** Server wrapper: fetch once, render the client slider. */

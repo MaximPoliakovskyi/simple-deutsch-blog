@@ -5,6 +5,15 @@ import { getPosts, getPostsByTagSlug, getPostsPage, getPostsPageByCategory } fro
 const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
 type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 
+type PageInfo = { hasNextPage: boolean; endCursor: string | null };
+type LoadMoreBody = {
+  first?: number;
+  after?: string | null;
+  lang?: string;
+  categorySlug?: string;
+  tagSlug?: string;
+};
+
 function getPostLanguage(post: {
   slug?: string;
   categories?: { nodes?: { slug?: string | null }[] } | null;
@@ -22,7 +31,8 @@ function getPostLanguage(post: {
 
 export async function POST(req: NextRequest) {
   try {
-    const { first = 0, after = null, lang, categorySlug, tagSlug } = await req.json();
+    const { first = 0, after = null, lang, categorySlug, tagSlug }: LoadMoreBody =
+      await req.json();
 
     if (!first || first <= 0) {
       return NextResponse.json({ message: "Invalid first param" }, { status: 400 });
@@ -32,7 +42,7 @@ export async function POST(req: NextRequest) {
     const fetchCount = lang ? first * 10 : first;
 
     let posts: any[] = [];
-    let pageInfo: { hasNextPage: boolean; endCursor: string | null } = {
+    let pageInfo: PageInfo = {
       hasNextPage: false,
       endCursor: null,
     };

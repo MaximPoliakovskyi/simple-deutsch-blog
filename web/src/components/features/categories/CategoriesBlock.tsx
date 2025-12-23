@@ -1,8 +1,13 @@
 import type { ReactElement } from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { getAllTags, getPostsByTagSlug } from "@/server/wp/api";
+import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
+
+type Locale = "en" | "ru" | "ua";
+type TagNode = { id: string; name: string; slug: string };
+type Category = { id: string; name: string; slug: string };
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 
 /**
  * Server component: fetches categories and a small posts page, then
@@ -11,13 +16,12 @@ import CategoriesBlockClient from "./CategoriesBlockClient";
 export default async function CategoriesBlock({
   locale,
 }: {
-  locale?: "en" | "ru" | "ua";
+  locale?: Locale;
 } = {}): Promise<ReactElement> {
   // Fetch a small set of tags to display in this block (we'll surface only
   // the level tags A1..C2 here). Keep the same client props shape so the
   // client component can be reused without layout changes.
   const tagsResp = await getAllTags({ first: 12 });
-  type TagNode = { id: string; name: string; slug: string };
   const tags = extractConnectionNodes<TagNode>(tagsResp?.tags).map((t) => ({
     id: t.id,
     name: t.name,
@@ -26,14 +30,16 @@ export default async function CategoriesBlock({
 
   // Only show the CEFR level tags in the homepage block (A1..C2).
   const levelSlugs = ["a1", "a2", "b1", "b2", "c1", "c2"];
-  const visibleCategories = tags.filter((t) => levelSlugs.includes((t.slug || "").toLowerCase()));
+  const visibleCategories: Category[] = tags.filter((t) =>
+    levelSlugs.includes((t.slug || "").toLowerCase()),
+  );
 
   const effectiveLocale = locale ?? DEFAULT_LOCALE;
   
   // For initial render, pass empty posts - client will fetch based on selected tag
   const firstTagSlug = visibleCategories.length > 0 ? visibleCategories[0].slug : null;
   const initialPosts: any[] = [];
-  const pageInfo = { endCursor: null, hasNextPage: false };
+  const pageInfo: PageInfo = { endCursor: null, hasNextPage: false };
 
   return (
     // Match success stories slider background (full-bleed dark band)

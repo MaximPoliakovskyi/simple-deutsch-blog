@@ -1,14 +1,10 @@
-// src/lib/api.ts
+// src/server/wp/fetchPosts.ts
 import { headers } from "next/headers";
 
 export type Locale = "en" | "ru" | "ua";
 
 async function resolveBaseUrl(): Promise<string> {
-  const envBase = (
-    process.env.NEXT_PUBLIC_BASE_URL ||
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    ""
-  ).toString();
+  const envBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";
   if (envBase) return envBase.replace(/\/$/, "");
 
   try {
@@ -31,8 +27,10 @@ export async function fetchPosts(locale: Locale) {
 
   const res = await fetch(url.toString(), { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch posts");
-  const data = await res.json();
-  return Array.isArray(data) ? data : (data.posts ?? []);
+  const data = (await res.json()) as { posts?: unknown } | unknown[];
+  if (Array.isArray(data)) return data;
+  const posts = Array.isArray((data as { posts?: unknown }).posts)
+    ? (data as { posts: unknown[] }).posts
+    : [];
+  return posts;
 }
-
-export default fetchPosts;

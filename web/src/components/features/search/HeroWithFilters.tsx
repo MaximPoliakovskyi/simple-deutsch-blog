@@ -6,7 +6,18 @@ import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
-type Cat = { id: string; name: string; slug: string };
+type Locale = "en" | "ru" | "ua";
+type Category = { id: string; name: string; slug: string };
+type HighlightMap = Record<Locale, string>;
+
+type Props = {
+  categories: Category[];
+  initialPosts: WPPostCard[];
+  initialEndCursor: string | null;
+  initialHasNextPage: boolean;
+  pageSize?: number;
+  locale?: Locale;
+};
 
 export default function HeroWithFilters({
   categories,
@@ -15,14 +26,7 @@ export default function HeroWithFilters({
   initialHasNextPage,
   pageSize = 6,
   locale,
-}: {
-  categories: Cat[];
-  initialPosts: WPPostCard[];
-  initialEndCursor: string | null;
-  initialHasNextPage: boolean;
-  pageSize?: number;
-  locale?: "en" | "ru" | "ua";
-}) {
+}: Props) {
   const { t, locale: uiLocale } = useI18n();
   const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
@@ -71,7 +75,7 @@ export default function HeroWithFilters({
   }, [selectedCategory, locale, pageSize, initialPosts]);
 
   const loadMore = React.useCallback(() => {
-    setDisplayedCount(prev => prev + pageSize);
+    setDisplayedCount((prev) => prev + pageSize);
   }, [pageSize]);
 
   const displayedPosts = allPosts.slice(0, displayedCount);
@@ -84,7 +88,7 @@ export default function HeroWithFilters({
           {(() => {
             const raw = t("heroTitle");
             // Words to highlight per locale
-            const highlightMap: Record<"en" | "ua" | "ru", string> = {
+            const highlightMap: HighlightMap = {
               en: "practical",
               ua: "практичні",
               ru: "практичные",

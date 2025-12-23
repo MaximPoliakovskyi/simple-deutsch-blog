@@ -7,6 +7,15 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllCategories, getPostsPageByCategory } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
+type LanguageSlug = "en" | "ru" | "ua";
+type CategoryNode = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  count?: number;
+};
+
 // helper removed; using shared `extractConnectionNodes` from utils
 
 export const revalidate = 600;
@@ -25,13 +34,6 @@ export default async function CategoriesIndexPage({
   const { categories } = await getAllCategories({ first: 100 });
 
   // Support either categories.nodes or categories.edges -> node
-  type CategoryNode = {
-    id: string;
-    name: string;
-    slug: string;
-    description?: string | null;
-    count?: number;
-  };
   const nodes = extractConnectionNodes<CategoryNode>(categories);
   const visible = filterHiddenCategories(nodes);
 

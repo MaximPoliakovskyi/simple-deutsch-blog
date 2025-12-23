@@ -8,6 +8,8 @@ const SITE_TITLE = process.env.NEXT_PUBLIC_SITE_TITLE ?? "Simple Deutsch";
 const SITE_DESCRIPTION =
   process.env.NEXT_PUBLIC_SITE_DESCRIPTION ?? "Einfache, klare Inhalte auf Simple Deutsch.";
 
+type PostNode = { slug: string; title: string; excerpt: string | null; date: string };
+
 function escape(s: string) {
   return s
     .replaceAll("&", "&amp;")
@@ -20,7 +22,7 @@ function escape(s: string) {
 export async function GET() {
   const { posts } = await getPosts({ first: 30 });
   const items = posts.nodes.map(
-    (p) => `
+    (p: PostNode) => `
     <item>
       <title>${escape(p.title)}</title>
       <link>${SITE_URL}/posts/${p.slug}</link>

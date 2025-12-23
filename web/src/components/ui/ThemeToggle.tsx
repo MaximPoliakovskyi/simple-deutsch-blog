@@ -3,6 +3,7 @@ import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
+const TRANSITION_MS = 350; // Match CSS transition duration
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -14,11 +15,10 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
-  function setTheme(next: Theme, _e?: MouseEvent<HTMLButtonElement>) {
+  function setTheme(next: Theme, _e?: MouseEvent<HTMLButtonElement>): void {
     const root = document.documentElement;
     const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Match CSS transition duration (ms) and avoid stacking timers when toggling quickly.
-    const TRANSITION_MS = 350;
+    // Avoid stacking timers when toggling quickly.
 
     // Add a short transition class so token-based colors interpolate smoothly.
     if (!prefersReduce) {

@@ -2,6 +2,12 @@ import { revalidatePath, revalidateTag } from "next/cache";
 import type { NextRequest } from "next/server";
 import { CACHE_TAGS } from "@/server/cache";
 
+type RevalidateBody = {
+  type?: "posts" | "post" | "categories" | "tags";
+  slug?: string;
+  path?: string;
+};
+
 export async function POST(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
 
@@ -10,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body = await req.json().catch(() => ({}));
+    const body: RevalidateBody = await req.json().catch(() => ({} as RevalidateBody));
 
     switch (body.type) {
       case "posts":

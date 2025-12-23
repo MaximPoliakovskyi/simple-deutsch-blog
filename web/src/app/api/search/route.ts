@@ -3,6 +3,17 @@ import { searchPosts } from "@/server/wp/api";
 
 export const dynamic = "force-dynamic";
 
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
+type SearchPost = {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  date: string;
+  featuredImage?: { node?: { sourceUrl?: string | null } | null } | null;
+  categories?: { nodes?: Array<{ slug?: string | null } | null> };
+};
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim() || "";
@@ -17,10 +28,10 @@ export async function GET(req: Request) {
     const { posts, pageInfo } = await searchPosts({ query: q, first: 8, after });
 
     const filtered = lang
-      ? posts.filter((p: any) => p?.categories?.nodes?.some((c: any) => c?.slug === lang))
+      ? posts.filter((p: SearchPost) => p?.categories?.nodes?.some((c) => c?.slug === lang))
       : posts;
 
-    const slim = filtered.map((p) => ({
+    const slim = filtered.map((p: SearchPost) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,

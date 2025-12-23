@@ -1,6 +1,8 @@
 "use client";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
+type Locale = "en" | "ru" | "ua";
+
 export default function Footer() {
   const { t, locale } = useI18n();
   const prefix = locale === "en" ? "" : `/${locale}`;

@@ -17,7 +17,11 @@ type SlimPost = {
   image: string | null;
 };
 
-function cn(...a: Array<string | false | null | undefined>) {
+type OpenMethod = "click" | "keyboard" | undefined;
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
+type SearchResponse = { posts: SlimPost[]; pageInfo: PageInfo };
+
+function cn(...a: Array<string | false | null | undefined>): string {
   return a.filter(Boolean).join(" ");
 }
 
@@ -33,7 +37,7 @@ export function SearchButton({
 }) {
   const [open, setOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [openMethod, setOpenMethod] = useState<"click" | "keyboard" | undefined>(undefined);
+  const [openMethod, setOpenMethod] = useState<OpenMethod>(undefined);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -110,13 +114,12 @@ export function SearchButton({
 }
 
 /** The overlay itself — rendered in a portal to <body> so it covers the entire page */
-export default function SearchOverlay({
-  onClose,
-  openMethod,
-}: {
+type SearchOverlayProps = {
   onClose: () => void;
-  openMethod?: "click" | "keyboard" | undefined;
-}) {
+  openMethod?: OpenMethod;
+};
+
+export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProps) {
   const { t, locale } = useI18n();
   const tPlaceholder = t("searchPlaceholder");
   const tSearchLabel = t("searchAria");
@@ -202,10 +205,7 @@ export default function SearchOverlay({
             signal: ac.signal,
           },
         );
-        const json = (await res.json()) as {
-          posts: SlimPost[];
-          pageInfo: { endCursor: string | null; hasNextPage: boolean };
-        };
+        const json = (await res.json()) as SearchResponse;
         setItems(json.posts);
         setAfter(json.pageInfo.endCursor);
         setHasNext(json.pageInfo.hasNextPage);
@@ -263,10 +263,7 @@ export default function SearchOverlay({
         `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}&lang=${encodeURIComponent(locale)}`,
         { method: "GET", cache: "no-store" },
       );
-      const json = (await res.json()) as {
-        posts: SlimPost[];
-        pageInfo: { endCursor: string | null; hasNextPage: boolean };
-      };
+      const json = (await res.json()) as SearchResponse;
       setItems((prev) => [...prev, ...json.posts]);
       setAfter(json.pageInfo.endCursor);
       setHasNext(json.pageInfo.hasNextPage);

@@ -2,10 +2,14 @@ import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPa
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getPosts, getPostsPage } from "@/server/wp/api";
 import type { Locale } from "@/server/wp/fetchPosts";
+import type { WPPostCard, PostListItem } from "@/server/wp/api";
 
 const PAGE_SIZE = 6;
 
-async function fetchFirstPage(lang?: string) {
+type PageInfo = { hasNextPage: boolean; endCursor: string | null };
+type FirstPageResult = { posts: Array<WPPostCard | PostListItem>; pageInfo: PageInfo };
+
+async function fetchFirstPage(lang?: string): Promise<FirstPageResult> {
   if (lang) {
     const res = await getPosts({ first: PAGE_SIZE, locale: lang });
     return {

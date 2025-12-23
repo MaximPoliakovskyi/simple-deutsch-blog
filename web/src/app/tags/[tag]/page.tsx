@@ -9,6 +9,8 @@ import { getPostsByTagSlug, getTagBySlug } from "@/server/wp/api";
 export const revalidate = 600;
 
 type Params = { tag: string };
+type LanguageSlug = "en" | "ru" | "ua";
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 
 // Minimal Tag shape we use on this page
 type TagNode = {
@@ -43,8 +45,7 @@ export default async function TagPage({
   const PAGE_SIZE = 3;
 
   // Language detection used across the site (category slug or slug prefix)
-  const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
-  type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+  const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "ua"] as const;
 
   function getPostLanguage(post: {
     slug?: string;
@@ -65,7 +66,8 @@ export default async function TagPage({
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
   // Fetch an initial batch and filter to current language
-  const { posts: fetchedPosts } = await getPostsByTagSlug(tag, PAGE_SIZE * 10);
+  const { posts: fetchedPosts }: { posts: { nodes?: PostListItem[]; pageInfo?: PageInfo } } =
+    await getPostsByTagSlug(tag, PAGE_SIZE * 10);
   const nodes = (fetchedPosts?.nodes ?? []) as PostListItem[];
   const filtered = nodes.filter((p) => getPostLanguage(p) === lang);
   const initialPosts = filtered.slice(0, PAGE_SIZE) as any[];

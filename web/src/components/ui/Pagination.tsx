@@ -13,6 +13,12 @@ type Props = {
   pageSize?: number;
 };
 
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
+type SearchResponse = { posts: WPPostCard[]; pageInfo: PageInfo };
+
+const DEFAULT_PAGE_SIZE = 9; // posts per page
+const ACCENT_COLOR = "oklch(0.371 0 0)";
+
 // Small helper so each card animates in on mount
 function PostListItem({ post }: { post: WPPostCard }) {
   const [mounted, setMounted] = React.useState(false);
@@ -40,7 +46,7 @@ export default function Pagination({
   initialPosts,
   initialEndCursor,
   initialHasNextPage,
-  pageSize = 9, // 9 posts per page
+  pageSize = DEFAULT_PAGE_SIZE,
 }: Props) {
   const { locale } = useI18n();
   const [items, setItems] = React.useState<WPPostCard[]>(initialPosts);
@@ -66,10 +72,7 @@ export default function Pagination({
       const res = await fetch(url.toString(), { method: "GET" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-      const json: {
-        posts: WPPostCard[];
-        pageInfo: { endCursor: string | null; hasNextPage: boolean };
-      } = await res.json();
+      const json: SearchResponse = await res.json();
 
       const next: WPPostCard[] = [];
       for (const p of json.posts) {
@@ -91,7 +94,7 @@ export default function Pagination({
   };
 
   // Accent color used for border/outline
-  const accent = "oklch(0.371 0 0)";
+  // (defined as constant at top of file)
 
   return (
     <div>
@@ -118,8 +121,8 @@ export default function Pagination({
               "focus-visible:outline-2 focus-visible:outline-offset-2",
             ].join(" ")}
             style={{
-              borderColor: accent,
-              outlineColor: accent,
+              borderColor: ACCENT_COLOR,
+              outlineColor: ACCENT_COLOR,
             }}
           >
             {loading ? "Loading…" : "View more"}

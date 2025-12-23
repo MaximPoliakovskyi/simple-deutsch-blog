@@ -3,11 +3,13 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { WPPostCard } from "@/server/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
 
+type Locale = "en" | "ru" | "ua";
+
 type Props = {
-  locale?: "en" | "ru" | "ua";
+  locale?: Locale;
 };
 
-async function getBaseUrl() {
+async function getBaseUrl(): Promise<string> {
   // Prefer an explicit public base URL when available (local dev or prod)
   const envBase = process.env.NEXT_PUBLIC_BASE_URL ?? "";
   if (envBase) return envBase.replace(/\/$/, "");
@@ -22,7 +24,15 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
-async function getSliderPosts(locale?: string): Promise<unknown[]> {
+function normalizePosts(payload: unknown): WPPostCard[] {
+  if (Array.isArray(payload)) return payload as WPPostCard[];
+  if (payload && typeof payload === "object" && Array.isArray((payload as any).posts)) {
+    return (payload as { posts: WPPostCard[] }).posts;
+  }
+  return [];
+}
+
+async function getSliderPosts(locale?: string): Promise<WPPostCard[]> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base);
   url.searchParams.set("first", "8");
@@ -32,7 +42,7 @@ async function getSliderPosts(locale?: string): Promise<unknown[]> {
   const res = await fetch(url.toString(), { next: { revalidate: 0 } });
   if (!res.ok) return [];
   const json = await res.json();
-  return Array.isArray(json) ? json : (json?.posts ?? []);
+  return normalizePosts(json);
 }
 
 export default async function LatestPostsSliderServer({ locale }: Props = {}) {

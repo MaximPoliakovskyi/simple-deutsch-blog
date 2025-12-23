@@ -5,6 +5,8 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
+type TagNode = { id: string; name: string; slug: string };
+
 // helper removed; using shared `extractConnectionNodes` from utils
 
 export const revalidate = 600;
@@ -18,7 +20,6 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
   // Your API probably has a getAllTags helper similar to getAllCategories
   const { tags } = await getAllTags({ first: 100 });
 
-  type TagNode = { id: string; name: string; slug: string };
   const nodes = extractConnectionNodes<TagNode>(tags);
 
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];

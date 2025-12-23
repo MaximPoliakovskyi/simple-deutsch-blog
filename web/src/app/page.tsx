@@ -6,6 +6,11 @@ import SuccessStoriesSliderServer from "@/components/features/stories/SuccessSto
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
 import { getAllCategories } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
+import type { WPPostCard } from "@/server/wp/api";
+
+type PageInfo = { endCursor: string | null; hasNextPage: boolean };
+type PostsResponse = { posts: WPPostCard[]; pageInfo: PageInfo };
+type CategoryNode = { id: string; name: string; slug: string };
 
 async function getBaseUrl() {
   const h = await headers();
@@ -18,7 +23,7 @@ async function getBaseUrl() {
   return `${proto}://${host}`;
 }
 
-async function getPosts(first: number, locale?: string) {
+async function getPosts(first: number, locale?: string): Promise<PostsResponse> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base);
   url.searchParams.set("first", String(first));
@@ -31,8 +36,8 @@ async function getPosts(first: number, locale?: string) {
 
   const json = await res.json();
   return {
-    posts: json.posts ?? json ?? [],
-    pageInfo: json.pageInfo ?? { endCursor: null, hasNextPage: false },
+    posts: (json.posts ?? json ?? []) as WPPostCard[],
+    pageInfo: (json.pageInfo ?? { endCursor: null, hasNextPage: false }) as PageInfo,
   };
 }
 
@@ -47,7 +52,7 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
 
   const catsResp = await getAllCategories({ first: 12 });
   const categoryNodes = filterHiddenCategories(
-    extractConnectionNodes<{ id: string; name: string; slug: string }>(catsResp?.categories),
+    extractConnectionNodes<CategoryNode>(catsResp?.categories),
   ).slice(0, 7);
 
   return (

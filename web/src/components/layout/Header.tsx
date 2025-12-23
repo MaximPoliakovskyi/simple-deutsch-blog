@@ -1,5 +1,7 @@
 // src/components/Header.tsx
 
+type Props = Record<string, never>; // No props
+
 export default function Header() {
   return (
     <header className="flex h-[90vh] flex-col items-center justify-center bg-[hsl(var(--bg))] text-center">

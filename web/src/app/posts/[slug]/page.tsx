@@ -7,9 +7,11 @@ import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getPostBySlug, getPostsPage, getPostsPageByCategory } from "@/server/wp/api"; // adjust path if yours differs
+import type { PostDetail, PostListItem } from "@/server/wp/api";
 
 const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
 type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
 function getPostLanguage(post: {
   slug?: string;
@@ -67,7 +69,7 @@ export default async function PostPage({
   // a 404 so we can recover in more cases.
   let post = await getPostBySlug(slug);
 
-  async function findPostFallback(slugToCheck: string) {
+  async function findPostFallback(slugToCheck: string): Promise<PostDetail | null> {
     // try decoding URI components and simple normalizations
     const candidates = [
       slugToCheck,
@@ -77,7 +79,7 @@ export default async function PostPage({
     ];
     // fetch a modest page of posts and try to match by slug
     try {
-      const page = await getPostsPage({ first: 50 });
+      const page: { posts: PostListItem[]; pageInfo: PageInfo } = await getPostsPage({ first: 50 });
       const nodes = page.posts ?? [];
       for (const cand of candidates) {
         const found = nodes.find((n) => n.slug === cand);
@@ -138,7 +140,10 @@ export default async function PostPage({
   // fetch related / more posts for the sidebar — LANGUAGE ONLY (no topic/category logic)
   let moreArticles: { slug: string; title: string }[] = [];
   try {
-    const allLangRes = await getPostsPageByCategory({ first: 20, categorySlug: currentLang });
+    const allLangRes: { posts: PostListItem[]; pageInfo: PageInfo } = await getPostsPageByCategory({
+      first: 20,
+      categorySlug: currentLang,
+    });
     const nodes = allLangRes.posts ?? [];
     moreArticles = nodes
       .filter((p) => p.slug !== post.slug)

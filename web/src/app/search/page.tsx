@@ -9,6 +9,7 @@ import { searchPosts, type WPPostCard } from "@/server/wp/api";
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ q?: string; after?: string }>;
+type SearchResult = { posts: WPPostCard[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
 
 export async function generateMetadata({
   searchParams,
@@ -33,12 +34,12 @@ export default async function SearchPage(
   const after = sp.after ?? null;
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
-  const { posts, pageInfo } = await searchPosts({ query: q, first: 10, after });
+  const { posts, pageInfo }: SearchResult = await searchPosts({ query: q, first: 10, after });
   // If a locale is provided, filter search results to posts that include the
   // language category (slug === locale). This mirrors the language filtering
   // used in the posts API.
-  const filteredPosts = locale
-    ? posts.filter((p: any) => (p?.categories?.nodes ?? []).some((c: any) => c?.slug === locale))
+  const filteredPosts: WPPostCard[] = locale
+    ? posts.filter((p) => (p?.categories?.nodes ?? []).some((c) => c?.slug === locale))
     : posts;
 
   return (

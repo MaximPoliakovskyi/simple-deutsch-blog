@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getPosts, getPostsByTagSlug, getPostsPageByCategory } from "@/server/wp/api";
 
+type PageInfo = { hasNextPage: boolean; endCursor: string | null };
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const lang = searchParams.get("lang");
@@ -15,7 +17,7 @@ export async function GET(req: Request) {
 
   try {
     let posts: any[] = [];
-    let pageInfo: { hasNextPage: boolean; endCursor: string | null } = {
+    let pageInfo: PageInfo = {
       hasNextPage: false,
       endCursor: null,
     };

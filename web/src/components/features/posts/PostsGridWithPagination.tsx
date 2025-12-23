@@ -1,20 +1,20 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import PostCard from "@/components/features/posts/PostCard";
+import PostCard, { type PostCardPost } from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import type { PostListItem, WPPostCard } from "@/server/wp/api";
 
 type PageInfo = {
   hasNextPage: boolean;
   endCursor: string | null;
 };
 
-type Post = {
-  id?: string;
-  slug: string;
-  title: string;
-  // other fields used by PostCard
-  [key: string]: any;
+type Post = WPPostCard | PostListItem | PostCardPost;
+
+type NormalizedFetchResult = {
+  posts: Post[];
+  pageInfo: PageInfo;
 };
 
 type Query = {
@@ -30,6 +30,24 @@ type Props = {
   pageSize: number; // e.g. 6
   query: Query;
 };
+
+const EMPTY_PAGE_INFO: PageInfo = { hasNextPage: false, endCursor: null };
+
+function normalizePostsResponse(payload: unknown): NormalizedFetchResult {
+  if (Array.isArray(payload)) {
+    return { posts: payload as Post[], pageInfo: EMPTY_PAGE_INFO };
+  }
+
+  if (payload && typeof payload === "object") {
+    const { posts, pageInfo } = payload as { posts?: unknown; pageInfo?: PageInfo };
+    return {
+      posts: Array.isArray(posts) ? (posts as Post[]) : [],
+      pageInfo: pageInfo ?? EMPTY_PAGE_INFO,
+    };
+  }
+
+  return { posts: [], pageInfo: EMPTY_PAGE_INFO };
+}
 
 export function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSize, query }: Props) {
   const { t } = useI18n();
@@ -83,8 +101,8 @@ export function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSiz
 
         setPosts(firstChunk);
         setBuffer(rest);
-        setServerHasNextPage((initialPageInfo ?? { hasNextPage: false }).hasNextPage);
-        setEndCursor((initialPageInfo ?? { endCursor: null }).endCursor);
+        setServerHasNextPage(safePageInfo.hasNextPage);
+        setEndCursor(safePageInfo.endCursor);
         setIsLoading(false);
         setError(null);
         return;
@@ -105,17 +123,7 @@ export function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSiz
 
         if (cancelled) return;
 
-        // normalize response shapes
-        let fetchedPosts: Post[] = [];
-        let pageInfo = { hasNextPage: false, endCursor: null } as PageInfo;
-
-        if (Array.isArray(json)) {
-          fetchedPosts = json as Post[];
-        } else if (json && Array.isArray(json.posts)) {
-          fetchedPosts = json.posts as Post[];
-          pageInfo = json.pageInfo ?? pageInfo;
-        }
-
+        const { posts: fetchedPosts, pageInfo } = normalizePostsResponse(json);
         const firstChunk = fetchedPosts.slice(0, pageSize);
         const rest = fetchedPosts.slice(pageSize);
 
@@ -123,9 +131,12 @@ export function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSiz
         setBuffer(rest);
         setServerHasNextPage(pageInfo.hasNextPage);
         setEndCursor(pageInfo.endCursor);
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Failed to fetch filtered posts", err);
-        if (!cancelled) setError(err?.message ?? "Failed to load posts");
+        if (!cancelled) {
+          const message = err instanceof Error ? err.message : "Failed to load posts";
+          setError(message);
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -193,9 +204,10 @@ export function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSiz
 
       setServerHasNextPage(data.pageInfo.hasNextPage);
       setEndCursor(data.pageInfo.endCursor);
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("loadMore error:", e);
-      setError(e?.message ?? "Failed to load more posts");
+      const message = e instanceof Error ? e.message : "Failed to load more posts";
+      setError(message);
     } finally {
       setIsLoading(false);
     }

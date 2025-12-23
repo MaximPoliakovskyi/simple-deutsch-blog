@@ -1,4 +1,4 @@
-// src/lib/wp/queries.ts
+// src/server/wp/queries.ts
 // Core GraphQL queries used by the app
 
 export const GET_POST_BY_SLUG = /* GraphQL */ `
@@ -228,6 +228,78 @@ export const SEARCH_POSTS = /* GraphQL */ `
             name
             slug
           }
+        }
+      }
+    }
+  }
+`;
+
+// --- Tag queries ---
+
+const TAG_FIELDS = /* GraphQL */ `
+  fragment TagFields on Tag {
+    id
+    databaseId
+    name
+    slug
+    description
+    count
+    uri
+  }
+`;
+
+export const GET_ALL_TAGS = /* GraphQL */ `
+  ${TAG_FIELDS}
+  query AllTags($first: Int!, $after: String) {
+    tags(first: $first, after: $after) {
+      nodes {
+        ...TagFields
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+    }
+  }
+`;
+
+export const GET_TAG_BY_SLUG = /* GraphQL */ `
+  ${TAG_FIELDS}
+  query TagBySlug($slug: ID!) {
+    tag(id: $slug, idType: SLUG) {
+      ...TagFields
+    }
+  }
+`;
+
+export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
+  query PostsByTagSlug($slug: ID!, $first: Int!, $after: String) {
+    tag(id: $slug, idType: SLUG) {
+      name
+      slug
+      posts(first: $first, after: $after) {
+        nodes {
+          id
+          slug
+          title
+          date
+          excerpt
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+          categories {
+            nodes {
+              name
+              slug
+            }
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
         }
       }
     }
