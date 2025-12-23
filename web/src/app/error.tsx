@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect } from "react";
-import StatusPage from "@/components/StatusPage";
+import StatusPage from "@/components/ui/StatusPage";
 
 export default function AppError({
   error,

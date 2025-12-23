@@ -1,10 +1,14 @@
-// web/types/env.d.ts
+// web/types/next-fetch.d.ts
 export {};
 
 declare global {
   namespace NodeJS {
     interface ProcessEnv {
-      WP_GRAPHQL_URL: string;
+      NEXT_PUBLIC_WP_GRAPHQL_ENDPOINT?: string;
+      WP_GRAPHQL_ENDPOINT?: string;
+      NEXT_PUBLIC_BASE_URL?: string;
+      NEXT_PUBLIC_SITE_URL?: string;
+      VERCEL_URL?: string;
     }
   }
 }

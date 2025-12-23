@@ -72,8 +72,8 @@ html.dark {
 
   /* Card surface in dark mode: subtle translucent surface */
   --sd-card-bg: rgb(255 255 255 / 3%);
-  --sd-card-grad-start: rgba(255,255,255,0.02);
-  --sd-card-grad-end: rgba(255,255,255,0.0);
+  --sd-card-grad-start: rgba(255, 255, 255, 0.02);
+  --sd-card-grad-end: rgba(255, 255, 255, 0);
 
   /* Override pill tokens in dark mode */
   --sd-pill-bg: #1f1f1f;
@@ -101,8 +101,8 @@ html.dark {
 html.theme-infect {
   --infect-x: 50%;
   --infect-y: 50%;
-  --infect-color-start: rgba(6,12,24,0.95);
-  --infect-color-end: rgba(20,30,50,0.7);
+  --infect-color-start: rgba(6, 12, 24, 0.95);
+  --infect-color-end: rgba(20, 30, 50, 0.7);
 }
 
 /* The ::before pseudo element expands from a small circle to cover the viewport.
@@ -114,11 +114,18 @@ html.theme-infect::before {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  background: radial-gradient(circle at var(--infect-x) var(--infect-y), var(--infect-color-start) 0%, var(--infect-color-end) 55%, transparent 60%);
+  background: radial-gradient(
+    circle at var(--infect-x) var(--infect-y),
+    var(--infect-color-start) 0%,
+    var(--infect-color-end) 55%,
+    transparent 60%
+  );
   opacity: 0;
   transform-origin: var(--infect-x) var(--infect-y);
   transform: scale(0.001);
-  transition: transform 500ms cubic-bezier(.2,.9,.2,1), opacity 300ms linear;
+  transition:
+    transform 500ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    opacity 300ms linear;
 }
 
 html.theme-infect.theme-infect-active::before {
@@ -133,7 +140,7 @@ html.theme-transition,
 html.theme-transition * {
   transition-property: background-color, color, border-color, box-shadow, fill, stroke;
   transition-duration: 300ms;
-  transition-timing-function: cubic-bezier(.2,.9,.2,1);
+  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -148,8 +155,8 @@ html.theme-transition * {
 html.theme-reveal {
   --reveal-x: 50%;
   --reveal-y: 50%;
-  --reveal-color-start: rgba(6,12,24,0.95);
-  --reveal-color-end: rgba(20,30,50,0.7);
+  --reveal-color-start: rgba(6, 12, 24, 0.95);
+  --reveal-color-end: rgba(20, 30, 50, 0.7);
 }
 
 html.theme-reveal::before {
@@ -158,11 +165,18 @@ html.theme-reveal::before {
   inset: 0;
   pointer-events: none;
   z-index: 9999;
-  background: radial-gradient(circle at var(--reveal-x) var(--reveal-y), var(--reveal-color-start) 0%, var(--reveal-color-end) 55%, transparent 65%);
+  background: radial-gradient(
+    circle at var(--reveal-x) var(--reveal-y),
+    var(--reveal-color-start) 0%,
+    var(--reveal-color-end) 55%,
+    transparent 65%
+  );
   opacity: 0;
   transform-origin: var(--reveal-x) var(--reveal-y);
   transform: scale(0.001);
-  transition: transform 420ms cubic-bezier(.2,.9,.2,1), opacity 300ms linear;
+  transition:
+    transform 420ms cubic-bezier(0.2, 0.9, 0.2, 1),
+    opacity 300ms linear;
 }
 
 html.theme-reveal.theme-reveal-active::before {
@@ -246,7 +260,10 @@ html.theme-reveal.theme-reveal-active::before {
   text-decoration: none;
   font-weight: 600;
   line-height: 1;
-  transition: background-color 180ms ease, color 180ms ease, transform 120ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease,
+    transform 120ms ease;
   border: 1px solid transparent;
 }
 
@@ -262,9 +279,9 @@ html.theme-reveal.theme-reveal-active::before {
 html.dark .prose .wp-block-button__link,
 html.dark .prose a.button,
 html.dark .prose a.sd-pill {
-  background: rgba(255,255,255,0.03); /* slightly lighter than page bg */
+  background: rgba(255, 255, 255, 0.03); /* slightly lighter than page bg */
   color: hsl(var(--fg));
-  border-color: rgba(255,255,255,0.05);
+  border-color: rgba(255, 255, 255, 0.05);
   box-shadow: none;
 }
 
@@ -339,7 +356,12 @@ html.dark .prose a.sd-pill {
   bottom: 0;
   height: 40%;
   pointer-events: none;
-  background: radial-gradient( at 50% 100%, var(--sd-card-grad-start), var(--sd-card-grad-end) 60%, transparent 75% );
+  background: radial-gradient(
+    at 50% 100%,
+    var(--sd-card-grad-start),
+    var(--sd-card-grad-end) 60%,
+    transparent 75%
+  );
 }
 @supports not (aspect-ratio: 1) {
   .embed {
@@ -357,10 +379,11 @@ body {
 /* Ensure the root background/color interpolate smoothly when theme tokens change.
    This targets the highest-level elements so most pages update without needing
    every child to have an explicit transition. Respects prefers-reduced-motion. */
-html, body {
+html,
+body {
   transition-property: background-color, color;
   transition-duration: 350ms;
-  transition-timing-function: cubic-bezier(.2,.9,.2,1);
+  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
   /* Prevent a site-wide horizontal scrollbar caused by elements that
      use 100vw or slight overflow (e.g. wide embeds or alignfull blocks).
      `overflow-x: clip` avoids showing a scrollbar while still clipping
@@ -369,7 +392,8 @@ html, body {
 }
 
 @supports not (overflow: clip) {
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 }
@@ -424,14 +448,14 @@ input[type="search"]::-webkit-search-results-decoration {
      before JavaScript runs. The overlay uses background tokens but adds a
      subtle tint for contrast. */
   background: hsl(var(--bg));
-  background-image: linear-gradient(rgba(0,0,0,0.02), rgba(0,0,0,0.02));
+  background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
 }
 
 /* Prefer explicit contrast for light/dark schemes before JS runs */
 @media (prefers-color-scheme: dark) {
   #sd-preloader {
     background: hsl(var(--bg));
-    background-image: linear-gradient(rgba(255,255,255,0.02), rgba(255,255,255,0.02));
+    background-image: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
   }
 }
 
@@ -466,28 +490,65 @@ input[type="search"]::-webkit-search-results-decoration {
   transform: translateY(100%);
   animation: sd-rotator 24s linear infinite;
 }
-.sd-rotator-word:nth-child(1) { animation-delay: 0s; }
-.sd-rotator-word:nth-child(2) { animation-delay: 5s; }
-.sd-rotator-word:nth-child(3) { animation-delay: 10s; }
-.sd-rotator-word:nth-child(4) { animation-delay: 15s; }
-.sd-rotator-word:nth-child(5) { animation-delay: 20s; }
-.sd-rotator-word:nth-child(6) { animation-delay: 25s; }
-.sd-rotator-word:nth-child(7) { animation-delay: 30s; }
-.sd-rotator-word:nth-child(8) { animation-delay: 35s; }
-
-@keyframes sd-rotator {
-  0% { opacity: 0; transform: translateY(100%); }
-  3% { opacity: 1; transform: translateY(0%); }
-  80% { opacity: 1; transform: translateY(0%); }
-  85% { opacity: 0; transform: translateY(-100%); }
-  100% { opacity: 0; transform: translateY(-100%); }
+.sd-rotator-word:nth-child(1) {
+  animation-delay: 0s;
+}
+.sd-rotator-word:nth-child(2) {
+  animation-delay: 5s;
+}
+.sd-rotator-word:nth-child(3) {
+  animation-delay: 10s;
+}
+.sd-rotator-word:nth-child(4) {
+  animation-delay: 15s;
+}
+.sd-rotator-word:nth-child(5) {
+  animation-delay: 20s;
+}
+.sd-rotator-word:nth-child(6) {
+  animation-delay: 25s;
+}
+.sd-rotator-word:nth-child(7) {
+  animation-delay: 30s;
+}
+.sd-rotator-word:nth-child(8) {
+  animation-delay: 35s;
 }
 
-.sd-hidden { display: none !important; }
+@keyframes sd-rotator {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  3% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0%);
+  }
+  85% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+.sd-hidden {
+  display: none !important;
+}
 
 /* JS flipper visibility toggles */
-.sd-js-hidden { display: none; }
-.sd-js-active { display: inline-flex; }
+.sd-js-hidden {
+  display: none;
+}
+.sd-js-active {
+  display: inline-flex;
+}
 
 /* On dark backgrounds, invert the word color for better contrast if needed */
 html.dark #sd-preloader .sd-preloader-word {

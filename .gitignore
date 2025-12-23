@@ -38,7 +38,7 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
+**/node_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -75,7 +75,7 @@ web_modules/
 .parcel-cache
 
 # Next.js build output
-.next
+**/.next
 out
 
 # Nuxt.js build / generate output
@@ -115,6 +115,12 @@ dist
 
 # DynamoDB Local files
 .dynamodb/
+
+# Archived backups
+archive/
+
+# Editor settings
+**/.vscode/
 
 # Firebase cache directory
 .firebase/

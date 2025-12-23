@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import PostContent from "@/components/PostContent";
 import Link from "next/link";
-import { getPostBySlug, getPostsByCategorySlug, getPostsPage, getPostsPageByCategory } from "@/lib/wp/api"; // adjust path if yours differs
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
-import { isHiddenCategory } from "@/lib/hiddenCategories";
-import { translateCategory } from "@/lib/categoryTranslations";
-import { generateTocFromHtml } from "@/lib/utils/generateToc";
+import { notFound } from "next/navigation";
+import PostContent from "@/components/features/posts/PostContent";
+import { generateTocFromHtml } from "@/core/content/generateToc";
+import { isHiddenCategory } from "@/core/content/hiddenCategories";
+import { translateCategory } from "@/core/i18n/categoryTranslations";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { getPostBySlug, getPostsPage, getPostsPageByCategory } from "@/server/wp/api"; // adjust path if yours differs
 
 const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
 type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 
-function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+function getPostLanguage(post: {
+  slug?: string;
+  categories?: { nodes?: { slug?: string | null }[] } | null;
+}): LanguageSlug | null {
   const catLang = post.categories?.nodes
     ?.map((c) => c?.slug)
     .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
   if (catLang) return catLang as LanguageSlug;
 
   const prefix = post.slug?.split("-")[0];
-  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
+    return prefix as LanguageSlug;
   return null;
 }
 
@@ -48,7 +52,13 @@ export async function generateMetadata({ params }: { params: ParamsPromise }): P
   };
 }
 
-export default async function PostPage({ params, locale }: { params: ParamsPromise; locale?: "en" | "ru" | "ua" }) {
+export default async function PostPage({
+  params,
+  locale,
+}: {
+  params: ParamsPromise;
+  locale?: "en" | "ru" | "ua";
+}) {
   const { slug } = await params; // ✅ must await
 
   // Try primary lookup by slug. Some WordPress setups or malformed links
@@ -59,7 +69,12 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
 
   async function findPostFallback(slugToCheck: string) {
     // try decoding URI components and simple normalizations
-    const candidates = [slugToCheck, decodeURIComponent(slugToCheck || ""), slugToCheck.replace(/^\/+/, ""), slugToCheck.replace(/\.html?$/i, "")];
+    const candidates = [
+      slugToCheck,
+      decodeURIComponent(slugToCheck || ""),
+      slugToCheck.replace(/^\/+/, ""),
+      slugToCheck.replace(/\.html?$/i, ""),
+    ];
     // fetch a modest page of posts and try to match by slug
     try {
       const page = await getPostsPage({ first: 50 });
@@ -98,16 +113,24 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
   // Show all non-language categories (do not show language category)
   const visibleCategories = (post.categories?.nodes ?? [])
     .filter((c) => c && !(LANGUAGE_SLUGS as readonly string[]).includes(c.slug ?? ""))
-    .filter((c) => !isHiddenCategory(c!.name, c!.slug));
+    .filter((c) => !isHiddenCategory(c?.name, c?.slug));
   const showCategories = visibleCategories.length > 0;
-  const firstCategoryForFetch = visibleCategories.length > 0 ? visibleCategories[0] : null;
+  const _firstCategoryForFetch = visibleCategories.length > 0 ? visibleCategories[0] : null;
 
   // compute read time (approx) from word count (200 wpm)
-  const words = post.content ? post.content.replace(/<[^>]+>/g, "").trim().split(/\s+/).filter(Boolean).length : 0;
+  const words = post.content
+    ? post.content
+        .replace(/<[^>]+>/g, "")
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean).length
+    : 0;
   const readMinutes = Math.max(1, Math.ceil(words / 200));
 
   // Generate a table-of-contents and inject anchor ids into headings
-  const { html: contentHtml, toc } = post.content ? generateTocFromHtml(post.content) : { html: "", toc: [] };
+  const { html: contentHtml, toc } = post.content
+    ? generateTocFromHtml(post.content)
+    : { html: "", toc: [] };
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   const currentLang = getPostLanguage(post) ?? "en";
@@ -133,27 +156,37 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
     <main className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <article className="md:col-span-3">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">{post.title}</h1>
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
+            {post.title}
+          </h1>
 
           {showCategories ? (
             <div className="mb-6 flex flex-wrap gap-2">
               {visibleCategories.map((cat) => (
                 <Link
-                  key={cat!.slug}
-                  href={(locale ?? DEFAULT_LOCALE) === "en" ? `/categories/${cat!.slug}` : `/${locale}/categories/${cat!.slug}`}
+                  key={cat?.slug}
+                  href={
+                    (locale ?? DEFAULT_LOCALE) === "en"
+                      ? `/categories/${cat?.slug}`
+                      : `/${locale}/categories/${cat?.slug}`
+                  }
                   className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
                 >
-                  {translateCategory(cat!.name, cat!.slug, locale ?? DEFAULT_LOCALE)}
+                  {translateCategory(cat?.name, cat?.slug, locale ?? DEFAULT_LOCALE)}
                 </Link>
               ))}
             </div>
           ) : null}
 
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">{(authorName || "").charAt(0).toUpperCase()}</div>
+            <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">
+              {(authorName || "").charAt(0).toUpperCase()}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               <div className="font-medium text-gray-900 dark:text-gray-100">{authorName}</div>
-                <div className="dark:text-gray-400">{formattedDate} · {readMinutes} {t.minRead}</div>
+              <div className="dark:text-gray-400">
+                {formattedDate} · {readMinutes} {t.minRead}
+              </div>
             </div>
           </div>
 
@@ -178,27 +211,39 @@ export default async function PostPage({ params, locale }: { params: ParamsPromi
           {contentHtml ? <PostContent html={contentHtml} /> : null}
         </article>
 
-  <aside className="md:col-span-1">
+        <aside className="md:col-span-1">
           <div className="sticky top-20 space-y-6">
             {/* Promo rounded card (fill sidebar width) */}
             <div className="sd-card px-6 py-6 w-full text-center">
-              <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">{t.promoHeading}</h3>
+              <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">
+                {t.promoHeading}
+              </h3>
               <div className="flex justify-center">
-                <a href="#" className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base">{t.promoCta}</a>
+                <a
+                  href="#"
+                  className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base"
+                >
+                  {t.promoCta}
+                </a>
               </div>
             </div>
 
             {/* More articles (no background/borders, fill sidebar width) */}
             <div className="px-3 py-3 rounded-xl w-full">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">{t.moreArticles}</h4>
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                {t.moreArticles}
+              </h4>
               <ul className="text-sm text-gray-600 dark:text-gray-400">
-                  {moreArticles.map((p) => (
-                    <li key={p.slug} className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0">
-                      <Link href={`/posts/${p.slug}`} className="hover:underline block">
-                        {p.title}
-                      </Link>
-                    </li>
-                  ))}
+                {moreArticles.map((p) => (
+                  <li
+                    key={p.slug}
+                    className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                  >
+                    <Link href={`/posts/${p.slug}`} className="hover:underline block">
+                      {p.title}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>

@@ -1,29 +1,33 @@
 // app/categories/[category]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import PostsGridWithPagination from "@/components/PostsGridWithPagination";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
-import { translateCategory } from "@/lib/categoryTranslations";
-import { getCategoryBySlug, getPostsPageByCategory } from "@/lib/wp/api";
+import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
+import { translateCategory } from "@/core/i18n/categoryTranslations";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { getCategoryBySlug, getPostsPageByCategory } from "@/server/wp/api";
 
 export const revalidate = 600;
 
 type Params = { category: string };
 
-const PAGE_SIZE = 6;
+const PAGE_SIZE = 3;
 
 // Language detection used across posts/category pages
 const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
 type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 
-function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+function getPostLanguage(post: {
+  slug?: string;
+  categories?: { nodes?: { slug?: string | null }[] } | null;
+}): LanguageSlug | null {
   const catLang = post.categories?.nodes
     ?.map((c) => c?.slug)
     .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
   if (catLang) return catLang as LanguageSlug;
 
   const prefix = post.slug?.split("-")[0];
-  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
+    return prefix as LanguageSlug;
   return null;
 }
 
@@ -37,7 +41,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
-export default async function CategoryPage({ params, locale }: { params: Promise<Params>; locale?: "en" | "ru" | "ua" }) {
+export default async function CategoryPage({
+  params,
+  locale,
+}: {
+  params: Promise<Params>;
+  locale?: "en" | "ru" | "ua";
+}) {
   const { category } = await params;
 
   const term = await getCategoryBySlug(category);
@@ -49,7 +59,10 @@ export default async function CategoryPage({ params, locale }: { params: Promise
 
   // Fetch an initial batch larger than PAGE_SIZE so we can filter out posts
   // in other languages while still filling the first page.
-  const { posts: fetched, pageInfo } = await getPostsPageByCategory({ first: PAGE_SIZE * 2, categorySlug: category });
+  const { posts: fetched, pageInfo } = await getPostsPageByCategory({
+    first: PAGE_SIZE * 10,
+    categorySlug: category,
+  });
 
   // Keep only posts that match the current site language
   const filtered = (fetched ?? []).filter((p) => getPostLanguage(p) === lang);

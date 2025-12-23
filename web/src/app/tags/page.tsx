@@ -1,9 +1,9 @@
 // app/tags/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
-import { getAllTags } from "@/lib/wp/api";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { getAllTags } from "@/server/wp/api";
+import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
 // helper removed; using shared `extractConnectionNodes` from utils
 

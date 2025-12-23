@@ -1,9 +1,9 @@
 // app/search/page.tsx
 import type { Metadata } from "next";
-import PostCard from "@/components/PostCard";
-import SearchBox from "@/components/SearchBox";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
-import { searchPosts, type WPPostCard } from "@/lib/wp/api";
+import PostCard from "@/components/features/posts/PostCard";
+import SearchBox from "@/components/features/search/SearchBox";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { searchPosts, type WPPostCard } from "@/server/wp/api";
 
 // Dynamic render for fresh search each request
 export const dynamic = "force-dynamic";
@@ -23,7 +23,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function SearchPage({ searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "ua" } = { searchParams: Promise.resolve({}) }) {
+export default async function SearchPage(
+  { searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "ua" } = {
+    searchParams: Promise.resolve({}),
+  },
+) {
   const sp = await searchParams; // Next 15: must await dynamic APIs
   const q = (sp.q ?? "").trim();
   const after = sp.after ?? null;
@@ -39,8 +43,8 @@ export default async function SearchPage({ searchParams, locale }: { searchParam
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-  <h1 className="mb-4 text-2xl font-semibold">{t.search}</h1>
-  <SearchBox className="mb-6" autoFocus placeholder={t.searchPlaceholder} />
+      <h1 className="mb-4 text-2xl font-semibold">{t.search}</h1>
+      <SearchBox className="mb-6" autoFocus placeholder={t.searchPlaceholder} />
 
       {!q && (
         <p className="text-neutral-600">
@@ -56,18 +60,18 @@ export default async function SearchPage({ searchParams, locale }: { searchParam
 
       <section className="grid gap-6">
         {filteredPosts.map((p: WPPostCard) => (
-            <PostCard key={p.id} post={p} />
-          ))}
+          <PostCard key={p.id} post={p} />
+        ))}
       </section>
 
       {q && pageInfo.hasNextPage ? (
         <div className="mt-8 flex justify-center">
-            <a
-              href={`/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
-              className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
-            >
-              {t.loadMore}
-            </a>
+          <a
+            href={`/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
+            className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
+          >
+            {t.loadMore}
+          </a>
         </div>
       ) : null}
     </main>

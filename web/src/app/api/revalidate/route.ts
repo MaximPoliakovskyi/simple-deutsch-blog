@@ -1,44 +1,36 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import type { NextRequest } from "next/server";
-import { CACHE_TAGS } from "@/lib/cache";
+import { CACHE_TAGS } from "@/server/cache";
 
 export async function POST(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
+
   if (!token || token !== process.env.REVALIDATION_TOKEN) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const body = await req.json().catch(() => ({}));
-  // Supported shapes:
-  // { type: 'posts' } -> revalidate posts list
-  // { type: 'post', slug: 'hello-world' } -> revalidate single post
-  // { type: 'categories' } or { type: 'tags' }
-  // Optional: { path: '/blog' } to revalidate a route path as well
-
   try {
+    const body = await req.json().catch(() => ({}));
+
     switch (body.type) {
       case "posts":
-        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.posts);
+        revalidateTag(CACHE_TAGS.posts, "max");
         break;
       case "post":
-        if (!body.slug) throw new Error("Missing slug");
-        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.post(body.slug));
-        // you can also refresh the listing path if you have one:
-        // revalidatePath('/blog')
+        if (body.slug) revalidateTag(CACHE_TAGS.post(body.slug), "max");
         break;
       case "categories":
-        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.categories);
+        revalidateTag(CACHE_TAGS.categories, "max");
         break;
       case "tags":
-        (revalidateTag as unknown as (...args: any[]) => void)(CACHE_TAGS.tags);
-        break;
-      default:
-        // no-op
+        revalidateTag(CACHE_TAGS.tags, "max");
         break;
     }
-    if (body.path) revalidatePath(body.path as string);
+
+    if (body.path) revalidatePath(body.path);
+
     return Response.json({ revalidated: true, now: Date.now() });
-  } catch (e) {
-    return new Response(JSON.stringify({ error: (e as Error).message }), { status: 500 });
+  } catch (_error) {
+    return Response.json({ error: "Revalidation failed" }, { status: 500 });
   }
 }

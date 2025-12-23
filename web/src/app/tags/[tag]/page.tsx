@@ -1,10 +1,10 @@
 // app/tags/[tag]/page.tsx
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import PostsGridWithPagination from "@/components/PostsGridWithPagination";
-import type { PostListItem } from "@/lib/wp/api";
-import { getPostsByTagSlug, getTagBySlug } from "@/lib/wp/api";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { PostListItem } from "@/server/wp/api";
+import { getPostsByTagSlug, getTagBySlug } from "@/server/wp/api";
 
 export const revalidate = 600;
 
@@ -28,26 +28,36 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
-export default async function TagPage({ params, locale }: { params: Promise<Params>; locale?: "en" | "ru" | "ua" }) {
+export default async function TagPage({
+  params,
+  locale,
+}: {
+  params: Promise<Params>;
+  locale?: "en" | "ru" | "ua";
+}) {
   const { tag } = await params;
 
   const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
   if (!term) return notFound();
-  // PAGE_SIZE same as posts/categories
-  const PAGE_SIZE = 6;
+  // PAGE_SIZE set to 3 to match categories block pagination
+  const PAGE_SIZE = 3;
 
   // Language detection used across the site (category slug or slug prefix)
   const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
   type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 
-  function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+  function getPostLanguage(post: {
+    slug?: string;
+    categories?: { nodes?: { slug?: string | null }[] } | null;
+  }): LanguageSlug | null {
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
       .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
     if (catLang) return catLang as LanguageSlug;
 
     const prefix = post.slug?.split("-")[0];
-    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
+      return prefix as LanguageSlug;
     return null;
   }
 
@@ -55,10 +65,19 @@ export default async function TagPage({ params, locale }: { params: Promise<Para
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
   // Fetch an initial batch and filter to current language
-  const { posts: fetchedPosts } = await getPostsByTagSlug(tag, PAGE_SIZE * 2);
+  const { posts: fetchedPosts } = await getPostsByTagSlug(tag, PAGE_SIZE * 10);
   const nodes = (fetchedPosts?.nodes ?? []) as PostListItem[];
   const filtered = nodes.filter((p) => getPostLanguage(p) === lang);
   const initialPosts = filtered.slice(0, PAGE_SIZE) as any[];
+
+  // Derive accurate pageInfo based on filtered posts
+  const filteredHasMore = filtered.length > PAGE_SIZE;
+  const upstreamPageInfo = (fetchedPosts?.pageInfo as any) ?? { hasNextPage: false, endCursor: null };
+  // Only set hasNextPage when we actually have more filtered posts OR we filled the page and upstream has more
+  const initialPageInfo = {
+    endCursor: upstreamPageInfo.endCursor ?? null,
+    hasNextPage: filteredHasMore || (filtered.length === PAGE_SIZE && upstreamPageInfo.hasNextPage) || false,
+  };
 
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
   const label = (t.tagLabel as string) ?? "Tag:";
@@ -70,7 +89,7 @@ export default async function TagPage({ params, locale }: { params: Promise<Para
       <PostsGridWithPagination
         key={`${lang}-tag-${tag}`}
         initialPosts={initialPosts}
-        initialPageInfo={(fetchedPosts?.pageInfo as any) ?? { hasNextPage: false, endCursor: null }}
+        initialPageInfo={initialPageInfo}
         pageSize={PAGE_SIZE}
         query={{ lang, categorySlug: null, tagSlug: tag, level: null }}
       />

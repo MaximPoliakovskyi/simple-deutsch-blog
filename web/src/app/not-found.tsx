@@ -1,6 +1,6 @@
 // app/not-found.tsx
 import Link from "next/link";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export const metadata = {
   title: TRANSLATIONS[DEFAULT_LOCALE].pageNotFoundTitle,

@@ -1,12 +1,11 @@
 // app/categories/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { extractConnectionNodes } from "@/lib/utils/normalizeConnection";
-import { getAllCategories } from "@/lib/wp/api";
-import { filterHiddenCategories } from "@/lib/hiddenCategories";
-import { translateCategory, translateCategoryDescription } from "@/lib/categoryTranslations";
-import { getPostsPageByCategory } from "@/lib/wp/api";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/lib/i18n";
+import { filterHiddenCategories } from "@/core/content/hiddenCategories";
+import { translateCategory, translateCategoryDescription } from "@/core/i18n/categoryTranslations";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { getAllCategories, getPostsPageByCategory } from "@/server/wp/api";
+import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
 // helper removed; using shared `extractConnectionNodes` from utils
 
@@ -17,7 +16,11 @@ export const metadata: Metadata = {
   description: "Explore posts by category.",
 };
 
-export default async function CategoriesIndexPage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
+export default async function CategoriesIndexPage({
+  locale,
+}: {
+  locale?: "en" | "ru" | "ua";
+} = {}) {
   // Your API expects one argument (e.g., { first: number })
   const { categories } = await getAllCategories({ first: 100 });
 
@@ -40,14 +43,18 @@ export default async function CategoriesIndexPage({ locale }: { locale?: "en" | 
   // Helper to detect post language (same logic used elsewhere)
   const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
   type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
-  function getPostLanguage(post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null; }): LanguageSlug | null {
+  function getPostLanguage(post: {
+    slug?: string;
+    categories?: { nodes?: { slug?: string | null }[] } | null;
+  }): LanguageSlug | null {
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
       .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
     if (catLang) return catLang as LanguageSlug;
 
     const prefix = post.slug?.split("-")[0];
-    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix as LanguageSlug;
+    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
+      return prefix as LanguageSlug;
     return null;
   }
 
@@ -59,10 +66,15 @@ export default async function CategoriesIndexPage({ locale }: { locale?: "en" | 
   const countsBySlug = await Promise.all(
     visible.map(async (c) => {
       try {
-        const { posts: postsForCat } = await getPostsPageByCategory({ first: 200, categorySlug: c.slug });
-        const count = (postsForCat ?? []).filter((p) => getPostLanguage(p) === (lang as LanguageSlug)).length;
+        const { posts: postsForCat } = await getPostsPageByCategory({
+          first: 200,
+          categorySlug: c.slug,
+        });
+        const count = (postsForCat ?? []).filter(
+          (p) => getPostLanguage(p) === (lang as LanguageSlug),
+        ).length;
         return [c.slug, count] as const;
-      } catch (err) {
+      } catch (_err) {
         return [c.slug, 0] as const;
       }
     }),
@@ -106,32 +118,46 @@ export default async function CategoriesIndexPage({ locale }: { locale?: "en" | 
             >
               {/* Prefer a locale-specific description when available */}
               <Link
-                href={(locale ?? DEFAULT_LOCALE) === "en" ? `/categories/${cat.slug}` : `/${locale}/categories/${cat.slug}`}
+                href={
+                  (locale ?? DEFAULT_LOCALE) === "en"
+                    ? `/categories/${cat.slug}`
+                    : `/${locale}/categories/${cat.slug}`
+                }
                 className="group block"
               >
                 <div className="mb-1 flex items-baseline justify-between">
-                  <h2 className="text-lg font-medium group-hover:underline">{translateCategory(cat.name, cat.slug, locale ?? "en")}</h2>
-                  {
-                    (() => {
-                      const count = countsMap.get(cat.slug) ?? 0;
-                      return <span className="text-xs text-neutral-500">{formatPostCount(count, lang)}</span>;
-                    })()
-                  }
-                </div>
-                {
-                  (() => {
-                    const translated = translateCategoryDescription(cat?.description, cat?.slug, locale ?? "en");
-                    const final = translated ?? cat?.description ?? null;
-                    if (final) {
-                      return (
-                        <p className="line-clamp-3 text-sm text-neutral-600 dark:text-neutral-400">{final}</p>
-                      );
-                    }
+                  <h2 className="text-lg font-medium group-hover:underline">
+                    {translateCategory(cat.name, cat.slug, locale ?? "en")}
+                  </h2>
+                  {(() => {
+                    const count = countsMap.get(cat.slug) ?? 0;
                     return (
-                      <p className="text-sm text-neutral-500">Browse posts in {translateCategory(cat?.name, cat?.slug, locale ?? "en")}.</p>
+                      <span className="text-xs text-neutral-500">
+                        {formatPostCount(count, lang)}
+                      </span>
                     );
-                  })()
-                }
+                  })()}
+                </div>
+                {(() => {
+                  const translated = translateCategoryDescription(
+                    cat?.description,
+                    cat?.slug,
+                    locale ?? "en",
+                  );
+                  const final = translated ?? cat?.description ?? null;
+                  if (final) {
+                    return (
+                      <p className="line-clamp-3 text-sm text-neutral-600 dark:text-neutral-400">
+                        {final}
+                      </p>
+                    );
+                  }
+                  return (
+                    <p className="text-sm text-neutral-500">
+                      Browse posts in {translateCategory(cat?.name, cat?.slug, locale ?? "en")}.
+                    </p>
+                  );
+                })()}
               </Link>
             </li>
           ))}

@@ -2,7 +2,7 @@
 "use client";
 
 import "@/styles/globals.css"; // must import styles because this replaces the root layout
-import StatusPage from "@/components/StatusPage";
+import StatusPage from "@/components/ui/StatusPage";
 
 export default function GlobalError({
   error,
