@@ -55,6 +55,14 @@ const en: Translations = {
   tagsHeading: "Tags",
   tagsDescription: "Tags indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
   tagLabel: "Tag:",
+
+  /* Levels (UI rename for tags) */
+  levels: "Levels",
+  levelsHeading: "Levels",
+  levelsDescription: "Levels indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
+  levelLabel: "Level:",
+  levelNotFound: "Level not found",
+  "level.titlePrefix": "Level:",
   a1Title: "A1 (Beginner)",
   a1Description: "Absolute beginner: basic words and simple everyday phrases.",
   a2Title: "A2 (Elementary)",
@@ -167,6 +175,14 @@ const ua: Translations = {
   tagsHeading: "Теги",
   tagsDescription: "Теги вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
   tagLabel: "Тег:",
+
+  /* Levels (UI rename for tags) */
+  levels: "Рівні",
+  levelsHeading: "Рівні",
+  levelsDescription: "Рівні вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
+  levelLabel: "Рівень:",
+  levelNotFound: "Рівень не знайдено",
+  "level.titlePrefix": "Рівень:",
   a1Title: "A1 — Початковий",
   a1Description: "Початковий рівень: базові слова та прості повсякденні фрази.",
   a2Title: "A2 — Елементарний",
@@ -279,6 +295,13 @@ const ru: Translations = {
   tagsHeading: "Теги",
   tagsDescription: "Теги указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
   tagLabel: "Тег:",
+  /* Levels (UI rename for tags) */
+  levels: "Уровни",
+  levelsHeading: "Уровни",
+  levelsDescription: "Уровни указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
+  levelLabel: "Уровень:",
+  levelNotFound: "Уровень не найден",
+  "level.titlePrefix": "Уровень:",
   a1Title: "A1 — Начальный",
   a1Description: "Начальный уровень: базовые слова и простые повседневные фразы.",
   a2Title: "A2 — Элементарный",

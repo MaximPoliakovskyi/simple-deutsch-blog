@@ -527,10 +527,10 @@ export default function Header() {
                 {t("categories")}
               </Link>
               <Link
-                href={buildLocalePath("/tags")}
+                href={buildLocalePath("/levels")}
                 className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
               >
-                {t("tags")}
+                {t("levels")}
               </Link>
 
               {/* Search then language selector (matches screenshot: search first, small language pill to the right) */}
@@ -692,11 +692,11 @@ export default function Header() {
               </li>
               <li>
                 <Link
-                  href={buildLocalePath("/tags")}
+                  href={buildLocalePath("/levels")}
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  {t("tags")}
+                  {t("levels")}
                 </Link>
               </li>
               <li>

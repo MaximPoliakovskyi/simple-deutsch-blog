@@ -22,6 +22,22 @@ const WORDS = [
   "Bereit",
   "Weiterlernen",
   "Schritt für Schritt",
+  // Additional short/impactful phrases
+  "Genial",
+  "Perfekt",
+  "Klasse",
+  "Super",
+  "Top",
+  "Los geht's",
+  "Auf geht's",
+  "Sehr gut",
+  "Du rockst",
+  "Fantastisch",
+  "Sauber",
+  "Weiter!",
+  "Komm schon",
+  "Ziel im Blick",
+  "Kurz & knapp",
 ];
 
 function pick(exclude?: string) {
@@ -80,7 +96,7 @@ export default function PreloaderClient() {
     let hideTimer: number | null = null;
     const FLIP_INTERVAL = 5000; // ms between full flip cycles (slower)
     const QUICK_DELAY = 2500; // ms for the quick follow-up flip
-    const HIDE_AFTER = 6000; // ms after load before hiding (longer to allow slower flips)
+    const HIDE_AFTER = 1500; // ms after load before hiding (reduced to 1.5s)
 
     function clearAll() {
       // use for-of to avoid returning from forEach callback

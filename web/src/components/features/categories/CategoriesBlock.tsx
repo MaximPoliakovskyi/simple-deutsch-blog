@@ -45,7 +45,7 @@ export default async function CategoriesBlock({
     // Match success stories slider background (full-bleed dark band)
     <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
       <section
-        aria-label={TRANSLATIONS[locale ?? DEFAULT_LOCALE].tags}
+        aria-label={TRANSLATIONS[locale ?? DEFAULT_LOCALE].levels}
         data-categories-scope
         className="mx-auto max-w-7xl px-4 py-10 text-white"
       >
@@ -101,10 +101,10 @@ export default async function CategoriesBlock({
 
         <div className="space-y-2">
           <h2 className="text-3xl font-extrabold mb-8">
-            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsHeading}
+            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsHeading}
           </h2>
           <p className="text-sm text-gray-300 max-w-2xl">
-            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsDescription}
+            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsDescription}
           </p>
         </div>
 
