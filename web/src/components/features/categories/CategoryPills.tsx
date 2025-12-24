@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
+import { getLevelLabel, getLevelDescription } from "@/core/cefr/levels";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type Category = { id: string; name: string; slug: string };
@@ -23,20 +24,56 @@ export default function CategoryPills({
 }) {
   const { t, locale } = useI18n();
 
+  // Enforce fixed CEFR ordering on client-side
+  const CEFR_ORDER = React.useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
+  const CEFR_ORDER_MAP = React.useMemo(() => {
+    const m = new Map<string, number>();
+    CEFR_ORDER.forEach((s, i) => m.set(s, i));
+    return m;
+  }, [CEFR_ORDER]);
+
+  // Map of sticker colors for each CEFR label (uppercase key)
+  const CEFR_STICKER: Record<string, string> = React.useMemo(() => ({
+    A1: "bg-green-500",
+    A2: "bg-yellow-400",
+    B1: "bg-orange-500",
+    B2: "bg-red-500",
+    C1: "bg-purple-500",
+    C2: "bg-black",
+  }), []);
+
+  // Sorted categories according to CEFR_ORDER; unknown slugs go after known ones
+  const sortedCategories = React.useMemo(() => {
+    return [...categories].sort((a, b) => {
+      const ia = CEFR_ORDER_MAP.get(a.slug?.toUpperCase() ?? "") ?? 999;
+      const ib = CEFR_ORDER_MAP.get(b.slug?.toUpperCase() ?? "") ?? 999;
+      if (ia !== ib) return ia - ib;
+      return 0;
+    });
+  }, [categories, CEFR_ORDER_MAP]);
+
   // Helper to get CEFR level description by tag slug
   const getTagDescription = React.useCallback((slug: string): string | undefined => {
+    // Prefer centralized CEFR descriptions when available, fall back to translations
+    const fromLevels = getLevelDescription(slug, locale ?? "en");
+    if (fromLevels) return fromLevels;
     const normalized = slug.toLowerCase();
     const key = `${normalized}Description`;
     return t(key);
-  }, [t]);
+  }, [t, locale]);
 
   // If `required` is true and no explicit initialSelected was provided, default
   // to the first category's slug when categories are available.
   const defaultSelected = React.useMemo(() => {
     if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
-    if (required) return categories.length > 0 ? categories[0].slug : null;
+
+    // Prefer selecting the A1 level when available (case-insensitive match).
+    const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
+    if (a1) return a1.slug;
+
+    if (required) return sortedCategories.length > 0 ? sortedCategories[0].slug : null;
     return null;
-  }, [initialSelected, required, categories]);
+  }, [initialSelected, required, sortedCategories]);
 
   const [selected, setSelected] = React.useState<string | null>(defaultSelected ?? null);
 
@@ -45,18 +82,19 @@ export default function CategoryPills({
     onSelect(selected);
   }, [selected, onSelect]);
 
-  const containerClass = `mt-8 flex flex-wrap gap-3 ${alignment === "center" ? "justify-center" : "justify-start"}`;
+  const containerClass = `mx-0 my-8 flex flex-wrap gap-3 ${alignment === "center" ? "justify-center" : "justify-start"}`;
 
   return (
     <div className={containerClass}>
-      {categories.length === 0 ? (
+      {sortedCategories.length === 0 ? (
         <div className="text-sm text-neutral-500 dark:text-neutral-400">{t("noCategories")}</div>
       ) : (
-        categories.map((cat) => {
+        sortedCategories.map((cat) => {
           // active only when the category slug matches the selected value
           const active = selected === cat.slug;
           const description = getTagDescription(cat.slug);
-          const displayName = translateCategory(cat.name, cat.slug, locale);
+          const displayName = getLevelLabel(cat.slug, locale ?? "en") ?? translateCategory(cat.name, cat.slug, locale);
+          // compute sticker class safely to avoid 'undefined' being inserted
           return (
             <button
               key={cat.id}
@@ -78,7 +116,15 @@ export default function CategoryPills({
               title={description}
               aria-label={description ? `${displayName}: ${description}` : displayName}
             >
-              {displayName}
+              <span className="flex items-center">
+                {(() => {
+                  const stickerClass = CEFR_STICKER[cat.slug?.toUpperCase() ?? ""] ?? "";
+                  return stickerClass ? (
+                    <span className={`w-2.5 h-2.5 rounded-full ${stickerClass} mr-2`} />
+                  ) : null;
+                })()}
+                <span>{displayName}</span>
+              </span>
             </button>
           );
         })

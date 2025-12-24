@@ -3,6 +3,7 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
+import { CEFR_SLUGS } from "@/core/cefr/levels";
 
 type Locale = "en" | "ru" | "ua";
 type TagNode = { id: string; name: string; slug: string };
@@ -29,9 +30,8 @@ export default async function CategoriesBlock({
   }));
 
   // Only show the CEFR level tags in the homepage block (A1..C2).
-  const levelSlugs = ["a1", "a2", "b1", "b2", "c1", "c2"];
   const visibleCategories: Category[] = tags.filter((t) =>
-    levelSlugs.includes((t.slug || "").toLowerCase()),
+    CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
   const effectiveLocale = locale ?? DEFAULT_LOCALE;
@@ -99,22 +99,26 @@ export default async function CategoriesBlock({
           }
         `}</style>
 
-        <h2 className="text-3xl font-extrabold mb-4">
-          {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsHeading}
-        </h2>
-        <p className="text-sm text-gray-300 mb-8 max-w-2xl">
-          {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsDescription}
-        </p>
+        <div className="space-y-2">
+          <h2 className="text-3xl font-extrabold mb-8">
+            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsHeading}
+          </h2>
+          <p className="text-sm text-gray-300 max-w-2xl">
+            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsDescription}
+          </p>
+        </div>
 
         {/* Client component gets serializable props only */}
-        <CategoriesBlockClient
+        <div className="mt-4">
+          <CategoriesBlockClient
           categories={visibleCategories}
           initialPosts={initialPosts}
           initialEndCursor={pageInfo.endCursor}
           initialHasNextPage={pageInfo.hasNextPage}
           pageSize={3}
           locale={effectiveLocale}
-        />
+          />
+        </div>
       </section>
     </div>
   );

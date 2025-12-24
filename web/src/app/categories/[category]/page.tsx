@@ -71,6 +71,11 @@ export default async function CategoryPage({
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-semibold">{`${label} ${translatedName}`}</h1>
+      {category === "success-stories" && (
+        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+          {t.successStoriesDescription}
+        </p>
+      )}
 
       <PostsGridWithPagination
         key={`${lang}-${category}`}

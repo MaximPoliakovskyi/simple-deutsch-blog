@@ -21,8 +21,16 @@ export async function generateMetadata({ params }: Props) {
   const term = (await getTagBySlug(tag)) as any;
   if (!term) return { title: TRANSLATIONS[locale].tagNotFound };
 
+  // Localized title prefix + CEFR mapping
+  const t = TRANSLATIONS[locale];
+  const prefix = (t["tag.titlePrefix"] as string) ?? (t.tagLabel as string) ?? "Tag:";
+  const CEFR_BY_SLUG = { a1: "A1", a2: "A2", b1: "B1", b2: "B2", c1: "C1", c2: "C2" } as const;
+  const code = CEFR_BY_SLUG[(tag ?? "").toLowerCase() as keyof typeof CEFR_BY_SLUG];
+  const levelLabel = code ? (t[`cefr.${code}.title`] as string) : undefined;
+  const title = code && levelLabel ? `${prefix} ${code} (${levelLabel}) — ${t.siteTitle}` : `${prefix} ${term.name} — ${t.siteTitle}`;
+
   return {
-    title: `Tag: ${term.name} — ${TRANSLATIONS[locale].siteTitle}`,
+    title,
   };
 }
 

@@ -27,9 +27,13 @@ export default function CategoriesBlockClient({
   locale,
 }: Props) {
   const { t } = useI18n();
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(
-    categories.length > 0 ? categories[0].slug : null
-  );
+  // Prefer A1 level when available to ensure A1 is selected initially
+  const preferredInitial = React.useMemo(() => {
+    const a1 = categories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
+    return a1 ? a1.slug : categories.length > 0 ? categories[0].slug : null;
+  }, [categories]);
+
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(preferredInitial);
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>([]);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -89,7 +93,7 @@ export default function CategoriesBlockClient({
       <div className="mb-4">
         <CategoryPills
           categories={categories}
-          initialSelected={categories.length > 0 ? categories[0].slug : null}
+          initialSelected={preferredInitial}
           onSelect={(slug) => setSelectedCategory(slug)}
           alignment="left"
           required={true}

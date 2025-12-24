@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import PostCard from "@/components/features/posts/PostCard";
+import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
 type Props = {
@@ -55,6 +56,8 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
   }, [updateEdgeState]);
 
   if (!posts?.length) return null;
+
+  const { t } = useI18n();
 
   // Only posts in “Success stories”; hide that chip from list
   // Use category slug for matching because category name can include emoji or
@@ -158,6 +161,9 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
             </button>
           </div>
         </div>
+        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+          {t("successStoriesDescription")}
+        </p>
 
         <div
           ref={scrollerRef}

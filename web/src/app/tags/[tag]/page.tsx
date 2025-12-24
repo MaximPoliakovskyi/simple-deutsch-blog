@@ -24,8 +24,15 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { tag } = await params;
   const term = (await getTagBySlug(tag)) as TagNode | null; // <- type assert
   if (!term) return { title: TRANSLATIONS[DEFAULT_LOCALE].tagNotFound };
+  // Localize title prefix and CEFR level when possible (fallback to term name)
+  const t = TRANSLATIONS[DEFAULT_LOCALE];
+  const prefix = (t["tag.titlePrefix"] as string) ?? (t.tagLabel as string) ?? "Tag:";
+  const CEFR_BY_SLUG = { a1: "A1", a2: "A2", b1: "B1", b2: "B2", c1: "C1", c2: "C2" } as const;
+  const code = CEFR_BY_SLUG[(tag ?? "").toLowerCase() as keyof typeof CEFR_BY_SLUG];
+  const levelLabel = code ? ((t[`cefr.${code}.title`] as string) ?? undefined) : undefined;
+  const title = code && levelLabel ? `${prefix} ${code} (${levelLabel}) — ${t.siteTitle}` : `${prefix} ${term.name} — ${t.siteTitle}`;
   return {
-    title: `Tag: ${term.name} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
+    title,
     description: term.description ?? `Posts tagged with “${term.name}”`,
   };
 }
@@ -71,11 +78,14 @@ export default async function TagPage({
   const initialPageInfo = pageRes.pageInfo;
 
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
-  const label = (t.tagLabel as string) ?? "Tag:";
+  const prefix = (t["tag.titlePrefix"] as string) ?? (t.tagLabel as string) ?? "Tag:";
+  const CEFR_BY_SLUG = { a1: "A1", a2: "A2", b1: "B1", b2: "B2", c1: "C1", c2: "C2" } as const;
+  const code = CEFR_BY_SLUG[(tag ?? "").toLowerCase() as keyof typeof CEFR_BY_SLUG];
+  const levelLabel = code ? (t[`cefr.${code}.title`] as string) : undefined;
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">{`${label} ${term.name}`}</h1>
+      <h1 className="mb-6 text-3xl font-semibold">{code && levelLabel ? `${prefix} ${code} (${levelLabel})` : `${prefix} ${term.name}`}</h1>
 
       <PostsGridWithPagination key={`${lang}-tag-${tag}`} initialPosts={initialPosts} initialPageInfo={initialPageInfo} pageSize={PAGE_SIZE} query={{ lang, categorySlug: null, tagSlug: tag, level: null }} />
     </main>

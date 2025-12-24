@@ -2,6 +2,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { CEFR_LEVELS, CEFR_SLUGS, getLevelLabel, getLevelDescription, CEFR_ORDER, CEFR_UI_CONFIG } from "@/core/cefr/levels";
 import { getAllPostsForCounts, type PostListItem } from "@/server/wp/api";
 
 export const revalidate = 600;
@@ -16,15 +17,13 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
   const prefix = locale && locale !== DEFAULT_LOCALE ? `/${locale}` : "";
   const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "ua";
 
-  // Define CEFR levels in order with their slugs
-  const cefrLevels = [
-    { slug: "a1", id: "tag-a1" },
-    { slug: "a2", id: "tag-a2" },
-    { slug: "b1", id: "tag-b1" },
-    { slug: "b2", id: "tag-b2" },
-    { slug: "c1", id: "tag-c1" },
-    { slug: "c2", id: "tag-c2" },
-  ];
+  // Use centralized CEFR levels ordering and data, but enforce canonical client-side order
+  const cefrOrderMap = new Map<string, number>(CEFR_ORDER.map((s, i) => [s.toLowerCase(), i]));
+  const cefrLevels = [...CEFR_LEVELS].sort((a, b) => {
+    const ia = cefrOrderMap.get(a.slug.toLowerCase() ?? "") ?? 999;
+    const ib = cefrOrderMap.get(b.slug.toLowerCase() ?? "") ?? 999;
+    return ia - ib;
+  });
 
   // Helper to detect post language (EXACT SAME as categories page)
   const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
@@ -66,7 +65,7 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
       .replace(/^(?:de-|ger-)/, "");
     // Tokenize on non-alphanumeric boundaries
     const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
-    const valid = new Set(["a1", "a2", "b1", "b2", "c1", "c2"]);
+    const valid = new Set(CEFR_SLUGS);
     for (const tok of tokens) {
       if (valid.has(tok)) return tok as any;
     }
@@ -90,7 +89,7 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
     | "c2"
     | null {
     const name = (tag.name ?? "").trim().toUpperCase();
-    const exact = new Set(["A1", "A2", "B1", "B2", "C1", "C2"]);
+    const exact = new Set(CEFR_SLUGS.map((s) => s.toUpperCase()));
     if (exact.has(name)) return name.toLowerCase() as any;
     return normalizeLevelSlug(tag.slug ?? "");
   }
@@ -128,13 +127,11 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
     return `${count} ${word.charAt(0).toUpperCase() + word.slice(1)}`;
   }
 
-  // Helper to get tag title and description by slug
+  // Helper to get tag title and description by slug from centralized source
   const getTagData = (slug: string) => {
-    const titleKey = `${slug}Title` as keyof typeof t;
-    const descKey = `${slug}Description` as keyof typeof t;
     return {
-      title: t[titleKey] || slug.toUpperCase(),
-      description: t[descKey] || "",
+      title: getLevelLabel(slug, lang) || slug.toUpperCase(),
+      description: getLevelDescription(slug, lang) || "",
     };
   };
 
@@ -148,9 +145,13 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
         {cefrLevels.map((level) => {
           const tagData = getTagData(level.slug);
           const count = countsMap.get(level.slug) ?? 0;
+          const code = (level.slug ?? "").toUpperCase();
+          const ui = CEFR_UI_CONFIG[code] ?? { dotClass: "bg-neutral-400" };
+          const titleLabel = (t[`cefr.${code}.title`] as string) ?? tagData.title;
+          const longDescription = (t[`cefr.${code}.description`] as string) ?? getLevelDescription(level.slug, lang) ?? tagData.description;
           return (
             <li
-              key={level.id}
+              key={level.slug}
               className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
             >
               <Link
@@ -158,15 +159,18 @@ export default async function TagsIndexPage({ locale }: { locale?: "en" | "ru" |
                 className="group block"
               >
                 <div className="mb-1 flex items-baseline justify-between">
-                  <h2 className="text-lg font-medium group-hover:underline">
-                    {tagData.title}
-                  </h2>
+                  <div className="flex items-center gap-3">
+                    <span className={`w-3 h-3 rounded-full ${ui.dotClass}`} />
+                    <h2 className="text-lg font-medium group-hover:underline">
+                      {code} — {titleLabel}
+                    </h2>
+                  </div>
                   <span className="text-xs text-neutral-500">
                     {formatPostCount(count, lang)}
                   </span>
                 </div>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {tagData.description}
+                  {longDescription}
                 </p>
               </Link>
             </li>
