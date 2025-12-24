@@ -60,7 +60,7 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
     posts(
       first: $first
       after: $after
-      where: { categoryName: $slug, orderby: { field: DATE, order: DESC } }
+      where: { categoryName: $slug, orderby: { field: DATE, order: DESC }, status: PUBLISH }
     ) {
       pageInfo {
         hasNextPage
@@ -89,6 +89,12 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
           }
         }
         categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        tags {
           nodes {
             name
             slug
@@ -150,6 +156,12 @@ export const GET_POSTS = /* GraphQL */ `
             slug
           }
         }
+        tags {
+          nodes {
+            name
+            slug
+          }
+        }
       }
     }
   }
@@ -189,6 +201,12 @@ export const POSTS_CONNECTION = /* GraphQL */ `
             }
           }
           categories {
+            nodes {
+              name
+              slug
+            }
+          }
+          tags {
             nodes {
               name
               slug

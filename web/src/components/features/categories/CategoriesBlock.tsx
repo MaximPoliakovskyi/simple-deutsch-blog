@@ -99,9 +99,12 @@ export default async function CategoriesBlock({
           }
         `}</style>
 
-        <h2 className="text-3xl font-extrabold mb-6">
+        <h2 className="text-3xl font-extrabold mb-4">
           {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsHeading}
         </h2>
+        <p className="text-sm text-gray-300 mb-8 max-w-2xl">
+          {TRANSLATIONS[locale ?? DEFAULT_LOCALE].tagsDescription}
+        </p>
 
         {/* Client component gets serializable props only */}
         <CategoriesBlockClient

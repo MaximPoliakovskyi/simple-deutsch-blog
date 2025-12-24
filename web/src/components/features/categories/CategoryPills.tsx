@@ -22,6 +22,14 @@ export default function CategoryPills({
   required?: boolean;
 }) {
   const { t, locale } = useI18n();
+
+  // Helper to get CEFR level description by tag slug
+  const getTagDescription = React.useCallback((slug: string): string | undefined => {
+    const normalized = slug.toLowerCase();
+    const key = `${normalized}Description`;
+    return t(key);
+  }, [t]);
+
   // If `required` is true and no explicit initialSelected was provided, default
   // to the first category's slug when categories are available.
   const defaultSelected = React.useMemo(() => {
@@ -47,6 +55,8 @@ export default function CategoryPills({
         categories.map((cat) => {
           // active only when the category slug matches the selected value
           const active = selected === cat.slug;
+          const description = getTagDescription(cat.slug);
+          const displayName = translateCategory(cat.name, cat.slug, locale);
           return (
             <button
               key={cat.id}
@@ -65,8 +75,10 @@ export default function CategoryPills({
                   ? "bg-white dark:bg-neutral-900/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 ring-2 ring-blue-50"
                   : "bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-neutral-700"
               }`}
+              title={description}
+              aria-label={description ? `${displayName}: ${description}` : displayName}
             >
-              {translateCategory(cat.name, cat.slug, locale)}
+              {displayName}
             </button>
           );
         })

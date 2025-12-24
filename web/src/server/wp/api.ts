@@ -51,6 +51,7 @@ export type PostListItem = {
   featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> };
+  tags?: { nodes: Array<{ name: string; slug: string }> };
 };
 
 type Connection<TNode> = {
@@ -182,6 +183,29 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return { posts: nodes, pageInfo };
+}
+
+// ---------- All posts (minimal fields) for counting by locale ----------
+/**
+ * Fetches all published posts for the given locale (language category slug)
+ * in a paginated loop, returning minimal fields (slug, categories, tags).
+ * Uses the same locale filtering logic as the regular feed.
+ */
+export async function getAllPostsForCounts(locale: "en" | "ru" | "ua", pageSize = 200) {
+  let after: string | undefined = undefined;
+  let hasNext = true;
+  const all: PostListItem[] = [];
+
+  while (hasNext) {
+    const res = await getPosts({ first: pageSize, after, locale });
+    const nodes = res.posts?.nodes ?? [];
+    all.push(...nodes);
+    const info = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+    hasNext = Boolean(info.hasNextPage);
+    after = info.endCursor ?? undefined;
+  }
+
+  return all;
 }
 
 export async function getPostsPageByCategory(params: {
