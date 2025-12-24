@@ -45,6 +45,7 @@ export const GET_CATEGORY_BY_SLUG = /* GraphQL */ `
   query CategoryBySlug($slug: ID!) {
     category(id: $slug, idType: SLUG) {
       id
+      databaseId
       name
       slug
       description
@@ -126,8 +127,8 @@ export const GET_ALL_CATEGORIES = /* GraphQL */ `
 
 // --- Feed with categories included ---
 export const GET_POSTS = /* GraphQL */ `
-  query PostsFeed($first: Int!, $after: String) {
-    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC } }) {
+  query PostsFeed($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID]) {
+    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryIn: $categoryIn, tagIn: $tagIn }) {
       pageInfo {
         hasNextPage
         endCursor
@@ -169,8 +170,8 @@ export const GET_POSTS = /* GraphQL */ `
 
 // --- Cursor-based connection (edges) with categories included ---
 export const POSTS_CONNECTION = /* GraphQL */ `
-  query PostsConnection($first: Int!, $after: String) {
-    posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}}) {
+  query PostsConnection($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID]) {
+    posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}, categoryIn: $categoryIn, tagIn: $tagIn}) {
       pageInfo {
         hasNextPage
         endCursor
@@ -202,12 +203,185 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           }
           categories {
             nodes {
+              id
+              databaseId
               name
               slug
             }
           }
           tags {
             nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Explicit category-based connection (intersection-ready)
+export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
+  query PostsByCategory($first: Int!, $after: String, $langSlug: String!, $categorySlug: ID!) {
+    category(id: $categorySlug, idType: SLUG) {
+      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryName: $langSlug }) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          slug
+          title
+          excerpt
+          content
+          date
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+              mediaDetails {
+                width
+                height
+              }
+            }
+          }
+          author {
+            node {
+              name
+              slug
+            }
+          }
+          categories {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+          tags {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+// Explicit tag-based connection (allows categoryIn + tagIn intersection)
+export const GET_POSTS_BY_TAG = /* GraphQL */ `
+  query PostsByTag($first: Int!, $after: String, $langSlug: String!, $tagSlug: ID!) {
+    tag(id: $tagSlug, idType: SLUG) {
+      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryName: $langSlug }) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          slug
+          title
+          excerpt
+          content
+          date
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+              mediaDetails {
+                width
+                height
+              }
+            }
+          }
+          author {
+            node {
+              name
+              slug
+            }
+          }
+          categories {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+          tags {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const GET_POSTS_INDEX = /* GraphQL */ `
+  query PostsIndex($first: Int!, $after: String, $langSlug: String!) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        orderby: { field: DATE, order: DESC }
+        categoryName: $langSlug
+      }
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      edges {
+        cursor
+        node {
+          id
+          slug
+          title
+          excerpt
+          content
+          date
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+              mediaDetails {
+                width
+                height
+              }
+            }
+          }
+          author {
+            node {
+              name
+              slug
+            }
+          }
+          categories {
+            nodes {
+              id
+              databaseId
+              name
+              slug
+            }
+          }
+          tags {
+            nodes {
+              id
+              databaseId
               name
               slug
             }

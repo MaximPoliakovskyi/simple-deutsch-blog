@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { PostListItem } from "@/server/wp/api";
-import { getPostsByTagSlug, getTagBySlug } from "@/server/wp/api";
+import { getTagBySlug, getCategoryBySlug, getPostsByTag } from "@/server/wp/api";
 
 export const revalidate = 600;
 
@@ -65,21 +65,10 @@ export default async function TagPage({
   // Determine page language
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
-  // Fetch an initial batch and filter to current language
-  const { posts: fetchedPosts }: { posts: { nodes?: PostListItem[]; pageInfo?: PageInfo } } =
-    await getPostsByTagSlug(tag, PAGE_SIZE * 10);
-  const nodes = (fetchedPosts?.nodes ?? []) as PostListItem[];
-  const filtered = nodes.filter((p) => getPostLanguage(p) === lang);
-  const initialPosts = filtered.slice(0, PAGE_SIZE) as any[];
-
-  // Derive accurate pageInfo based on filtered posts
-  const filteredHasMore = filtered.length > PAGE_SIZE;
-  const upstreamPageInfo = (fetchedPosts?.pageInfo as any) ?? { hasNextPage: false, endCursor: null };
-  // Only set hasNextPage when we actually have more filtered posts OR we filled the page and upstream has more
-  const initialPageInfo = {
-    endCursor: upstreamPageInfo.endCursor ?? null,
-    hasNextPage: filteredHasMore || (filtered.length === PAGE_SIZE && upstreamPageInfo.hasNextPage) || false,
-  };
+  // Fetch first paginated page upstream using slug-based taxQuery (lang + tag)
+  const pageRes = await getPostsByTag({ first: PAGE_SIZE, after: null, langSlug: lang, tagSlug: tag });
+  const initialPosts = pageRes.posts as any[];
+  const initialPageInfo = pageRes.pageInfo;
 
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
   const label = (t.tagLabel as string) ?? "Tag:";
@@ -88,13 +77,7 @@ export default async function TagPage({
     <main className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-semibold">{`${label} ${term.name}`}</h1>
 
-      <PostsGridWithPagination
-        key={`${lang}-tag-${tag}`}
-        initialPosts={initialPosts}
-        initialPageInfo={initialPageInfo}
-        pageSize={PAGE_SIZE}
-        query={{ lang, categorySlug: null, tagSlug: tag, level: null }}
-      />
+      <PostsGridWithPagination key={`${lang}-tag-${tag}`} initialPosts={initialPosts} initialPageInfo={initialPageInfo} pageSize={PAGE_SIZE} query={{ lang, categorySlug: null, tagSlug: tag, level: null }} />
     </main>
   );
 }

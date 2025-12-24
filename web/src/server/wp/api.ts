@@ -11,6 +11,9 @@ import {
   GET_TAG_BY_SLUG,
   POSTS_CONNECTION,
   SEARCH_POSTS,
+  GET_POSTS_BY_CATEGORY,
+  GET_POSTS_BY_TAG,
+  GET_POSTS_INDEX,
 } from "@/server/wp/queries";
 
 // ---------- Shared types ----------
@@ -185,6 +188,158 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   return { posts: nodes, pageInfo };
 }
 
+// Fetch a single page of posts with optional numeric category/tag filters
+export async function getPostsPageFiltered(params: {
+  first: number;
+  after?: string | null;
+  categoryIn?: number[] | null;
+  tagIn?: number[] | null;
+}) {
+  const { first, after, categoryIn, tagIn } = params;
+  // keep legacy POSTS_CONNECTION path when IDs are used elsewhere
+  const categoryIds = categoryIn?.map((n) => String(n)) ?? null;
+  const tagIds = tagIn?.map((n) => String(n)) ?? null;
+  const data = await fetchGraphQL<PostsConnectionResponse>(
+    POSTS_CONNECTION,
+    { first, after: after ?? null, categoryIn: categoryIds, tagIn: tagIds },
+    { next: { revalidate: 300 } },
+  );
+
+  const edges = data.posts?.edges ?? [];
+  const nodes = edges.map((e) => e.node);
+  const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+
+  return { posts: nodes, pageInfo };
+}
+
+// Resolve numeric IDs from slugs
+// Strict upstream fetch helpers using slug-based taxQuery (intersection)
+export async function getPostsByCategory(params: { first: number; after?: string | null; langSlug?: string | null; categorySlug: string }) {
+  const { first, after, langSlug, categorySlug } = params;
+  const data = await fetchGraphQL<{
+    category?: {
+      posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
+    };
+  }>(
+    GET_POSTS_BY_CATEGORY,
+    { first, after: after ?? null, langSlug: langSlug ?? "", categorySlug },
+    { next: { revalidate: 300 } },
+  );
+
+  const nodes = data.category?.posts?.nodes ?? [];
+  const pageInfo = data.category?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+  return { posts: nodes, pageInfo };
+}
+
+export async function getPostsByTag(params: { first: number; after?: string | null; langSlug?: string | null; tagSlug: string }) {
+  const { first, after, langSlug, tagSlug } = params;
+  const data = await fetchGraphQL<{
+    tag?: {
+      posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
+    };
+  }>(
+    GET_POSTS_BY_TAG,
+    { first, after: after ?? null, langSlug: langSlug ?? "", tagSlug },
+    { next: { revalidate: 300 } },
+  );
+
+  const nodes = data.tag?.posts?.nodes ?? [];
+  const pageInfo = data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+  return { posts: nodes, pageInfo };
+}
+
+export async function getPostsIndex(params: { first: number; after?: string | null; langSlug?: string | null }) {
+  const { first, after, langSlug } = params;
+  const data = await fetchGraphQL<PostsConnectionResponse>(
+    GET_POSTS_INDEX,
+    { first, after: after ?? null, langSlug: langSlug ?? "" },
+    { next: { revalidate: 300 } },
+  );
+
+  const edges = data.posts?.edges ?? [];
+  const nodes = edges.map((e) => e.node);
+  const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+  return { posts: nodes, pageInfo };
+}
+
+// Fetch all posts matching optional filters by looping upstream pagination.
+export async function getAllPostsByFilter(opts: {
+  lang?: "en" | "ru" | "ua" | string | undefined;
+  categorySlug?: string | null;
+  tagSlug?: string | null;
+  pageSize?: number;
+  maxPages?: number;
+  maxPosts?: number;
+}): Promise<Array<PostListItem | WPPostCard>> {
+  const { lang, categorySlug, tagSlug } = opts;
+  const pageSize = opts.pageSize ?? 50;
+  const maxPages = opts.maxPages ?? 50;
+  const maxPosts = opts.maxPosts ?? 5000;
+
+  let after: string | undefined = undefined;
+  let page = 0;
+  let hasNext = true;
+  const all: Array<PostListItem | WPPostCard> = [];
+
+  const detectLang = (post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null }) => {
+    const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+    const catLang = post.categories?.nodes?.map((c) => c?.slug).find((s) => s && LANGUAGE_SLUGS.includes(s as any));
+    if (catLang) return catLang as string;
+    const prefix = post.slug?.split("-")[0];
+    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix;
+    return null;
+  };
+
+  while (hasNext && page < maxPages && all.length < maxPosts) {
+    if (categorySlug) {
+      const res = await getPostsPageByCategory({ first: pageSize, after, categorySlug });
+      const nodes = res.posts ?? [];
+      all.push(...nodes);
+      const info = res.pageInfo ?? { hasNextPage: false, endCursor: null };
+      hasNext = info.hasNextPage;
+      after = info.endCursor ?? undefined;
+    } else if (tagSlug) {
+      const r = await getPostsByTagSlug(tagSlug, pageSize, after);
+      const nodes = r.posts?.nodes ?? [];
+      all.push(...nodes);
+      const info = r.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+      hasNext = info.hasNextPage;
+      after = info.endCursor ?? undefined;
+    } else {
+      const res = (await getPosts({ first: pageSize, after, locale: lang })) as {
+        posts?: { nodes?: PostListItem[]; pageInfo?: { hasNextPage: boolean; endCursor: string | null } };
+      };
+      const nodes = res.posts?.nodes ?? [];
+      all.push(...nodes);
+      const info = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+      hasNext = info.hasNextPage;
+      after = info.endCursor ?? undefined;
+    }
+
+    page++;
+  }
+
+  // Deduplicate by stable key: prefer id, then databaseId, then slug
+  const map = new Map<string, PostListItem | WPPostCard>();
+  for (const p of all) {
+    const key = (p as any).id ?? ((p as any).databaseId !== undefined ? String((p as any).databaseId) : (p as any).slug);
+    if (!map.has(key)) map.set(key, p);
+  }
+
+  let result = Array.from(map.values());
+
+  // If a language was requested but the upstream category/tag queries don't
+  // support combined filters, apply language filtering on server-side.
+  if (lang) {
+    result = result.filter((p) => {
+      const detected = detectLang(p as any);
+      return detected ? detected === lang : true;
+    });
+  }
+
+  return result;
+}
+
 // ---------- All posts (minimal fields) for counting by locale ----------
 /**
  * Fetches all published posts for the given locale (language category slug)
@@ -197,7 +352,9 @@ export async function getAllPostsForCounts(locale: "en" | "ru" | "ua", pageSize 
   const all: PostListItem[] = [];
 
   while (hasNext) {
-    const res = await getPosts({ first: pageSize, after, locale });
+    const res = (await getPosts({ first: pageSize, after, locale })) as {
+      posts?: { nodes?: PostListItem[]; pageInfo?: { hasNextPage: boolean; endCursor: string | null } };
+    };
     const nodes = res.posts?.nodes ?? [];
     all.push(...nodes);
     const info = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };

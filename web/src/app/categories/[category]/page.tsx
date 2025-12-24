@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { getCategoryBySlug, getPostsPageByCategory } from "@/server/wp/api";
+import { getCategoryBySlug, getPostsByCategory } from "@/server/wp/api";
 
 export const revalidate = 600;
 
@@ -58,16 +58,11 @@ export default async function CategoryPage({
   // provided for localized routes (/ru, /ua). Default to English.
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
-  // Fetch an initial batch larger than PAGE_SIZE so we can filter out posts
-  // in other languages while still filling the first page.
-  const { posts: fetched, pageInfo } = await getPostsPageByCategory({
-    first: PAGE_SIZE * 10,
-    categorySlug: category,
-  });
-
-  // Keep only posts that match the current site language
-  const filtered = (fetched ?? []).filter((p) => getPostLanguage(p) === lang);
-  const initialPosts = filtered.slice(0, PAGE_SIZE);
+  // Fetch first paginated page upstream using slug-based taxQuery (lang + category)
+  const PAGE_SIZE = 3;
+  const pageRes = await getPostsByCategory({ first: PAGE_SIZE, after: null, langSlug: lang, categorySlug: category });
+  const initialPosts = pageRes.posts;
+  const initialPageInfo = pageRes.pageInfo;
 
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
   const translatedName = translateCategory(term.name, term.slug, lang ?? "en");
@@ -80,7 +75,7 @@ export default async function CategoryPage({
       <PostsGridWithPagination
         key={`${lang}-${category}`}
         initialPosts={initialPosts}
-        initialPageInfo={pageInfo}
+        initialPageInfo={initialPageInfo}
         pageSize={PAGE_SIZE}
         query={{ lang, categorySlug: category, tagSlug: null, level: null }}
       />
