@@ -90,7 +90,7 @@ export default function CategoriesBlockClient({
 
   return (
     <div>
-      <div className="mb-4">
+      <div className="mb-1">
         <CategoryPills
           categories={categories}
           initialSelected={preferredInitial}
@@ -100,13 +100,13 @@ export default function CategoriesBlockClient({
         />
       </div>
 
-      <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
         {displayedPosts.length === 0 && !isFetching && (
           <div>{t("noPosts")}</div>
         )}
         
         {displayedPosts.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6">
             {displayedPosts.map((post) => (
               <div key={post.id ?? post.slug}>
                 <PostCard post={post} />

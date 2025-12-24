@@ -24,8 +24,26 @@ const WORDS = [
   "Schritt für Schritt",
 ];
 
-function pick() {
-  return WORDS[Math.floor(Math.random() * WORDS.length)];
+function pick(exclude?: string) {
+  if (WORDS.length === 0) return "";
+  if (!exclude) return WORDS[Math.floor(Math.random() * WORDS.length)];
+  if (WORDS.length === 1) return WORDS[0];
+  let idx = Math.floor(Math.random() * WORDS.length);
+  let tries = 0;
+  while (WORDS[idx] === exclude && tries < 10) {
+    idx = Math.floor(Math.random() * WORDS.length);
+    tries += 1;
+  }
+  if (WORDS[idx] === exclude) {
+    // fallback: pick the first different word
+    for (let i = 0; i < WORDS.length; i++) {
+      if (WORDS[i] !== exclude) {
+        idx = i;
+        break;
+      }
+    }
+  }
+  return WORDS[idx];
 }
 
 export default function PreloaderClient() {
@@ -47,6 +65,7 @@ export default function PreloaderClient() {
   const id = useId();
   const charKeysRef = useRef<Record<number, string>>({});
   const [jsReady, setJsReady] = useState(false);
+  const lastWordRef = useRef<string | null>(null);
 
   // keep refs in sync
   useEffect(() => {
@@ -80,6 +99,7 @@ export default function PreloaderClient() {
 
     function start() {
       const initial = pick();
+      lastWordRef.current = initial;
       const arr = Array.from(initial).map((ch) => (ch === " " ? "\u00A0" : ch));
       setChars(arr);
       setFlips(new Array(arr.length).fill(false));
@@ -87,7 +107,8 @@ export default function PreloaderClient() {
       flipsRef.current = new Array(arr.length).fill(false);
 
       const flipCycle = () => {
-        const next = pick();
+        const next = pick(lastWordRef.current ?? undefined);
+        lastWordRef.current = next;
         const prev = charsRef.current.slice();
         const prevLen = prev.length;
         const nextLen = next.length;

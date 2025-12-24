@@ -47,7 +47,7 @@ export default async function CategoriesBlock({
       <section
         aria-label={TRANSLATIONS[locale ?? DEFAULT_LOCALE].tags}
         data-categories-scope
-        className="mx-auto max-w-7xl px-4 py-16 text-white"
+        className="mx-auto max-w-7xl px-4 py-10 text-white"
       >
         <style>{`
           [data-categories-scope] h1,
@@ -109,7 +109,7 @@ export default async function CategoriesBlock({
         </div>
 
         {/* Client component gets serializable props only */}
-        <div className="mt-4">
+        <div className="mt-8">
           <CategoriesBlockClient
           categories={visibleCategories}
           initialPosts={initialPosts}

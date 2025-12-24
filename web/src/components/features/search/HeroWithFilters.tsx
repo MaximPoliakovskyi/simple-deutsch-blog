@@ -99,7 +99,7 @@ export default function HeroWithFilters({
 
   return (
     <>
-      <section className="text-center max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-14 md:pt-16 pb-8 sm:pb-10 md:pb-12">
+      <section className="text-center max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-14 md:pt-16 pb-0">
         {/* Hero heading: single h1 with manual line breaks and minimal line height */}
         <h1
           className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]"
