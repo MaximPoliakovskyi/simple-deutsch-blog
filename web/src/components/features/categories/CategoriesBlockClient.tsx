@@ -100,7 +100,7 @@ export default function CategoriesBlockClient({
         />
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-8">
         {displayedPosts.length === 0 && !isFetching && (
           <div>{t("noPosts")}</div>
         )}

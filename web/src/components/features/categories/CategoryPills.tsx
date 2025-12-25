@@ -108,11 +108,11 @@ export default function CategoryPills({
                   return s === cat.slug ? null : cat.slug;
                 })
               }
-              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors ${
-                active
-                  ? "bg-white dark:bg-neutral-900/40 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800 ring-2 ring-blue-50"
-                  : "bg-slate-100 dark:bg-neutral-800 text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:bg-slate-200 dark:hover:bg-neutral-700"
-              }`}
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors ${
+                  active
+                    ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                    : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
+                }`}
               title={description}
               aria-label={description ? `${displayName}: ${description}` : displayName}
             >

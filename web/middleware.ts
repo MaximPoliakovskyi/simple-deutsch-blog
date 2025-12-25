@@ -41,6 +41,33 @@ export function middleware(req: NextRequest) {
 
     if (isAsset(pathname)) return NextResponse.next();
 
+    // Redirect legacy category slugs to updated slugs, preserve locale prefix
+    // examples:
+    // /categories/exercises -> /categories/exercises-practice
+    // /ru/category/speaking -> /ru/categories/speaking-pronunciation
+    const catMatch = pathname.match(/^\/(?:(ru|ua|en|de)\/)?(categories?|category)\/(exercises|tips|speaking)(\/|$)/i);
+    if (catMatch) {
+      try {
+        const localePart = catMatch[1] ? `/${catMatch[1]}` : "";
+        const plural = "categories"; // normalize to plural
+        const oldSlug = (catMatch[3] || "").toLowerCase();
+        const map: Record<string, string> = {
+          exercises: "exercises-practice",
+          tips: "tips-motivation",
+          speaking: "speaking-pronunciation",
+        };
+        const newSlug = map[oldSlug];
+        if (newSlug) {
+          const suffix = catMatch[4] || "";
+          const redirectUrl = nextUrl.clone();
+          redirectUrl.pathname = `${localePart}/${plural}/${newSlug}${suffix}`;
+          return NextResponse.redirect(redirectUrl, 308);
+        }
+      } catch (e) {
+        // fall through
+      }
+    }
+
     // Redirect legacy /tags routes to /levels (permanent 308)
     // Examples: /tags -> /levels, /en/tags -> /en/levels, /ru/tags/some -> /ru/levels/some
     if (pathname.includes("/tags") && !pathname.includes("/levels")) {

@@ -1,5 +1,8 @@
 // app/not-found.tsx
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export const metadata = {
@@ -8,7 +11,16 @@ export const metadata = {
 };
 
 export default function NotFound() {
-  const t = TRANSLATIONS[DEFAULT_LOCALE];
+  // Client-side locale detection from the current pathname. This mirrors the
+  // site's routing which prefixes localized pages with `/ru`, `/ua`, `/de`, etc.
+  const pathname = usePathname();
+  const seg = pathname?.split("/")[1] ?? "";
+  const locale = ["en", "ru", "ua", "de"].includes(seg) ? (seg as any) : DEFAULT_LOCALE;
+  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+
+  // Localized home link: prefix with locale if not the default.
+  const homeHref = (locale && locale !== DEFAULT_LOCALE) ? `/${locale}/` : "/";
+
   return (
     // Fullscreen overlay above everything (including header)
     <div className="fixed inset-0 z-[100] grid place-items-center bg-black text-white">
@@ -32,18 +44,18 @@ export default function NotFound() {
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-semibold">{t.pageNotFoundHeading}</h1>
+        <h1 className="text-2xl font-semibold">{t["notFound.title"] ?? t.pageNotFoundHeading}</h1>
 
         {/* Message */}
-        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">{t.pageNotFoundMessage}</p>
+        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">{t["notFound.description"] ?? t.pageNotFoundMessage}</p>
 
         {/* CTA */}
         <div className="mt-6">
           <Link
-            href="/"
+            href={homeHref}
             className="inline-flex items-center rounded-md bg-[#1d9bf0] px-4 py-2 text-sm font-medium text-white hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1d9bf0]/70"
           >
-            {t.backToHome}
+            {t["notFound.backToHome"] ?? t.backToHome}
           </Link>
         </div>
       </div>

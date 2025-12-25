@@ -1,5 +1,5 @@
 // Minimal translations for the site. Add keys as needed.
-export type Locale = "en" | "ua" | "ru";
+export type Locale = "en" | "ua" | "ru" | "de";
 
 type Translations = Record<string, string>;
 
@@ -47,6 +47,10 @@ const en: Translations = {
   pageNotFoundHeading: "Page Not Found",
   pageNotFoundMessage: "The page you are looking for does not exist or may have been moved.",
   backToHome: "Back to Home",
+  /* New notFound keys (preferred) */
+  "notFound.title": "Page Not Found",
+  "notFound.description": "The page you are looking for does not exist or may have been moved.",
+  "notFound.backToHome": "Back to Home",
   postNotFound: "Post not found",
   categoryNotFound: "Category not found",
   tagNotFound: "Tag not found",
@@ -121,6 +125,8 @@ const en: Translations = {
   /* Theme labels */
   darkMode: "Dark theme",
   lightMode: "Light theme",
+  /* Footer */
+  "footer.copyright": "© {year} Simple Deutsch. German-language learning platform. All rights reserved.",
 };
 
 const ua: Translations = {
@@ -167,6 +173,10 @@ const ua: Translations = {
   pageNotFoundHeading: "Сторінку не знайдено",
   pageNotFoundMessage: "Сторінку, яку ви шукаєте, не знайдено або її було переміщено.",
   backToHome: "Повернутися на головну",
+  /* New notFound keys (preferred) */
+  "notFound.title": "Сторінку не знайдено",
+  "notFound.description": "Сторінку, яку ви шукаєте, не знайдено або її було переміщено.",
+  "notFound.backToHome": "Повернутися на головну",
   postNotFound: "Публікацію не знайдено",
   categoryNotFound: "Категорію не знайдено",
   tagNotFound: "Тег не знайдено",
@@ -234,13 +244,15 @@ const ua: Translations = {
   team: "Команда",
   careers: "Вакансії",
   press: "Преса",
-  imprint: "Імпринт",
+  imprint: "Вихідні дані",
   privacy: "Політика конфіденційності",
   terms: "Умови",
   contact: "Контакти",
   /* Theme labels */
   darkMode: "Темна тема",
   lightMode: "Світла тема",
+  /* Footer */
+  "footer.copyright": "© {year} Simple Deutsch. Платформа для вивчення німецької мови. Усі права захищені.",
 };
 
 const ru: Translations = {
@@ -287,6 +299,10 @@ const ru: Translations = {
   pageNotFoundHeading: "Страница не найдена",
   pageNotFoundMessage: "Страница, которую вы ищете, не существует или была перемещена.",
   backToHome: "Вернуться на главную",
+  /* New notFound keys (preferred) */
+  "notFound.title": "Страница не найдена",
+  "notFound.description": "Страница, которую вы ищете, не существует или была перемещена.",
+  "notFound.backToHome": "Вернуться на главную",
   postNotFound: "Публиция не найдена",
   categoryNotFound: "Категория не найдена",
   tagNotFound: "Тег не найден",
@@ -353,19 +369,33 @@ const ru: Translations = {
   team: "Команда",
   careers: "Карьера",
   press: "Пресса",
-  imprint: "Импринт",
+  imprint: "Выходные данные",
   privacy: "Политика конфиденциальности",
   terms: "Условия",
   contact: "Контакты",
   /* Theme labels */
   darkMode: "Тёмная тема",
   lightMode: "Светлая тема",
+  /* Footer */
+  "footer.copyright": "© {year} Simple Deutsch. Платформа для изучения немецкого языка. Все права защищены.",
+};
+
+// German translations: reuse English defaults and override as needed.
+const de: Translations = {
+  ...en,
+  "siteTitle": "Simple Deutsch",
+  "footer.copyright": "© {year} Simple Deutsch. Plattform zum Deutschlernen. Alle Rechte vorbehalten.",
+  /* German notFound keys (override English default if needed) */
+  "notFound.title": "Seite nicht gefunden",
+  "notFound.description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
+  "notFound.backToHome": "Zur Startseite",
 };
 
 export const TRANSLATIONS = {
   en,
   ua,
   ru,
+  de,
 } satisfies Record<Locale, Translations>;
 
 export const DEFAULT_LOCALE: Locale = "en";

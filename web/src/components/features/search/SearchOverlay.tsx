@@ -348,7 +348,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
           className="
             flex items-center gap-2 rounded-xl px-3 py-2 border
             bg-white text-neutral-900
-            dark:bg-[hsl(var(--bg))] dark:text-neutral-100 dark:border-white/10
+            dark:bg-ui-darkButton dark:text-neutral-100 dark:border-white/10
             focus-within:ring-2 focus-within:ring-[var(--sd-accent)]
           "
           // use a specific light-mode border color (avoid utility conflict)

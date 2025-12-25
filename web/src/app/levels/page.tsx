@@ -148,9 +148,9 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
                 <div className="mb-1 flex items-baseline justify-between">
                   <div className="flex items-center gap-3">
                     <span className={`w-3 h-3 rounded-full ${ui.dotClass}`} />
-                    <h2 className="text-lg font-medium group-hover:underline">
-                      {code} — {titleLabel}
-                    </h2>
+                          <h2 className="text-lg font-medium group-hover:underline">
+                            {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
+                          </h2>
                   </div>
                   <span className="text-xs text-neutral-500">
                     {formatPostCount(count, lang)}

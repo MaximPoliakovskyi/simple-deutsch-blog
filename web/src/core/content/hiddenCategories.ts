@@ -7,6 +7,7 @@ const HIDDEN_KEYS = [
   "английский",
   "англ",
   "английский",
+  "blog",
 ] as const;
 
 export function isHiddenCategory(name?: string | null, slug?: string | null) {

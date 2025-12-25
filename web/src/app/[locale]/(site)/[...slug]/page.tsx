@@ -20,6 +20,20 @@ export default async function LocalizedCatchAll({ params }: Props) {
     notFound();
   }
 
-  // Fallback: render homepage with locale
+  /*
+   * This catch-all previously rendered the homepage for any unknown localized
+   * path which caused random URLs (e.g. `/ru/asdf`) to show a blank/home page
+   * while returning HTTP 200. Instead, if a slug is present here it means no
+   * more-specific route matched; treat that as a real 404 for users and search
+   * engines.
+   */
+  const { slug } = await params;
+  if (slug && Array.isArray(slug) && slug.length > 0) {
+    // Unknown localized path -> return a 404
+    notFound();
+  }
+
+  // No slug present: render the homepage for the locale (should be handled
+  // by the dedicated localized root, but keep this fallback safe).
   return <HomePage locale={locale} />;
 }

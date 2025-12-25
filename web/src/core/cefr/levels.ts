@@ -115,11 +115,11 @@ export default CEFR_LEVELS;
 // Client-side canonical ordering and UI config for CEFR levels
 export const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
 
-export const CEFR_UI_CONFIG: Record<string, { dotClass: string }> = {
-  A1: { dotClass: "bg-green-500" },
-  A2: { dotClass: "bg-yellow-400" },
-  B1: { dotClass: "bg-orange-500" },
-  B2: { dotClass: "bg-red-500" },
-  C1: { dotClass: "bg-purple-500" },
-  C2: { dotClass: "bg-black" },
+export const CEFR_UI_CONFIG: Record<string, { dotClass: string; emoji: string }> = {
+  A1: { dotClass: "bg-green-500", emoji: "🟢" },
+  A2: { dotClass: "bg-yellow-400", emoji: "🟡" },
+  B1: { dotClass: "bg-orange-500", emoji: "🟠" },
+  B2: { dotClass: "bg-red-500", emoji: "🔴" },
+  C1: { dotClass: "bg-purple-500", emoji: "🟣" },
+  C2: { dotClass: "bg-black", emoji: "⚫" },
 };

@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
-
-import FooterWordmark from "./FooterWordmark";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { useI18n } from "@/core/i18n/LocaleProvider";
 
 const TYPO_STYLE = { fontSize: "var(--text-base)", lineHeight: "var(--tw-leading, var(--text-base--line-height))" };
 
 type LinkItem = { label: string; href: string; external?: boolean };
 type Section = { title: string; items: LinkItem[] };
 
-type Locale = "en" | "ua" | "ru";
+type Locale = "en" | "ua" | "ru" | "de";
 
 const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
   en: {
@@ -23,8 +23,7 @@ const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
           { label: "Exercises & Practice", href: "/categories/exercises-practice" },
           { label: "Grammar", href: "/categories/grammar" },
           { label: "Success Stories", href: "/categories/success-stories" },
-          { label: "Tips & Motivation", href: "/categories/tips-motivation" },
-          { label: "Blog", href: "/blog" },
+              { label: "Tips & Motivation", href: "/categories/tips-motivation" },
           { label: "Vocabulary", href: "/categories/vocabulary" },
         ],
       },
@@ -82,8 +81,7 @@ const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
           { label: "Вправи та практика", href: "/categories/exercises-practice" },
           { label: "Граматика", href: "/categories/grammar" },
           { label: "Історії успіху", href: "/categories/success-stories" },
-          { label: "Поради та мотивація", href: "/categories/tips-motivation" },
-          { label: "Блог", href: "/blog" },
+              { label: "Поради та мотивація", href: "/categories/tips-motivation" },
           { label: "Словник", href: "/categories/vocabulary" },
         ],
       },
@@ -141,8 +139,7 @@ const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
           { label: "Упражнения и практика", href: "/categories/exercises-practice" },
           { label: "Грамматика", href: "/categories/grammar" },
           { label: "Истории успеха", href: "/categories/success-stories" },
-          { label: "Советы и мотивация", href: "/categories/tips-motivation" },
-          { label: "Блог", href: "/blog" },
+              { label: "Советы и мотивация", href: "/categories/tips-motivation" },
           { label: "Словарь", href: "/categories/vocabulary" },
         ],
       },
@@ -193,15 +190,8 @@ const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
   },
 };
 
-function getLocaleFromPath(pathname: string | null | undefined): Locale {
-  if (!pathname) return "en";
-  const m = pathname.match(/^\/(ua|ru|en)(?:\/|$)/);
-  if (m && (m[1] === "ua" || m[1] === "ru" || m[1] === "en")) return m[1] as Locale;
-  return "en";
-}
-
 function replaceLocaleInPath(pathname: string, locale: string) {
-  const re = /^\/(ua|ru|en)(\/|$)/;
+  const re = /^\/(ua|ru|en|de)(\/|$)/;
   if (re.test(pathname)) {
     return pathname.replace(re, `/${locale}$2`);
   }
@@ -212,64 +202,109 @@ export default function Footer() {
   const pathname = usePathname() || "/";
   const router = useRouter();
 
-  const locale = getLocaleFromPath(pathname);
+  const { locale } = useI18n();
+
+  function prefixHrefForLocale(href: string, locale: Locale) {
+    if (!href || !href.startsWith("/")) return href;
+    if (locale === "en") return href;
+    const re = /^\/(ua|ru|en|de)(\/|$)/;
+    if (re.test(href)) return href.replace(re, `/${locale}$2`);
+    return href === "/" ? `/${locale}` : `/${locale}${href}`;
+  }
 
   function handleLocaleSwitch(target: string) {
     const newPath = replaceLocaleInPath(pathname, target);
     router.replace(newPath);
   }
 
-  // Theme-aware footer: light background in light mode, exact deep navy in dark mode.
+  // Footer: light theme uses pure white (#FFFFFF); dark theme uses deep navy (#0B101E).
+  // Footer root is the single source of truth for background color.
   return (
-    <footer className="bg-white dark:bg-[#0B1220]">
-      <div className="max-w-7xl mx-auto px-4 pt-12 bg-white dark:bg-[#0B1220]">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-          {FOOTER_I18N[locale].sections.map((section) => (
-            <div key={section.title}>
-              <h3 className="font-medium text-slate-700 dark:text-slate-100" style={TYPO_STYLE}>
-                {section.title}
-              </h3>
-              <div className="mt-3">
-                <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
-                  {section.items.map((item) => {
-                    const isLangLink = section.title === (locale === "en" ? "Language" : locale === "ua" ? "Мова" : "Язык") && item.href.startsWith("#");
-                    if (isLangLink) {
-                      const target = item.href.replace("#", "");
+    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E]">
+      {/* main footer background area (no inner background so it inherits from footer root) */}
+      <div>
+        <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pt-12 pb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
+            {FOOTER_I18N[locale].sections.map((section) => (
+              <div key={section.title}>
+                <h3 className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]" style={TYPO_STYLE}>
+                  {section.title}
+                </h3>
+                <div className="mt-3">
+                  <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
+                    {section.items.map((item) => {
+                      const isLangLink = section.title === (locale === "en" ? "Language" : locale === "ua" ? "Мова" : "Язык") && item.href.startsWith("#");
+                      // label resolution: use translations for the Impressum route
+                      const dict = TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] || TRANSLATIONS[DEFAULT_LOCALE];
+                      const resolvedLabel = item.href === "/impressum" ? (dict.imprint || item.label) : item.label;
+
+                      if (isLangLink) {
+                        const target = item.href.replace("#", "");
+                        return (
+                          <li key={item.label}>
+                            <button
+                              onClick={() => handleLocaleSwitch(target)}
+                              className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
+                              style={TYPO_STYLE}
+                            >
+                              {item.label}
+                            </button>
+                          </li>
+                        );
+                      }
+
+                      if (item.external) {
+                        return (
+                          <li key={item.label}>
+                            <a
+                              href={item.href}
+                              className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
+                              rel="noopener noreferrer"
+                              style={TYPO_STYLE}
+                            >
+                              {resolvedLabel}
+                            </a>
+                          </li>
+                        );
+                      }
+
                       return (
                         <li key={item.label}>
-                          <button onClick={() => handleLocaleSwitch(target)} className="font-normal text-slate-600 dark:text-slate-400 hover:underline dark:hover:text-slate-200" style={TYPO_STYLE}>
-                            {item.label}
-                          </button>
+                          <Link
+                            href={prefixHrefForLocale(item.href, locale)}
+                            className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
+                            style={TYPO_STYLE}
+                          >
+                            {resolvedLabel}
+                          </Link>
                         </li>
                       );
-                    }
-
-                    if (item.external) {
-                      return (
-                        <li key={item.label}>
-                          <a href={item.href} className="font-normal text-slate-600 dark:text-slate-300 hover:underline dark:hover:text-slate-200" rel="noopener noreferrer" style={TYPO_STYLE}>
-                            {item.label}
-                          </a>
-                        </li>
-                      );
-                    }
-
-                    return (
-                      <li key={item.label}>
-                            <Link href={item.href} className="font-normal text-slate-600 dark:text-slate-300 hover:underline dark:hover:text-slate-200" style={TYPO_STYLE}>
-                          {item.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
+                    })}
+                  </ul>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      </div>
 
-        {/* Dynamic, container-constrained brand wordmark that always fits on one line */}
-        <FooterWordmark />
+      {/* bottom bar area: full-width background with container-aligned content (no bg here) */}
+      <div>
+        <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+          {/* divider aligned to container: light mode black/10, dark mode white/10 */}
+          <div className="h-px w-full bg-black/10 dark:bg-white/10 mt-6" />
+
+          {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
+          <div className="py-4 text-sm text-slate-700 dark:text-[rgba(255,255,255,0.7)]" style={TYPO_STYLE}>
+            {
+              (() => {
+                const dict = TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] || TRANSLATIONS[DEFAULT_LOCALE];
+                const template = dict["footer.copyright"] || "© {year} Simple Deutsch. All rights reserved. German-language learning platform.";
+                return template.replace("{year}", String(new Date().getFullYear()));
+              })()
+            }
+          </div>
+        </div>
       </div>
     </footer>
   );
