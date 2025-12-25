@@ -161,7 +161,7 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
             </button>
           </div>
         </div>
-        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+        <p className="mb-8 max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-300">
           {t("successStoriesDescription")}
         </p>
 

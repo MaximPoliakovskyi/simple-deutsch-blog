@@ -312,8 +312,12 @@ html.dark .prose a.sd-pill {
   width: auto;
 }
 .prose :where(.alignfull) {
-  width: 100vw;
-  max-width: 100vw;
+  /* Avoid using 100vw directly to prevent unexpected horizontal
+     scrollbars on small viewports. Use full-width relative to the
+     containing block instead. This preserves the intent of a
+     wide/"full-bleed" element while preventing page overflow. */
+  width: 100%;
+  max-width: none;
   margin-left: 50%;
   transform: translateX(-50%);
 }

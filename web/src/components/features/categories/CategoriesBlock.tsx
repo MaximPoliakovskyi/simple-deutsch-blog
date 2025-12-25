@@ -103,7 +103,7 @@ export default async function CategoriesBlock({
           <h2 className="text-3xl font-extrabold mb-8">
             {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsHeading}
           </h2>
-          <p className="text-sm text-gray-300 max-w-2xl">
+          <p className="text-base leading-relaxed text-gray-300 max-w-2xl">
             {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsDescription}
           </p>
         </div>

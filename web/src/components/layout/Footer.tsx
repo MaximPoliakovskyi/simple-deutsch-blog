@@ -1,201 +1,277 @@
 "use client";
-import { useI18n } from "@/core/i18n/LocaleProvider";
 
-type Locale = "en" | "ru" | "ua";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useId } from "react";
+
+import FooterWordmark from "./FooterWordmark";
+
+const TYPO_STYLE = { fontSize: "var(--text-base)", lineHeight: "var(--tw-leading, var(--text-base--line-height))" };
+
+type LinkItem = { label: string; href: string; external?: boolean };
+type Section = { title: string; items: LinkItem[] };
+
+type Locale = "en" | "ua" | "ru";
+
+const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
+  en: {
+    sections: [
+      {
+        title: "Categories",
+        items: [
+          { label: "Speaking & Pronunciation", href: "/categories/speaking-pronunciation" },
+          { label: "Exercises & Practice", href: "/categories/exercises-practice" },
+          { label: "Grammar", href: "/categories/grammar" },
+          { label: "Success Stories", href: "/categories/success-stories" },
+          { label: "Tips & Motivation", href: "/categories/tips-motivation" },
+          { label: "Blog", href: "/blog" },
+          { label: "Vocabulary", href: "/categories/vocabulary" },
+        ],
+      },
+      {
+        title: "Levels",
+        items: [
+          { label: "A1 — Beginner", href: "/levels/a1" },
+          { label: "A2 — Elementary", href: "/levels/a2" },
+          { label: "B1 — Intermediate", href: "/levels/b1" },
+          { label: "B2 — Upper-Intermediate", href: "/levels/b2" },
+          { label: "C1 — Advanced", href: "/levels/c1" },
+          { label: "C2 — Proficient", href: "/levels/c2" },
+        ],
+      },
+      {
+        title: "Platform",
+        items: [
+          { label: "About the project", href: "/about" },
+          { label: "Team", href: "/team" },
+          { label: "Partnerships", href: "/partnerships" },
+        ],
+      },
+      {
+        title: "Community",
+        items: [
+          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
+          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
+        ],
+      },
+      {
+        title: "Legal",
+        items: [
+          { label: "Impressum", href: "/impressum" },
+          { label: "Privacy Policy", href: "/privacy" },
+          { label: "Terms of Service", href: "/terms" },
+          { label: "Cookie Settings", href: "/cookies" },
+        ],
+      },
+      {
+        title: "Language",
+        items: [
+          { label: "Українська", href: "#ua" },
+          { label: "Русский", href: "#ru" },
+          { label: "English", href: "#en" },
+        ],
+      },
+    ],
+  },
+  ua: {
+    sections: [
+      {
+        title: "Категорії",
+        items: [
+          { label: "Розмовна практика та вимова", href: "/categories/speaking-pronunciation" },
+          { label: "Вправи та практика", href: "/categories/exercises-practice" },
+          { label: "Граматика", href: "/categories/grammar" },
+          { label: "Історії успіху", href: "/categories/success-stories" },
+          { label: "Поради та мотивація", href: "/categories/tips-motivation" },
+          { label: "Блог", href: "/blog" },
+          { label: "Словник", href: "/categories/vocabulary" },
+        ],
+      },
+      {
+        title: "Рівні",
+        items: [
+          { label: "A1 — Початковий", href: "/levels/a1" },
+          { label: "A2 — Елементарний", href: "/levels/a2" },
+          { label: "B1 — Середній", href: "/levels/b1" },
+          { label: "B2 — Вище середнього", href: "/levels/b2" },
+          { label: "C1 — Просунутий", href: "/levels/c1" },
+          { label: "C2 — Професійний", href: "/levels/c2" },
+        ],
+      },
+      {
+        title: "Платформа",
+        items: [
+          { label: "Про проєкт", href: "/about" },
+          { label: "Команда", href: "/team" },
+          { label: "Партнерства", href: "/partnerships" },
+        ],
+      },
+      {
+        title: "Спільнота",
+        items: [
+          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
+          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
+        ],
+      },
+      {
+        title: "Правова інформація",
+        items: [
+          { label: "Impressum", href: "/impressum" },
+          { label: "Політика конфіденційності", href: "/privacy" },
+          { label: "Умови користування", href: "/terms" },
+          { label: "Налаштування файлів cookie", href: "/cookies" },
+        ],
+      },
+      {
+        title: "Мова",
+        items: [
+          { label: "Українська", href: "#ua" },
+          { label: "Русский", href: "#ru" },
+          { label: "English", href: "#en" },
+        ],
+      },
+    ],
+  },
+  ru: {
+    sections: [
+      {
+        title: "Категории",
+        items: [
+          { label: "Разговорная практика и произношение", href: "/categories/speaking-pronunciation" },
+          { label: "Упражнения и практика", href: "/categories/exercises-practice" },
+          { label: "Грамматика", href: "/categories/grammar" },
+          { label: "Истории успеха", href: "/categories/success-stories" },
+          { label: "Советы и мотивация", href: "/categories/tips-motivation" },
+          { label: "Блог", href: "/blog" },
+          { label: "Словарь", href: "/categories/vocabulary" },
+        ],
+      },
+      {
+        title: "Уровни",
+        items: [
+          { label: "A1 — Начальный", href: "/levels/a1" },
+          { label: "A2 — Элементарный", href: "/levels/a2" },
+          { label: "B1 — Средний", href: "/levels/b1" },
+          { label: "B2 — Выше среднего", href: "/levels/b2" },
+          { label: "C1 — Продвинутый", href: "/levels/c1" },
+          { label: "C2 — Профессиональный", href: "/levels/c2" },
+        ],
+      },
+      {
+        title: "Платформа",
+        items: [
+          { label: "О проекте", href: "/about" },
+          { label: "Команда", href: "/team" },
+          { label: "Партнёрства", href: "/partnerships" },
+        ],
+      },
+      {
+        title: "Сообщество",
+        items: [
+          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
+          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
+        ],
+      },
+      {
+        title: "Юридическая информация",
+        items: [
+          { label: "Impressum", href: "/impressum" },
+          { label: "Политика конфиденциальности", href: "/privacy" },
+          { label: "Условия использования", href: "/terms" },
+          { label: "Настройки файлов cookie", href: "/cookies" },
+        ],
+      },
+      {
+        title: "Язык",
+        items: [
+          { label: "Українська", href: "#ua" },
+          { label: "Русский", href: "#ru" },
+          { label: "English", href: "#en" },
+        ],
+      },
+    ],
+  },
+};
+
+function getLocaleFromPath(pathname: string | null | undefined): Locale {
+  if (!pathname) return "en";
+  const m = pathname.match(/^\/(ua|ru|en)(?:\/|$)/);
+  if (m && (m[1] === "ua" || m[1] === "ru" || m[1] === "en")) return m[1] as Locale;
+  return "en";
+}
+
+function replaceLocaleInPath(pathname: string, locale: string) {
+  const re = /^\/(ua|ru|en)(\/|$)/;
+  if (re.test(pathname)) {
+    return pathname.replace(re, `/${locale}$2`);
+  }
+  return `/${locale}${pathname}`;
+}
 
 export default function Footer() {
-  const { t, locale } = useI18n();
-  const prefix = locale === "en" ? "" : `/${locale}`;
+  const pathname = usePathname() || "/";
+  const router = useRouter();
 
+  const locale = getLocaleFromPath(pathname);
+
+  function handleLocaleSwitch(target: string) {
+    const newPath = replaceLocaleInPath(pathname, target);
+    router.replace(newPath);
+  }
+
+  // Footer uses an explicit pure-white background to match site chrome.
   return (
-    <footer className="bg-[hsl(var(--bg))] text-[hsl(var(--fg))]">
-      <div className="container mx-auto px-4 py-16">
-        <div className="w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
-            <div>
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mb-6">
-                {t("learn")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/courses`} className="hover:underline">
-                    {t("courses")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/lessons`} className="hover:underline">
-                    {t("lessons")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/exercises`} className="hover:underline">
-                    {t("exercises")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/certificates`} className="hover:underline">
-                    {t("certificates")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/learning-paths`} className="hover:underline">
-                    {t("learningPaths")}
-                  </a>
-                </li>
-              </ul>
+    <footer className="bg-white">
+      <div className="max-w-7xl mx-auto px-4 pt-12 bg-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
+          {FOOTER_I18N[locale].sections.map((section) => (
+            <div key={section.title}>
+              <h3 className="font-medium text-gray-700" style={TYPO_STYLE}>
+                {section.title}
+              </h3>
+              <div className="mt-3">
+                <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
+                  {section.items.map((item) => {
+                    const isLangLink = section.title === (locale === "en" ? "Language" : locale === "ua" ? "Мова" : "Язык") && item.href.startsWith("#");
+                    if (isLangLink) {
+                      const target = item.href.replace("#", "");
+                      return (
+                        <li key={item.label}>
+                          <button onClick={() => handleLocaleSwitch(target)} className="font-normal text-gray-600 hover:underline" style={TYPO_STYLE}>
+                            {item.label}
+                          </button>
+                        </li>
+                      );
+                    }
 
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mt-8 mb-6">
-                {t("forBusiness")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/business`} className="hover:underline">
-                    {t("businessSolutions")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/schools`} className="hover:underline">
-                    {t("solutionsSchools")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/pricing`} className="hover:underline">
-                    {t("pricing")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/enterprise`} className="hover:underline">
-                    {t("enterprise")}
-                  </a>
-                </li>
-              </ul>
+                    if (item.external) {
+                      return (
+                        <li key={item.label}>
+                          <a href={item.href} className="font-normal text-gray-600 hover:underline" rel="noopener noreferrer" style={TYPO_STYLE}>
+                            {item.label}
+                          </a>
+                        </li>
+                      );
+                    }
+
+                    return (
+                      <li key={item.label}>
+                        <Link href={item.href} className="font-normal text-gray-600 hover:underline" style={TYPO_STYLE}>
+                          {item.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
             </div>
-
-            <div>
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mb-6">
-                {t("coursesLevels")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/levels/a1`} className="hover:underline">
-                    {t("levelsA1")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/levels/a2`} className="hover:underline">
-                    {t("levelsA2")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/levels/b1`} className="hover:underline">
-                    {t("levelsB1")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/levels/b2`} className="hover:underline">
-                    {t("levelsB2")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/conversation`} className="hover:underline">
-                    {t("conversationCourses")}
-                  </a>
-                </li>
-              </ul>
-
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mt-8 mb-6">
-                {t("resources")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/blog`} className="hover:underline">
-                    {t("blog")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/podcast`} className="hover:underline">
-                    {t("podcast")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/faq`} className="hover:underline">
-                    {t("faq")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/help`} className="hover:underline">
-                    {t("helpSupport")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/community`} className="hover:underline">
-                    {t("community")}
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mb-6">
-                {t("company")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/about`} className="hover:underline">
-                    {t("about")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/team`} className="hover:underline">
-                    {t("team")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/careers`} className="hover:underline">
-                    {t("careers")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/press`} className="hover:underline">
-                    {t("press")}
-                  </a>
-                </li>
-              </ul>
-
-              <h4 className="text-sm tracking-widest text-slate-400 dark:text-slate-400 mt-8 mb-6">
-                {t("legalContact")}
-              </h4>
-              <ul className="space-y-4 text-base text-slate-700 dark:text-slate-300">
-                <li>
-                  <a href={`${prefix}/imprint`} className="hover:underline">
-                    {t("imprint")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/privacy`} className="hover:underline">
-                    {t("privacy")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/terms`} className="hover:underline">
-                    {t("terms")}
-                  </a>
-                </li>
-                <li>
-                  <a href={`${prefix}/contact`} className="hover:underline">
-                    {t("contact")}
-                  </a>
-                </li>
-              </ul>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom bar: copyright left */}
-        <div className="mt-12 pt-6 text-sm text-slate-500 dark:text-slate-400">
-          <div>© {new Date().getFullYear()} Simple Deutsch</div>
-        </div>
+        {/* Dynamic, container-constrained brand wordmark that always fits on one line */}
+        <FooterWordmark />
       </div>
     </footer>
   );
 }
+
