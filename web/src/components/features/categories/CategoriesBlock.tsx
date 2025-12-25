@@ -34,7 +34,8 @@ export default async function CategoriesBlock({
     CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
-  const effectiveLocale = locale ?? DEFAULT_LOCALE;
+  const defaultLocaleLocal: Locale = (DEFAULT_LOCALE === "de" ? "en" : (DEFAULT_LOCALE as Locale));
+  const effectiveLocale: Locale = locale ?? defaultLocaleLocal;
   
   // For initial render, pass empty posts - client will fetch based on selected tag
   const firstTagSlug = visibleCategories.length > 0 ? visibleCategories[0].slug : null;

@@ -129,6 +129,7 @@ export function translateCategory(
   slug?: string | null,
   locale: Locale = "en",
 ) {
+  const safeLocale = (locale === "de" ? "en" : locale) as "en" | "ua" | "ru";
   // extract any leading emoji/symbol prefix from the original name so we
   // can re-attach it to translated labels (matches screenshot UX)
   function extractLeadingSymbols(s: string | undefined | null) {
@@ -149,15 +150,15 @@ export function translateCategory(
   const slugCandidates = makeLookupVariants(slug);
   for (const k of slugCandidates) {
     const entry = MAP[k as keyof typeof MAP];
-    if (k && entry && entry[locale])
-      return `${emojiPrefix} ${String(entry[locale]).trimStart()}`;
+    if (k && entry && entry[safeLocale])
+      return `${emojiPrefix} ${String(entry[safeLocale]).trimStart()}`;
   }
 
   const nameCandidates = makeLookupVariants(name);
   for (const k of nameCandidates) {
     const entry = MAP[k as keyof typeof MAP];
-    if (k && entry && entry[locale])
-      return `${emojiPrefix} ${String(entry[locale]).trimStart()}`;
+    if (k && entry && entry[safeLocale])
+      return `${emojiPrefix} ${String(entry[safeLocale]).trimStart()}`;
   }
 
   // No translation found — fall back to the provided name or slug
@@ -172,16 +173,17 @@ export function translateCategoryDescription(
   slug?: string | null,
   locale: Locale = "en",
 ) {
+  const safeLocale = (locale === "de" ? "en" : locale) as "en" | "ua" | "ru";
   const slugCandidates = makeLookupVariants(slug);
   for (const k of slugCandidates) {
     const entry = DESC_MAP[k as keyof typeof DESC_MAP];
-    if (k && entry && entry[locale]) return String(entry[locale]).trim();
+    if (k && entry && entry[safeLocale]) return String(entry[safeLocale]).trim();
   }
 
   const nameCandidates = makeLookupVariants(original);
   for (const k of nameCandidates) {
     const entry = DESC_MAP[k as keyof typeof DESC_MAP];
-    if (k && entry && entry[locale]) return String(entry[locale]).trim();
+    if (k && entry && entry[safeLocale]) return String(entry[safeLocale]).trim();
   }
 
   // No translation found — return undefined so callers can fall back to WP description

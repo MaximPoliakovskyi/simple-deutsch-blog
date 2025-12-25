@@ -1,8 +1,7 @@
 // app/not-found.tsx
-"use client";
+// "use client"; // Commented out to convert to server component
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export const metadata = {
@@ -11,15 +10,8 @@ export const metadata = {
 };
 
 export default function NotFound() {
-  // Client-side locale detection from the current pathname. This mirrors the
-  // site's routing which prefixes localized pages with `/ru`, `/ua`, `/de`, etc.
-  const pathname = usePathname();
-  const seg = pathname?.split("/")[1] ?? "";
-  const locale = ["en", "ru", "ua", "de"].includes(seg) ? (seg as any) : DEFAULT_LOCALE;
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
-
-  // Localized home link: prefix with locale if not the default.
-  const homeHref = (locale && locale !== DEFAULT_LOCALE) ? `/${locale}/` : "/";
+  const t = TRANSLATIONS[DEFAULT_LOCALE];
+  const homeHref = "/";
 
   return (
     // Fullscreen overlay above everything (including header)

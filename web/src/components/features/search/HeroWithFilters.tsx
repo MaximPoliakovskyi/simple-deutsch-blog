@@ -6,7 +6,6 @@ import PostCard from "@/components/features/posts/PostCard";
 import TypewriterWords from "@/components/ui/TypewriterWords";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
-
 type Locale = "en" | "ru" | "ua";
 type Category = { id: string; name: string; slug: string };
 
@@ -36,13 +35,13 @@ export default function HeroWithFilters({
 
   // Locale-aware animated words for hero headline (line 3)
   // Each locale provides its own word list
-  const HERO_ANIMATED_WORDS: Record<Locale, string[]> = {
+  const HERO_ANIMATED_WORDS: Record<string, string[]> = {
     en: ["work", "travel", "life", "business"],
     ua: ["роботи", "подорожей", "життя", "бізнесу"],
     ru: ["работы", "путешествия", "жизни", "бизнеса"],
   };
 
-  const animatedWords = HERO_ANIMATED_WORDS[uiLocale] || HERO_ANIMATED_WORDS.en;
+  const animatedWords = HERO_ANIMATED_WORDS[uiLocale as string] || HERO_ANIMATED_WORDS.en;
 
   // Calculate the longest animated word length for stable width (prevents horizontal drift)
   // Each ch unit ≈ one character width; add ~0.2 for cursor space

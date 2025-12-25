@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS, type Locale } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 const TYPO_STYLE = { fontSize: "var(--text-base)", lineHeight: "var(--tw-leading, var(--text-base--line-height))" };
@@ -11,9 +11,7 @@ const TYPO_STYLE = { fontSize: "var(--text-base)", lineHeight: "var(--tw-leading
 type LinkItem = { label: string; href: string; external?: boolean };
 type Section = { title: string; items: LinkItem[] };
 
-type Locale = "en" | "ua" | "ru" | "de";
-
-const FOOTER_I18N: Record<Locale, { sections: Section[] }> = {
+const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
   en: {
     sections: [
       {
@@ -225,7 +223,7 @@ export default function Footer() {
       <div>
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-            {FOOTER_I18N[locale].sections.map((section) => (
+            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? []).map((section) => (
               <div key={section.title}>
                 <h3 className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]" style={TYPO_STYLE}>
                   {section.title}
@@ -295,7 +293,7 @@ export default function Footer() {
           <div className="h-px w-full bg-black/10 dark:bg-white/10 mt-6" />
 
           {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
-          <div className="py-4 text-sm text-slate-700 dark:text-[rgba(255,255,255,0.7)]" style={TYPO_STYLE}>
+          <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">
             {
               (() => {
                 const dict = TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] || TRANSLATIONS[DEFAULT_LOCALE];

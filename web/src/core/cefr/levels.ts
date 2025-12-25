@@ -4,9 +4,9 @@ import type { Locale } from "@/core/i18n/i18n";
 export type CeFrLevel = {
   slug: string;
   /** Short display label used in UI (e.g. "A1 — Beginner") */
-  label: Record<Locale, string>;
+  label: Partial<Record<Locale, string>>;
   /** Short description/tooltip (single-line) */
-  description: Record<Locale, string>;
+  description: Partial<Record<Locale, string>>;
 };
 
 export const CEFR_LEVELS: CeFrLevel[] = [
