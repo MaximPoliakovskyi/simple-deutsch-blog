@@ -219,14 +219,14 @@ export default function Footer() {
     router.replace(newPath);
   }
 
-  // Footer uses an explicit pure-white background to match site chrome.
+  // Theme-aware footer: light background in light mode, exact deep navy in dark mode.
   return (
-    <footer className="bg-white">
-      <div className="max-w-7xl mx-auto px-4 pt-12 bg-white">
+    <footer className="bg-white dark:bg-[#0B1220]">
+      <div className="max-w-7xl mx-auto px-4 pt-12 bg-white dark:bg-[#0B1220]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
           {FOOTER_I18N[locale].sections.map((section) => (
             <div key={section.title}>
-              <h3 className="font-medium text-gray-700" style={TYPO_STYLE}>
+              <h3 className="font-medium text-slate-700 dark:text-slate-100" style={TYPO_STYLE}>
                 {section.title}
               </h3>
               <div className="mt-3">
@@ -237,7 +237,7 @@ export default function Footer() {
                       const target = item.href.replace("#", "");
                       return (
                         <li key={item.label}>
-                          <button onClick={() => handleLocaleSwitch(target)} className="font-normal text-gray-600 hover:underline" style={TYPO_STYLE}>
+                          <button onClick={() => handleLocaleSwitch(target)} className="font-normal text-slate-600 dark:text-slate-400 hover:underline dark:hover:text-slate-200" style={TYPO_STYLE}>
                             {item.label}
                           </button>
                         </li>
@@ -247,7 +247,7 @@ export default function Footer() {
                     if (item.external) {
                       return (
                         <li key={item.label}>
-                          <a href={item.href} className="font-normal text-gray-600 hover:underline" rel="noopener noreferrer" style={TYPO_STYLE}>
+                          <a href={item.href} className="font-normal text-slate-600 dark:text-slate-300 hover:underline dark:hover:text-slate-200" rel="noopener noreferrer" style={TYPO_STYLE}>
                             {item.label}
                           </a>
                         </li>
@@ -256,7 +256,7 @@ export default function Footer() {
 
                     return (
                       <li key={item.label}>
-                        <Link href={item.href} className="font-normal text-gray-600 hover:underline" style={TYPO_STYLE}>
+                            <Link href={item.href} className="font-normal text-slate-600 dark:text-slate-300 hover:underline dark:hover:text-slate-200" style={TYPO_STYLE}>
                           {item.label}
                         </Link>
                       </li>

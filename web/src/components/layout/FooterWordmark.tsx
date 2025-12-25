@@ -86,7 +86,7 @@ export default function FooterWordmark({ className = "" }: Props) {
       <span
         ref={textRef}
         aria-hidden
-        className="inline-block whitespace-nowrap leading-[1.05] font-extrabold pointer-events-none select-none text-center"
+        className="inline-block whitespace-nowrap leading-[1.05] font-extrabold pointer-events-none select-none text-center text-[#181C26] dark:text-white"
         style={{ fontSize: fontSize ? `${fontSize}px` : undefined, lineHeight: "1.05" }}
       >
         Simple Deutsch®
