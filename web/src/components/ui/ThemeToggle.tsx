@@ -62,7 +62,7 @@ export default function ThemeToggle() {
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
       className={
-        "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm " +
+        "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
         "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
         "sd-pill"
       }

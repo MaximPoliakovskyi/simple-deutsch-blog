@@ -119,7 +119,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
     <article className={["group", className].filter(Boolean).join(" ")}>
       <Link href={`${prefix}/posts/${post.slug}`} className="block" aria-label={post.title}>
         {/* Media — smoother zoom wrapper */}
-        <div className="relative overflow-hidden rounded-2xl aspect-[4/3] bg-neutral-200 dark:bg-neutral-800">
+        <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div
             className="
               absolute inset-0
@@ -137,7 +137,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
                 src={img.url}
                 alt={imageAlt}
                 fill
-                className="object-cover pointer-events-none select-none [backface-visibility:hidden]"
+                className="object-cover pointer-events-none select-none backface-hidden"
                 priority={priority}
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               />

@@ -75,7 +75,7 @@ export function SearchButton({
           "flex text-sm focus:outline-none",
           // pill appearance (default) / compact circle (icon)
           variant === "icon"
-            ? "items-center justify-center w-[38px] h-[38px] rounded-full p-0"
+            ? "items-center justify-center w-9.5 h-9.5 rounded-full p-0"
             : "items-center gap-2 rounded-full px-5 py-2",
           // transitions and micro-interaction (smaller scale for the labeled pill)
           variant === "icon"
@@ -306,7 +306,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   if (!mounted) return null;
 
   return createPortal(
-    <div
+        <div
       role="dialog"
       aria-modal="true"
       aria-label="Search articles"
@@ -315,7 +315,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-        "fixed inset-0 z-[100]",
+            "fixed inset-0 z-100",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",
@@ -349,7 +349,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
             flex items-center gap-2 rounded-xl px-3 py-2 border
             bg-white text-neutral-900
             dark:bg-ui-darkButton dark:text-neutral-100 dark:border-white/10
-            focus-within:ring-2 focus-within:ring-[var(--sd-accent)]
+            focus-within:ring-2 focus-within:ring-(--sd-accent)
           "
           // use a specific light-mode border color (avoid utility conflict)
           style={{ borderColor: "#E6E7EB" }}

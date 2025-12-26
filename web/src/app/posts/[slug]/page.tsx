@@ -135,7 +135,19 @@ export default async function PostPage({
     : { html: "", toc: [] };
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
-  const currentLang = getPostLanguage(post) ?? "en";
+  // Determine the current route/site language.
+  // Prefer a `lang` route param when present (for pages under /[lang]/...),
+  // otherwise fall back to the Next `locale` prop and finally to DEFAULT_LOCALE.
+  const _allParams = (await params) as unknown as Record<string, string | undefined>;
+  const paramLang = _allParams?.lang as LanguageSlug | undefined;
+  const currentRouteLang: LanguageSlug = paramLang && (LANGUAGE_SLUGS as readonly string[]).includes(paramLang)
+    ? (paramLang as LanguageSlug)
+    : ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
+
+  const currentLang = getPostLanguage(post) ?? (locale ?? DEFAULT_LOCALE);
+
+  const withLocaleHref = (lang: string, postSlug: string) =>
+    lang === DEFAULT_LOCALE ? `/posts/${postSlug}` : `/${lang}/posts/${postSlug}`;
 
   // fetch related / more posts for the sidebar — LANGUAGE ONLY (no topic/category logic)
   let moreArticles: { slug: string; title: string }[] = [];
@@ -244,7 +256,7 @@ export default async function PostPage({
                     key={p.slug}
                     className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
                   >
-                    <Link href={`/posts/${p.slug}`} className="hover:underline block">
+                    <Link href={withLocaleHref(currentRouteLang, p.slug)} className="hover:underline block">
                       {p.title}
                     </Link>
                   </li>

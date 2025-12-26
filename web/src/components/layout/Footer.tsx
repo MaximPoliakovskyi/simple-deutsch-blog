@@ -12,7 +12,7 @@ type LinkItem = { label: string; href: string; external?: boolean };
 type Section = { title: string; items: LinkItem[] };
 
 const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
-  en: {
+      en: {
     sections: [
       {
         title: "Categories",
@@ -65,7 +65,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
+          { label: "English", href: "http://localhost:3000", external: true },
         ],
       },
     ],
@@ -123,7 +123,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
+          { label: "English", href: "http://localhost:3000", external: true },
         ],
       },
     ],
@@ -181,7 +181,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
+          { label: "English", href: "http://localhost:3000", external: true },
         ],
       },
     ],
@@ -290,7 +290,7 @@ export default function Footer() {
       <div>
         <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
           {/* divider aligned to container: light mode black/10, dark mode white/10 */}
-          <div className="h-px w-full bg-black/10 dark:bg-white/10 mt-6" />
+          <div className="h-px w-full bg-black/10 dark:bg-white/10" />
 
           {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
           <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">

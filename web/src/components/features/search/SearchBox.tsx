@@ -79,7 +79,7 @@ export default function SearchBox({
           "border-[#E6E7EB]",
           "dark:bg-[hsl(var(--bg))] dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-white/10",
           // focus (no UA blue outline)
-          "appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)] focus:ring-offset-0",
+          "appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-(--sd-accent) focus:ring-offset-0",
         ].join(" ")}
       />
 

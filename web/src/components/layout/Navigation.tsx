@@ -105,7 +105,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
         onKeyDown={onButtonKeyDown}
         // match SearchButton styling and set exact 38x38 size
         className={
-          "flex items-center justify-center w-[38px] h-[38px] rounded-full text-sm " +
+          "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
           "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
           "sd-pill"
         }
@@ -122,7 +122,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
           ref={menuRef}
           aria-label={t("language")}
           className={
-            "absolute left-1/2 -translate-x-1/2 mt-2 w-[38px] origin-top rounded-[9999px] px-0 " +
+            "absolute left-1/2 -translate-x-1/2 mt-2 w-9.5 origin-top rounded-[9999px] px-0 " +
             // Keep the original light-theme look but use the provided grey only
             // when the site is in dark mode so light theme remains unchanged.
             "bg-[#FFFFFF] dark:bg-[#1f1f1f] border border-[#E6E7EB] dark:border-[#2b2b2b] " +
@@ -279,7 +279,7 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
               closeMenu?.();
             }}
             className={
-              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
+              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-(--sd-accent) " +
               // Light-theme: slightly bright hover (original behaviour).
               // Dark-theme: subtle translucent white to gently lighten the grey.
               "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)]"
@@ -516,19 +516,19 @@ export default function Header() {
             <div className="hidden items-center gap-6 md:flex">
               <Link
                 href={buildLocalePath("/posts")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
               >
                 {t("posts")}
               </Link>
               <Link
                 href={buildLocalePath("/categories")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
               >
                 {t("categories")}
               </Link>
               <Link
                 href={buildLocalePath("/levels")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
               >
                 {t("levels")}
               </Link>
@@ -564,7 +564,7 @@ export default function Header() {
                 aria-expanded={open}
                 aria-controls="mobile-fullscreen-menu"
                 onClick={() => setOpen((v) => !v)}
-                className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 aria-label={open ? "Menü schließen" : "Menü öffnen"}
                 title={open ? "Menü schließen" : "Menü öffnen"}
               >
@@ -600,7 +600,7 @@ export default function Header() {
           >
             <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden rounded">
               <div
-                className="h-full bg-[var(--sd-accent)] transition-transform duration-300 ease-out"
+                className="h-full bg-(--sd-accent) transition-transform duration-300 ease-out"
                 style={{
                   transform: `scaleX(${progress / 100})`,
                   transformOrigin: "left",
@@ -614,7 +614,7 @@ export default function Header() {
 
       {/* Mobile drawer */}
       <div
-        className={["md:hidden", "fixed inset-0 z-[90]", open ? "" : "pointer-events-none"].join(
+        className={["md:hidden", "fixed inset-0 z-90", open ? "" : "pointer-events-none"].join(
           " ",
         )}
       >
@@ -655,7 +655,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+              className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
               aria-label="Menü schließen"
               title="Menü schließen"
             >
@@ -676,7 +676,7 @@ export default function Header() {
                 <Link
                   href={buildLocalePath("/posts")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 >
                   {t("posts")}
                 </Link>
@@ -685,7 +685,7 @@ export default function Header() {
                 <Link
                   href={buildLocalePath("/categories")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 >
                   {t("categories")}
                 </Link>
@@ -694,7 +694,7 @@ export default function Header() {
                 <Link
                   href={buildLocalePath("/levels")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 >
                   {t("levels")}
                 </Link>
@@ -703,7 +703,7 @@ export default function Header() {
                 <Link
                   href={buildLocalePath("/search")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 >
                   {t("search")}
                 </Link>
@@ -715,7 +715,7 @@ export default function Header() {
                     toggleMobileTheme();
                     // keep menu open so user sees the change, or close if preferred
                   }}
-                  className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+                  className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
                 >
                   {isDarkMobile
                     ? (t("lightMode") ?? "Light theme")

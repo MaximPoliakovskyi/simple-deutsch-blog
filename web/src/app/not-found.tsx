@@ -1,21 +1,33 @@
 // app/not-found.tsx
-// "use client"; // Commented out to convert to server component
+"use client";
 
 import Link from "next/link";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { usePathname } from "next/navigation";
+import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export const metadata = {
   title: TRANSLATIONS[DEFAULT_LOCALE].pageNotFoundTitle,
   robots: { index: false },
 };
 
-export default function NotFound() {
-  const t = TRANSLATIONS[DEFAULT_LOCALE];
-  const homeHref = "/";
+export default function NotFound({ locale }: { locale?: Locale }) {
+  const pathname = usePathname();
+
+  const inferred = (() => {
+    if (locale) return locale as Locale;
+    const first = pathname?.split("/")[1];
+    if (first === "ru") return "ru" as Locale;
+    if (first === "ua") return "ua" as Locale;
+    return DEFAULT_LOCALE;
+  })();
+
+  const lang = inferred ?? DEFAULT_LOCALE;
+  const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
+  const homeHref = lang === "ru" ? "/ru" : lang === "ua" ? "/ua" : "/";
 
   return (
     // Fullscreen overlay above everything (including header)
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black text-white">
+    <div className="fixed inset-0 z-100 grid place-items-center bg-black text-white">
       <div className="text-center px-4">
         {/* Icon */}
         <div className="mx-auto mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-white/10">

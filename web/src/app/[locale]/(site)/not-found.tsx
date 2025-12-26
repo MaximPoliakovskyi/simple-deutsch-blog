@@ -1,4 +1,32 @@
-// Re-export the global not-found UI so localized not-found routes render the
-// same Page Not Found screen instead of returning an empty fragment.
-// Use a relative import to avoid resolving issues in the dev server bundler.
-export { default } from "../../not-found";
+import NotFound from "../../not-found";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+
+const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const isSupportedLocale = (locale: string): locale is SupportedLocale =>
+	SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+
+type Props = {
+	params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: Props) {
+	const p = params ?? {};
+	const resolved = typeof (p as any)?.then === "function" ? await p : p;
+	const locale = (resolved as any)?.locale;
+	if (!isSupportedLocale(locale)) return {};
+
+	return {
+		title: TRANSLATIONS[locale].pageNotFoundTitle,
+	};
+}
+
+export default async function LocalizedNotFound({ params }: Props) {
+	const p = params ?? {};
+	const resolved = typeof (p as any)?.then === "function" ? await p : p;
+	const locale = (resolved as any)?.locale;
+
+	if (!isSupportedLocale(locale)) return <NotFound />;
+
+	return <NotFound locale={locale} />;
+}
