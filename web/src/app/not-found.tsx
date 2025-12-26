@@ -5,11 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
 
-export const metadata = {
-  title: TRANSLATIONS[DEFAULT_LOCALE].pageNotFoundTitle,
-  robots: { index: false },
-};
-
 export default function NotFound({ locale }: { locale?: Locale }) {
   const pathname = usePathname();
 
