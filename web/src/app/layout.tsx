@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import Footer from "@/components/layout/Footer";
 import Navigation from "@/components/layout/Navigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
+import BackButton from "@/components/ui/BackButton";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { LocaleProvider } from "@/core/i18n/LocaleProvider";
 import "@/styles/globals.css";
@@ -47,6 +48,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Main page content - add top spacing so content sits further below the nav */}
           <div className="mt-8 md:mt-12" aria-hidden />
           {children}
+
+          {/* Global back button that appears after scrolling */}
+          <BackButton />
 
           {/* Homepage-only components are rendered by their pages now. */}
           <Footer />

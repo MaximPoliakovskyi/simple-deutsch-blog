@@ -38,15 +38,16 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
   const labelsFull: Record<Lang, string> = { en: "English", ua: "Українська", ru: "Русский" };
 
   useEffect(() => {
-    function onDoc(e: MouseEvent) {
+    function onDoc(e: Event) {
       const t = e.target as Node | null;
       if (!open) return;
       if (btnRef.current && t && btnRef.current.contains(t)) return;
       if (menuRef.current && t && menuRef.current.contains(t)) return;
       setOpen(false);
     }
-    window.addEventListener("mousedown", onDoc);
-    return () => window.removeEventListener("mousedown", onDoc);
+    // Use pointerdown to catch both mouse and touch interactions.
+    window.addEventListener("pointerdown", onDoc);
+    return () => window.removeEventListener("pointerdown", onDoc);
   }, [open]);
 
   // Hover helpers: add a small delay when closing so the user can move
@@ -74,6 +75,29 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
     };
   }, []);
 
+  // Detect whether the current input modality supports hover (desktop).
+  // On touch devices we disable hover-based open behavior and rely on click/tap.
+  const [useHover, setUseHover] = useState<boolean>(() => {
+    if (typeof window === "undefined") return true;
+    try {
+      return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) => setUseHover(Boolean((e as any).matches));
+    if (mq.addEventListener) mq.addEventListener("change", onChange as any);
+    else mq.addListener(onChange as any);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange as any);
+      else mq.removeListener(onChange as any);
+    };
+  }, []);
+
   // keyboard handling: open with ArrowDown/Enter/Space, close with Escape
   const onButtonKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
@@ -93,8 +117,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
   return (
     <div
       className="relative inline-block text-left"
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      {...(useHover ? { onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave } : {})}
     >
       <button
         ref={btnRef}
