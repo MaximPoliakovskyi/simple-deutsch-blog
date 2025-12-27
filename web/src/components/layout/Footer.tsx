@@ -54,7 +54,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Legal",
         items: [
-          { label: "Impressum", href: "/impressum" },
+          { label: "Imprint", href: "/imprint" },
           { label: "Privacy Policy", href: "/privacy" },
           { label: "Terms of Service", href: "/terms" },
           { label: "Cookie Settings", href: "/cookies" },
@@ -112,7 +112,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Правова інформація",
         items: [
-          { label: "Impressum", href: "/impressum" },
+          { label: "Юридична інформація", href: "/imprint" },
           { label: "Політика конфіденційності", href: "/privacy" },
           { label: "Умови користування", href: "/terms" },
           { label: "Налаштування файлів cookie", href: "/cookies" },
@@ -170,7 +170,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Юридическая информация",
         items: [
-          { label: "Impressum", href: "/impressum" },
+          { label: "Выходные данные", href: "/imprint" },
           { label: "Политика конфиденциальности", href: "/privacy" },
           { label: "Условия использования", href: "/terms" },
           { label: "Настройки файлов cookie", href: "/cookies" },
