@@ -45,6 +45,12 @@
   /* Back-compat aliases (mapped to new tokens) */
   --sd-bg: hsl(var(--bg));
   --sd-fg: hsl(var(--fg));
+  /* New semantic tokens used across the site */
+  --sd-page-bg: hsl(var(--bg));
+  --sd-text: hsl(var(--fg));
+  --sd-text-muted: hsl(var(--muted));
+  --sd-border: rgba(0, 0, 0, 0.06);
+  --sd-surface: var(--sd-card-bg);
 
   /* Pill/button surface tokens (used for header/search/load-more pills) */
   --sd-pill-bg: #ffffff;
@@ -79,6 +85,23 @@ html.dark {
   --sd-pill-bg: #1f1f1f;
   --sd-pill-fg: #ffffff;
   --sd-pill-bg-hover: #2b2b2b;
+  /* Semantic token overrides for dark theme */
+  --sd-page-bg: hsl(var(--bg));
+  --sd-text: hsl(var(--fg));
+  --sd-text-muted: hsl(var(--muted));
+  --sd-border: rgba(255, 255, 255, 0.06);
+  --sd-surface: var(--sd-card-bg);
+}
+
+/* Local forced-dark scope: apply dark color-scheme inside the wrapper
+   Use by adding class "dark sd-dark-scope" to an element to force Tailwind
+   `dark:` utilities to apply within that subtree without toggling <html>. */
+.sd-dark-scope {
+  color-scheme: dark;
+}
+.sd-dark-scope :where(*) {
+  /* ensure form controls and UA surfaces prefer dark rendering */
+  color-scheme: dark;
 }
 
 /* Shared pill surface class used by search, header and Load more so they match exactly */

@@ -1,0 +1,114 @@
+{
+  "about.platformLabel": "About the project",
+  "about.hero.title": "We build better German learning",
+  "about.hero.subtitle": "Practical skills. Clear progress.",
+  "about.hero.description": "Short, focused lessons and real-world practice that help learners move from study to confidence.",
+  "about.hero.ctaPrimary": "Start learning",
+  "about.hero.ctaSecondary": "Explore Success Stories",
+
+  "about.mission.title": "Our mission",
+  "about.mission.lead": "Make German learning practical, approachable, and measurable for everyone.",
+  "about.mission.principle.1.title": "Clarity",
+  "about.mission.principle.1.desc": "Simple explanations and clear goals so you know what to learn next.",
+  "about.mission.principle.2.title": "Practicality",
+  "about.mission.principle.2.desc": "Lessons built around real usage: speaking, listening, and writing.",
+  "about.mission.principle.3.title": "Consistency",
+  "about.mission.principle.3.desc": "Small, frequent practice beats occasional long sessions.",
+
+  "about.how.title": "How it works",
+  "about.how.step.1.title": "Learn core concepts",
+  "about.how.step.1.desc": "Short lessons introduce essential grammar and vocabulary.",
+  "about.how.step.2.title": "Practice with context",
+  "about.how.step.2.desc": "Interactive exercises simulate real conversations and tasks.",
+  "about.how.step.3.title": "Track your progress",
+  "about.how.step.3.desc": "See clear milestones and measurable improvement.",
+  "about.how.step.4.title": "Apply what you learn",
+  "about.how.step.4.desc": "Use real-world prompts to build confidence and fluency.",
+
+  "about.impact.title": "Impact",
+  "about.impact.metric.1.value": "120k+",
+  "about.impact.metric.1.label": "Learners engaged",
+  "about.impact.metric.2.value": "85%",
+  "about.impact.metric.2.label": "Completion rate for core lessons",
+  "about.impact.metric.3.value": "4.8/5",
+  "about.impact.metric.3.label": "Average learner rating",
+
+  "about.values.title": "Our values",
+  "about.values.1.title": "Learner-first",
+  "about.values.1.desc": "Design choices focused on real learner outcomes.",
+  "about.values.2.title": "Evidence-driven",
+  "about.values.2.desc": "We iterate based on real usage and feedback.",
+  "about.values.3.title": "Accessible",
+  "about.values.3.desc": "Materials for different levels and speeds.",
+  "about.values.4.title": "Respectful",
+  "about.values.4.desc": "Inclusive language and approachable tone.",
+  "about.values.5.title": "Transparent",
+  "about.values.5.desc": "Clear expectations and honest progress tracking.",
+  "about.values.6.title": "Practical",
+  "about.values.6.desc": "Focus on tasks you can use today.",
+
+  "about.faq.title": "Frequently asked questions",
+  "about.faq.1.q": "Who is this for?",
+  "about.faq.1.a": "Learners at all levels who want practical German for real life.",
+  "about.faq.2.q": "Do you offer certificates?",
+  "about.faq.2.a": "We provide completion badges and optional assessments for progress proof.",
+  "about.faq.3.q": "Can I use this for school or work?",
+  "about.faq.3.a": "Yes — materials are suitable for individual learning and classroom use.",
+  "about.faq.4.q": "Is there a free tier?",
+  "about.faq.4.a": "Many lessons and exercises are free to try; premium paths unlock deeper tracks.",
+  "about.faq.5.q": "How long until I see progress?",
+  "about.faq.5.a": "With regular practice, learners often notice improvement in weeks, not months.",
+  "about.faq.6.q": "How do I contact support?",
+  "about.faq.6.a": "Use the contact link in the footer or email hello@simpledeutsch.com.",
+
+  "about.cta.finalTitle": "Ready to get started?",
+  "about.cta.finalCta": "Start learning"
+
+  ,"about.cta.finalLead": "Clear lessons, practical exercises, and steady progress — everything you need to build real confidence in German.",
+
+  "about.sections.realLife.title": "Learning built for real life",
+  "about.sections.realLife.p1": "Lessons focus on situations you actually encounter — at work, in conversations, and in everyday routines.",
+  "about.sections.realLife.p2": "We emphasize usefulness over abstract theory: short, concrete examples show how language works in context so you can apply it right away when you need it.",
+  "about.sections.realLife.p3": "Think of language as a tool for getting things done — relocating, collaborating, or simply navigating daily life — rather than an academic subject to memorize.",
+
+  "about.sections.consistency.title": "Consistency over intensity",
+  "about.sections.consistency.p1": "You don’t need long study sessions. Small, regular practice leads to lasting results.",
+  "about.sections.consistency.p2": "Daily, manageable habits avoid burnout and make progress predictable: a few focused minutes every day adds up.",
+  "about.sections.consistency.p3": "Repeated exposure over time builds durable skills far more reliably than occasional intensive effort.",
+  "about.sections.consistency.p4": "Long-term progress comes from realistic routines that fit your life: simple, repeatable actions that become habits rather than one-off marathons.",
+  "about.sections.consistency.quote": "Language learning isn’t about doing more — it’s about showing up consistently.",
+  "about.sections.consistency.p5": "When small, regular practice becomes habit, confidence grows naturally and turns into real-life use: speaking at work, navigating tasks, and joining conversations without hesitation.",
+
+  "about.sections.fits.title": "Learning that fits your life",
+  "about.sections.fits.p1": "Simple Deutsch is designed around real schedules and real goals. Short lessons, clear explanations, and practical examples make progress feel natural — not overwhelming.",
+  "about.sections.fits.p2": "Whether you’re studying after work, between meetings, or in small daily sessions, the focus stays on clarity, confidence, and steady improvement.",
+
+  "about.testimonials.heading": "Why learners trust Simple Deutsch",
+  "about.testimonials.sub": "Real learners share what works — clarity, practice, and steady progress.",
+
+  "about.testimonials.1.name": "Anna Müller",
+  "about.testimonials.1.role": "B2 learner",
+  "about.testimonials.1.text": "I appreciate how lessons focus on concrete tasks. That clarity meant I could practice useful phrases for work and daily life without getting lost in theory.",
+
+  "about.testimonials.2.name": "Oleg Petrov",
+  "about.testimonials.2.role": "Relocated to Germany",
+  "about.testimonials.2.text": "Short, predictable lessons helped me build a routine. Small wins each day kept me motivated while adjusting to a new city and language.",
+
+  "about.testimonials.3.name": "Lena Fischer",
+  "about.testimonials.3.role": "Software engineer",
+  "about.testimonials.3.text": "I liked that lessons emphasize practical usage. Practicing short dialogues made speaking more natural and less intimidating.",
+
+  "about.testimonials.4.name": "Mateo Rossi",
+  "about.testimonials.4.role": "Freelancer",
+  "about.testimonials.4.text": "The focus on small steps prevents overwhelm. I can pick a short lesson between projects and still feel I'm progressing.",
+
+  "about.testimonials.5.name": "Sofia Ivanova",
+  "about.testimonials.5.role": "B1 learner",
+  "about.testimonials.5.text": "Consistency mattered most for me. Short daily practice felt achievable and slowly built my confidence to speak in meetings.",
+
+  "about.testimonials.6.name": "Jonas Becker",
+  "about.testimonials.6.role": "Student",
+  "about.testimonials.6.text": "Practical exercises and real-world examples helped me use phrases in context. That practical focus made learning feel useful from day one."
+  ,"about.logo.alt": "Simple Deutsch",
+  "about.media.placeholderAlt": "Placeholder image"
+}

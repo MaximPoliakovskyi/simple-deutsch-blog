@@ -66,7 +66,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "http://localhost:3000", external: true },
+          { label: "English", href: "#en" },
         ],
       },
     ],
@@ -124,7 +124,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "http://localhost:3000", external: true },
+          { label: "English", href: "#en" },
         ],
       },
     ],
@@ -182,7 +182,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         items: [
           { label: "Українська", href: "#ua" },
           { label: "Русский", href: "#ru" },
-          { label: "English", href: "http://localhost:3000", external: true },
+            { label: "English", href: "#en" },
         ],
       },
     ],

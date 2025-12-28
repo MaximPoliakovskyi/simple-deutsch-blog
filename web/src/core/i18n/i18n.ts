@@ -669,3 +669,13 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
 };
 
 export const DEFAULT_LOCALE: Locale = "en";
+
+// Merge in content translations from JSON files (about page)
+import aboutEn from "@/content/i18n/about.en.json";
+import aboutUa from "@/content/i18n/about.ua.json";
+import aboutRu from "@/content/i18n/about.ru.json";
+
+// Note: extend base translation objects with about.* keys
+Object.assign(en, aboutEn as Translations);
+Object.assign(ua, aboutUa as Translations);
+Object.assign(ru, aboutRu as Translations);
