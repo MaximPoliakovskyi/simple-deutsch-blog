@@ -6,6 +6,7 @@ import Navigation from "@/components/layout/Navigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 import BackButton from "@/components/ui/BackButton";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { LocaleProvider } from "@/core/i18n/LocaleProvider";
 import "@/styles/globals.css";
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Footer />
         </LocaleProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
