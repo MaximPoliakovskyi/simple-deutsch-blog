@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS, type Locale } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 
 const TYPO_STYLE = { fontSize: "var(--text-base)", lineHeight: "var(--tw-leading, var(--text-base--line-height))" };
 
@@ -188,19 +189,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
   },
 };
 
-function replaceLocaleInPath(pathname: string, locale: string) {
-  const re = /^\/(ua|ru|en|de)(\/|$)/;
-  if (re.test(pathname)) {
-    return pathname.replace(re, `/${locale}$2`);
-  }
-  return `/${locale}${pathname}`;
-}
-
 export default function Footer() {
   const pathname = usePathname() || "/";
   const router = useRouter();
 
   const { locale } = useI18n();
+  
 
   function prefixHrefForLocale(href: string, locale: Locale) {
     if (!href || !href.startsWith("/")) return href;
@@ -211,7 +205,10 @@ export default function Footer() {
   }
 
   function handleLocaleSwitch(target: string) {
-    const newPath = replaceLocaleInPath(pathname, target);
+    try {
+      localStorage.setItem("sd-locale", target);
+    } catch {}
+    const newPath = buildLocalizedHref(target as any, pathname);
     router.replace(newPath);
   }
 

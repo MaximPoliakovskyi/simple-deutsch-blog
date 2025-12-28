@@ -135,6 +135,12 @@ export async function getPosts(
 export type PostDetail = PostListItem & {
   content: string | null;
   seo?: { title?: string | null; metaDesc?: string | null } | null;
+  translations?: Array<{
+    id?: string;
+    slug?: string;
+    uri?: string;
+    language?: { code?: string | null } | null;
+  }>;
 };
 
 export async function getPostBySlug(slug: string) {

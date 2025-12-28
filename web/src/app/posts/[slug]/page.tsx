@@ -102,6 +102,8 @@ export default async function PostPage({
 
   if (!post) return notFound();
 
+  
+
   // We render static article content for this page (screenshot example).
 
   // derive dynamic values

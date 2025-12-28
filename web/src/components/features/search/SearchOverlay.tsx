@@ -25,6 +25,10 @@ function cn(...a: Array<string | false | null | undefined>): string {
   return a.filter(Boolean).join(" ");
 }
 
+// Shared radius token for dropdown and last item to ensure pixel-perfect match
+const DROPDOWN_RADIUS = "rounded-2xl";
+const LAST_ITEM_RADIUS = "rounded-b-2xl";
+
 /** Public button to open the overlay */
 export function SearchButton({
   className = "",
@@ -497,7 +501,8 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       <div
         className={cn(
           "mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]",
-          "rounded-2xl bg-[hsl(var(--bg))] p-0 shadow-2xl",
+          DROPDOWN_RADIUS,
+          "bg-[hsl(var(--bg))] p-0 shadow-2xl",
           "text-neutral-900 dark:text-neutral-100",
           "mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]",
           "sm:mt-[calc(env(safe-area-inset-top)+5rem)]",
@@ -516,8 +521,8 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
         <div
           className="
             flex items-center gap-2 rounded-xl px-3 py-2
-            bg-white text-neutral-900
-            dark:bg-ui-darkButton dark:text-neutral-100
+            bg-transparent text-neutral-900
+            dark:text-neutral-100
           "
         >
           <svg
@@ -586,9 +591,9 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
               <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">{tNoResults}</li>
             )}
 
-            {!loading && items.length > 0 &&
+            {(!loading && items.length > 0) &&
               items.slice(0, visibleCount).map((it, i) => (
-                <li key={it.id} className="rounded-md first:rounded-t-2xl last:rounded-b-2xl overflow-hidden">
+                <li key={it.id}>
                 <button
                   type="button"
                   onMouseEnter={() => setHighlight(i)}
@@ -597,9 +602,11 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
                     router.push(`/posts/${it.slug}`);
                   }}
                   className={cn(
-                    "flex w-full items-start gap-3 px-3 py-3 text-left",
+                    "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none",
                     "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
                     i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
+                    // only the last rendered item should have bottom rounding
+                    i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
                   )}
                   aria-current={i === highlight ? "true" : undefined}
                 >
