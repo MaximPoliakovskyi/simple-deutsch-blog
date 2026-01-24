@@ -7,7 +7,6 @@ import { useEffect, useId, useRef, useState } from "react";
 import { SearchButton } from "@/components/features/search/SearchOverlay";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useI18n } from "@/core/i18n/LocaleProvider";
-import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 
 // LanguageDropdown uses the hooks imported above
 
@@ -255,8 +254,14 @@ function usePostLanguageSwitch() {
       setLocale(targetLang as Lang);
     } catch {}
 
-    // Navigate using the single source-of-truth builder
-    const newPath = buildLocalizedHref(targetLang, pathname);
+    // If not on a post page, nothing more to do here
+    if (!isPost || !slug) return;
+
+    const parts = slug.split("-");
+    if (parts.length < 2) return; // invalid slug
+    const articleId = parts.slice(1).join("-");
+    const newPath = buildPostPath(targetLang, articleId);
+
     try {
       await router.push(newPath);
     } catch {}

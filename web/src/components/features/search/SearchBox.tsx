@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useDeferredValue, useEffect, useRef, useState } from "react";
+import { startTransition, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type Props = {
@@ -11,13 +11,11 @@ type Props = {
 	debounceMs?: number;
 };
 
-const DEFAULT_DEBOUNCE_MS = 200; // tighter debounce to reduce jank while typing
-
 export default function SearchBox({
 	placeholder,
 	className = "",
 	autoFocus = false,
-	debounceMs = DEFAULT_DEBOUNCE_MS,
+	debounceMs = 0,
 }: Props) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -26,7 +24,6 @@ export default function SearchBox({
 
 	const initial = (searchParams.get("q") ?? "").trim();
 	const [value, setValue] = useState(initial);
-	const deferredValue = useDeferredValue(value);
 
 	useEffect(() => {
 		const next = (searchParams.get("q") ?? "").trim();
@@ -35,22 +32,11 @@ export default function SearchBox({
 		}
 	}, [searchParams, value]);
 
-	useEffect(() => {
-		const t = setTimeout(() => {
-			const q = deferredValue.trim();
-			const nextUrl = q ? `/search?q=${encodeURIComponent(q)}` : `/search`;
-			const currentQ = (searchParams.get("q") ?? "").trim();
-			if (currentQ === q) return;
-			startTransition(() => {
-				router.replace(nextUrl);
-			});
-		}, debounceMs);
-		return () => clearTimeout(t);
-	}, [deferredValue, debounceMs, router, searchParams]);
+	// Immediate navigation on input change handled in `onChange`
 
 	const finalPlaceholder = placeholder ?? t("searchPlaceholder");
 	const finalAria = t("searchAria");
-	const finalClear = "Clear"; // fixed label across locales per requirement
+	const finalClear = t("search.clear");
 
 	return (
 		<div className={`flex items-center gap-2 ${className}`}>
@@ -60,7 +46,17 @@ export default function SearchBox({
 				inputMode="search"
 				{...(autoFocus ? { autoFocus: true } : {})}
 				value={value}
-				onChange={(e) => setValue(e.target.value)}
+				onChange={(e) => {
+					const next = e.target.value;
+					setValue(next);
+					const q = next.trim();
+					const nextUrl = q ? `/search?q=${encodeURIComponent(q)}` : `/search`;
+					const currentQ = (searchParams.get("q") ?? "").trim();
+					if (currentQ === q) return;
+					startTransition(() => {
+						router.replace(nextUrl);
+					});
+				}}
 				onKeyDown={(e) => {
 					if (e.key === "Escape" && value) {
 						e.preventDefault();

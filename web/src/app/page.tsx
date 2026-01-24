@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { Suspense } from "react";
 import CategoriesBlock from "@/components/features/categories/CategoriesBlock";
 import LatestPostsSliderServer from "@/components/features/posts/LatestPosts/LatestPostsSliderServer";
 import HeroWithFilters from "@/components/features/search/HeroWithFilters";
@@ -68,9 +69,15 @@ export default async function HomePage({ locale }: { locale?: "en" | "ru" | "ua"
         />
       </main>
 
-      <SuccessStoriesSliderServer locale={effectiveLocale} />
-      <LatestPostsSliderServer locale={effectiveLocale} />
-      <CategoriesBlock locale={effectiveLocale} />
+      <Suspense fallback={<div className="h-96" />}>
+        <SuccessStoriesSliderServer locale={effectiveLocale} />
+      </Suspense>
+      <Suspense fallback={<div className="h-96" />}>
+        <LatestPostsSliderServer locale={effectiveLocale} />
+      </Suspense>
+      <Suspense fallback={<div className="h-64" />}>
+        <CategoriesBlock locale={effectiveLocale} />
+      </Suspense>
     </>
   );
 }

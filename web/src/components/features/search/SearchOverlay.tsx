@@ -127,7 +127,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   const { t, locale } = useI18n();
   const tPlaceholder = t("searchPlaceholder");
   const tSearchLabel = t("searchAria");
-  const CLEAR_LABEL = "Clear"; // fixed label across locales per requirement
+  const CLEAR_LABEL = t("search.clear");
   const tNoResults = t("noResults");
   const tLoadMore = t("loadMore");
   const router = useRouter();

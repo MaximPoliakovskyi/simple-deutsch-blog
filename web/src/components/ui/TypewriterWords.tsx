@@ -256,8 +256,8 @@ export default function TypewriterWords({
       {/* Hidden measurement span: must have same classes as visible text for accurate width */}
       <span
         ref={measureRef}
-        className={`absolute -left-[9999px] ${containerClassName} ${className}`}
-        style={{ visibility: "hidden", pointerEvents: "none" }}
+        className={`absolute ${containerClassName} ${className}`}
+        style={{ visibility: "hidden", pointerEvents: "none", left: "-9999px" }}
         aria-hidden="true"
       />
 

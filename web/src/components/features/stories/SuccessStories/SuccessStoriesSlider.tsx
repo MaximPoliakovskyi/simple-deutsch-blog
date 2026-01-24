@@ -3,17 +3,17 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import PostCard from "@/components/features/posts/PostCard";
-import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
 type Props = {
   posts: WPPostCard[];
   title?: string;
+  description?: string;
 };
 
 type Direction = "prev" | "next";
 
-export default function SuccessStoriesSlider({ posts = [], title = "Success stories" }: Props) {
+export default function SuccessStoriesSlider({ posts = [], title = "Success stories", description = "" }: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
@@ -56,8 +56,6 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
   }, [updateEdgeState]);
 
   if (!posts?.length) return null;
-
-  const { t } = useI18n();
 
   // Only posts in “Success stories”; hide that chip from list
   // Use category slug for matching because category name can include emoji or
@@ -162,7 +160,7 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
           </div>
         </div>
         <p className="mb-8 max-w-2xl text-base leading-relaxed text-neutral-600 dark:text-neutral-300">
-          {t("successStoriesDescription")}
+          {description}
         </p>
 
         <div

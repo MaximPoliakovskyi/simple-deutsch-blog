@@ -1,10 +1,9 @@
-(() => {
+// Optimized theme init - runs synchronously before first paint
+(function() {
   try {
-    const ls = localStorage.getItem("sd-theme"); // 'dark' | 'light' | null
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const initial = ls ? ls : systemDark ? "dark" : "light";
-    const root = document.documentElement;
-    if (initial === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
+    var ls = localStorage.getItem("sd-theme");
+    var systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    var theme = ls || (systemDark ? "dark" : "light");
+    if (theme === "dark") document.documentElement.classList.add("dark");
   } catch (_) {}
 })();

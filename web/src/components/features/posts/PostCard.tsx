@@ -139,6 +139,9 @@ export default function PostCard({ post, className, priority = false }: PostCard
                 fill
                 className="object-cover pointer-events-none select-none backface-hidden"
                 priority={priority}
+                fetchPriority={priority ? "high" : "auto"}
+                loading={priority ? "eager" : "lazy"}
+                decoding="async"
                 sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
               />
             ) : (

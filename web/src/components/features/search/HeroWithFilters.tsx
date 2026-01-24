@@ -1,11 +1,18 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import CategoryPills from "@/components/features/categories/CategoryPills";
 import PostCard from "@/components/features/posts/PostCard";
-import TypewriterWords from "@/components/ui/TypewriterWords";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
+
+// Defer TypewriterWords loading to not block initial paint
+const TypewriterWords = dynamic(() => import("@/components/ui/TypewriterWords"), {
+  ssr: false,
+  loading: () => <span className="text-blue-600">work</span>,
+});
+
 type Locale = "en" | "ru" | "ua";
 type Category = { id: string; name: string; slug: string };
 
@@ -148,9 +155,9 @@ export default function HeroWithFilters({
         
         {displayedPosts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
-            {displayedPosts.map((post) => (
+            {displayedPosts.map((post, idx) => (
               <div key={post.id ?? post.slug}>
-                <PostCard post={post} />
+                <PostCard post={post} priority={idx < 3} />
               </div>
             ))}
           </div>

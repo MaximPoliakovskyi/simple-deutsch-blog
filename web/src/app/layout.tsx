@@ -2,7 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import Footer from "@/components/layout/Footer";
-import Navigation from "@/components/layout/Navigation";
+import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 import BackButton from "@/components/ui/BackButton";
 import { Analytics } from "@vercel/analytics/react";
@@ -11,8 +11,18 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { LocaleProvider } from "@/core/i18n/LocaleProvider";
 import "@/styles/globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistSans = Geist({ 
+  variable: "--font-geist-sans", 
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+});
+const geistMono = Geist_Mono({ 
+  variable: "--font-geist-mono", 
+  subsets: ["latin"],
+  display: "swap",
+  preload: true,
+});
 
 /**
  * Runs before paint to set the theme without a flash.
@@ -30,8 +40,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
         <link rel="icon" href="/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* DNS prefetch for external resources */}
+        <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
+        <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
-        <script src="/theme-init.js" async />
+        <script src="/theme-init.js" />
       </head>
       <body
         className={[
@@ -40,12 +53,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        {/* Client-side preloader component (no SSR text mutations) */}
+        {/* Preloader with 1.5s minimum display time */}
         <PreloaderClient />
 
-        {/* Global navigation, visible on all pages */}
+        {/* Global navigation with SSR skeleton for fast FCP */}
         <LocaleProvider>
-          <Navigation />
+          <HydratedNavigation />
 
           {/* Main page content - add top spacing so content sits further below the nav */}
           <div className="mt-8 md:mt-12" aria-hidden />
@@ -57,8 +70,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Homepage-only components are rendered by their pages now. */}
           <Footer />
         </LocaleProvider>
-        <Analytics />
-        <SpeedInsights />
+        <Analytics mode="production" />
+        <SpeedInsights sampleRate={0.1} />
       </body>
     </html>
   );

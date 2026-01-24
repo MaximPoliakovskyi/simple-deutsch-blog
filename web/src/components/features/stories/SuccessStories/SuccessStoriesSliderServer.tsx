@@ -58,5 +58,5 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
   const posts = await getSliderPosts(locale);
   if (!posts.length) return null;
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
-  return <SuccessStoriesSlider posts={posts} title={t.successStories} />;
+  return <SuccessStoriesSlider posts={posts} title={t.successStories} description={t.successStoriesDescription} />;
 }
