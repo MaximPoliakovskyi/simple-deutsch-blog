@@ -10,7 +10,7 @@ import { useI18n } from "@/core/i18n/LocaleProvider";
 
 // LanguageDropdown uses the hooks imported above
 
-type Lang = "en" | "ru" | "ua";
+type Lang = "en" | "ru" | "uk";
 
 type LanguageDropdownProps = {
   currentLocale: Lang;
@@ -32,10 +32,10 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
   const closeTimerRef = useRef<number | null>(null);
 
   // All languages ordered; when rendering we place the selected locale at the top
-  const _order: Lang[] = ["en", "ua", "ru"];
+  const _order: Lang[] = ["en", "uk", "ru"];
   // Short labels for the pill / stacked items
-  const labelsShort: Record<Lang, string> = { en: "En", ua: "Ук", ru: "Ру" };
-  const labelsFull: Record<Lang, string> = { en: "English", ua: "Українська", ru: "Русский" };
+  const labelsShort: Record<Lang, string> = { en: "En", uk: "Ук", ru: "Ру" };
+  const labelsFull: Record<Lang, string> = { en: "English", uk: "Українська", ru: "Русский" };
 
   useEffect(() => {
     function onDoc(e: Event) {
@@ -167,17 +167,17 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
 function useLanguage() {
   const router = useRouter();
   const pathname = usePathname() || "/";
-  // Determine locale from either a leading locale prefix (/ru or /ua)
+  // Determine locale from either a leading locale prefix (/ru or /uk)
   // or from post slugs (/posts/{lang}-{rest}). Default to 'en'.
   const locale: Lang = (() => {
     if (!pathname) return "en";
     if (pathname.startsWith("/posts/")) {
       const slug = pathname.replace("/posts/", "");
       const maybe = slug.split("-")[0];
-      return (["en", "ru", "ua"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
+      return (["en", "ru", "uk"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
     }
     if (pathname.startsWith("/ru")) return "ru";
-    if (pathname.startsWith("/ua")) return "ua";
+    if (pathname.startsWith("/uk")) return "uk";
     return "en";
   })();
 
@@ -191,8 +191,8 @@ function useLanguage() {
     if (pathname.startsWith("/posts/")) return;
 
     // For non-post pages preserve the current path but swap locale prefix
-    // strip existing locale prefix (/ru or /ua)
-    const stripped = pathname.replace(/^\/(ru|ua)(?=\/|$)/, "") || "/";
+    // strip existing locale prefix (/ru or /uk)
+    const stripped = pathname.replace(/^\/(ru|uk)(?=\/|$)/, "") || "/";
 
     const newPath =
       next === "en" ? stripped : stripped === "/" ? `/${next}` : `/${next}${stripped}`;
@@ -214,8 +214,9 @@ function usePostLanguageSwitch() {
   const router = useRouter();
   const pathname = usePathname() || "/";
   const { locale: currentLocale, setLocale } = useLanguage();
+  const { postLangLinks } = useI18n();
 
-  const SITE_LANGS = ["en", "ru", "ua"] as const;
+  const SITE_LANGS = ["en", "ru", "uk"] as const;
   type SiteLang = (typeof SITE_LANGS)[number];
 
   // parse pathname parts
@@ -225,7 +226,7 @@ function usePostLanguageSwitch() {
   let isPost = false;
   let slug: string | null = null;
 
-  if (parts[0] === "ru" || parts[0] === "ua") {
+  if (parts[0] === "ru" || parts[0] === "uk") {
     siteLang = parts[0] as SiteLang;
     if (parts[1] === "posts") {
       isPost = true;
@@ -238,6 +239,10 @@ function usePostLanguageSwitch() {
       slug = parts[1] ?? null;
     }
   }
+
+  const languageLinks = isPost ? postLangLinks?.links ?? null : null;
+  const currentFromLinks = (postLangLinks?.currentLang as SiteLang | undefined) ?? null;
+  if (currentFromLinks) siteLang = currentFromLinks;
 
   function buildPostPath(targetLang: SiteLang, articleId: string) {
     const slug = `${targetLang}-${articleId}`;
@@ -254,6 +259,17 @@ function usePostLanguageSwitch() {
       setLocale(targetLang as Lang);
     } catch {}
 
+    if (isPost && !postLangLinks) return;
+
+    if (isPost && postLangLinks) {
+      const href = postLangLinks.links[targetLang] ?? null;
+      if (!href) return;
+      try {
+        await router.push(href);
+      } catch {}
+      return;
+    }
+
     // If not on a post page, nothing more to do here
     if (!isPost || !slug) return;
 
@@ -267,16 +283,16 @@ function usePostLanguageSwitch() {
     } catch {}
   };
 
-  return { currentSiteLang: siteLang as SiteLang, changeLang };
+  return { currentSiteLang: siteLang as SiteLang, changeLang, languageLinks, isPost };
 }
 
 // Component: NavLanguageDropdown
 function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
-  const { currentSiteLang, changeLang } = usePostLanguageSwitch();
+  const { currentSiteLang, changeLang, languageLinks, isPost } = usePostLanguageSwitch();
 
   const LANGS = [
     { code: "en", label: "En" },
-    { code: "ua", label: "Ук" },
+    { code: "uk", label: "Ук" },
     { code: "ru", label: "Ру" },
   ] as const;
 
@@ -288,6 +304,8 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
   return (
     <>
       {visibleLangs.map((item, idx) => (
+        // Disable when we are on a post page and the translation is missing
+        // (languageLinks holds null for missing translations).
         <li
           key={item.code}
           role="none"
@@ -295,21 +313,30 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
             idx < visibleLangs.length - 1 ? "border-b border-neutral-100 dark:border-white/6" : ""
           }
         >
+          {(() => {
+            const linkAvailable = !isPost ? true : Boolean(languageLinks?.[item.code as LangCode]);
+            return (
           <button
             role="menuitem"
             onClick={() => {
+              if (!linkAvailable) return;
               changeLang(item.code as LangCode);
               closeMenu?.();
             }}
+            aria-disabled={!linkAvailable}
+            disabled={!linkAvailable}
             className={
               "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-(--sd-accent) " +
               // Light-theme: slightly bright hover (original behaviour).
               // Dark-theme: subtle translucent white to gently lighten the grey.
-              "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)]"
+              "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
+              (!linkAvailable ? "opacity-50 cursor-not-allowed" : "")
             }
           >
             {item.label}
           </button>
+            );
+          })()}
         </li>
       ))}
     </>
@@ -332,26 +359,26 @@ export default function Header() {
   const titleId = `mobile-menu-title-${id}`;
   // determine current locale from pathname. For post pages the language
   // is encoded in the post slug (/posts/{lang}-{rest}), otherwise check
-  // for a leading locale prefix (/ru or /ua). Default to 'en'.
+  // for a leading locale prefix (/ru or /uk). Default to 'en'.
   const currentLocale: Lang = (() => {
     if (!pathname) return "en";
     if (pathname.startsWith("/posts/")) {
       const slug = pathname.replace("/posts/", "");
       const maybe = slug.split("-")[0];
-      return (["en", "ru", "ua"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
+      return (["en", "ru", "uk"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
     }
     if (pathname.startsWith("/ru")) return "ru";
-    if (pathname.startsWith("/ua")) return "ua";
+    if (pathname.startsWith("/uk")) return "uk";
     return "en";
   })();
 
   const stripLocale = (p: string | null | undefined) => {
     if (!p) return "/";
-    const stripped = p.replace(/^\/(ru|ua)(?=\/|$)/, "");
+    const stripped = p.replace(/^\/(ru|uk)(?=\/|$)/, "");
     return stripped === "" ? "/" : stripped;
   };
 
-  const buildLocaleHref = (target: "en" | "ru" | "ua") => {
+  const buildLocaleHref = (target: "en" | "ru" | "uk") => {
     // For most navigation links we want to preserve the current path,
     // but the site logo should always go to the locale root (home page).
     const base = stripLocale(pathname);
@@ -359,11 +386,11 @@ export default function Header() {
     return base === "/" ? `/${target}` : `/${target}${base}`;
   };
 
-  const buildLocaleRootHref = (target: "en" | "ru" | "ua") => {
+  const buildLocaleRootHref = (target: "en" | "ru" | "uk") => {
     return target === "en" ? "/" : `/${target}`;
   };
 
-  const buildLocalePath = (path: string, target: "en" | "ru" | "ua" = currentLocale) => {
+  const buildLocalePath = (path: string, target: "en" | "ru" | "uk" = currentLocale) => {
     // Ensure leading slash
     const p = path.startsWith("/") ? path : `/${path}`;
     return target === "en" ? p : `/${target}${p}`;
@@ -452,8 +479,8 @@ export default function Header() {
     let ticking = false;
 
     const calculate = () => {
-      // Only run on article pages. Normalize locale prefixes like /ru, /ua, /uk.
-      const normalizedPath = pathname?.replace(/^\/(ru|ua|uk)(?=\/)/, "") ?? pathname;
+      // Only run on article pages. Normalize locale prefixes like /ru, /ua.
+      const normalizedPath = pathname?.replace(/^\/(ru|ua)(?=\/)/,"") ?? pathname;
       if (!normalizedPath || !normalizedPath.startsWith("/posts/")) {
         setProgress(0);
         setVisible(false);

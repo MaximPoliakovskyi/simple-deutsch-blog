@@ -11,6 +11,7 @@ type SearchPost = {
   excerpt: string | null;
   date: string;
   featuredImage?: { node?: { sourceUrl?: string | null } | null } | null;
+  featuredImageUrl?: string | null;
   categories?: { nodes?: Array<{ slug?: string | null } | null> };
 };
 
@@ -24,20 +25,27 @@ export async function GET(req: Request) {
     return NextResponse.json({ posts: [], pageInfo: { endCursor: null, hasNextPage: false } });
   }
 
+  // For Russian/Ukrainian sites, don't search if query contains only Latin characters
+  if (lang === "uk" || lang === "ru") {
+    const hasOnlyLatinChars = /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
+    if (hasOnlyLatinChars) {
+      return NextResponse.json({ posts: [], pageInfo: { endCursor: null, hasNextPage: false } });
+    }
+  }
+
   try {
-    const { posts, pageInfo } = await searchPosts({ query: q, first: 8, after });
+    // Map UI locale to WordPress language code and search in that language only
+    const wpLang = lang === "uk" ? "UK" : lang === "ru" ? "RU" : "EN";
+    const { posts, pageInfo } = await searchPosts({ query: q, first: 8, after, language: wpLang });
 
-    const filtered = lang
-      ? posts.filter((p: SearchPost) => p?.categories?.nodes?.some((c) => c?.slug === lang))
-      : posts;
-
-    const slim = filtered.map((p: SearchPost) => ({
+    // WordPress already filtered by language, so just format the response
+    const slim = posts.map((p: SearchPost) => ({
       id: p.id,
       slug: p.slug,
       title: p.title,
       excerpt: p.excerpt,
       date: p.date,
-      image: p.featuredImage?.node?.sourceUrl ?? null,
+      image: p.featuredImageUrl ?? p.featuredImage?.node?.sourceUrl ?? null,
     }));
 
     return NextResponse.json({ posts: slim, pageInfo });

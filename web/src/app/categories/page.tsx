@@ -2,12 +2,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
+import { deduplicateCategories } from "@/core/content/categoryUtils";
 import { translateCategory, translateCategoryDescription } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllCategories, getPostsPageByCategory } from "@/server/wp/api";
+import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
-type LanguageSlug = "en" | "ru" | "ua";
+type LanguageSlug = "en" | "ru" | "uk";
 type CategoryNode = {
   id: string;
   name: string;
@@ -28,27 +30,33 @@ export const metadata: Metadata = {
 export default async function CategoriesIndexPage({
   locale,
 }: {
-  locale?: "en" | "ru" | "ua";
+  locale?: "en" | "ru" | "uk";
 } = {}) {
   // Your API expects one argument (e.g., { first: number })
   const { categories } = await getAllCategories({ first: 100 });
 
   // Support either categories.nodes or categories.edges -> node
   const nodes = extractConnectionNodes<CategoryNode>(categories);
-  const visible = filterHiddenCategories(nodes);
+  
+  // Remove language duplicates and filter hidden categories
+  const visible = filterHiddenCategories(deduplicateCategories(nodes));
 
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
   // derive language for counting posts per-language
-  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "ua";
+  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "uk";
 
   // Helper to detect post language (same logic used elsewhere)
-  const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+  const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
   type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
   function getPostLanguage(post: {
     slug?: string;
     categories?: { nodes?: { slug?: string | null }[] } | null;
+    language?: { code?: string | null } | null;
   }): LanguageSlug | null {
+    const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
+    if (fromLangField) return fromLangField as LanguageSlug;
+
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
       .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
@@ -68,13 +76,23 @@ export default async function CategoriesIndexPage({
   const countsBySlug = await Promise.all(
     visible.map(async (c) => {
       try {
-        const { posts: postsForCat } = await getPostsPageByCategory({
+        // First try with language filter
+        let { posts: postsForCat } = await getPostsPageByCategory({
           first: 200,
           categorySlug: c.slug,
+          locale: lang,
         });
-        const count = (postsForCat ?? []).filter(
-          (p) => getPostLanguage(p) === (lang as LanguageSlug),
-        ).length;
+        
+        // If no results with language filter, try without (in case category isn't language-specific)
+        if (!postsForCat || postsForCat.length === 0) {
+          const { posts: postsNoLang } = await getPostsPageByCategory({
+            first: 200,
+            categorySlug: c.slug,
+          });
+          postsForCat = postsNoLang;
+        }
+        
+        const count = postsForCat?.length ?? 0;
         return [c.slug, count] as const;
       } catch (_err) {
         return [c.slug, 0] as const;
@@ -83,7 +101,7 @@ export default async function CategoriesIndexPage({
   );
   const countsMap = new Map(countsBySlug as Array<readonly [string, number]>);
 
-  function formatPostCount(count: number, locale: "en" | "ru" | "ua") {
+  function formatPostCount(count: number, locale: "en" | "ru" | "uk") {
     if (locale === "en") {
       return `${count} ${count === 1 ? "post" : "posts"}`;
     }

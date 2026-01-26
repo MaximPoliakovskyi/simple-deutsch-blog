@@ -1,7 +1,7 @@
 import React from "react";
 import { TRANSLATIONS, DEFAULT_LOCALE } from "@/core/i18n/i18n";
 
-type Locale = "en" | "ua" | "ru" | "de";
+type Locale = "en" | "uk" | "ru" | "de";
 
 export default function PrivacyPage({ locale }: { locale?: Locale }) {
 	const lang = (locale as Locale) ?? DEFAULT_LOCALE;

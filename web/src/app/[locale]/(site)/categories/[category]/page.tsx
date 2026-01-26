@@ -5,7 +5,7 @@ import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { getCategoryBySlug } from "@/server/wp/api";
 import CategoryPage from "../../../../categories/[category]/page";
 
-const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+const SUPPORTED_LOCALES = ["ru", "uk"] as const;
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const isSupportedLocale = (locale: string): locale is SupportedLocale =>
   SUPPORTED_LOCALES.includes(locale as SupportedLocale);
@@ -29,7 +29,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function LocalizedCategoryPage({ params }: Props) {
   const { locale, category } = await params;
 
-  if (locale !== "ru" && locale !== "ua") {
+  if (locale !== "ru" && locale !== "uk") {
     notFound();
   }
 

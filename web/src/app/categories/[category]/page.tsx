@@ -53,14 +53,17 @@ export default async function CategoryPage({
 
   const term = await getCategoryBySlug(category);
   if (!term) return notFound();
-
   // Derive current language for this page. Locale from App Router will be
   // provided for localized routes (/ru, /ua). Default to English.
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
-  // Fetch first paginated page upstream using slug-based taxQuery (lang + category)
+  // Build locale-specific category slug (categories use language suffixes like tags)
+  // English: "success-stories", Russian: "success-stories-ru", Ukrainian: "success-stories-uk"
+  const localeCategorySlug = lang === "en" ? category : `${category}-${lang}`;
+
+  // Fetch first paginated page upstream using locale-specific category slug
   const PAGE_SIZE = 3;
-  const pageRes = await getPostsByCategory({ first: PAGE_SIZE, after: null, langSlug: lang, categorySlug: category });
+  const pageRes = await getPostsByCategory({ first: PAGE_SIZE, after: null, locale: lang, categorySlug: localeCategorySlug });
   const initialPosts = pageRes.posts;
   const initialPageInfo = pageRes.pageInfo;
 
@@ -82,7 +85,7 @@ export default async function CategoryPage({
         initialPosts={initialPosts}
         initialPageInfo={initialPageInfo}
         pageSize={PAGE_SIZE}
-        query={{ lang, categorySlug: category, tagSlug: null, level: null }}
+        query={{ lang, categorySlug: localeCategorySlug, tagSlug: null, level: null }}
       />
     </main>
   );

@@ -13,7 +13,7 @@ const TypewriterWords = dynamic(() => import("@/components/ui/TypewriterWords"),
   loading: () => <span className="text-blue-600">work</span>,
 });
 
-type Locale = "en" | "ru" | "ua";
+type Locale = "en" | "ru" | "uk";
 type Category = { id: string; name: string; slug: string };
 
 type Props = {
@@ -44,7 +44,7 @@ export default function HeroWithFilters({
   // Each locale provides its own word list
   const HERO_ANIMATED_WORDS: Record<string, string[]> = {
     en: ["work", "travel", "life", "business"],
-    ua: ["роботи", "подорожей", "життя", "бізнесу"],
+    uk: ["роботи", "подорожей", "життя", "бізнесу"],
     ru: ["работы", "путешествия", "жизни", "бизнеса"],
   };
 

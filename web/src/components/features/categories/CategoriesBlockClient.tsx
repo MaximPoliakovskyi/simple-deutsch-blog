@@ -6,7 +6,7 @@ import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
-type Locale = "en" | "ru" | "ua";
+type Locale = "en" | "ru" | "uk";
 type Category = { id: string; name: string; slug: string };
 
 type Props = {
@@ -49,20 +49,60 @@ export default function CategoriesBlockClient({
       setIsFetching(true);
       setIsLoading(true);
       try {
+        // For Ukrainian and Russian locales, fetch English posts first (then translate)
+        const shouldFetchEnglish = locale === "uk" || locale === "ru";
+        const fetchLang = shouldFetchEnglish ? undefined : locale;
+        
         const url = new URL("/api/posts", window.location.origin);
         // Fetch a large batch to get all available posts for this tag
         url.searchParams.set("first", "100");
         url.searchParams.set("tag", selectedCategory);
-        url.searchParams.set("lang", locale ?? "en");
+        if (fetchLang) {
+          url.searchParams.set("lang", fetchLang);
+        }
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         
         const data = await res.json();
+        let posts = data.posts ?? [];
         
         if (cancelled) return;
         
-        setAllPosts(data.posts ?? []);
+        // If Ukrainian or Russian locale, fetch translated versions of posts
+        if (shouldFetchEnglish && posts.length > 0) {
+          const translatedPosts: any[] = [];
+          const targetLangCode = locale === "uk" ? "UK" : locale === "ru" ? "RU" : null;
+          
+          if (targetLangCode) {
+            for (const post of posts) {
+              const translation = post.translations?.find((t: any) => t.language?.code === targetLangCode);
+              
+              if (translation?.slug) {
+                try {
+                  // Fetch translated version
+                  const translatedUrl = new URL("/api/posts", window.location.origin);
+                  translatedUrl.searchParams.set("slug", translation.slug);
+                  const translatedRes = await fetch(translatedUrl.toString());
+                  
+                  if (translatedRes.ok) {
+                    const translatedData = await translatedRes.json();
+                    const translatedPost = translatedData.posts?.[0];
+                    if (translatedPost) {
+                      translatedPosts.push(translatedPost);
+                    }
+                  }
+                } catch (err) {
+                  console.error(`Failed to fetch ${locale} post ${translation.slug}:`, err);
+                }
+              }
+            }
+            
+            posts = translatedPosts;
+          }
+        }
+        
+        setAllPosts(posts);
         setDisplayedCount(pageSize);
       } catch (error) {
         console.error("Failed to fetch posts:", error);

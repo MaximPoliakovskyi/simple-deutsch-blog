@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Locale } from "@/server/wp/fetchPosts";
 import PostsIndex from "../../../posts/PostsIndex";
 
-const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const isSupportedLocale = (locale: string): locale is SupportedLocale =>
   SUPPORTED_LOCALES.includes(locale as SupportedLocale);

@@ -5,6 +5,7 @@ export const GET_POST_BY_SLUG = /* GraphQL */ `
   query PostBySlug($slug: ID!) {
     post(id: $slug, idType: SLUG) {
       id
+      databaseId
       slug
       title
       date
@@ -20,9 +21,25 @@ export const GET_POST_BY_SLUG = /* GraphQL */ `
           }
         }
       }
+      featuredImageUrl
       author {
         node {
           name
+        }
+      }
+      language {
+        code
+        slug
+        locale
+      }
+      translations {
+        databaseId
+        slug
+        uri
+        language {
+          code
+          slug
+          locale
         }
       }
       categories {
@@ -30,10 +47,6 @@ export const GET_POST_BY_SLUG = /* GraphQL */ `
           name
           slug
         }
-      }
-      seo {
-        title
-        metaDesc
       }
     }
   }
@@ -57,11 +70,11 @@ export const GET_CATEGORY_BY_SLUG = /* GraphQL */ `
 
 // --- Posts filtered by category slug ---
 export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
-  query PostsByCategorySlug($slug: String!, $first: Int!, $after: String) {
+  query PostsByCategorySlug($slug: String!, $first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
     posts(
       first: $first
       after: $after
-      where: { categoryName: $slug, orderby: { field: DATE, order: DESC }, status: PUBLISH }
+      where: { categoryName: $slug, orderby: { field: DATE, order: DESC }, status: PUBLISH, language: $language }
     ) {
       pageInfo {
         hasNextPage
@@ -84,9 +97,25 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
             }
           }
         }
+        featuredImageUrl
         author {
           node {
             name
+          }
+        }
+        language {
+          code
+          slug
+          locale
+        }
+        translations {
+          databaseId
+          slug
+          uri
+          language {
+            code
+            slug
+            locale
           }
         }
         categories {
@@ -100,6 +129,110 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
             name
             slug
           }
+        }
+      }
+    }
+  }
+`;
+
+// Fetch post with all translations using URI
+export const GET_POST_BY_URI = /* GraphQL */ `
+  query PostByUri($uri: String!) {
+    post(id: $uri, idType: URI) {
+      id
+      databaseId
+      slug
+      title
+      date
+      excerpt
+      content
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+          mediaDetails {
+            width
+            height
+          }
+        }
+      }
+      featuredImageUrl
+      author {
+        node {
+          name
+        }
+      }
+      language {
+        code
+        slug
+        locale
+      }
+      translations {
+        databaseId
+        slug
+        uri
+        language {
+          code
+          slug
+          locale
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
+        }
+      }
+    }
+  }
+`;
+
+// Final fetch: fetch by databaseId to avoid slug ambiguity across languages
+export const GET_POST_BY_DATABASE_ID = /* GraphQL */ `
+  query PostByDatabaseId($id: ID!) {
+    post(id: $id, idType: DATABASE_ID) {
+      id
+      databaseId
+      slug
+      title
+      date
+      excerpt
+      content
+      featuredImage {
+        node {
+          sourceUrl
+          altText
+          mediaDetails {
+            width
+            height
+          }
+        }
+      }
+      featuredImageUrl
+      author {
+        node {
+          name
+        }
+      }
+      language {
+        code
+        slug
+        locale
+      }
+      translations {
+        databaseId
+        slug
+        uri
+        language {
+          code
+          slug
+          locale
+        }
+      }
+      categories {
+        nodes {
+          name
+          slug
         }
       }
     }
@@ -127,8 +260,8 @@ export const GET_ALL_CATEGORIES = /* GraphQL */ `
 
 // --- Feed with categories included ---
 export const GET_POSTS = /* GraphQL */ `
-  query PostsFeed($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID]) {
-    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryIn: $categoryIn, tagIn: $tagIn }) {
+  query PostsFeed($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID], $language: LanguageCodeFilterEnum) {
+    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryIn: $categoryIn, tagIn: $tagIn, language: $language }) {
       pageInfo {
         hasNextPage
         endCursor
@@ -144,11 +277,31 @@ export const GET_POSTS = /* GraphQL */ `
           node {
             sourceUrl
             altText
+            mediaDetails {
+              width
+              height
+            }
           }
         }
+        featuredImageUrl
         author {
           node {
             name
+          }
+        }
+        language {
+          code
+          slug
+          locale
+        }
+        translations {
+          databaseId
+          slug
+          uri
+          language {
+            code
+            slug
+            locale
           }
         }
         categories {
@@ -170,8 +323,8 @@ export const GET_POSTS = /* GraphQL */ `
 
 // --- Cursor-based connection (edges) with categories included ---
 export const POSTS_CONNECTION = /* GraphQL */ `
-  query PostsConnection($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID]) {
-    posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}, categoryIn: $categoryIn, tagIn: $tagIn}) {
+  query PostsConnection($first: Int!, $after: String, $categoryIn: [ID], $tagIn: [ID], $language: LanguageCodeFilterEnum) {
+    posts(first: $first, after: $after, where: {orderby: {field: DATE, order: DESC}, categoryIn: $categoryIn, tagIn: $tagIn, language: $language}) {
       pageInfo {
         hasNextPage
         endCursor
@@ -185,6 +338,21 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           excerpt
           content
           date
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
           featuredImage {
             node {
               sourceUrl
@@ -195,6 +363,7 @@ export const POSTS_CONNECTION = /* GraphQL */ `
               }
             }
           }
+          featuredImageUrl
           author {
             node {
               name
@@ -225,9 +394,9 @@ export const POSTS_CONNECTION = /* GraphQL */ `
 
 // Explicit category-based connection (intersection-ready)
 export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
-  query PostsByCategory($first: Int!, $after: String, $langSlug: String!, $categorySlug: ID!) {
+  query PostsByCategory($first: Int!, $after: String, $categorySlug: ID!) {
     category(id: $categorySlug, idType: SLUG) {
-      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryName: $langSlug }) {
+      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC } }) {
         pageInfo {
           hasNextPage
           endCursor
@@ -239,6 +408,21 @@ export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
           excerpt
           content
           date
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
           featuredImage {
             node {
               sourceUrl
@@ -249,6 +433,7 @@ export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
               }
             }
           }
+          featuredImageUrl
           author {
             node {
               name
@@ -279,9 +464,9 @@ export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
 
 // Explicit tag-based connection (allows categoryIn + tagIn intersection)
 export const GET_POSTS_BY_TAG = /* GraphQL */ `
-  query PostsByTag($first: Int!, $after: String, $langSlug: String!, $tagSlug: ID!) {
+  query PostsByTag($first: Int!, $after: String, $tagSlug: ID!) {
     tag(id: $tagSlug, idType: SLUG) {
-      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, categoryName: $langSlug }) {
+      posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC } }) {
         pageInfo {
           hasNextPage
           endCursor
@@ -293,6 +478,21 @@ export const GET_POSTS_BY_TAG = /* GraphQL */ `
           excerpt
           content
           date
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
           featuredImage {
             node {
               sourceUrl
@@ -303,6 +503,7 @@ export const GET_POSTS_BY_TAG = /* GraphQL */ `
               }
             }
           }
+          featuredImageUrl
           author {
             node {
               name
@@ -332,13 +533,14 @@ export const GET_POSTS_BY_TAG = /* GraphQL */ `
 `;
 
 export const GET_POSTS_INDEX = /* GraphQL */ `
-  query PostsIndex($first: Int!, $after: String, $langSlug: String!) {
+  query PostsIndex($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
     posts(
       first: $first
       after: $after
       where: {
         orderby: { field: DATE, order: DESC }
-        categoryName: $langSlug
+        status: PUBLISH
+        language: $language
       }
     ) {
       pageInfo {
@@ -354,6 +556,21 @@ export const GET_POSTS_INDEX = /* GraphQL */ `
           excerpt
           content
           date
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
           featuredImage {
             node {
               sourceUrl
@@ -364,6 +581,7 @@ export const GET_POSTS_INDEX = /* GraphQL */ `
               }
             }
           }
+          featuredImageUrl
           author {
             node {
               name
@@ -394,8 +612,8 @@ export const GET_POSTS_INDEX = /* GraphQL */ `
 
 // --- Search posts with categories included ---
 export const SEARCH_POSTS = /* GraphQL */ `
-  query SearchPosts($search: String!, $first: Int!, $after: String) {
-    posts(where: { search: $search, status: PUBLISH }, first: $first, after: $after) {
+  query SearchPosts($search: String!, $first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
+    posts(where: { search: $search, status: PUBLISH, language: $language }, first: $first, after: $after) {
       pageInfo {
         endCursor
         hasNextPage
@@ -418,11 +636,18 @@ export const SEARCH_POSTS = /* GraphQL */ `
             }
           }
         }
+        featuredImageUrl
         categories {
           nodes {
             id
             name
             slug
+          }
+        }
+        translations {
+          slug
+          language {
+            code
           }
         }
       }
@@ -481,12 +706,32 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
           date
           excerpt
           content
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
           featuredImage {
             node {
               sourceUrl
               altText
+              mediaDetails {
+                width
+                height
+              }
             }
           }
+          featuredImageUrl
           categories {
             nodes {
               name

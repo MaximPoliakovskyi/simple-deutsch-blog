@@ -5,11 +5,12 @@ import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPa
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { PostListItem } from "@/server/wp/api";
 import { getTagBySlug, getCategoryBySlug, getPostsByTag } from "@/server/wp/api";
+import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 export const revalidate = 600;
 
 type Params = { tag: string };
-type LanguageSlug = "en" | "ru" | "ua";
+type LanguageSlug = "en" | "ru" | "uk";
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 
 type TagNode = {
@@ -45,7 +46,7 @@ export default async function LevelPage({
   locale,
 }: {
   params: Promise<Params>;
-  locale?: "en" | "ru" | "ua";
+  locale?: "en" | "ru" | "uk";
 }) {
   const { tag } = await params;
 
@@ -53,12 +54,16 @@ export default async function LevelPage({
   if (!term) return notFound();
   const PAGE_SIZE = 3;
 
-  const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "ua"] as const;
+  const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "uk"] as const;
 
   function getPostLanguage(post: {
     slug?: string;
     categories?: { nodes?: { slug?: string | null }[] } | null;
+    language?: { code?: string | null } | null;
   }): LanguageSlug | null {
+    const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
+    if (fromLangField) return fromLangField as LanguageSlug;
+
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
       .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
@@ -72,9 +77,18 @@ export default async function LevelPage({
 
   const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
 
-  const pageRes = await getPostsByTag({ first: PAGE_SIZE, after: null, langSlug: lang, tagSlug: tag });
+  // Build locale-specific tag slug: English uses "b1", Russian uses "b1-ru", Ukrainian uses "b1-uk"
+  const localeTagSlug = lang === "en" ? tag : `${tag}-${lang}`;
+
+  const pageRes = await getPostsByTag({ first: PAGE_SIZE, after: null, locale: lang, tagSlug: localeTagSlug });
   const initialPosts = pageRes.posts as any[];
   const initialPageInfo = pageRes.pageInfo;
+  const query: { lang: LanguageSlug; categorySlug: null; tagSlug: string | null; level: string | null } = {
+    lang,
+    categorySlug: null,
+    tagSlug: localeTagSlug,
+    level: null,
+  };
 
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
   const prefix = (t["level.titlePrefix"] as string) ?? (t.levelLabel as string) ?? "Level:";
@@ -88,7 +102,13 @@ export default async function LevelPage({
     <main className="mx-auto max-w-7xl px-4 py-10">
       <h1 className="mb-6 text-3xl font-semibold">{code && levelLabel ? `${prefix} ${emoji ? `${emoji} ` : ""}${code} (${levelLabel})` : `${prefix} ${term.name}`}</h1>
 
-      <PostsGridWithPagination key={`${lang}-tag-${tag}`} initialPosts={initialPosts} initialPageInfo={initialPageInfo} pageSize={PAGE_SIZE} query={{ lang, categorySlug: null, tagSlug: tag, level: null }} />
+      <PostsGridWithPagination
+        key={`${lang}-tag-${tag}`}
+        initialPosts={initialPosts}
+        initialPageInfo={initialPageInfo}
+        pageSize={PAGE_SIZE}
+        query={query}
+      />
     </main>
   );
 }

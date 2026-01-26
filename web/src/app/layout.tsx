@@ -33,6 +33,8 @@ const geistMono = Geist_Mono({
 
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const isProd = process.env.NODE_ENV === "production";
+
   return (
     <html lang="de" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
@@ -70,8 +72,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Homepage-only components are rendered by their pages now. */}
           <Footer />
         </LocaleProvider>
-        <Analytics mode="production" />
-        <SpeedInsights sampleRate={0.1} />
+        {isProd ? <Analytics mode="production" /> : null}
+        {isProd ? <SpeedInsights sampleRate={0.1} /> : null}
       </body>
     </html>
   );

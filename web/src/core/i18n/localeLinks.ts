@@ -1,4 +1,4 @@
-export type SiteLang = "en" | "ru" | "ua";
+export type SiteLang = "en" | "ru" | "uk";
 
 /**
  * Build a localized href that reproduces the Navigation's language-switch

@@ -57,17 +57,18 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
 
   if (!posts?.length) return null;
 
-  // Only posts in “Success stories”; hide that chip from list
-  // Use category slug for matching because category name can include emoji or
-  // localized text. The WP slug for this category is `success-stories`.
-  const filteredPosts = posts
-    .filter((post) => post?.categories?.nodes?.some((cat) => cat?.slug === "success-stories"))
-    .map((post) => ({
-      ...post,
-      categories: {
-        nodes: post?.categories?.nodes?.filter((cat) => cat?.slug !== "success-stories") ?? [],
-      },
-    }));
+  // Server already filtered and prepared the posts, just use them directly
+  // Remove the success-stories chip from display if it exists
+  const displayPosts = posts.map((post) => ({
+    ...post,
+    categories: {
+      nodes: post?.categories?.nodes?.filter((cat) => 
+        cat?.slug !== "success-stories" && 
+        cat?.slug !== "success-stories-uk" &&
+        cat?.slug !== "success-stories-ru"
+      ) ?? [],
+    },
+  }));
 
   const baseBtn =
     "h-10 w-10 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -185,7 +186,7 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
             }
           `}</style>
 
-          {filteredPosts.map((post, i: number) => (
+          {displayPosts.map((post, i: number) => (
             <div key={post.id ?? post.slug ?? i} data-card className="snap-start shrink-0">
               <PostCard post={post} priority={i < 3} />
             </div>

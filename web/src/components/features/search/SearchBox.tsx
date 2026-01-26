@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
@@ -19,8 +19,9 @@ export default function SearchBox({
 }: Props) {
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const pathname = usePathname();
 	const inputRef = useRef<HTMLInputElement>(null);
-	const { t } = useI18n();
+	const { t, locale } = useI18n();
 
 	const initial = (searchParams.get("q") ?? "").trim();
 	const [value, setValue] = useState(initial);
@@ -50,7 +51,9 @@ export default function SearchBox({
 					const next = e.target.value;
 					setValue(next);
 					const q = next.trim();
-					const nextUrl = q ? `/search?q=${encodeURIComponent(q)}` : `/search`;
+					// Preserve locale prefix in search URL
+					const localePrefix = locale && locale !== "en" ? `/${locale}` : "";
+					const nextUrl = q ? `${localePrefix}/search?q=${encodeURIComponent(q)}` : `${localePrefix}/search`;
 					const currentQ = (searchParams.get("q") ?? "").trim();
 					if (currentQ === q) return;
 					startTransition(() => {

@@ -25,7 +25,7 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage(
-  { searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "ua" } = {
+  { searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "uk" } = {
     searchParams: Promise.resolve({}),
   },
 ) {
@@ -34,13 +34,19 @@ export default async function SearchPage(
   const after = sp.after ?? null;
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
 
-  const { posts, pageInfo }: SearchResult = await searchPosts({ query: q, first: 10, after });
-  // If a locale is provided, filter search results to posts that include the
-  // language category (slug === locale). This mirrors the language filtering
-  // used in the posts API.
-  const filteredPosts: WPPostCard[] = locale
-    ? posts.filter((p) => (p?.categories?.nodes ?? []).some((c) => c?.slug === locale))
-    : posts;
+  // For Russian/Ukrainian sites, don't search if query contains only Latin characters
+  let posts: WPPostCard[] = [];
+  let pageInfo = { endCursor: null as string | null, hasNextPage: false };
+  
+  const shouldSkipSearch = (locale === "uk" || locale === "ru") && q && /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
+  
+  if (!shouldSkipSearch && q) {
+    // Map UI locale to WordPress language code for filtering at WordPress level
+    const wpLang = locale === "uk" ? "UK" : locale === "ru" ? "RU" : "EN";
+    const result: SearchResult = await searchPosts({ query: q, first: 10, after, language: wpLang });
+    posts = result.posts;
+    pageInfo = result.pageInfo;
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
@@ -60,7 +66,7 @@ export default async function SearchPage(
       )}
 
       <section className="grid gap-6">
-        {filteredPosts.map((p: WPPostCard) => (
+        {posts.map((p: WPPostCard) => (
           <PostCard key={p.id} post={p} />
         ))}
       </section>
@@ -68,7 +74,7 @@ export default async function SearchPage(
       {q && pageInfo.hasNextPage ? (
         <div className="mt-8 flex justify-center">
           <a
-            href={`/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
+            href={`${locale ? `/${locale}` : ""}/search?q=${encodeURIComponent(q)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
             className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
           >
             {t.loadMore}

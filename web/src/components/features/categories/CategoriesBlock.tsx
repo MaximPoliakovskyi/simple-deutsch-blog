@@ -5,7 +5,7 @@ import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
 import { CEFR_SLUGS } from "@/core/cefr/levels";
 
-type Locale = "en" | "ru" | "ua";
+type Locale = "en" | "ru" | "uk";
 type TagNode = { id: string; name: string; slug: string };
 type Category = { id: string; name: string; slug: string };
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
@@ -19,10 +19,9 @@ export default async function CategoriesBlock({
 }: {
   locale?: Locale;
 } = {}): Promise<ReactElement> {
-  // Fetch a small set of tags to display in this block (we'll surface only
-  // the level tags A1..C2 here). Keep the same client props shape so the
-  // client component can be reused without layout changes.
-  const tagsResp = await getAllTags({ first: 12 });
+  // Fetch enough tags to ensure we get all CEFR level tags (A1-C2)
+  // Increased from 12 to 50 to make sure A1 and C1 are included
+  const tagsResp = await getAllTags({ first: 50 });
   const tags = extractConnectionNodes<TagNode>(tagsResp?.tags).map((t) => ({
     id: t.id,
     name: t.name,

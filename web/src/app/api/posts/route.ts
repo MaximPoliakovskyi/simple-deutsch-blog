@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPosts, getPostsByTagSlug, getPostsPageByCategory } from "@/server/wp/api";
+import { getPosts, getPostsByTagSlug, getPostsPageByCategory, getPostBySlug } from "@/server/wp/api";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
@@ -8,12 +8,13 @@ export async function GET(req: Request) {
   const lang = searchParams.get("lang");
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");
+  const slug = searchParams.get("slug");
   const first = Number(searchParams.get("first")) || 200;
   
   // When filtering by language, fetch more posts to ensure we get enough after filtering
-  const fetchCount = lang ? first * 10 : first;
+  const fetchCount = lang ? first * 2 : first;
 
-  console.log(`[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", first=${first}, fetchCount=${fetchCount}`);
+  console.log(`[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`);
 
   try {
     let posts: any[] = [];
@@ -22,49 +23,30 @@ export async function GET(req: Request) {
       endCursor: null,
     };
 
-    if (tag) {
-      const res = await getPostsByTagSlug(tag, fetchCount);
+    if (slug) {
+      const post = await getPostBySlug(slug);
+      posts = post ? [post] : [];
+      console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
+    } else if (tag) {
+      const res = await getPostsByTagSlug(tag, fetchCount, undefined, lang ?? undefined);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts from tag "${tag}"`);
+      console.log(`[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`);
     } else if (category) {
-      const res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category });
+      const res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category, locale: lang ?? undefined });
       posts = res.posts;
       pageInfo = res.pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts from category "${category}"`);
+      console.log(`[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`);
     } else if (lang) {
       const res = await getPosts({ first: fetchCount, locale: lang });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts for locale "${lang}"`);
     } else {
-      const res = await getPosts(first);
+      const res = await getPosts({ first: fetchCount });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts (no filters)`);
-    }
-
-    // Apply language filtering when lang parameter is provided
-    if (lang) {
-      const beforeCount = posts.length;
-      posts = posts.filter((p: any) => {
-        const langs = (p?.categories?.nodes ?? []).map((c: any) => c?.slug).filter((s: any) => s);
-        const hasLang = langs.includes(lang);
-        return hasLang;
-      });
-      console.log(`[API /api/posts] Filtered ${beforeCount} → ${posts.length} posts for lang="${lang}"`);
-      console.log(`[API /api/posts] Sample post languages:`, posts.slice(0, 3).map((p: any) => ({
-        slug: p.slug,
-        langs: p?.categories?.nodes?.map((c: any) => c?.slug)
-      })));
-      
-      // Slice to return exactly 'first' posts and update hasNextPage
-      const hasMore = posts.length > first;
-      posts = posts.slice(0, first);
-      // Keep hasNextPage true if we either saw more filtered posts or upstream signaled more
-      pageInfo.hasNextPage = hasMore || pageInfo.hasNextPage;
-      
-      console.log(`[API /api/posts] Returning ${posts.length} posts, hasNextPage=${pageInfo.hasNextPage}`);
     }
 
     return NextResponse.json({ posts, pageInfo });

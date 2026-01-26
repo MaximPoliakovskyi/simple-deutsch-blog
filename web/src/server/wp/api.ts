@@ -4,7 +4,9 @@ import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,
   GET_CATEGORY_BY_SLUG,
+  GET_POST_BY_DATABASE_ID,
   GET_POST_BY_SLUG,
+  GET_POST_BY_URI,
   GET_POSTS,
   GET_POSTS_BY_CATEGORY_SLUG,
   GET_POSTS_BY_TAG_SLUG,
@@ -15,6 +17,9 @@ import {
   GET_POSTS_BY_TAG,
   GET_POSTS_INDEX,
 } from "@/server/wp/queries";
+import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
+
+type NextInit = RequestInit & { next?: { revalidate?: number; tags?: string[] } };
 
 // ---------- Shared types ----------
 export type Term = {
@@ -43,18 +48,35 @@ export type WPImage = {
 
 export type WPAuthor = { name: string; slug: string };
 
+export type PostLanguage = {
+  code: "EN" | "RU" | "UK";
+  slug: "en" | "ru" | "uk";
+  locale: string;
+};
+
+export type PostTranslation = {
+  databaseId: number;
+  slug: string;
+  uri: string;
+  language: PostLanguage;
+};
+
 // For simple lists pulled from tag/category queries etc.
 export type PostListItem = {
   id: string;
+  databaseId?: number;
   slug: string;
   title: string;
   date: string;
   excerpt: string | null;
   content?: string | null;
   featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
+  featuredImageUrl?: string | null;
   author?: { node?: { name?: string | null } | null } | null;
   categories?: { nodes: Array<{ name: string; slug: string }> };
   tags?: { nodes: Array<{ name: string; slug: string }> };
+  language?: PostLanguage | null;
+  translations?: PostTranslation[] | null;
 };
 
 type Connection<TNode> = {
@@ -69,11 +91,18 @@ export async function getCategoryBySlug(slug: string) {
 }
 
 // ---------- Posts (filtered) ----------
-export async function getPostsByCategorySlug(slug: string, first = 12, after?: string) {
+export async function getPostsByCategorySlug(
+  slug: string,
+  first = 12,
+  after?: string,
+  locale?: "en" | "ru" | "uk",
+) {
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
   return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS_BY_CATEGORY_SLUG, {
     slug,
     first,
     after: after ?? null,
+    language: language ?? null,
   });
 }
 
@@ -90,7 +119,7 @@ export async function getPosts(opts: {
   search?: string;
   categoryIn?: string[]; // reserved for future use
   tagIn?: string[]; // reserved for future use
-  locale?: string; // language category slug (en, ru, ua)
+  locale?: "en" | "ru" | "uk"; // language locale
 }): Promise<{ posts: Connection<PostListItem> }>;
 
 // Implementation
@@ -103,31 +132,21 @@ export async function getPosts(
         search?: string;
         categoryIn?: string[];
         tagIn?: string[];
-        locale?: string;
+        locale?: "en" | "ru" | "uk";
       },
   maybeAfter?: string,
 ): Promise<{ posts: Connection<PostListItem> }> {
   const first = typeof arg1 === "number" ? arg1 : arg1.first;
   const after = typeof arg1 === "number" ? maybeAfter : arg1.after;
-  const locale = typeof arg1 === "number" ? undefined : (arg1.locale as string | undefined);
-
-  // If a locale (language category slug) is provided, use the category query
-  // to filter posts by that language category. Otherwise use the generic feed.
-  if (locale) {
-    const res = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
-      GET_POSTS_BY_CATEGORY_SLUG,
-      {
-        slug: locale,
-        first,
-        after: after ?? null,
-      },
-    );
-    return res;
-  }
+  const locale = typeof arg1 === "number" ? undefined : arg1.locale;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
 
   return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, {
     first,
     after: after ?? null,
+    categoryIn: null,
+    tagIn: null,
+    language: language ?? null,
   });
 }
 
@@ -135,16 +154,20 @@ export async function getPosts(
 export type PostDetail = PostListItem & {
   content: string | null;
   seo?: { title?: string | null; metaDesc?: string | null } | null;
-  translations?: Array<{
-    id?: string;
-    slug?: string;
-    uri?: string;
-    language?: { code?: string | null } | null;
-  }>;
 };
 
-export async function getPostBySlug(slug: string) {
-  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_SLUG, { slug });
+export async function getPostBySlug(slug: string, init?: NextInit) {
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_SLUG, { slug }, init);
+  return data.post ?? null;
+}
+
+export async function getPostByUri(uri: string, init?: NextInit) {
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_URI, { uri }, init);
+  return data.post ?? null;
+}
+
+export async function getPostByDatabaseId(id: number, init?: NextInit) {
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_DATABASE_ID, { id }, init);
   return data.post ?? null;
 }
 
@@ -165,8 +188,10 @@ export type WPPostCard = {
   excerpt: string;
   date: string;
   featuredImage?: { node?: WPImage | null } | null;
+  featuredImageUrl?: string | null;
   author?: { node?: WPAuthor | null } | null;
   categories?: { nodes: { id?: string; name: string; slug: string }[] };
+  language?: PostLanguage | null;
 };
 
 export type PostsConnectionResponse = {
@@ -200,14 +225,15 @@ export async function getPostsPageFiltered(params: {
   after?: string | null;
   categoryIn?: number[] | null;
   tagIn?: number[] | null;
+  locale?: "en" | "ru" | "uk";
 }) {
-  const { first, after, categoryIn, tagIn } = params;
-  // keep legacy POSTS_CONNECTION path when IDs are used elsewhere
+  const { first, after, categoryIn, tagIn, locale } = params;
   const categoryIds = categoryIn?.map((n) => String(n)) ?? null;
   const tagIds = tagIn?.map((n) => String(n)) ?? null;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
   const data = await fetchGraphQL<PostsConnectionResponse>(
     POSTS_CONNECTION,
-    { first, after: after ?? null, categoryIn: categoryIds, tagIn: tagIds },
+    { first, after: after ?? null, categoryIn: categoryIds, tagIn: tagIds, language: language ?? null },
     { next: { revalidate: 300 } },
   );
 
@@ -220,45 +246,77 @@ export async function getPostsPageFiltered(params: {
 
 // Resolve numeric IDs from slugs
 // Strict upstream fetch helpers using slug-based taxQuery (intersection)
-export async function getPostsByCategory(params: { first: number; after?: string | null; langSlug?: string | null; categorySlug: string }) {
-  const { first, after, langSlug, categorySlug } = params;
+export async function getPostsByCategory(params: {
+  first: number;
+  after?: string | null;
+  locale?: "en" | "ru" | "uk";
+  categorySlug: string;
+}) {
+  const { first, after, locale, categorySlug } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+  
+  // Note: Categories use language-specific slugs (e.g., "success-stories" vs "success-stories-ru")
+  // So we don't need to filter by language - the category itself is language-specific
   const data = await fetchGraphQL<{
     category?: {
       posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
     };
   }>(
     GET_POSTS_BY_CATEGORY,
-    { first, after: after ?? null, langSlug: langSlug ?? "", categorySlug },
+    { first, after, categorySlug },
     { next: { revalidate: 300 } },
   );
 
   const nodes = data.category?.posts?.nodes ?? [];
   const pageInfo = data.category?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
-  return { posts: nodes, pageInfo };
+  
+  return {
+    posts: nodes,
+    pageInfo,
+  };
 }
 
-export async function getPostsByTag(params: { first: number; after?: string | null; langSlug?: string | null; tagSlug: string }) {
-  const { first, after, langSlug, tagSlug } = params;
+export async function getPostsByTag(params: {
+  first: number;
+  after?: string | null;
+  locale?: "en" | "ru" | "uk";
+  tagSlug: string;
+}) {
+  const { first, after, locale, tagSlug } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+  
+  // Note: Tags use language-specific slugs (e.g., "b1" vs "b1-ru")
+  // So we don't need to filter by language - the tag itself is language-specific
   const data = await fetchGraphQL<{
     tag?: {
       posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
     };
   }>(
     GET_POSTS_BY_TAG,
-    { first, after: after ?? null, langSlug: langSlug ?? "", tagSlug },
+    { first, after, tagSlug },
     { next: { revalidate: 300 } },
   );
 
   const nodes = data.tag?.posts?.nodes ?? [];
   const pageInfo = data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
-  return { posts: nodes, pageInfo };
+  
+  return {
+    posts: nodes,
+    pageInfo,
+  };
 }
 
-export async function getPostsIndex(params: { first: number; after?: string | null; langSlug?: string | null }) {
-  const { first, after, langSlug } = params;
+export async function getPostsIndex(params: {
+  first: number;
+  after?: string | null;
+  locale?: "en" | "ru" | "uk";
+}) {
+  const { first, after, locale } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+
   const data = await fetchGraphQL<PostsConnectionResponse>(
     GET_POSTS_INDEX,
-    { first, after: after ?? null, langSlug: langSlug ?? "" },
+    { first, after: after ?? null, language: language ?? null },
     { next: { revalidate: 300 } },
   );
 
@@ -270,14 +328,14 @@ export async function getPostsIndex(params: { first: number; after?: string | nu
 
 // Fetch all posts matching optional filters by looping upstream pagination.
 export async function getAllPostsByFilter(opts: {
-  lang?: "en" | "ru" | "ua" | string | undefined;
+  locale?: "en" | "ru" | "uk" | undefined;
   categorySlug?: string | null;
   tagSlug?: string | null;
   pageSize?: number;
   maxPages?: number;
   maxPosts?: number;
 }): Promise<Array<PostListItem | WPPostCard>> {
-  const { lang, categorySlug, tagSlug } = opts;
+  const { locale, categorySlug, tagSlug } = opts;
   const pageSize = opts.pageSize ?? 50;
   const maxPages = opts.maxPages ?? 50;
   const maxPosts = opts.maxPosts ?? 5000;
@@ -287,32 +345,23 @@ export async function getAllPostsByFilter(opts: {
   let hasNext = true;
   const all: Array<PostListItem | WPPostCard> = [];
 
-  const detectLang = (post: { slug?: string; categories?: { nodes?: { slug?: string | null }[] } | null }) => {
-    const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
-    const catLang = post.categories?.nodes?.map((c) => c?.slug).find((s) => s && LANGUAGE_SLUGS.includes(s as any));
-    if (catLang) return catLang as string;
-    const prefix = post.slug?.split("-")[0];
-    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix)) return prefix;
-    return null;
-  };
-
   while (hasNext && page < maxPages && all.length < maxPosts) {
     if (categorySlug) {
-      const res = await getPostsPageByCategory({ first: pageSize, after, categorySlug });
+      const res = await getPostsByCategory({ first: pageSize, after, categorySlug, locale });
       const nodes = res.posts ?? [];
       all.push(...nodes);
       const info = res.pageInfo ?? { hasNextPage: false, endCursor: null };
       hasNext = info.hasNextPage;
       after = info.endCursor ?? undefined;
     } else if (tagSlug) {
-      const r = await getPostsByTagSlug(tagSlug, pageSize, after);
-      const nodes = r.posts?.nodes ?? [];
+      const r = await getPostsByTag({ first: pageSize, after, tagSlug, locale });
+      const nodes = r.posts ?? [];
       all.push(...nodes);
-      const info = r.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+      const info = r.pageInfo ?? { hasNextPage: false, endCursor: null };
       hasNext = info.hasNextPage;
       after = info.endCursor ?? undefined;
     } else {
-      const res = (await getPosts({ first: pageSize, after, locale: lang })) as {
+      const res = (await getPosts({ first: pageSize, after, locale })) as {
         posts?: { nodes?: PostListItem[]; pageInfo?: { hasNextPage: boolean; endCursor: string | null } };
       };
       const nodes = res.posts?.nodes ?? [];
@@ -332,27 +381,15 @@ export async function getAllPostsByFilter(opts: {
     if (!map.has(key)) map.set(key, p);
   }
 
-  let result = Array.from(map.values());
-
-  // If a language was requested but the upstream category/tag queries don't
-  // support combined filters, apply language filtering on server-side.
-  if (lang) {
-    result = result.filter((p) => {
-      const detected = detectLang(p as any);
-      return detected ? detected === lang : true;
-    });
-  }
-
-  return result;
+  return Array.from(map.values());
 }
 
 // ---------- All posts (minimal fields) for counting by locale ----------
 /**
- * Fetches all published posts for the given locale (language category slug)
- * in a paginated loop, returning minimal fields (slug, categories, tags).
- * Uses the same locale filtering logic as the regular feed.
+ * Fetches all published posts for the given locale language
+ * in a paginated loop, returning minimal fields.
  */
-export async function getAllPostsForCounts(locale: "en" | "ru" | "ua", pageSize = 200) {
+export async function getAllPostsForCounts(locale: "en" | "ru" | "uk", pageSize = 200) {
   let after: string | undefined = undefined;
   let hasNext = true;
   const all: PostListItem[] = [];
@@ -375,14 +412,16 @@ export async function getPostsPageByCategory(params: {
   first: number;
   after?: string | null;
   categorySlug: string;
+  locale?: "en" | "ru" | "uk";
 }) {
-  const { first, after, categorySlug } = params;
+  const { first, after, categorySlug, locale } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
   // Reuse the category-based posts query to fetch nodes (pageInfo + nodes)
   const res = await fetchGraphQL<{
     posts: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: PostListItem[] };
   }>(
     GET_POSTS_BY_CATEGORY_SLUG,
-    { slug: categorySlug, first, after: after ?? null },
+    { slug: categorySlug, first, after: after ?? null, language: language ?? null },
     { next: { revalidate: 300 } },
   );
 
@@ -397,9 +436,10 @@ export type SearchPostsArgs = {
   query: string;
   first?: number;
   after?: string | null;
+  language?: "EN" | "RU" | "UK" | null;
 };
 
-export async function searchPosts({ query, first = 10, after = null }: SearchPostsArgs) {
+export async function searchPosts({ query, first = 10, after = null, language = "EN" }: SearchPostsArgs) {
   if (!query?.trim()) {
     return {
       posts: [] as WPPostCard[],
@@ -413,7 +453,7 @@ export async function searchPosts({ query, first = 10, after = null }: SearchPos
       pageInfo: { endCursor: string | null; hasNextPage: boolean };
       nodes: WPPostCard[];
     };
-  }>(SEARCH_POSTS, { search: query, first, after }, { next: { revalidate: 0 } });
+  }>(SEARCH_POSTS, { search: query, first, after, language }, { next: { revalidate: 0 } });
 
   return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
 }
@@ -432,7 +472,7 @@ export async function getTagBySlug(slug: string) {
   return data.tag ?? null;
 }
 
-export async function getPostsByTagSlug(slug: string, first = 12, after?: string) {
+export async function getPostsByTagSlug(slug: string, first = 12, after?: string, locale?: "en" | "ru" | "uk") {
   const data = await fetchGraphQL<{
     tag: {
       name: string;
@@ -445,8 +485,19 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
   }>(GET_POSTS_BY_TAG_SLUG, { slug, first, after: after ?? null });
 
   const tag = data.tag ?? null;
+  
+  // Filter posts by language if locale is provided
+  let posts = tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } };
+  if (locale && posts.nodes) {
+    const targetLang = mapUiToGraphQLEnum(locale);
+    posts = {
+      ...posts,
+      nodes: posts.nodes.filter(post => post.language?.code === targetLang),
+    };
+  }
+  
   return {
     tag,
-    posts: tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } },
+    posts,
   };
 }

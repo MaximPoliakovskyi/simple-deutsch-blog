@@ -24,7 +24,7 @@ export default function CategoryPills({
 }) {
   const { t, locale } = useI18n();
 
-  // Enforce fixed CEFR ordering on client-side
+  // Enforce fixed CEFR ordering on client-side (only for CEFR levels, not content categories)
   const CEFR_ORDER = React.useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
   const CEFR_ORDER_MAP = React.useMemo(() => {
     const m = new Map<string, number>();
@@ -42,15 +42,28 @@ export default function CategoryPills({
     C2: "bg-black",
   }), []);
 
-  // Sorted categories according to CEFR_ORDER; unknown slugs go after known ones
+  // Check if a category is a CEFR level
+  const isCefrLevel = React.useCallback((slug?: string): boolean => {
+    if (!slug) return false;
+    const upperSlug = slug.toUpperCase();
+    return CEFR_ORDER.includes(upperSlug);
+  }, [CEFR_ORDER]);
+
+  // Sorted categories: CEFR levels first (in order), then others
   const sortedCategories = React.useMemo(() => {
-    return [...categories].sort((a, b) => {
+    const cefr = categories.filter(c => isCefrLevel(c.slug));
+    const nonCefr = categories.filter(c => !isCefrLevel(c.slug));
+    
+    // Sort CEFR levels by CEFR_ORDER
+    const sortedCefr = cefr.sort((a, b) => {
       const ia = CEFR_ORDER_MAP.get(a.slug?.toUpperCase() ?? "") ?? 999;
       const ib = CEFR_ORDER_MAP.get(b.slug?.toUpperCase() ?? "") ?? 999;
-      if (ia !== ib) return ia - ib;
-      return 0;
+      return ia - ib;
     });
-  }, [categories, CEFR_ORDER_MAP]);
+
+    // Keep non-CEFR categories in their original order
+    return [...sortedCefr, ...nonCefr];
+  }, [categories, CEFR_ORDER_MAP, isCefrLevel]);
 
   // Helper to get CEFR level description by tag slug
   const getTagDescription = React.useCallback((slug: string): string | undefined => {
@@ -67,13 +80,15 @@ export default function CategoryPills({
   const defaultSelected = React.useMemo(() => {
     if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
 
-    // Prefer selecting the A1 level when available (case-insensitive match).
-    const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
-    if (a1) return a1.slug;
+    // Only prefer A1 if we're actually dealing with CEFR levels
+    if (sortedCategories.some(c => isCefrLevel(c.slug))) {
+      const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
+      if (a1) return a1.slug;
+    }
 
     if (required) return sortedCategories.length > 0 ? sortedCategories[0].slug : null;
     return null;
-  }, [initialSelected, required, sortedCategories]);
+  }, [initialSelected, required, sortedCategories, isCefrLevel]);
 
   const [selected, setSelected] = React.useState<string | null>(defaultSelected ?? null);
 

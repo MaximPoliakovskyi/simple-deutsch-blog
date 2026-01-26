@@ -4,6 +4,7 @@ import Link from "next/link";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { CEFR_LEVELS, CEFR_SLUGS, getLevelLabel, getLevelDescription, CEFR_ORDER, CEFR_UI_CONFIG } from "@/core/cefr/levels";
 import { getAllPostsForCounts, type PostListItem } from "@/server/wp/api";
+import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 export const revalidate = 600;
 
@@ -12,10 +13,10 @@ export const metadata: Metadata = {
   description: "Explore posts by level.",
 };
 
-export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru" | "ua" } = {}) {
+export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru" | "uk" } = {}) {
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
   const prefix = locale && locale !== DEFAULT_LOCALE ? `/${locale}` : "";
-  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "ua";
+  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "uk";
 
   const cefrOrderMap = new Map<string, number>(CEFR_ORDER.map((s, i) => [s.toLowerCase(), i]));
   const cefrLevels = [...CEFR_LEVELS].sort((a, b) => {
@@ -24,12 +25,16 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     return ia - ib;
   });
 
-  const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+  const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
   type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
   function getPostLanguage(post: {
     slug?: string;
     categories?: { nodes?: { slug?: string | null }[] } | null;
+    language?: { code?: string | null } | null;
   }): LanguageSlug | null {
+    const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
+    if (fromLangField) return fromLangField as LanguageSlug;
+
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
       .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
@@ -95,7 +100,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     levelsForPost.forEach((lvl) => countsMap.set(lvl, (countsMap.get(lvl) ?? 0) + 1));
   });
 
-  function formatPostCount(count: number, locale: "en" | "ru" | "ua") {
+  function formatPostCount(count: number, locale: "en" | "ru" | "uk") {
     if (locale === "en") {
       return `${count} ${count === 1 ? "post" : "posts"}`;
     }

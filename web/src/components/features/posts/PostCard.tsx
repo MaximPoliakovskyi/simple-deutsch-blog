@@ -35,7 +35,11 @@ export type PostCardPost = {
   author?: { node?: { name?: string | null } | null } | null;
   categories?: Categories;
   featuredImage?: FeaturedImageNode | FeaturedImageFlat | null;
+  featuredImageUrl?: string | null;
   readingMinutes?: number | null;
+  readingText?: string | null;
+  dateText?: string | null;
+  href?: string | null;
 };
 
 export type PostCardProps = {
@@ -65,6 +69,10 @@ function extractImage(p: PostCardPost) {
   // shape: { url, alt }
   if (hasFlatUrl(fi) && fi.url) {
     return { url: String(fi.url), alt: String(fi.alt ?? "") };
+  }
+  // Fallback: use featuredImageUrl from custom WP field (bypasses broken MediaItem)
+  if (p.featuredImageUrl) {
+    return { url: p.featuredImageUrl, alt: "" };
   }
   return { url: "", alt: "" };
 }
@@ -99,8 +107,8 @@ export default function PostCard({ post, className, priority = false }: PostCard
 
   const { t, locale } = useI18n();
 
-  const dateText = post.date
-    ? new Intl.DateTimeFormat(locale === "ua" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
+  const computedDateText = post.date
+    ? new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
         dateStyle: "long",
         timeZone: "UTC",
       }).format(new Date(post.date))
@@ -114,10 +122,11 @@ export default function PostCard({ post, className, priority = false }: PostCard
   );
 
   const prefix = locale === "en" ? "" : `/${locale}`;
+  const href = post.href ?? `${prefix}/posts/${post.slug}`;
 
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
-      <Link href={`${prefix}/posts/${post.slug}`} className="block" aria-label={post.title}>
+      <Link href={href} className="block" aria-label={post.title}>
         {/* Media — smoother zoom wrapper */}
         <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div
@@ -151,10 +160,9 @@ export default function PostCard({ post, className, priority = false }: PostCard
         </div>
 
         {/* Meta (date • reading time) */}
-        {(dateText || minutes) && (
+        {((post.dateText ?? computedDateText) || minutes) && (
           <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            {dateText} {dateText && minutes ? <span aria-hidden>·</span> : null}{" "}
-            {minutes ? `${minutes} ${t("minRead")}` : null}
+            {post.dateText ?? computedDateText} {(post.dateText ?? computedDateText) && (post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)) ? <span aria-hidden>·</span> : null} {post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)}
           </p>
         )}
 

@@ -1,5 +1,5 @@
 // Minimal translations for the site. Add keys as needed.
-export type Locale = "en" | "ua" | "ru" | "de";
+export type Locale = "en" | "uk" | "ru" | "de";
 
 type Translations = Record<string, string>;
 
@@ -220,7 +220,7 @@ const en: Translations = {
   "footer.copyright": "© {year} Simple Deutsch. German-language learning platform. All rights reserved.",
 };
 
-const ua: Translations = {
+const uk: Translations = {
   siteTitle: "Simple Deutsch",
   posts: "Пости",
   categories: "Категорії",
@@ -666,7 +666,7 @@ const de: Translations = {
 
 export const TRANSLATIONS: Record<Locale, Translations> = {
   en,
-  ua,
+  uk,
   ru,
   de,
 };
@@ -675,10 +675,10 @@ export const DEFAULT_LOCALE: Locale = "en";
 
 // Merge in content translations from JSON files (about page)
 import aboutEn from "@/content/i18n/about.en.json";
-import aboutUa from "@/content/i18n/about.ua.json";
+import aboutUk from "@/content/i18n/about.ua.json";
 import aboutRu from "@/content/i18n/about.ru.json";
 
 // Note: extend base translation objects with about.* keys
 Object.assign(en, aboutEn as Translations);
-Object.assign(ua, aboutUa as Translations);
+Object.assign(uk, aboutUk as Translations);
 Object.assign(ru, aboutRu as Translations);

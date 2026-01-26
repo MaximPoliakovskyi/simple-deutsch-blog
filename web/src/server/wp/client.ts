@@ -9,7 +9,8 @@ export async function fetchGraphQL<T>(
 ): Promise<T> {
   const endpoint =
     process.env.NEXT_PUBLIC_WP_GRAPHQL_ENDPOINT ?? "https://cms.simple-deutsch.de/graphql";
-  const defaultInit: NextInit = { next: { revalidate: 600 } };
+
+  const defaultInit: NextInit = init?.cache === "no-store" ? {} : { next: { revalidate: 600 } };
   const mergedNext = { ...defaultInit.next, ...init?.next };
   const finalInit = { ...defaultInit, ...init, next: mergedNext };
 

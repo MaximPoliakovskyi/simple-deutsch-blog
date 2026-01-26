@@ -5,7 +5,7 @@ import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { getTagBySlug } from "@/server/wp/api";
 import LevelPage from "../../../../levels/[tag]/page";
 
-const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+const SUPPORTED_LOCALES = ["ru", "uk"] as const;
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const isSupportedLocale = (locale: string): locale is SupportedLocale =>
   SUPPORTED_LOCALES.includes(locale as SupportedLocale);
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props) {
 export default async function LocalizedLevelPage({ params }: Props) {
   const { locale, tag } = await params;
 
-  if (locale !== "ru" && locale !== "ua") {
+  if (locale !== "ru" && locale !== "uk") {
     notFound();
   }
 

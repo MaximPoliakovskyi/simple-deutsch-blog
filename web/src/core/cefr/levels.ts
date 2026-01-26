@@ -14,12 +14,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "a1",
     label: {
       en: "A1 — Beginner",
-      ua: TRANSLATIONS.ua.a1Title,
+      uk: TRANSLATIONS.uk.a1Title,
       ru: TRANSLATIONS.ru.a1Title,
     },
     description: {
       en: "Beginner",
-      ua: TRANSLATIONS.ua.a1Description,
+      uk: TRANSLATIONS.uk.a1Description,
       ru: TRANSLATIONS.ru.a1Description,
     },
   },
@@ -27,12 +27,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "a2",
     label: {
       en: "A2 — Elementary",
-      ua: TRANSLATIONS.ua.a2Title,
+      uk: TRANSLATIONS.uk.a2Title,
       ru: TRANSLATIONS.ru.a2Title,
     },
     description: {
       en: "Elementary",
-      ua: TRANSLATIONS.ua.a2Description,
+      uk: TRANSLATIONS.uk.a2Description,
       ru: TRANSLATIONS.ru.a2Description,
     },
   },
@@ -40,12 +40,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "b1",
     label: {
       en: "B1 — Intermediate",
-      ua: TRANSLATIONS.ua.b1Title,
+      uk: TRANSLATIONS.uk.b1Title,
       ru: TRANSLATIONS.ru.b1Title,
     },
     description: {
       en: "Intermediate",
-      ua: TRANSLATIONS.ua.b1Description,
+      uk: TRANSLATIONS.uk.b1Description,
       ru: TRANSLATIONS.ru.b1Description,
     },
   },
@@ -53,12 +53,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "b2",
     label: {
       en: "B2 — Upper-intermediate",
-      ua: TRANSLATIONS.ua.b2Title,
+      uk: TRANSLATIONS.uk.b2Title,
       ru: TRANSLATIONS.ru.b2Title,
     },
     description: {
       en: "Upper-intermediate",
-      ua: TRANSLATIONS.ua.b2Description,
+      uk: TRANSLATIONS.uk.b2Description,
       ru: TRANSLATIONS.ru.b2Description,
     },
   },
@@ -66,12 +66,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "c1",
     label: {
       en: "C1 — Advanced",
-      ua: TRANSLATIONS.ua.c1Title,
+      uk: TRANSLATIONS.uk.c1Title,
       ru: TRANSLATIONS.ru.c1Title,
     },
     description: {
       en: "Advanced",
-      ua: TRANSLATIONS.ua.c1Description,
+      uk: TRANSLATIONS.uk.c1Description,
       ru: TRANSLATIONS.ru.c1Description,
     },
   },
@@ -79,12 +79,12 @@ export const CEFR_LEVELS: CeFrLevel[] = [
     slug: "c2",
     label: {
       en: "C2 — Near-native",
-      ua: TRANSLATIONS.ua.c2Title,
+      uk: TRANSLATIONS.uk.c2Title,
       ru: TRANSLATIONS.ru.c2Title,
     },
     description: {
       en: "Near-native",
-      ua: TRANSLATIONS.ua.c2Description,
+      uk: TRANSLATIONS.uk.c2Description,
       ru: TRANSLATIONS.ru.c2Description,
     },
   },

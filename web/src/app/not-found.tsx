@@ -12,13 +12,13 @@ export default function NotFound({ locale }: { locale?: Locale }) {
     if (locale) return locale as Locale;
     const first = pathname?.split("/")[1];
     if (first === "ru") return "ru" as Locale;
-    if (first === "ua") return "ua" as Locale;
+    if (first === "uk" || first === "ua") return "uk" as Locale; // Support legacy "ua" path
     return DEFAULT_LOCALE;
   })();
 
   const lang = inferred ?? DEFAULT_LOCALE;
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  const homeHref = lang === "ru" ? "/ru" : lang === "ua" ? "/ua" : "/";
+  const homeHref = lang === "ru" ? "/ru" : lang === "uk" ? "/uk" : "/";
 
   return (
     // Fullscreen overlay above everything (including header)

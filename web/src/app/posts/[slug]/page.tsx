@@ -2,42 +2,63 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import PostContent from "@/components/features/posts/PostContent";
+import PostLanguageLinksHydrator from "@/components/features/posts/PostLanguageLinksHydrator";
 import { generateTocFromHtml } from "@/core/content/generateToc";
 import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { getPostBySlug, getPostsPage, getPostsPageByCategory } from "@/server/wp/api"; // adjust path if yours differs
+import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
 import type { PostDetail, PostListItem } from "@/server/wp/api";
+import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
-const LANGUAGE_SLUGS = ["en", "ru", "ua"] as const;
+const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
 type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
-function getPostLanguage(post: {
-  slug?: string;
-  categories?: { nodes?: { slug?: string | null }[] } | null;
-}): LanguageSlug | null {
-  const catLang = post.categories?.nodes
-    ?.map((c) => c?.slug)
-    .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
-  if (catLang) return catLang as LanguageSlug;
-
-  const prefix = post.slug?.split("-")[0];
-  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
-    return prefix as LanguageSlug;
-  return null;
+function getPostLanguageFromGraphQL(post: PostDetail | null): LanguageSlug | null {
+  if (!post?.language?.code) return null;
+  return mapGraphQLEnumToUi(post.language.code);
 }
 
-// Optional: keep your ISR setting if you use it
-export const revalidate = 300; // 5 minutes
+const buildLocalizedPostPath = (lang: LanguageSlug, slugValue?: string | null) => {
+  if (!slugValue) return null;
+  const cleanSlug = slugValue.replace(/^\/+/g, "").replace(/\/+$/g, "");
+  return lang === DEFAULT_LOCALE ? `/posts/${cleanSlug}` : `/${lang}/posts/${cleanSlug}`;
+};
+
+// Hard-disable caching: always render language-specific content dynamically
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // 👇 In Next 15, params is async. Type it as a Promise and ALWAYS await it.
 type ParamsPromise = Promise<{ slug: string }>;
 
-export async function generateMetadata({ params }: { params: ParamsPromise }): Promise<Metadata> {
-  const { slug } = await params; // ✅ must await
+async function fetchPost(slug: string) {
+  const post = await getPostBySlug(slug, {
+    cache: "no-store",
+    next: { revalidate: 0 },
+  });
+  return post;
+}
 
-  const post = await getPostBySlug(slug);
+async function fetchMoreArticles(currentLang: LanguageSlug, currentSlug: string) {
+  try {
+    const res = await getPostsPageFiltered({ first: 12, locale: currentLang });
+    const nodes = res.posts ?? [];
+    return nodes
+      .filter((p) => p.slug !== currentSlug)
+      .slice(0, 4)
+      .map((p) => ({ slug: p.slug, title: p.title }));
+  } catch (err) {
+    console.error("Failed to fetch more articles", err);
+    return [] as { slug: string; title: string }[];
+  }
+}
+
+export async function generateMetadata({ params }: { params: ParamsPromise }): Promise<Metadata> {
+  const { slug } = await params;
+
+  const post = await fetchPost(slug);
   if (!post) return { title: TRANSLATIONS[DEFAULT_LOCALE].postNotFound };
 
   const title = post.seo?.title ?? post.title ?? "Simple Deutsch";
@@ -59,58 +80,58 @@ export default async function PostPage({
   locale,
 }: {
   params: ParamsPromise;
-  locale?: "en" | "ru" | "ua";
+  locale?: "en" | "ru" | "uk";
 }) {
   const { slug } = await params; // ✅ must await
 
-  // Try primary lookup by slug. Some WordPress setups or malformed links
-  // (encoding, trailing slashes, unexpected prefixes) may cause the direct
-  // GraphQL lookup to fail. Attempt a small fallback search before returning
-  // a 404 so we can recover in more cases.
-  let post = await getPostBySlug(slug);
-
-  async function findPostFallback(slugToCheck: string): Promise<PostDetail | null> {
-    // try decoding URI components and simple normalizations
-    const candidates = [
-      slugToCheck,
-      decodeURIComponent(slugToCheck || ""),
-      slugToCheck.replace(/^\/+/, ""),
-      slugToCheck.replace(/\.html?$/i, ""),
-    ];
-    // fetch a modest page of posts and try to match by slug
-    try {
-      const page: { posts: PostListItem[]; pageInfo: PageInfo } = await getPostsPage({ first: 50 });
-      const nodes = page.posts ?? [];
-      for (const cand of candidates) {
-        const found = nodes.find((n) => n.slug === cand);
-        if (found) {
-          // fetch full post detail for rendering
-          const full = await getPostBySlug(found.slug);
-          if (full) return full;
-        }
-      }
-    } catch (err) {
-      // ignore and fall through
-      console.error("Fallback post search failed:", err);
-    }
-    return null;
-  }
-
-  if (!post) {
-    post = await findPostFallback(slug);
-  }
-
+  const post = await fetchPost(slug);
   if (!post) return notFound();
 
-  
+  const postLanguageFromGraphQL = getPostLanguageFromGraphQL(post);
+  const desiredUiLang: LanguageSlug = (locale ?? DEFAULT_LOCALE) as LanguageSlug;
 
-  // We render static article content for this page (screenshot example).
+  // Build language links from translations[] array
+  const languageLinks: Record<LanguageSlug, string | null> = { en: null, ru: null, uk: null };
+
+  // Set links for all available translations
+  if (post.translations && Array.isArray(post.translations)) {
+    post.translations.forEach((translation) => {
+      const uiLang = mapGraphQLEnumToUi(translation.language?.code);
+      if (uiLang) {
+        const pathFromSlug = buildLocalizedPostPath(uiLang, translation.slug);
+
+        if (pathFromSlug) {
+          languageLinks[uiLang] = pathFromSlug;
+          return;
+        }
+
+        if (translation.uri) {
+          try {
+            const parsed = new URL(translation.uri, "https://simple-deutsch.de");
+            const normalizedPath = parsed.pathname.replace(/\/+$|^\/+/g, "");
+            languageLinks[uiLang] = normalizedPath ? `/${normalizedPath}` : null;
+            return;
+          } catch (err) {
+            console.error("Failed to normalize translation URI", err);
+          }
+        }
+
+        languageLinks[uiLang] = null;
+      }
+    });
+  }
+
+  // Ensure current language is in links
+  if (!languageLinks[desiredUiLang]) {
+    languageLinks[desiredUiLang] =
+      desiredUiLang === DEFAULT_LOCALE ? `/posts/${post.slug}` : `/${desiredUiLang}/posts/${post.slug}`;
+  }
 
   // derive dynamic values
   const authorName = post.author?.node?.name ?? "Unknown author";
   const date = post.date ? new Date(post.date) : null;
   // Format date according to the page locale (map our site locale -> Intl locale)
-  const localeForDate = (locale ?? DEFAULT_LOCALE) === "ua" ? "uk-UA" : (locale ?? DEFAULT_LOCALE);
+  const localeForDate = (locale ?? DEFAULT_LOCALE) === "uk" ? "uk-UA" : (locale ?? DEFAULT_LOCALE);
   const formattedDate = date
     ? date.toLocaleDateString(localeForDate, { year: "numeric", month: "long", day: "numeric" })
     : "";
@@ -119,7 +140,6 @@ export default async function PostPage({
     .filter((c) => c && !(LANGUAGE_SLUGS as readonly string[]).includes(c.slug ?? ""))
     .filter((c) => !isHiddenCategory(c?.name, c?.slug));
   const showCategories = visibleCategories.length > 0;
-  const _firstCategoryForFetch = visibleCategories.length > 0 ? visibleCategories[0] : null;
 
   // compute read time (approx) from word count (200 wpm)
   const words = post.content
@@ -146,33 +166,18 @@ export default async function PostPage({
     ? (paramLang as LanguageSlug)
     : ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
 
-  const currentLang = getPostLanguage(post) ?? (locale ?? DEFAULT_LOCALE);
+  const currentLang = postLanguageFromGraphQL ?? ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
 
   const withLocaleHref = (lang: string, postSlug: string) =>
     lang === DEFAULT_LOCALE ? `/posts/${postSlug}` : `/${lang}/posts/${postSlug}`;
 
   // fetch related / more posts for the sidebar — LANGUAGE ONLY (no topic/category logic)
-  let moreArticles: { slug: string; title: string }[] = [];
-  try {
-    const allLangRes: { posts: PostListItem[]; pageInfo: PageInfo } = await getPostsPageByCategory({
-      first: 20,
-      categorySlug: currentLang,
-    });
-    const nodes = allLangRes.posts ?? [];
-    moreArticles = nodes
-      .filter((p) => p.slug !== post.slug)
-      // safety: ensure post language matches currentLang
-      .filter((p) => getPostLanguage(p) === currentLang)
-      .map((p) => ({ slug: p.slug, title: p.title }))
-      .slice(0, 4);
-  } catch (err) {
-    // If the language-based fetch fails for some reason, fall back to an empty list.
-    console.error("Failed to fetch language posts for moreArticles:", err);
-    moreArticles = [];
-  }
+  const moreArticles = await fetchMoreArticles(currentLang, post.slug);
 
   return (
-    <main className="container mx-auto px-4 py-8">
+    <>
+      <PostLanguageLinksHydrator currentLang={desiredUiLang} links={languageLinks} />
+      <main className="container mx-auto px-4 py-8">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <article className="md:col-span-3">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
@@ -268,6 +273,7 @@ export default async function PostPage({
           </div>
         </aside>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

@@ -32,19 +32,21 @@ export default function PostsGridWithPagination({ initialPosts, initialPageInfo,
   const [isLoading, setIsLoading] = useState(false);
 
   const keySet = useMemo(() => new Set(posts.map((p) => stableKey(p))), [posts]);
-
   const loadMore = useCallback(async () => {
     if (!pageInfo.hasNextPage || isLoading) return;
     setIsLoading(true);
     try {
       const mode = query.tagSlug ? "tag" : query.categorySlug ? "category" : "index";
+      const skipIds = Array.from(keySet);
       const body = {
         first: pageSize,
         after: pageInfo.endCursor,
-        langSlug: query.lang,
+        locale: query.lang,
         mode,
         categorySlug: query.categorySlug ?? null,
         tagSlug: query.tagSlug ?? null,
+        level: query.level ?? null,
+        skipIds,
       };
 
       const res = await fetch(`/api/posts/load-more`, {

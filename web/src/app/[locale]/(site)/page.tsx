@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import HomePage from "../../page";
 
-const SUPPORTED_LOCALES = ["ru", "ua"] as const;
+const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
 type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
 const isSupportedLocale = (locale: string): locale is SupportedLocale =>
   SUPPORTED_LOCALES.includes(locale as SupportedLocale);

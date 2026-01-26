@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const SUPPORTED = ["en", "ru", "ua"] as const;
+const SUPPORTED = ["en", "ru", "uk"] as const;
 type Locale = (typeof SUPPORTED)[number];
 
 function mapLang(tag?: string | null): Locale | null {
   if (!tag) return null;
   const t = tag.toLowerCase();
-  if (t.startsWith("uk") || t.startsWith("uk-")) return "ua";
+  if (t.startsWith("uk") || t.startsWith("uk-")) return "uk";
   if (t.startsWith("ru") || t.startsWith("ru-")) return "ru";
   if (t.startsWith("en") || t.startsWith("en-")) return "en";
   return null;
@@ -45,7 +45,7 @@ export function middleware(req: NextRequest) {
     // examples:
     // /categories/exercises -> /categories/exercises-practice
     // /ru/category/speaking -> /ru/categories/speaking-pronunciation
-    const catMatch = pathname.match(/^\/(?:(ru|ua|en|de)\/)?(categories?|category)\/(exercises|tips|speaking)(\/|$)/i);
+    const catMatch = pathname.match(/^\/?(?:(ru|uk|en|de)\/)?(categories?|category)\/(exercises|tips|speaking)(\/|$)/i);
     if (catMatch) {
       try {
         const localePart = catMatch[1] ? `/${catMatch[1]}` : "";
@@ -82,7 +82,7 @@ export function middleware(req: NextRequest) {
     }
 
     // If path already contains a locale prefix, do nothing
-    const hasLocalePrefix = /^\/(ru|ua|en)(?:\/|$)/i.test(pathname);
+    const hasLocalePrefix = /^\/(ru|uk|en)(?:\/|$)/i.test(pathname);
     if (hasLocalePrefix) return NextResponse.next();
 
     // If cookie exists, honor it

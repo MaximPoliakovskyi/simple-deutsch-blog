@@ -71,7 +71,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       },
     ],
   },
-  ua: {
+  uk: {
     sections: [
       {
         title: "Категорії",
@@ -122,7 +122,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Мова",
         items: [
-          { label: "Українська", href: "#ua" },
+          { label: "Українська", href: "#uk" },
           { label: "Русский", href: "#ru" },
           { label: "English", href: "#en" },
         ],
@@ -228,7 +228,7 @@ export default function Footer() {
                 <div className="mt-3">
                   <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
                     {section.items.map((item) => {
-                      const isLangLink = section.title === (locale === "en" ? "Language" : locale === "ua" ? "Мова" : "Язык") && item.href.startsWith("#");
+                      const isLangLink = section.title === (locale === "en" ? "Language" : locale === "uk" ? "Мова" : "Язык") && item.href.startsWith("#");
                       // label resolution: use translations for the Impressum route
                       const dict = TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] || TRANSLATIONS[DEFAULT_LOCALE];
                       const resolvedLabel = item.href === "/impressum" ? (dict.imprint || item.label) : item.label;
