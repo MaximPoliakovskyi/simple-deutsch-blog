@@ -12,7 +12,12 @@ type Props = {
   // kept for compatibility with existing callsites
   initialPageInfo?: { hasNextPage: boolean; endCursor: string | null } | undefined;
   pageSize?: number; // will default to 3
-  query: { lang?: string; categorySlug?: string | null; tagSlug?: string | null; level?: string | null };
+  query: {
+    lang?: string;
+    categorySlug?: string | null;
+    tagSlug?: string | null;
+    level?: string | null;
+  };
 };
 
 function stableKey(p: Post): string {
@@ -20,10 +25,15 @@ function stableKey(p: Post): string {
   const id = (p as { id?: string }).id;
   const dbId = (wp as WPPostCard).databaseId;
   const slug = (p as { slug?: string }).slug;
-  return id ?? (dbId !== undefined ? String(dbId) : slug ?? "");
+  return id ?? (dbId !== undefined ? String(dbId) : (slug ?? ""));
 }
 
-export default function PostsGridWithPagination({ initialPosts, initialPageInfo, pageSize = 3, query }: Props) {
+export default function PostsGridWithPagination({
+  initialPosts,
+  initialPageInfo,
+  pageSize = 3,
+  query,
+}: Props) {
   const { t } = useI18n();
   const [posts, setPosts] = useState<Post[]>(() => initialPosts ?? []);
   const [pageInfo, setPageInfo] = useState<{ hasNextPage: boolean; endCursor: string | null }>(

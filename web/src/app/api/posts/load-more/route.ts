@@ -20,8 +20,16 @@ const isSupportedLocale = (locale: string | undefined): locale is SupportedLocal
 
 export async function POST(req: NextRequest) {
   try {
-    const { first = 3, after = null, locale, mode = "index", categorySlug, tagSlug, level, skipIds }: LoadMoreBody =
-      await req.json();
+    const {
+      first = 3,
+      after = null,
+      locale,
+      mode = "index",
+      categorySlug,
+      tagSlug,
+      level,
+      skipIds,
+    }: LoadMoreBody = await req.json();
 
     if (!first || first <= 0) {
       return NextResponse.json({ message: "Invalid first param" }, { status: 400 });
@@ -44,14 +52,14 @@ export async function POST(req: NextRequest) {
       const normalizeLevelSlug = (slug?: string | null): string | null => {
         if (!slug) return null;
         const s = slug.toLowerCase().trim().replace(/_/g, "-");
-        let cleaned = s
+        const cleaned = s
           .replace(/^(?:cefrlevel-)/, "")
           .replace(/^(?:cefr-)/, "")
           .replace(/^(?:level-)/, "")
           .replace(/^(?:de-|ger-)/, "");
         const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
         for (const tok of tokens) {
-          if (["a1","a2","b1","b2","c1","c2"].includes(tok)) return tok;
+          if (["a1", "a2", "b1", "b2", "c1", "c2"].includes(tok)) return tok;
         }
         if (/\bc2\b/.test(cleaned)) return "c2";
         if (/\bc1\b/.test(cleaned)) return "c1";
@@ -90,7 +98,8 @@ export async function POST(req: NextRequest) {
 
         // Skip any posts already visible on the client
         const seen = new Set(skipIds ?? []);
-        const keyOf = (p: any) => p?.id ?? (p?.databaseId !== undefined ? String(p.databaseId) : p?.slug ?? "");
+        const keyOf = (p: any) =>
+          p?.id ?? (p?.databaseId !== undefined ? String(p.databaseId) : (p?.slug ?? ""));
 
         for (const m of matching) {
           if (collected.length >= first) break;
@@ -107,7 +116,10 @@ export async function POST(req: NextRequest) {
         // If we hit no next page, break.
       }
 
-      return NextResponse.json({ posts: collected, pageInfo: { hasNextPage: hasNext, endCursor: cursor } });
+      return NextResponse.json({
+        posts: collected,
+        pageInfo: { hasNextPage: hasNext, endCursor: cursor },
+      });
     }
 
     return NextResponse.json({ posts: res.posts, pageInfo: res.pageInfo });
@@ -116,4 +128,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Failed to load more posts" }, { status: 500 });
   }
 }
-

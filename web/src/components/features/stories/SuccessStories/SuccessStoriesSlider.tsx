@@ -13,7 +13,11 @@ type Props = {
 
 type Direction = "prev" | "next";
 
-export default function SuccessStoriesSlider({ posts = [], title = "Success stories", description = "" }: Props) {
+export default function SuccessStoriesSlider({
+  posts = [],
+  title = "Success stories",
+  description = "",
+}: Props) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [isAtStart, setIsAtStart] = useState(true);
   const [isAtEnd, setIsAtEnd] = useState(false);
@@ -62,11 +66,13 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
   const displayPosts = posts.map((post) => ({
     ...post,
     categories: {
-      nodes: post?.categories?.nodes?.filter((cat) => 
-        cat?.slug !== "success-stories" && 
-        cat?.slug !== "success-stories-uk" &&
-        cat?.slug !== "success-stories-ru"
-      ) ?? [],
+      nodes:
+        post?.categories?.nodes?.filter(
+          (cat) =>
+            cat?.slug !== "success-stories" &&
+            cat?.slug !== "success-stories-uk" &&
+            cat?.slug !== "success-stories-ru",
+        ) ?? [],
     },
   }));
 

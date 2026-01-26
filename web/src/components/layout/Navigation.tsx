@@ -89,7 +89,8 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const onChange = (e: MediaQueryListEvent | MediaQueryList) => setUseHover(Boolean((e as any).matches));
+    const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
+      setUseHover(Boolean((e as any).matches));
     if (mq.addEventListener) mq.addEventListener("change", onChange as any);
     else mq.addListener(onChange as any);
     return () => {
@@ -189,7 +190,13 @@ function useLanguage() {
 
     // If we're on a posts page (with or without a slug), don't attempt to compute a generic path here.
     // Post-specific navigation will be handled by callers (NavLanguageDropdown).
-    if (pathname.startsWith("/posts") || pathname.startsWith("/en/posts") || pathname.startsWith("/ru/posts") || pathname.startsWith("/uk/posts")) return;
+    if (
+      pathname.startsWith("/posts") ||
+      pathname.startsWith("/en/posts") ||
+      pathname.startsWith("/ru/posts") ||
+      pathname.startsWith("/uk/posts")
+    )
+      return;
 
     // For non-post pages preserve the current path but swap locale prefix
     // strip existing locale prefix (/ru or /uk)
@@ -248,7 +255,7 @@ function usePostLanguageSwitch() {
     }
   }
 
-  const languageLinks = isPost ? postLangLinks?.links ?? null : null;
+  const languageLinks = isPost ? (postLangLinks?.links ?? null) : null;
   const currentFromLinks = (postLangLinks?.currentLang as SiteLang | undefined) ?? null;
   if (currentFromLinks) siteLang = currentFromLinks;
 
@@ -302,7 +309,13 @@ function usePostLanguageSwitch() {
     }
   };
 
-  return { currentSiteLang: siteLang as SiteLang, changeLang, languageLinks, isPost, hasSlug: Boolean(slug) };
+  return {
+    currentSiteLang: siteLang as SiteLang,
+    changeLang,
+    languageLinks,
+    isPost,
+    hasSlug: Boolean(slug),
+  };
 }
 
 // Component: NavLanguageDropdown
@@ -334,27 +347,28 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
         >
           {(() => {
             // Enable if not on posts, or if on posts listing (no slug), or if article translation exists
-            const linkAvailable = !isPost || !hasSlug || Boolean(languageLinks?.[item.code as LangCode]);
+            const linkAvailable =
+              !isPost || !hasSlug || Boolean(languageLinks?.[item.code as LangCode]);
             return (
-          <button
-            role="menuitem"
-            onClick={() => {
-              if (!linkAvailable) return;
-              changeLang(item.code as LangCode);
-              closeMenu?.();
-            }}
-            aria-disabled={!linkAvailable}
-            disabled={!linkAvailable}
-            className={
-              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-(--sd-accent) " +
-              // Light-theme: slightly bright hover (original behaviour).
-              // Dark-theme: subtle translucent white to gently lighten the grey.
-              "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
-              (!linkAvailable ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
-            }
-          >
-            {item.label}
-          </button>
+              <button
+                role="menuitem"
+                onClick={() => {
+                  if (!linkAvailable) return;
+                  changeLang(item.code as LangCode);
+                  closeMenu?.();
+                }}
+                aria-disabled={!linkAvailable}
+                disabled={!linkAvailable}
+                className={
+                  "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-(--sd-accent) " +
+                  // Light-theme: slightly bright hover (original behaviour).
+                  // Dark-theme: subtle translucent white to gently lighten the grey.
+                  "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
+                  (!linkAvailable ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
+                }
+              >
+                {item.label}
+              </button>
             );
           })()}
         </li>
@@ -500,7 +514,7 @@ export default function Header() {
 
     const calculate = () => {
       // Only run on article pages. Normalize locale prefixes like /ru, /ua.
-      const normalizedPath = pathname?.replace(/^\/(ru|ua)(?=\/)/,"") ?? pathname;
+      const normalizedPath = pathname?.replace(/^\/(ru|ua)(?=\/)/, "") ?? pathname;
       if (!normalizedPath || !normalizedPath.startsWith("/posts/")) {
         setProgress(0);
         setVisible(false);
@@ -684,9 +698,7 @@ export default function Header() {
 
       {/* Mobile drawer */}
       <div
-        className={["md:hidden", "fixed inset-0 z-90", open ? "" : "pointer-events-none"].join(
-          " ",
-        )}
+        className={["md:hidden", "fixed inset-0 z-90", open ? "" : "pointer-events-none"].join(" ")}
       >
         <div
           className={[

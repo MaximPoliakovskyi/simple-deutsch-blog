@@ -1,13 +1,13 @@
 // app/categories/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
-import { filterHiddenCategories } from "@/core/content/hiddenCategories";
 import { deduplicateCategories } from "@/core/content/categoryUtils";
+import { filterHiddenCategories } from "@/core/content/hiddenCategories";
 import { translateCategory, translateCategoryDescription } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllCategories, getPostsPageByCategory } from "@/server/wp/api";
-import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
+import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 type LanguageSlug = "en" | "ru" | "uk";
 type CategoryNode = {
@@ -37,7 +37,7 @@ export default async function CategoriesIndexPage({
 
   // Support either categories.nodes or categories.edges -> node
   const nodes = extractConnectionNodes<CategoryNode>(categories);
-  
+
   // Remove language duplicates and filter hidden categories
   const visible = filterHiddenCategories(deduplicateCategories(nodes));
 
@@ -82,7 +82,7 @@ export default async function CategoriesIndexPage({
           categorySlug: c.slug,
           locale: lang,
         });
-        
+
         // If no results with language filter, try without (in case category isn't language-specific)
         if (!postsForCat || postsForCat.length === 0) {
           const { posts: postsNoLang } = await getPostsPageByCategory({
@@ -91,7 +91,7 @@ export default async function CategoriesIndexPage({
           });
           postsForCat = postsNoLang;
         }
-        
+
         const count = postsForCat?.length ?? 0;
         return [c.slug, count] as const;
       } catch (_err) {

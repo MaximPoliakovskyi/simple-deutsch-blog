@@ -46,7 +46,9 @@ export default function NotFound({ locale }: { locale?: Locale }) {
         <h1 className="text-2xl font-semibold">{t["notFound.title"] ?? t.pageNotFoundHeading}</h1>
 
         {/* Message */}
-        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">{t["notFound.description"] ?? t.pageNotFoundMessage}</p>
+        <p className="mx-auto mt-3 max-w-md text-sm text-white/75">
+          {t["notFound.description"] ?? t.pageNotFoundMessage}
+        </p>
 
         {/* CTA */}
         <div className="mt-6">

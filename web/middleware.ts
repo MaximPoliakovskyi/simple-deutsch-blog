@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const SUPPORTED = ["en", "ru", "uk"] as const;
 type Locale = (typeof SUPPORTED)[number];
@@ -14,7 +14,10 @@ function mapLang(tag?: string | null): Locale | null {
 
 function pickFromAcceptLanguage(header?: string | null): Locale | null {
   if (!header) return null;
-  const parts = header.split(",").map((p) => p.trim()).filter(Boolean);
+  const parts = header
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
   for (const part of parts) {
     const [lang] = part.split(";");
     const mapped = mapLang(lang);
@@ -29,6 +32,8 @@ function isAsset(pathname: string) {
     pathname.startsWith("/static/") ||
     pathname.startsWith("/api/") ||
     pathname === "/favicon.ico" ||
+    pathname === "/logo.ico" ||
+    pathname === "/theme-init.js" ||
     pathname.startsWith("/assets/") ||
     /\.[a-zA-Z0-9]+$/.test(pathname)
   );
@@ -39,13 +44,20 @@ export function middleware(req: NextRequest) {
     const { nextUrl } = req;
     const pathname = nextUrl.pathname;
 
-    if (isAsset(pathname)) return NextResponse.next();
+    if (isAsset(pathname)) {
+      const res = NextResponse.next();
+      // Cache static assets aggressively
+      res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      return res;
+    }
 
     // Redirect legacy category slugs to updated slugs, preserve locale prefix
     // examples:
     // /categories/exercises -> /categories/exercises-practice
     // /ru/category/speaking -> /ru/categories/speaking-pronunciation
-    const catMatch = pathname.match(/^\/?(?:(ru|uk|en|de)\/)?(categories?|category)\/(exercises|tips|speaking)(\/|$)/i);
+    const catMatch = pathname.match(
+      /^\/?(?:(ru|uk|en|de)\/)?(categories?|category)\/(exercises|tips|speaking)(\/|$)/i,
+    );
     if (catMatch) {
       try {
         const localePart = catMatch[1] ? `/${catMatch[1]}` : "";
@@ -83,7 +95,14 @@ export function middleware(req: NextRequest) {
 
     // If path already contains a locale prefix, do nothing
     const hasLocalePrefix = /^\/(ru|uk|en)(?:\/|$)/i.test(pathname);
-    if (hasLocalePrefix) return NextResponse.next();
+    if (hasLocalePrefix) {
+      const res = NextResponse.next();
+      // Add cache headers for HTML pages (not API routes)
+      if (!pathname.includes("/api/")) {
+        res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
+      }
+      return res;
+    }
 
     // If cookie exists, honor it
     const cookieValue = req.cookies.get("site_locale")?.value;
@@ -94,6 +113,10 @@ export function middleware(req: NextRequest) {
     const detected = pickFromAcceptLanguage(accept) ?? "en";
 
     const res = NextResponse.next();
+    // Add cache headers for HTML pages
+    if (!pathname.includes("/api/")) {
+      res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
+    }
     try {
       res.cookies.set("site_locale", detected, { path: "/", maxAge: 60 * 60 * 24 * 365 });
     } catch {

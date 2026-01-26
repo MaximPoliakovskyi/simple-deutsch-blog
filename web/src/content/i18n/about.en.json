@@ -62,9 +62,8 @@
   "about.faq.6.a": "Use the contact link in the footer or email hello@simpledeutsch.com.",
 
   "about.cta.finalTitle": "Ready to get started?",
-  "about.cta.finalCta": "Start learning"
-
-  ,"about.cta.finalLead": "Clear lessons, practical exercises, and steady progress — everything you need to build real confidence in German.",
+  "about.cta.finalCta": "Start learning",
+  "about.cta.finalLead": "Clear lessons, practical exercises, and steady progress — everything you need to build real confidence in German.",
 
   "about.sections.realLife.title": "Learning built for real life",
   "about.sections.realLife.p1": "Lessons focus on situations you actually encounter — at work, in conversations, and in everyday routines.",
@@ -108,7 +107,7 @@
 
   "about.testimonials.6.name": "Jonas Becker",
   "about.testimonials.6.role": "Student",
-  "about.testimonials.6.text": "Practical exercises and real-world examples helped me use phrases in context. That practical focus made learning feel useful from day one."
-  ,"about.logo.alt": "Simple Deutsch",
+  "about.testimonials.6.text": "Practical exercises and real-world examples helped me use phrases in context. That practical focus made learning feel useful from day one.",
+  "about.logo.alt": "Simple Deutsch",
   "about.media.placeholderAlt": "Placeholder image"
 }

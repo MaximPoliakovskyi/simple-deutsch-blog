@@ -58,13 +58,15 @@ const en: Translations = {
   categoriesHeading: "Categories",
   categoryLabel: "Category:",
   tagsHeading: "Tags",
-  tagsDescription: "Tags indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
+  tagsDescription:
+    "Tags indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
   tagLabel: "Tag:",
 
   /* Levels (UI rename for tags) */
   levels: "Levels",
   levelsHeading: "Levels",
-  levelsDescription: "Levels indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
+  levelsDescription:
+    "Levels indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
   levelLabel: "Level:",
   levelNotFound: "Level not found",
   "level.titlePrefix": "Level:",
@@ -84,17 +86,23 @@ const en: Translations = {
   "tag.titlePrefix": "Tag:",
   /* CEFR UI (labels + richer descriptions) */
   "cefr.A1.title": "Beginner",
-  "cefr.A1.description": "You can understand and use everyday expressions and simple phrases. Great for your first steps in German.",
+  "cefr.A1.description":
+    "You can understand and use everyday expressions and simple phrases. Great for your first steps in German.",
   "cefr.A2.title": "Elementary",
-  "cefr.A2.description": "You can communicate in simple, routine situations and describe basic needs. Start building confidence in real-life topics.",
+  "cefr.A2.description":
+    "You can communicate in simple, routine situations and describe basic needs. Start building confidence in real-life topics.",
   "cefr.B1.title": "Intermediate",
-  "cefr.B1.description": "You can handle most situations while traveling and talk about familiar subjects. A solid level for independent learning.",
+  "cefr.B1.description":
+    "You can handle most situations while traveling and talk about familiar subjects. A solid level for independent learning.",
   "cefr.B2.title": "Upper-intermediate",
-  "cefr.B2.description": "You can understand main ideas of complex texts and interact more fluently. Ideal for work, studies, and longer conversations.",
+  "cefr.B2.description":
+    "You can understand main ideas of complex texts and interact more fluently. Ideal for work, studies, and longer conversations.",
   "cefr.C1.title": "Advanced",
-  "cefr.C1.description": "You can express ideas clearly and use German flexibly in social and professional contexts. Good for academic and professional reading.",
+  "cefr.C1.description":
+    "You can express ideas clearly and use German flexibly in social and professional contexts. Good for academic and professional reading.",
   "cefr.C2.title": "Near-native",
-  "cefr.C2.description": "You can understand virtually everything and express yourself precisely. Close to native-level comprehension and nuance.",
+  "cefr.C2.description":
+    "You can understand virtually everything and express yourself precisely. Close to native-level comprehension and nuance.",
   /* Footer links */
   courses: "Courses",
   lessons: "Lessons",
@@ -128,41 +136,57 @@ const en: Translations = {
   "privacy.lastUpdated": "Last updated: {date}",
   "privacy.contact": "For questions about this policy, contact {email}.",
   "privacy.s1.title": "1. Introduction",
-  "privacy.s1.p": "Simple Deutsch provides educational content to help learners study German. This Privacy Policy explains how we collect, use, and protect personal data in connection with our services.",
+  "privacy.s1.p":
+    "Simple Deutsch provides educational content to help learners study German. This Privacy Policy explains how we collect, use, and protect personal data in connection with our services.",
   "privacy.s2.title": "2. Scope",
-  "privacy.s2.p": "This policy applies to personal data processed through our website and related services. It does not cover third-party services linked from our site.",
+  "privacy.s2.p":
+    "This policy applies to personal data processed through our website and related services. It does not cover third-party services linked from our site.",
   "privacy.s3.title": "3. Data We Collect",
   "privacy.s3.a.title": "Information you provide voluntarily",
-  "privacy.s3.a.p": "Account details, form submissions, feedback, and communications you choose to send us.",
+  "privacy.s3.a.p":
+    "Account details, form submissions, feedback, and communications you choose to send us.",
   "privacy.s3.b.title": "Automatically collected information",
-  "privacy.s3.b.p": "Technical data such as IP address, browser type, device identifiers, and basic usage logs collected for operation and security.",
+  "privacy.s3.b.p":
+    "Technical data such as IP address, browser type, device identifiers, and basic usage logs collected for operation and security.",
   "privacy.s3.c.title": "Analytics and cookies",
-  "privacy.s3.c.p": "Anonymous analytics and cookies help us understand site usage and improve the experience.",
+  "privacy.s3.c.p":
+    "Anonymous analytics and cookies help us understand site usage and improve the experience.",
   "privacy.s3.d.title": "Sensitive data",
-  "privacy.s3.d.p": "We do not knowingly collect sensitive personal data. If such data is provided inadvertently, we will delete it unless retention is required by law.",
+  "privacy.s3.d.p":
+    "We do not knowingly collect sensitive personal data. If such data is provided inadvertently, we will delete it unless retention is required by law.",
   "privacy.s4.title": "4. Cookies and Analytics",
   "privacy.s4.a.title": "Functional cookies",
   "privacy.s4.a.p": "Essential cookies enable site functionality and preferences.",
   "privacy.s4.b.title": "Performance and analytics",
-  "privacy.s4.b.p": "We use aggregated analytics to improve content and measure performance. These do not identify you personally.",
+  "privacy.s4.b.p":
+    "We use aggregated analytics to improve content and measure performance. These do not identify you personally.",
   "privacy.s4.c.title": "Managing cookies",
-  "privacy.s4.c.p": "You can manage or disable cookies via your browser settings; disabling some cookies may affect site features.",
+  "privacy.s4.c.p":
+    "You can manage or disable cookies via your browser settings; disabling some cookies may affect site features.",
   "privacy.s5.title": "5. How We Use Data",
-  "privacy.s5.p": "- To provide and maintain the site\n- To improve and personalize content\n- To respond to inquiries and support requests\n- To monitor and enhance security and performance",
+  "privacy.s5.p":
+    "- To provide and maintain the site\n- To improve and personalize content\n- To respond to inquiries and support requests\n- To monitor and enhance security and performance",
   "privacy.s6.title": "6. Data Sharing",
-  "privacy.s6.p": "- With service providers who process data on our behalf\n- When required by law or to protect legal rights\n- In aggregated or anonymized form for analysis",
+  "privacy.s6.p":
+    "- With service providers who process data on our behalf\n- When required by law or to protect legal rights\n- In aggregated or anonymized form for analysis",
   "privacy.s7.title": "7. Data Retention",
-  "privacy.s7.p": "We retain personal data only as long as necessary for the purposes described or to comply with legal obligations.",
+  "privacy.s7.p":
+    "We retain personal data only as long as necessary for the purposes described or to comply with legal obligations.",
   "privacy.s8.title": "8. Your Rights (EU/EEA)",
-  "privacy.s8.p": "You may have rights to access, correct, restrict, or delete your personal data, and to object to or request portability of data. To exercise rights, contact us at the address below.",
+  "privacy.s8.p":
+    "You may have rights to access, correct, restrict, or delete your personal data, and to object to or request portability of data. To exercise rights, contact us at the address below.",
   "privacy.s9.title": "9. Data Security",
-  "privacy.s9.p": "We use administrative, technical, and physical measures to protect personal data but cannot guarantee absolute security.",
+  "privacy.s9.p":
+    "We use administrative, technical, and physical measures to protect personal data but cannot guarantee absolute security.",
   "privacy.s10.title": "10. International Transfers",
-  "privacy.s10.p": "Data may be processed in countries outside your jurisdiction. We take steps to ensure appropriate safeguards are in place.",
+  "privacy.s10.p":
+    "Data may be processed in countries outside your jurisdiction. We take steps to ensure appropriate safeguards are in place.",
   "privacy.s11.title": "11. Children’s Privacy",
-  "privacy.s11.p": "Our services are not intended for children under 16. We do not knowingly collect personal data from children; parents should contact us to request deletion.",
+  "privacy.s11.p":
+    "Our services are not intended for children under 16. We do not knowingly collect personal data from children; parents should contact us to request deletion.",
   "privacy.s12.title": "12. Changes to This Policy",
-  "privacy.s12.p": "We may update this policy. Material changes will be indicated by the updated date at the top and, where appropriate, a notice on the site.",
+  "privacy.s12.p":
+    "We may update this policy. Material changes will be indicated by the updated date at the top and, where appropriate, a notice on the site.",
   "privacy.s13.title": "13. Contact",
   "privacy.s13.p": "Contact:",
   /* Terms of Service */
@@ -171,25 +195,35 @@ const en: Translations = {
   "terms.lastUpdatedLabel": "Last updated",
   "terms.lastUpdatedDate": "2025-12-25",
   "terms.s1.title": "1. Introduction",
-  "terms.s1.p": "These Terms of Service (\"Terms\") set out the rules for using Simple Deutsch (the \"Service\" or \"Simple Deutsch\"). By accessing or using the Service you agree to these Terms.",
+  "terms.s1.p":
+    'These Terms of Service ("Terms") set out the rules for using Simple Deutsch (the "Service" or "Simple Deutsch"). By accessing or using the Service you agree to these Terms.',
   "terms.s2.title": "2. Definitions",
-  "terms.s2.p": "\"Simple Deutsch\" means the website and services operated by Simple Deutsch. \"User\" means any person who accesses or uses the Service.",
+  "terms.s2.p":
+    '"Simple Deutsch" means the website and services operated by Simple Deutsch. "User" means any person who accesses or uses the Service.',
   "terms.s3.title": "3. Eligibility",
-  "terms.s3.p": "You must be at least 16 years old to use the Service. By using the Service you represent that you meet this age requirement.",
+  "terms.s3.p":
+    "You must be at least 16 years old to use the Service. By using the Service you represent that you meet this age requirement.",
   "terms.s4.title": "4. Acceptable Use",
-  "terms.s4.p": "- Do not use the Service for unlawful purposes\n- Do not attempt to interfere with the security or operation of the Service\n- Do not post content that infringes others' rights or is abusive, hateful, or pornographic",
+  "terms.s4.p":
+    "- Do not use the Service for unlawful purposes\n- Do not attempt to interfere with the security or operation of the Service\n- Do not post content that infringes others' rights or is abusive, hateful, or pornographic",
   "terms.s5.title": "5. Accounts and User Content",
-  "terms.s5.p": "If you create an account, you are responsible for your credentials and activity. You grant Simple Deutsch a non-exclusive, worldwide license to display content you post on the Service.",
+  "terms.s5.p":
+    "If you create an account, you are responsible for your credentials and activity. You grant Simple Deutsch a non-exclusive, worldwide license to display content you post on the Service.",
   "terms.s6.title": "6. Intellectual Property",
-  "terms.s6.p": "All site content is the property of Simple Deutsch or its licensors and is protected by copyright. You may view and share content for personal, non-commercial use only.",
+  "terms.s6.p":
+    "All site content is the property of Simple Deutsch or its licensors and is protected by copyright. You may view and share content for personal, non-commercial use only.",
   "terms.s7.title": "7. Third-party Links",
-  "terms.s7.p": "The Service may contain links to third-party sites. We are not responsible for their content or practices.",
+  "terms.s7.p":
+    "The Service may contain links to third-party sites. We are not responsible for their content or practices.",
   "terms.s8.title": "8. Disclaimers",
-  "terms.s8.p": "The Service is provided \"as is\" without warranties of any kind. We do not guarantee accuracy or availability of content.",
+  "terms.s8.p":
+    'The Service is provided "as is" without warranties of any kind. We do not guarantee accuracy or availability of content.',
   "terms.s9.title": "9. Limitation of Liability",
-  "terms.s9.p": "To the maximum extent permitted by law, Simple Deutsch and its affiliates will not be liable for indirect, incidental, or consequential damages arising from your use of the Service.",
+  "terms.s9.p":
+    "To the maximum extent permitted by law, Simple Deutsch and its affiliates will not be liable for indirect, incidental, or consequential damages arising from your use of the Service.",
   "terms.s10.title": "10. Changes to Terms",
-  "terms.s10.p": "We may modify these Terms. Material changes will be indicated by the updated date at the top. Continued use of the Service constitutes acceptance of the updated Terms.",
+  "terms.s10.p":
+    "We may modify these Terms. Material changes will be indicated by the updated date at the top. Continued use of the Service constitutes acceptance of the updated Terms.",
   "terms.s11.title": "11. Contact",
   "terms.s11.p": "For questions about these Terms contact",
   /* Imprint / Impressum */
@@ -198,7 +232,8 @@ const en: Translations = {
   "imprint.lastUpdatedLabel": "Last updated:",
   "imprint.lastUpdatedDate": "2025-12-27",
   "imprint.s1.title": "1. Operator / Site Owner",
-  "imprint.s1.p": "This website is operated by a private individual.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
+  "imprint.s1.p":
+    "This website is operated by a private individual.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
   "imprint.s2.title": "2. Contact",
   "imprint.s2.p": "Email: hello@simpledeutsch.com",
   "imprint.s3.title": "3. Responsible for content",
@@ -206,18 +241,23 @@ const en: Translations = {
   "imprint.s3.name": "Maksym Poliakovskyi",
   "imprint.s3.address": "Murtener Straße, 12205 Berlin, Germany",
   "imprint.s4.title": "4. Liability for content",
-  "imprint.s4.p": "Disclaimer: We make reasonable efforts to ensure the accuracy and timeliness of the content, but we cannot guarantee completeness, accuracy, or timeliness. Responsibility applies only to content that we have created ourselves, in accordance with applicable law.",
+  "imprint.s4.p":
+    "Disclaimer: We make reasonable efforts to ensure the accuracy and timeliness of the content, but we cannot guarantee completeness, accuracy, or timeliness. Responsibility applies only to content that we have created ourselves, in accordance with applicable law.",
   "imprint.s5.title": "5. Liability for links",
-  "imprint.s5.p": "This website may contain links to third-party sites. We have no control over their content and are not responsible for them.",
+  "imprint.s5.p":
+    "This website may contain links to third-party sites. We have no control over their content and are not responsible for them.",
   "imprint.s6.title": "6. Copyright",
-  "imprint.s6.p": "All content and materials on this site are protected by copyright. Reproduction or use requires prior written consent unless permitted by law.",
+  "imprint.s6.p":
+    "All content and materials on this site are protected by copyright. Reproduction or use requires prior written consent unless permitted by law.",
   "imprint.s7.title": "7. Dispute resolution / Consumer arbitration",
-  "imprint.s7.p": "We are not obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration board.",
+  "imprint.s7.p":
+    "We are not obliged nor willing to participate in dispute resolution proceedings before a consumer arbitration board.",
   /* Theme labels */
   darkMode: "Dark theme",
   lightMode: "Light theme",
   /* Footer */
-  "footer.copyright": "© {year} Simple Deutsch. German-language learning platform. All rights reserved.",
+  "footer.copyright":
+    "© {year} Simple Deutsch. German-language learning platform. All rights reserved.",
 };
 
 const uk: Translations = {
@@ -275,13 +315,15 @@ const uk: Translations = {
   categoriesHeading: "Категорії",
   categoryLabel: "Категорія:",
   tagsHeading: "Теги",
-  tagsDescription: "Теги вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
+  tagsDescription:
+    "Теги вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
   tagLabel: "Тег:",
 
   /* Levels (UI rename for tags) */
   levels: "Рівні",
   levelsHeading: "Рівні",
-  levelsDescription: "Рівні вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
+  levelsDescription:
+    "Рівні вказують рівень мови кожної статті за шкалою CEFR — від A1 (початковий) до C2 (рівень носія мови). Використовуйте їх, щоб знайти контент, який відповідає вашому рівню німецької мови.",
   levelLabel: "Рівень:",
   levelNotFound: "Рівень не знайдено",
   "level.titlePrefix": "Рівень:",
@@ -301,17 +343,23 @@ const uk: Translations = {
   "tag.titlePrefix": "Тег:",
   /* CEFR UI (labels + richer descriptions) */
   "cefr.A1.title": "Початковий",
-  "cefr.A1.description": "Ви можете розуміти та використовувати повсякденні вирази та прості фрази. Чудово підходить для перших кроків у німецькій.",
+  "cefr.A1.description":
+    "Ви можете розуміти та використовувати повсякденні вирази та прості фрази. Чудово підходить для перших кроків у німецькій.",
   "cefr.A2.title": "Елементарний",
-  "cefr.A2.description": "Ви можете спілкуватися в простих, повсякденних ситуаціях і описувати базові потреби. Почніть набувати впевненості в реальних темах.",
+  "cefr.A2.description":
+    "Ви можете спілкуватися в простих, повсякденних ситуаціях і описувати базові потреби. Почніть набувати впевненості в реальних темах.",
   "cefr.B1.title": "Середній",
-  "cefr.B1.description": "Ви можете справлятися з більшістю ситуацій під час подорожей і говорити на знайомі теми. Надійний рівень для самостійного навчання.",
+  "cefr.B1.description":
+    "Ви можете справлятися з більшістю ситуацій під час подорожей і говорити на знайомі теми. Надійний рівень для самостійного навчання.",
   "cefr.B2.title": "Вище середнього",
-  "cefr.B2.description": "Ви можете розуміти основні ідеї складних текстів і спілкуватися більш плавно. Ідеально для роботи, навчання та довших розмов.",
+  "cefr.B2.description":
+    "Ви можете розуміти основні ідеї складних текстів і спілкуватися більш плавно. Ідеально для роботи, навчання та довших розмов.",
   "cefr.C1.title": "Просунутий",
-  "cefr.C1.description": "Ви можете чітко виражати думки та гнучко використовувати німецьку в соціальних і професійних контекстах. Підходить для академічного та професійного читання.",
+  "cefr.C1.description":
+    "Ви можете чітко виражати думки та гнучко використовувати німецьку в соціальних і професійних контекстах. Підходить для академічного та професійного читання.",
   "cefr.C2.title": "Рівень носія",
-  "cefr.C2.description": "Ви можете розуміти практично все і висловлюватися точно. Близько до рідного рівня розуміння та нюансів.",
+  "cefr.C2.description":
+    "Ви можете розуміти практично все і висловлюватися точно. Близько до рідного рівня розуміння та нюансів.",
   /* Footer links */
   courses: "Курси",
   lessons: "Уроки",
@@ -345,41 +393,56 @@ const uk: Translations = {
   "privacy.lastUpdated": "Оновлено: {date}",
   "privacy.contact": "За питаннями цієї політики пишіть: {email}.",
   "privacy.s1.title": "1. Вступ",
-  "privacy.s1.p": "Simple Deutsch надає освітній контент для вивчення німецької мови. Ця Політика конфіденційності пояснює, як ми збираємо, використовуємо та захищаємо персональні дані.",
+  "privacy.s1.p":
+    "Simple Deutsch надає освітній контент для вивчення німецької мови. Ця Політика конфіденційності пояснює, як ми збираємо, використовуємо та захищаємо персональні дані.",
   "privacy.s2.title": "2. Область застосування",
-  "privacy.s2.p": "Політика застосовується до персональних даних, що обробляються через наш сайт та пов'язані сервіси. Вона не охоплює сторонні сервіси, на які ведуть посилання.",
+  "privacy.s2.p":
+    "Політика застосовується до персональних даних, що обробляються через наш сайт та пов'язані сервіси. Вона не охоплює сторонні сервіси, на які ведуть посилання.",
   "privacy.s3.title": "3. Дані, які ми збираємо",
   "privacy.s3.a.title": "Інформація, яку ви надаєте добровільно",
   "privacy.s3.a.p": "Дані акаунта, форми, відгуки та повідомлення, які ви надсилаєте.",
   "privacy.s3.b.title": "Автоматично зібрана інформація",
-  "privacy.s3.b.p": "Технічні дані: IP-адреса, тип браузера, ідентифікатори пристрою та базові журнали використання, що збираються для роботи та безпеки.",
+  "privacy.s3.b.p":
+    "Технічні дані: IP-адреса, тип браузера, ідентифікатори пристрою та базові журнали використання, що збираються для роботи та безпеки.",
   "privacy.s3.c.title": "Аналітика та cookie",
-  "privacy.s3.c.p": "Анонімна аналітика та cookie допомагають нам розуміти використання сайту та покращувати роботу.",
+  "privacy.s3.c.p":
+    "Анонімна аналітика та cookie допомагають нам розуміти використання сайту та покращувати роботу.",
   "privacy.s3.d.title": "Чутливі дані",
-  "privacy.s3.d.p": "Ми не збираємо навмисно чутливі персональні дані. Якщо такі дані будуть надані випадково, ми видалимо їх, якщо інше не вимагається законом.",
+  "privacy.s3.d.p":
+    "Ми не збираємо навмисно чутливі персональні дані. Якщо такі дані будуть надані випадково, ми видалимо їх, якщо інше не вимагається законом.",
   "privacy.s4.title": "4. Cookie та аналітика",
   "privacy.s4.a.title": "Функціональні cookie",
   "privacy.s4.a.p": "Необхідні cookie забезпечують роботу сайту та збереження налаштувань.",
   "privacy.s4.b.title": "Продуктивність та аналітика",
-  "privacy.s4.b.p": "Ми використовуємо агреговану аналітику для покращення контенту та оцінки продуктивності. Ці дані не ідентифікують вас особисто.",
+  "privacy.s4.b.p":
+    "Ми використовуємо агреговану аналітику для покращення контенту та оцінки продуктивності. Ці дані не ідентифікують вас особисто.",
   "privacy.s4.c.title": "Управління cookie",
-  "privacy.s4.c.p": "Ви можете керувати або відключати cookie в налаштуваннях браузера; це може обмежити функціональність сайту.",
+  "privacy.s4.c.p":
+    "Ви можете керувати або відключати cookie в налаштуваннях браузера; це може обмежити функціональність сайту.",
   "privacy.s5.title": "5. Як ми використовуємо дані",
-  "privacy.s5.p": "- Для надання та підтримки сайту\n- Для покращення та персоналізації контенту\n- Для відповіді на запити та звернення підтримки\n- Для моніторингу безпеки та продуктивності",
+  "privacy.s5.p":
+    "- Для надання та підтримки сайту\n- Для покращення та персоналізації контенту\n- Для відповіді на запити та звернення підтримки\n- Для моніторингу безпеки та продуктивності",
   "privacy.s6.title": "6. Передача даних",
-  "privacy.s6.p": "- Постачальникам послуг, які обробляють дані від нашого імені\n- Коли це вимагається за законом або для захисту прав\n- В агрегованому або анонімізованому вигляді для аналізу",
+  "privacy.s6.p":
+    "- Постачальникам послуг, які обробляють дані від нашого імені\n- Коли це вимагається за законом або для захисту прав\n- В агрегованому або анонімізованому вигляді для аналізу",
   "privacy.s7.title": "7. Зберігання даних",
-  "privacy.s7.p": "Ми зберігаємо персональні дані лише протягом часу, необхідного для цілей, описаних у цій політиці, або для виконання правових зобов'язань.",
+  "privacy.s7.p":
+    "Ми зберігаємо персональні дані лише протягом часу, необхідного для цілей, описаних у цій політиці, або для виконання правових зобов'язань.",
   "privacy.s8.title": "8. Ваші права (EU/EEA)",
-  "privacy.s8.p": "Ви можете мати права на доступ, виправлення, обмеження або видалення своїх даних, а також заперечувати обробку або вимагати перенесення даних. Щоб реалізувати права, зв'яжіться з нами.",
+  "privacy.s8.p":
+    "Ви можете мати права на доступ, виправлення, обмеження або видалення своїх даних, а також заперечувати обробку або вимагати перенесення даних. Щоб реалізувати права, зв'яжіться з нами.",
   "privacy.s9.title": "9. Безпека даних",
-  "privacy.s9.p": "Ми використовуємо адміністративні й технічні заходи для захисту персональних даних, але не можемо гарантувати абсолютну безпеку.",
+  "privacy.s9.p":
+    "Ми використовуємо адміністративні й технічні заходи для захисту персональних даних, але не можемо гарантувати абсолютну безпеку.",
   "privacy.s10.title": "10. Міжнародні передачі",
-  "privacy.s10.p": "Дані можуть оброблятися в інших країнах. Ми вживаємо заходів для забезпечення належних гарантій.",
+  "privacy.s10.p":
+    "Дані можуть оброблятися в інших країнах. Ми вживаємо заходів для забезпечення належних гарантій.",
   "privacy.s11.title": "11. Конфіденційність дітей",
-  "privacy.s11.p": "Наші сервіси не призначені для дітей до 16 років. Ми не збираємо навмисно дані дітей; батьки можуть звернутися до нас з проханням про видалення.",
+  "privacy.s11.p":
+    "Наші сервіси не призначені для дітей до 16 років. Ми не збираємо навмисно дані дітей; батьки можуть звернутися до нас з проханням про видалення.",
   "privacy.s12.title": "12. Зміни в політиці",
-  "privacy.s12.p": "Ми можемо оновлювати цю політику. Суще́льні зміни будуть позначені оновленою датою вгорі та, за потреби, повідомленням на сайті.",
+  "privacy.s12.p":
+    "Ми можемо оновлювати цю політику. Суще́льні зміни будуть позначені оновленою датою вгорі та, за потреби, повідомленням на сайті.",
   "privacy.s13.title": "13. Контакти",
   "privacy.s13.p": "Контакти:",
   /* Terms of Service */
@@ -388,25 +451,35 @@ const uk: Translations = {
   "terms.lastUpdatedLabel": "Останнє оновлення:",
   "terms.lastUpdatedDate": "2025-12-25",
   "terms.s1.title": "1. Вступ",
-  "terms.s1.p": "Ці Умови користування («Умови») встановлюють правила використання Simple Deutsch (далі — «Сервіс» або «Simple Deutsch»). Отримуючи доступ до Сервісу або користуючись ним, ви погоджуєтеся з цими Умовами.",
+  "terms.s1.p":
+    "Ці Умови користування («Умови») встановлюють правила використання Simple Deutsch (далі — «Сервіс» або «Simple Deutsch»). Отримуючи доступ до Сервісу або користуючись ним, ви погоджуєтеся з цими Умовами.",
   "terms.s2.title": "2. Визначення",
-  "terms.s2.p": "«Simple Deutsch» означає веб-сайт і сервіси, якими керує Simple Deutsch. «Користувач» означає будь-яку особу, яка отримує доступ до Сервісу або користується ним.",
+  "terms.s2.p":
+    "«Simple Deutsch» означає веб-сайт і сервіси, якими керує Simple Deutsch. «Користувач» означає будь-яку особу, яка отримує доступ до Сервісу або користується ним.",
   "terms.s3.title": "3. Право на користування",
-  "terms.s3.p": "Щоб користуватися Сервісом, вам має бути щонайменше 16 років. Користуючись Сервісом, ви підтверджуєте, що відповідаєте цій віковій вимозі.",
+  "terms.s3.p":
+    "Щоб користуватися Сервісом, вам має бути щонайменше 16 років. Користуючись Сервісом, ви підтверджуєте, що відповідаєте цій віковій вимозі.",
   "terms.s4.title": "4. Допустиме використання",
-  "terms.s4.p": "- Не використовуйте Сервіс для незаконних цілей\n- Не намагайтеся втручатися в роботу або безпеку Сервісу\n- Не публікуйте контент, який порушує права інших, є образливим, дискримінаційним або порнографічним",
+  "terms.s4.p":
+    "- Не використовуйте Сервіс для незаконних цілей\n- Не намагайтеся втручатися в роботу або безпеку Сервісу\n- Не публікуйте контент, який порушує права інших, є образливим, дискримінаційним або порнографічним",
   "terms.s5.title": "5. Акаунти та контент користувачів",
-  "terms.s5.p": "Якщо ви створюєте акаунт, ви відповідаєте за свої облікові дані та активність. Ви надаєте Simple Deutsch невиключну, світову ліцензію на публікацію та відображення контенту, який ви розміщуєте у Сервісі.",
+  "terms.s5.p":
+    "Якщо ви створюєте акаунт, ви відповідаєте за свої облікові дані та активність. Ви надаєте Simple Deutsch невиключну, світову ліцензію на публікацію та відображення контенту, який ви розміщуєте у Сервісі.",
   "terms.s6.title": "6. Інтелектуальна власність",
-  "terms.s6.p": "Весь контент сайту належить Simple Deutsch або його ліцензіарам і захищений авторським правом. Ви можете переглядати та ділитися контентом лише для особистого некомерційного використання.",
+  "terms.s6.p":
+    "Весь контент сайту належить Simple Deutsch або його ліцензіарам і захищений авторським правом. Ви можете переглядати та ділитися контентом лише для особистого некомерційного використання.",
   "terms.s7.title": "7. Посилання на сторонні ресурси",
-  "terms.s7.p": "Сервіс може містити посилання на сторонні сайти. Ми не несемо відповідальності за їхній контент або практики.",
+  "terms.s7.p":
+    "Сервіс може містити посилання на сторонні сайти. Ми не несемо відповідальності за їхній контент або практики.",
   "terms.s8.title": "8. Відмова від гарантій",
-  "terms.s8.p": "Сервіс надається «як є» без будь-яких гарантій. Ми не гарантуємо точність або доступність контенту.",
+  "terms.s8.p":
+    "Сервіс надається «як є» без будь-яких гарантій. Ми не гарантуємо точність або доступність контенту.",
   "terms.s9.title": "9. Обмеження відповідальності",
-  "terms.s9.p": "У максимально дозволеному законом обсязі Simple Deutsch та його афілійовані особи не несуть відповідальності за непрямі, побічні або наслідкові збитки, що виникають у зв'язку з використанням вами Сервісу.",
+  "terms.s9.p":
+    "У максимально дозволеному законом обсязі Simple Deutsch та його афілійовані особи не несуть відповідальності за непрямі, побічні або наслідкові збитки, що виникають у зв'язку з використанням вами Сервісу.",
   "terms.s10.title": "10. Зміни до Умов",
-  "terms.s10.p": "Ми можемо оновлювати ці Умови. Суще́льні зміни будуть позначені оновленою датою вгорі. Продовження використання Сервісу означає прийняття оновлених Умов.",
+  "terms.s10.p":
+    "Ми можемо оновлювати ці Умови. Суще́льні зміни будуть позначені оновленою датою вгорі. Продовження використання Сервісу означає прийняття оновлених Умов.",
   "terms.s11.title": "11. Контакти",
   "terms.s11.p": "За питаннями щодо цих Умов звертайтесь",
   /* Imprint / Impressum */
@@ -415,7 +488,8 @@ const uk: Translations = {
   "imprint.lastUpdatedLabel": "Останнє оновлення:",
   "imprint.lastUpdatedDate": "2025-12-27",
   "imprint.s1.title": "1. Оператор / Власник сайту",
-  "imprint.s1.p": "Цей вебсайт управляється приватною особою.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
+  "imprint.s1.p":
+    "Цей вебсайт управляється приватною особою.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
   "imprint.s2.title": "2. Контакти",
   "imprint.s2.p": "Email: hello@simpledeutsch.com",
   "imprint.s3.title": "3. Відповідальний за зміст",
@@ -423,18 +497,23 @@ const uk: Translations = {
   "imprint.s3.name": "Maksym Poliakovskyi",
   "imprint.s3.address": "Murtener Straße, 12205 Berlin, Germany",
   "imprint.s4.title": "4. Відповідальність за зміст",
-  "imprint.s4.p": "Відмова від гарантій: Ми докладаємо розумних зусиль для забезпечення точності та актуальності вмісту, проте не можемо гарантувати повноту, точність або своєчасність. Відповідальність поширюється лише на власний вміст відповідно до застосовного законодавства.",
+  "imprint.s4.p":
+    "Відмова від гарантій: Ми докладаємо розумних зусиль для забезпечення точності та актуальності вмісту, проте не можемо гарантувати повноту, точність або своєчасність. Відповідальність поширюється лише на власний вміст відповідно до застосовного законодавства.",
   "imprint.s5.title": "5. Відповідальність за посилання",
-  "imprint.s5.p": "Вебсайт може містити посилання на сторонні ресурси. Ми не контролюємо їхній вміст і не несемо за нього відповідальності.",
+  "imprint.s5.p":
+    "Вебсайт може містити посилання на сторонні ресурси. Ми не контролюємо їхній вміст і не несемо за нього відповідальності.",
   "imprint.s6.title": "6. Авторське право",
-  "imprint.s6.p": "Весь вміст і матеріали на цьому сайті захищені авторським правом. Відтворення або використання вимагає попередньої письмової згоди, якщо інше не передбачено законом.",
+  "imprint.s6.p":
+    "Весь вміст і матеріали на цьому сайті захищені авторським правом. Відтворення або використання вимагає попередньої письмової згоди, якщо інше не передбачено законом.",
   "imprint.s7.title": "7. Вирішення спорів / Споживча арбітраж",
-  "imprint.s7.p": "Ми не зобов'язані і не готові брати участь у процедурах розв'язання спорів перед споживчим арбітражним органом.",
+  "imprint.s7.p":
+    "Ми не зобов'язані і не готові брати участь у процедурах розв'язання спорів перед споживчим арбітражним органом.",
   /* Theme labels */
   darkMode: "Темна тема",
   lightMode: "Світла тема",
   /* Footer */
-  "footer.copyright": "© {year} Simple Deutsch. Платформа для вивчення німецької мови. Усі права захищені.",
+  "footer.copyright":
+    "© {year} Simple Deutsch. Платформа для вивчення німецької мови. Усі права захищені.",
 };
 
 const ru: Translations = {
@@ -492,12 +571,14 @@ const ru: Translations = {
   categoriesHeading: "Категории",
   categoryLabel: "Категория:",
   tagsHeading: "Теги",
-  tagsDescription: "Теги указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
+  tagsDescription:
+    "Теги указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
   tagLabel: "Тег:",
   /* Levels (UI rename for tags) */
   levels: "Уровни",
   levelsHeading: "Уровни",
-  levelsDescription: "Уровни указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
+  levelsDescription:
+    "Уровни указывают уровень языка каждой статьи по шкале CEFR — от A1 (начальный) до C2 (уровень носителя языка). Используйте их, чтобы найти контент, соответствующий вашему уровню немецкого языка.",
   levelLabel: "Уровень:",
   levelNotFound: "Уровень не найден",
   "level.titlePrefix": "Уровень:",
@@ -517,17 +598,23 @@ const ru: Translations = {
   "tag.titlePrefix": "Тег:",
   /* CEFR UI (labels + richer descriptions) */
   "cefr.A1.title": "Начальный",
-  "cefr.A1.description": "Вы можете понимать и использовать повседневные выражения и простые фразы. Отлично подходит для ваших первых шагов в немецком языке.",
+  "cefr.A1.description":
+    "Вы можете понимать и использовать повседневные выражения и простые фразы. Отлично подходит для ваших первых шагов в немецком языке.",
   "cefr.A2.title": "Элементарный",
-  "cefr.A2.description": "Вы можете общаться в простых, повседневных ситуациях и описывать базовые потребности. Начните укреплять уверенность в реальных темах.",
+  "cefr.A2.description":
+    "Вы можете общаться в простых, повседневных ситуациях и описывать базовые потребности. Начните укреплять уверенность в реальных темах.",
   "cefr.B1.title": "Средний",
-  "cefr.B1.description": "Вы можете справляться с большинством ситуаций во время путешествий и говорить на знакомые темы. Надёжный уровень для самостоятельного обучения.",
+  "cefr.B1.description":
+    "Вы можете справляться с большинством ситуаций во время путешествий и говорить на знакомые темы. Надёжный уровень для самостоятельного обучения.",
   "cefr.B2.title": "Выше среднего",
-  "cefr.B2.description": "Вы можете понимать основные идеи сложных текстов и взаимодействовать более бегло. Идеально для работы, учёбы и длительных разговоров.",
+  "cefr.B2.description":
+    "Вы можете понимать основные идеи сложных текстов и взаимодействовать более бегло. Идеально для работы, учёбы и длительных разговоров.",
   "cefr.C1.title": "Продвинутый",
-  "cefr.C1.description": "Вы можете ясно выражать мысли и гибко использовать немецкий в социальных и профессиональных контекстах. Подходит для академического и профессионального чтения.",
+  "cefr.C1.description":
+    "Вы можете ясно выражать мысли и гибко использовать немецкий в социальных и профессиональных контекстах. Подходит для академического и профессионального чтения.",
   "cefr.C2.title": "Уровень носителя",
-  "cefr.C2.description": "Вы можете понимать практически всё и выражать себя точно. Близко к уровню носителя по пониманию и нюансам.",
+  "cefr.C2.description":
+    "Вы можете понимать практически всё и выражать себя точно. Близко к уровню носителя по пониманию и нюансам.",
   /* Footer links */
   courses: "Курсы",
   lessons: "Уроки",
@@ -561,41 +648,56 @@ const ru: Translations = {
   "privacy.lastUpdated": "Обновлено: {date}",
   "privacy.contact": "По вопросам этой политики пишите: {email}.",
   "privacy.s1.title": "1. Введение",
-  "privacy.s1.p": "Simple Deutsch предоставляет образовательный контент для изучения немецкого языка. Эта Политика конфиденциальности объясняет, как мы собираем, используем и защищаем персональные данные.",
+  "privacy.s1.p":
+    "Simple Deutsch предоставляет образовательный контент для изучения немецкого языка. Эта Политика конфиденциальности объясняет, как мы собираем, используем и защищаем персональные данные.",
   "privacy.s2.title": "2. Область применения",
-  "privacy.s2.p": "Политика применяется к персональным данным, обрабатываемым через наш сайт и связанные сервисы. Она не охватывает сторонние ресурсы, на которые мы ссылаемся.",
+  "privacy.s2.p":
+    "Политика применяется к персональным данным, обрабатываемым через наш сайт и связанные сервисы. Она не охватывает сторонние ресурсы, на которые мы ссылаемся.",
   "privacy.s3.title": "3. Какие данные мы собираем",
   "privacy.s3.a.title": "Информация, которую вы предоставляете добровольно",
   "privacy.s3.a.p": "Данные аккаунта, формы, отзывы и сообщения, которые вы отправляете.",
   "privacy.s3.b.title": "Автоматически собираемая информация",
-  "privacy.s3.b.p": "Технические данные: IP-адрес, тип браузера, идентификаторы устройства и базовые журналы использования, собираемые для работы и безопасности.",
+  "privacy.s3.b.p":
+    "Технические данные: IP-адрес, тип браузера, идентификаторы устройства и базовые журналы использования, собираемые для работы и безопасности.",
   "privacy.s3.c.title": "Аналитика и cookies",
-  "privacy.s3.c.p": "Анонимная аналитика и cookie помогают понять использование сайта и улучшить работу.",
+  "privacy.s3.c.p":
+    "Анонимная аналитика и cookie помогают понять использование сайта и улучшить работу.",
   "privacy.s3.d.title": "Чувствительные данные",
-  "privacy.s3.d.p": "Мы не намеренно собираем чувствительные персональные данные. Если такие данные поступят случайно, мы удалим их, если иное не требуется по закону.",
+  "privacy.s3.d.p":
+    "Мы не намеренно собираем чувствительные персональные данные. Если такие данные поступят случайно, мы удалим их, если иное не требуется по закону.",
   "privacy.s4.title": "4. Cookies и аналитика",
   "privacy.s4.a.title": "Функциональные cookie",
   "privacy.s4.a.p": "Необходимые cookie обеспечивают работу сайта и сохранение предпочтений.",
   "privacy.s4.b.title": "Производительность и аналитика",
-  "privacy.s4.b.p": "Мы используем агрегированную аналитику для улучшения контента и оценки производительности. Эти данные не идентифицируют вас лично.",
+  "privacy.s4.b.p":
+    "Мы используем агрегированную аналитику для улучшения контента и оценки производительности. Эти данные не идентифицируют вас лично.",
   "privacy.s4.c.title": "Управление cookie",
-  "privacy.s4.c.p": "Вы можете управлять или отключать cookie в настройках браузера; это может ограничить функциональность сайта.",
+  "privacy.s4.c.p":
+    "Вы можете управлять или отключать cookie в настройках браузера; это может ограничить функциональность сайта.",
   "privacy.s5.title": "5. Как мы используем данные",
-  "privacy.s5.p": "- Для предоставления и поддержки сайта\n- Для улучшения и персонализации контента\n- Для ответа на запросы и поддержки\n- Для мониторинга безопасности и производительности",
+  "privacy.s5.p":
+    "- Для предоставления и поддержки сайта\n- Для улучшения и персонализации контента\n- Для ответа на запросы и поддержки\n- Для мониторинга безопасности и производительности",
   "privacy.s6.title": "6. Передача данных",
-  "privacy.s6.p": "- Поставщикам услуг, обрабатывающим данные от нашего имени\n- Когда это требуется по закону или для защиты прав\n- В агрегированном или анонимизированном виде для анализа",
+  "privacy.s6.p":
+    "- Поставщикам услуг, обрабатывающим данные от нашего имени\n- Когда это требуется по закону или для защиты прав\n- В агрегированном или анонимизированном виде для анализа",
   "privacy.s7.title": "7. Сохранение данных",
-  "privacy.s7.p": "Мы храним персональные данные только столько, сколько необходимо для целей, указанных в этой политике, или для соблюдения правовых обязательств.",
+  "privacy.s7.p":
+    "Мы храним персональные данные только столько, сколько необходимо для целей, указанных в этой политике, или для соблюдения правовых обязательств.",
   "privacy.s8.title": "8. Ваши права (ЕАЭС/ЕС)",
-  "privacy.s8.p": "Вы можете иметь права на доступ, исправление, ограничение или удаление данных, а также возражать против обработки или запросить переносимость. Для реализации прав свяжитесь с нами.",
+  "privacy.s8.p":
+    "Вы можете иметь права на доступ, исправление, ограничение или удаление данных, а также возражать против обработки или запросить переносимость. Для реализации прав свяжитесь с нами.",
   "privacy.s9.title": "9. Безопасность данных",
-  "privacy.s9.p": "Мы применяем административные и технические меры для защиты персональных данных, но не можем гарантировать абсолютную безопасность.",
+  "privacy.s9.p":
+    "Мы применяем административные и технические меры для защиты персональных данных, но не можем гарантировать абсолютную безопасность.",
   "privacy.s10.title": "10. Международные передачи",
-  "privacy.s10.p": "Данные могут обрабатываться в других странах. Мы принимаем меры для обеспечения надлежащих гарантий.",
+  "privacy.s10.p":
+    "Данные могут обрабатываться в других странах. Мы принимаем меры для обеспечения надлежащих гарантий.",
   "privacy.s11.title": "11. Конфиденциальность детей",
-  "privacy.s11.p": "Наши сервисы не предназначены для детей до 16 лет. Мы не намеренно собираем данные детей; родители могут обратиться к нам с просьбой об удалении.",
+  "privacy.s11.p":
+    "Наши сервисы не предназначены для детей до 16 лет. Мы не намеренно собираем данные детей; родители могут обратиться к нам с просьбой об удалении.",
   "privacy.s12.title": "12. Изменения в политике",
-  "privacy.s12.p": "Мы можем обновлять эту политику. Существенные изменения будут отмечены обновлённой датой вверху и, при необходимости, уведомлением на сайте.",
+  "privacy.s12.p":
+    "Мы можем обновлять эту политику. Существенные изменения будут отмечены обновлённой датой вверху и, при необходимости, уведомлением на сайте.",
   "privacy.s13.title": "13. Контакты",
   "privacy.s13.p": "Контакты:",
   /* Terms of Service */
@@ -604,25 +706,35 @@ const ru: Translations = {
   "terms.lastUpdatedLabel": "Последнее обновление:",
   "terms.lastUpdatedDate": "2025-12-25",
   "terms.s1.title": "1. Введение",
-  "terms.s1.p": "Настоящие Условия использования («Условия») устанавливают правила использования Simple Deutsch (далее — «Сервис» или «Simple Deutsch»). Получая доступ к Сервису или используя его, вы соглашаетесь с настоящими Условиями.",
+  "terms.s1.p":
+    "Настоящие Условия использования («Условия») устанавливают правила использования Simple Deutsch (далее — «Сервис» или «Simple Deutsch»). Получая доступ к Сервису или используя его, вы соглашаетесь с настоящими Условиями.",
   "terms.s2.title": "2. Определения",
-  "terms.s2.p": "«Simple Deutsch» означает веб-сайт и сервисы, управляемые Simple Deutsch. «Пользователь» означает любое лицо, которое получает доступ к Сервису или использует его.",
+  "terms.s2.p":
+    "«Simple Deutsch» означает веб-сайт и сервисы, управляемые Simple Deutsch. «Пользователь» означает любое лицо, которое получает доступ к Сервису или использует его.",
   "terms.s3.title": "3. Право на использование",
-  "terms.s3.p": "Для использования Сервиса вам должно быть не менее 16 лет. Используя Сервис, вы подтверждаете, что соответствуете этому возрастному требованию.",
+  "terms.s3.p":
+    "Для использования Сервиса вам должно быть не менее 16 лет. Используя Сервис, вы подтверждаете, что соответствуете этому возрастному требованию.",
   "terms.s4.title": "4. Допустимое использование",
-  "terms.s4.p": "- Не используйте Сервис для незаконных целей\n- Не пытайтесь вмешиваться в работу или безопасность Сервиса\n- Не публикуйте контент, который нарушает права других, является оскорбительным, дискриминационным или порнографическим",
+  "terms.s4.p":
+    "- Не используйте Сервис для незаконных целей\n- Не пытайтесь вмешиваться в работу или безопасность Сервиса\n- Не публикуйте контент, который нарушает права других, является оскорбительным, дискриминационным или порнографическим",
   "terms.s5.title": "5. Аккаунты и контент пользователей",
-  "terms.s5.p": "Если вы создаёте аккаунт, вы несёте ответственность за свои учётные данные и действия. Вы предоставляете Simple Deutsch неисключительную, мировую лицензию на публикацию и отображение контента, который вы размещаете в Сервисе.",
+  "terms.s5.p":
+    "Если вы создаёте аккаунт, вы несёте ответственность за свои учётные данные и действия. Вы предоставляете Simple Deutsch неисключительную, мировую лицензию на публикацию и отображение контента, который вы размещаете в Сервисе.",
   "terms.s6.title": "6. Интеллектуальная собственность",
-  "terms.s6.p": "Весь контент сайта принадлежит Simple Deutsch или его лицензиарам и защищён авторским правом. Вы можете просматривать и делиться контентом только для личного некоммерческого использования.",
+  "terms.s6.p":
+    "Весь контент сайта принадлежит Simple Deutsch или его лицензиарам и защищён авторским правом. Вы можете просматривать и делиться контентом только для личного некоммерческого использования.",
   "terms.s7.title": "7. Ссылки на сторонние сайты",
-  "terms.s7.p": "Сервис может содержать ссылки на сторонние сайты. Мы не несем ответственности за их содержание или практики.",
+  "terms.s7.p":
+    "Сервис может содержать ссылки на сторонние сайты. Мы не несем ответственности за их содержание или практики.",
   "terms.s8.title": "8. Отказ от гарантий",
-  "terms.s8.p": "Сервис предоставляется \"как есть\" без каких‑либо гарантий. Мы не гарантируем точность или доступность контента.",
+  "terms.s8.p":
+    'Сервис предоставляется "как есть" без каких‑либо гарантий. Мы не гарантируем точность или доступность контента.',
   "terms.s9.title": "9. Ограничение ответственности",
-  "terms.s9.p": "В максимально допустимой законом степени Simple Deutsch и его аффилированные лица не несут ответственности за косвенные, побочные или последующие убытки, возникающие в связи с использованием вами Сервиса.",
+  "terms.s9.p":
+    "В максимально допустимой законом степени Simple Deutsch и его аффилированные лица не несут ответственности за косвенные, побочные или последующие убытки, возникающие в связи с использованием вами Сервиса.",
   "terms.s10.title": "10. Изменения Условий",
-  "terms.s10.p": "Мы можем вносить изменения в эти Условия. Существенные изменения будут отмечены обновлённой датой вверху. Продолжение использования Сервиса означает принятие обновлённых Условий.",
+  "terms.s10.p":
+    "Мы можем вносить изменения в эти Условия. Существенные изменения будут отмечены обновлённой датой вверху. Продолжение использования Сервиса означает принятие обновлённых Условий.",
   "terms.s11.title": "11. Контакты",
   "terms.s11.p": "По вопросам, связанным с настоящими Условиями, обращайтесь",
   /* Imprint / Impressum */
@@ -631,7 +743,8 @@ const ru: Translations = {
   "imprint.lastUpdatedLabel": "Последнее обновление:",
   "imprint.lastUpdatedDate": "2025-12-27",
   "imprint.s1.title": "1. Оператор / Владелец сайта",
-  "imprint.s1.p": "Этот веб-сайт управляется частным лицом.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
+  "imprint.s1.p":
+    "Этот веб-сайт управляется частным лицом.\\nMaksym Poliakovskyi\\nMurtener Straße, 12205 Berlin, Germany",
   "imprint.s2.title": "2. Контакты",
   "imprint.s2.p": "Email: hello@simpledeutsch.com",
   "imprint.s3.title": "3. Ответственный за содержание",
@@ -639,25 +752,31 @@ const ru: Translations = {
   "imprint.s3.name": "Maksym Poliakovskyi",
   "imprint.s3.address": "Murtener Straße, 12205 Berlin, Germany",
   "imprint.s4.title": "4. Ответственность за содержимое",
-  "imprint.s4.p": "Отказ от гарантий: Мы прилагаем разумные усилия для обеспечения точности и актуальности содержимого, но не можем гарантировать полноту, точность или своевременность. Ответственность распространяется только на собственный контент в соответствии с применимым законодательством.",
+  "imprint.s4.p":
+    "Отказ от гарантий: Мы прилагаем разумные усилия для обеспечения точности и актуальности содержимого, но не можем гарантировать полноту, точность или своевременность. Ответственность распространяется только на собственный контент в соответствии с применимым законодательством.",
   "imprint.s5.title": "5. Ответственность за ссылки",
-  "imprint.s5.p": "Сайт может содержать ссылки на сторонние ресурсы. Мы не контролируем их содержание и не несем ответственности за них.",
+  "imprint.s5.p":
+    "Сайт может содержать ссылки на сторонние ресурсы. Мы не контролируем их содержание и не несем ответственности за них.",
   "imprint.s6.title": "6. Авторское право",
-  "imprint.s6.p": "Весь контент и материалы на этом сайте защищены авторским правом. Воспроизведение или использование требует предварительного письменного согласия, если иное не разрешено законом.",
+  "imprint.s6.p":
+    "Весь контент и материалы на этом сайте защищены авторским правом. Воспроизведение или использование требует предварительного письменного согласия, если иное не разрешено законом.",
   "imprint.s7.title": "7. Урегулирование споров / Потребительский арбитраж",
-  "imprint.s7.p": "Мы не обязаны и не готовы участвовать в процедурах урегулирования споров перед потребительской арбитражной комиссией.",
+  "imprint.s7.p":
+    "Мы не обязаны и не готовы участвовать в процедурах урегулирования споров перед потребительской арбитражной комиссией.",
   /* Theme labels */
   darkMode: "Тёмная тема",
   lightMode: "Светлая тема",
   /* Footer */
-  "footer.copyright": "© {year} Simple Deutsch. Платформа для изучения немецкого языка. Все права защищены.",
+  "footer.copyright":
+    "© {year} Simple Deutsch. Платформа для изучения немецкого языка. Все права защищены.",
 };
 
 // German translations: reuse English defaults and override as needed.
 const de: Translations = {
   ...en,
-  "siteTitle": "Simple Deutsch",
-  "footer.copyright": "© {year} Simple Deutsch. Plattform zum Deutschlernen. Alle Rechte vorbehalten.",
+  siteTitle: "Simple Deutsch",
+  "footer.copyright":
+    "© {year} Simple Deutsch. Plattform zum Deutschlernen. Alle Rechte vorbehalten.",
   /* German notFound keys (override English default if needed) */
   "notFound.title": "Seite nicht gefunden",
   "notFound.description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
@@ -675,8 +794,8 @@ export const DEFAULT_LOCALE: Locale = "en";
 
 // Merge in content translations from JSON files (about page)
 import aboutEn from "@/content/i18n/about.en.json";
-import aboutUk from "@/content/i18n/about.ua.json";
 import aboutRu from "@/content/i18n/about.ru.json";
+import aboutUk from "@/content/i18n/about.ua.json";
 
 // Note: extend base translation objects with about.* keys
 Object.assign(en, aboutEn as Translations);

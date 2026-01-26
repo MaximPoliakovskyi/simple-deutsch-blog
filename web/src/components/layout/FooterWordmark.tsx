@@ -12,11 +12,11 @@ export default function FooterWordmark({ className = "" }: Props) {
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
 
-      const BASE = 320;
-      // Don't use a fixed MIN_FONT; compute a dynamic minimum based on
-      // the available width so the mark can continue shrinking on small screens.
-      const SAFETY = 0.98;
-      const MAX_ADJUST = 32;
+    const BASE = 320;
+    // Don't use a fixed MIN_FONT; compute a dynamic minimum based on
+    // the available width so the mark can continue shrinking on small screens.
+    const SAFETY = 0.98;
+    const MAX_ADJUST = 32;
 
     let ro: ResizeObserver | null = null;
 
@@ -29,9 +29,9 @@ export default function FooterWordmark({ className = "" }: Props) {
 
       // Ensure span has correct baseline styles for measurement
       textEl.style.whiteSpace = "nowrap";
-        textEl.style.display = "inline-block";
-        textEl.style.lineHeight = "1";
-        textEl.style.overflow = "visible";
+      textEl.style.display = "inline-block";
+      textEl.style.lineHeight = "1";
+      textEl.style.overflow = "visible";
 
       textEl.style.fontSize = `${BASE}px`;
 
@@ -81,7 +81,7 @@ export default function FooterWordmark({ className = "" }: Props) {
     };
   }, []);
 
-      return (
+  return (
     <div ref={wrapperRef} className={`w-full max-w-full pt-12 ${className}`}>
       <span
         ref={textRef}

@@ -57,7 +57,11 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
     return (k) => dict[k] || k;
   }, [locale]);
 
-  return <Context.Provider value={{ locale, t, postLangLinks, setPostLangLinks }}>{children}</Context.Provider>;
+  return (
+    <Context.Provider value={{ locale, t, postLangLinks, setPostLangLinks }}>
+      {children}
+    </Context.Provider>
+  );
 }
 
 export function useI18n() {

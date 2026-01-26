@@ -1,24 +1,25 @@
 // app/layout.tsx
-import { Geist, Geist_Mono } from "next/font/google";
+
+import { Suspense } from "react";
 import type { ReactNode } from "react";
+import { Geist, Geist_Mono } from "next/font/google";
+import BackButton from "@/components/ui/BackButton";
 import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
-import BackButton from "@/components/ui/BackButton";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
+import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { LocaleProvider } from "@/core/i18n/LocaleProvider";
 import "@/styles/globals.css";
 
-const geistSans = Geist({ 
-  variable: "--font-geist-sans", 
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
   display: "swap",
   preload: true,
 });
-const geistMono = Geist_Mono({ 
-  variable: "--font-geist-mono", 
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
   preload: true,
@@ -42,9 +43,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
         <link rel="icon" href="/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        {/* DNS prefetch for external resources */}
-        <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
+        
+        {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
+        
+        {/* Preload critical fonts for faster first paint */}
+        <link
+          rel="preload"
+          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
+          as="style"
+        />
+        
+        {/* Prefetch common navigation pages */}
+        <link rel="prefetch" href="/api/posts?first=12" as="fetch" crossOrigin="anonymous" />
+        
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
         <script src="/theme-init.js" />
       </head>
@@ -72,8 +85,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           {/* Homepage-only components are rendered by their pages now. */}
           <Footer />
         </LocaleProvider>
-        {isProd ? <Analytics mode="production" /> : null}
-        {isProd ? <SpeedInsights sampleRate={0.1} /> : null}
+
+        {/* Load analytics only in production and defer to avoid blocking */}
+        <AnalyticsClient isProd={isProd} />
       </body>
     </html>
   );

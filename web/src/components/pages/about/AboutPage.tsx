@@ -2,10 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import SectionText from "@/components/about/SectionText";
 import AboutMedia from "@/components/about/AboutMedia";
-import TestimonialCard from "@/components/about/TestimonialCard";
 import ScrollRotateLogo from "@/components/about/ScrollRotateLogo";
+import SectionText from "@/components/about/SectionText";
+import TestimonialCard from "@/components/about/TestimonialCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 export default function AboutPage() {
@@ -16,7 +16,13 @@ export default function AboutPage() {
       <section className="mx-auto max-w-6xl px-6 pt-24 text-center">
         <div className="logo-wrapper flex justify-center mb-8">
           <ScrollRotateLogo degPerPx={0.15} clamp={360}>
-            <Image src="/main-logo.svg" alt={t("about.logo.alt")} width={220} height={64} className="object-contain" />
+            <Image
+              src="/main-logo.svg"
+              alt={t("about.logo.alt")}
+              width={220}
+              height={64}
+              className="object-contain"
+            />
           </ScrollRotateLogo>
         </div>
 
@@ -28,14 +34,12 @@ export default function AboutPage() {
         </div>
 
         <SectionText>
-          <p className="mt-0 text-base sm:text-lg md:text-xl leading-relaxed text-(--sd-text-muted) max-w-232 mx-auto text-center">{t("about.hero.description")}</p>
+          <p className="mt-0 text-base sm:text-lg md:text-xl leading-relaxed text-(--sd-text-muted) max-w-232 mx-auto text-center">
+            {t("about.hero.description")}
+          </p>
         </SectionText>
       </section>
-      
 
-      
-
-      
       {/* Editorial content flow: vertical sequence (text → image) x3 */}
       <section className="mx-auto w-full max-w-6xl px-6 pt-20 md:pt-28">
         <div className="flex flex-col items-center space-y-16 md:space-y-20">
@@ -64,7 +68,9 @@ export default function AboutPage() {
 
               <p className="md:text-left text-center">{t("about.sections.consistency.p4")}</p>
 
-              <blockquote className="mx-auto italic text-xl text-(--sd-text-muted) my-10 border-l-2 border-(--sd-border) pl-4 md:pl-6">{t("about.sections.consistency.quote")}</blockquote>
+              <blockquote className="mx-auto italic text-xl text-(--sd-text-muted) my-10 border-l-2 border-(--sd-border) pl-4 md:pl-6">
+                {t("about.sections.consistency.quote")}
+              </blockquote>
 
               <p className="md:text-left text-center">{t("about.sections.consistency.p5")}</p>
             </div>
@@ -90,30 +96,72 @@ export default function AboutPage() {
         <div className="dark sd-dark-scope">
           <div className="mx-auto w-full max-w-6xl px-6">
             <div className="text-center mx-auto max-w-3xl mb-6">
-              <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-white">{t("about.testimonials.heading")}</h2>
-              <p className="mt-4 text-base md:text-lg leading-relaxed text-gray-300 max-w-2xl mx-auto">{t("about.testimonials.sub")}</p>
+              <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-white">
+                {t("about.testimonials.heading")}
+              </h2>
+              <p className="mt-4 text-base md:text-lg leading-relaxed text-gray-300 max-w-2xl mx-auto">
+                {t("about.testimonials.sub")}
+              </p>
             </div>
 
             <div className="mt-10 md:mt-14 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-              <TestimonialCard name={t("about.testimonials.1.name")} role={t("about.testimonials.1.role")}>{t("about.testimonials.1.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.1.name")}
+                role={t("about.testimonials.1.role")}
+              >
+                {t("about.testimonials.1.text")}
+              </TestimonialCard>
 
-              <TestimonialCard name={t("about.testimonials.2.name")} role={t("about.testimonials.2.role")}>{t("about.testimonials.2.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.2.name")}
+                role={t("about.testimonials.2.role")}
+              >
+                {t("about.testimonials.2.text")}
+              </TestimonialCard>
 
-              <TestimonialCard name={t("about.testimonials.3.name")} role={t("about.testimonials.3.role")}>{t("about.testimonials.3.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.3.name")}
+                role={t("about.testimonials.3.role")}
+              >
+                {t("about.testimonials.3.text")}
+              </TestimonialCard>
 
-              <TestimonialCard name={t("about.testimonials.4.name")} role={t("about.testimonials.4.role")}>{t("about.testimonials.4.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.4.name")}
+                role={t("about.testimonials.4.role")}
+              >
+                {t("about.testimonials.4.text")}
+              </TestimonialCard>
 
-              <TestimonialCard name={t("about.testimonials.5.name")} role={t("about.testimonials.5.role")}>{t("about.testimonials.5.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.5.name")}
+                role={t("about.testimonials.5.role")}
+              >
+                {t("about.testimonials.5.text")}
+              </TestimonialCard>
 
-              <TestimonialCard name={t("about.testimonials.6.name")} role={t("about.testimonials.6.role")}>{t("about.testimonials.6.text")}</TestimonialCard>
+              <TestimonialCard
+                name={t("about.testimonials.6.name")}
+                role={t("about.testimonials.6.role")}
+              >
+                {t("about.testimonials.6.text")}
+              </TestimonialCard>
             </div>
           </div>
         </div>
       </section>
       {/* Final CTA — encourages action, last section on page */}
       <section className="mx-auto w-full max-w-6xl px-6 py-28 md:py-32">
-        <SectionText title={<h2 className="text-3xl sm:text-4xl font-semibold text-(--sd-text)">{t("about.cta.finalTitle")}</h2>}>
-          <p className="mt-6 text-base sm:text-lg md:text-xl leading-relaxed text-(--sd-text-muted) max-w-232 mx-auto text-center mb-8">{t("about.cta.finalLead")}</p>
+        <SectionText
+          title={
+            <h2 className="text-3xl sm:text-4xl font-semibold text-(--sd-text)">
+              {t("about.cta.finalTitle")}
+            </h2>
+          }
+        >
+          <p className="mt-6 text-base sm:text-lg md:text-xl leading-relaxed text-(--sd-text-muted) max-w-232 mx-auto text-center mb-8">
+            {t("about.cta.finalLead")}
+          </p>
 
           <div className="mt-0 flex justify-center">
             <Link

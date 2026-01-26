@@ -1,7 +1,7 @@
 "use client";
 
-import * as React from "react";
 import dynamic from "next/dynamic";
+import * as React from "react";
 import CategoryPills from "@/components/features/categories/CategoryPills";
 import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
@@ -65,7 +65,7 @@ export default function HeroWithFilters({
         setDisplayedCount(pageSize);
         return;
       }
-      
+
       setIsLoading(true);
       try {
         const url = new URL("/api/posts", window.location.origin);
@@ -75,11 +75,11 @@ export default function HeroWithFilters({
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         const data = await res.json();
-        
+
         if (cancelled) return;
-        
+
         setAllPosts(data.posts ?? []);
         setDisplayedCount(pageSize);
       } catch (error) {
@@ -93,7 +93,9 @@ export default function HeroWithFilters({
     }
 
     fetchPosts();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCategory, locale, pageSize, initialPosts]);
 
   const loadMore = React.useCallback(() => {
@@ -107,9 +109,7 @@ export default function HeroWithFilters({
     <>
       <section className="text-center max-w-6xl mx-auto px-6 sm:px-8 pt-12 sm:pt-14 md:pt-16 pb-0">
         {/* Hero heading: single h1 with manual line breaks and minimal line height */}
-        <h1
-          className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]"
-        >
+        <h1 className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
           {t("heroLine1")}
           <br />
           {t("heroLine2")}
@@ -149,10 +149,8 @@ export default function HeroWithFilters({
       </section>
 
       <div className="flex flex-col gap-8">
-        {displayedPosts.length === 0 && !isLoading && (
-          <div>{t("noPosts")}</div>
-        )}
-        
+        {displayedPosts.length === 0 && !isLoading && <div>{t("noPosts")}</div>}
+
         {displayedPosts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
             {displayedPosts.map((post, idx) => (

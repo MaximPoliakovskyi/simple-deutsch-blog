@@ -22,7 +22,7 @@ interface TypewriterWordsProps {
 function useMeasureWordWidths(
   words: string[],
   containerClassName: string,
-  onMaxWidthChange?: (maxWidthPx: number) => void
+  onMaxWidthChange?: (maxWidthPx: number) => void,
 ) {
   const measureRef = React.useRef<HTMLSpanElement>(null);
   const [maxWidthPx, setMaxWidthPx] = React.useState(0);
@@ -65,14 +65,14 @@ function useMeasureWordWidths(
 /**
  * Hook that manages the typewriter animation state.
  * Returns the current display text.
- * 
+ *
  * Animation lifecycle per word:
  * 1. Type characters one by one (typeMsPerChar)
  * 2. Pause after typing completes (pauseAfterTypeMs)
  * 3. Delete characters one by one (deleteMsPerChar)
  * 4. Pause after deleting completes (pauseAfterDeleteMs)
  * 5. Move to next word and repeat
- * 
+ *
  * All timers are properly cleaned up on unmount.
  */
 function useTypewriter({
@@ -162,14 +162,14 @@ function useTypewriter({
 
 /**
  * TypewriterWords component - displays rotating words with a typewriter animation.
- * 
+ *
  * Features:
  * - Pixel-accurate width measurement to prevent horizontal drift
  * - Absolutely positioned cursor that never wraps
  * - Respects prefers-reduced-motion
  * - Accessibility: aria-hidden on animated text, sr-only label
  * - No layout thrashing: cursor does not participate in flow
- * 
+ *
  * @example
  * <TypewriterWords
  *   words={["work", "travel", "life"]}
@@ -205,7 +205,7 @@ export default function TypewriterWords({
   const { measureRef, maxWidthPx } = useMeasureWordWidths(
     words,
     containerClassName,
-    onMaxWidthChange
+    onMaxWidthChange,
   );
 
   // Track the rendered width of the currently typed text for cursor positioning

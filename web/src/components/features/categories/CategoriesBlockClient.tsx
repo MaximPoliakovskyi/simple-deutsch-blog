@@ -45,14 +45,14 @@ export default function CategoriesBlockClient({
 
     async function fetchAllPosts() {
       if (!selectedCategory) return;
-      
+
       setIsFetching(true);
       setIsLoading(true);
       try {
         // For Ukrainian and Russian locales, fetch English posts first (then translate)
         const shouldFetchEnglish = locale === "uk" || locale === "ru";
         const fetchLang = shouldFetchEnglish ? undefined : locale;
-        
+
         const url = new URL("/api/posts", window.location.origin);
         // Fetch a large batch to get all available posts for this tag
         url.searchParams.set("first", "100");
@@ -63,28 +63,30 @@ export default function CategoriesBlockClient({
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        
+
         const data = await res.json();
         let posts = data.posts ?? [];
-        
+
         if (cancelled) return;
-        
+
         // If Ukrainian or Russian locale, fetch translated versions of posts
         if (shouldFetchEnglish && posts.length > 0) {
           const translatedPosts: any[] = [];
           const targetLangCode = locale === "uk" ? "UK" : locale === "ru" ? "RU" : null;
-          
+
           if (targetLangCode) {
             for (const post of posts) {
-              const translation = post.translations?.find((t: any) => t.language?.code === targetLangCode);
-              
+              const translation = post.translations?.find(
+                (t: any) => t.language?.code === targetLangCode,
+              );
+
               if (translation?.slug) {
                 try {
                   // Fetch translated version
                   const translatedUrl = new URL("/api/posts", window.location.origin);
                   translatedUrl.searchParams.set("slug", translation.slug);
                   const translatedRes = await fetch(translatedUrl.toString());
-                  
+
                   if (translatedRes.ok) {
                     const translatedData = await translatedRes.json();
                     const translatedPost = translatedData.posts?.[0];
@@ -97,11 +99,11 @@ export default function CategoriesBlockClient({
                 }
               }
             }
-            
+
             posts = translatedPosts;
           }
         }
-        
+
         setAllPosts(posts);
         setDisplayedCount(pageSize);
       } catch (error) {
@@ -118,7 +120,9 @@ export default function CategoriesBlockClient({
     }
 
     fetchAllPosts();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCategory, locale, pageSize]);
 
   const loadMore = React.useCallback(() => {
@@ -141,10 +145,8 @@ export default function CategoriesBlockClient({
       </div>
 
       <div className="flex flex-col gap-8">
-        {displayedPosts.length === 0 && !isFetching && (
-          <div>{t("noPosts")}</div>
-        )}
-        
+        {displayedPosts.length === 0 && !isFetching && <div>{t("noPosts")}</div>}
+
         {displayedPosts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6">
             {displayedPosts.map((post) => (

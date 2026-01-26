@@ -22,7 +22,7 @@ export type PostTranslation = {
  * This is the primary mapping function for list page language filtering.
  */
 export const mapUiToGraphQLEnum = (
-  locale: "en" | "ru" | "uk" | null | undefined
+  locale: "en" | "ru" | "uk" | null | undefined,
 ): "EN" | "RU" | "UK" => {
   if (!locale) return "EN";
   if (locale === "ru") return "RU";
@@ -42,7 +42,7 @@ export const mapGraphQLEnumToUi = (code: string | null | undefined): "en" | "ru"
 
 // Safe parser for the Polylang translation JSON string
 export function parseTranslations(
-  raw: string | null | undefined
+  raw: string | null | undefined,
 ): Partial<Record<"en" | "ru" | "uk", PolylangTranslation>> {
   if (!raw || typeof raw !== "string") return {};
   try {
@@ -51,7 +51,7 @@ export function parseTranslations(
 
     const result: Partial<Record<"en" | "ru" | "uk", PolylangTranslation>> = {};
     const validLangs = ["en", "ru", "uk"] as const;
-    
+
     for (const [lang, value] of Object.entries(parsed)) {
       if (!validLangs.includes(lang as any)) continue; // Ignore unknown locales
       if (!value || typeof value !== "object") continue;

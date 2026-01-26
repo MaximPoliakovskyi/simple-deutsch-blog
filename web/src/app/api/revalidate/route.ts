@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const body: RevalidateBody = await req.json().catch(() => ({} as RevalidateBody));
+    const body: RevalidateBody = await req.json().catch(() => ({}) as RevalidateBody);
 
     switch (body.type) {
       case "posts":

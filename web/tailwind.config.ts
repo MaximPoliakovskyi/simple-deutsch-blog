@@ -7,8 +7,8 @@ export default {
     extend: {
       colors: {
         ui: {
-          darkButton: '#1F1F1F',
-          darkButtonHover: '#2b2b2b',
+          darkButton: "#1F1F1F",
+          darkButtonHover: "#2b2b2b",
         },
       },
     },

@@ -39,7 +39,10 @@ async function getSliderPosts(locale?: string): Promise<WPPostCard[]> {
   // Always include lang when provided to ensure language-scoped posts
   if (locale) url.searchParams.set("lang", locale);
 
-  const res = await fetch(url.toString(), { next: { revalidate: 0 } });
+  // Cache for 1 hour to avoid repeated fetches; use revalidate tag for ISR
+  const res = await fetch(url.toString(), {
+    next: { revalidate: 3600, tags: ["posts-slider"] },
+  });
   if (!res.ok) return [];
   const json = await res.json();
   return normalizePosts(json);

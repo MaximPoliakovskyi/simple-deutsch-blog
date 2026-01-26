@@ -3,9 +3,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { getLevelLabel } from "@/core/cefr/levels";
 import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
-import { getLevelLabel } from "@/core/cefr/levels";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type FeaturedImageNode = {
@@ -84,10 +84,10 @@ function estimateReadingMinutes(post: PostCardPost): number | null {
   // Calculate from the full content for accuracy. With the updated queries,
   // content should now be available in all list views.
   const html = post.content ?? post.excerpt ?? "";
-  
+
   // If no content or excerpt available, don't show reading time
   if (!html) return null;
-  
+
   // Strip HTML tags and count words
   const text = html.replace(/<[^>]+>/g, " ");
   const words = (text.trim().match(/\S+/g) ?? []).length;
@@ -162,7 +162,12 @@ export default function PostCard({ post, className, priority = false }: PostCard
         {/* Meta (date • reading time) */}
         {((post.dateText ?? computedDateText) || minutes) && (
           <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            {post.dateText ?? computedDateText} {(post.dateText ?? computedDateText) && (post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)) ? <span aria-hidden>·</span> : null} {post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)}
+            {post.dateText ?? computedDateText}{" "}
+            {(post.dateText ?? computedDateText) &&
+            (post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)) ? (
+              <span aria-hidden>·</span>
+            ) : null}{" "}
+            {post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)}
           </p>
         )}
 

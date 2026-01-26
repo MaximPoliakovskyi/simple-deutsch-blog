@@ -4,7 +4,15 @@
 
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useDeferredValue, useLayoutEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
@@ -181,7 +189,10 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       // opening: animate from 0 -> final px
       setWrapHeight(0);
       // respect reduced motion
-      const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const prefersReduced =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (prefersReduced) {
         setWrapHeight(final);
         return;
@@ -209,13 +220,17 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     const final = Math.min(measured, contentMax ?? measured);
 
     // Determine previous measured height (fallback to current wrapper height)
-    const prevMeasured = prevMeasuredRef.current || (typeof wrapHeight === "number" ? wrapHeight : measured);
+    const prevMeasured =
+      prevMeasuredRef.current || (typeof wrapHeight === "number" ? wrapHeight : measured);
     prevMeasuredRef.current = measured;
 
     // If already essentially equal, do nothing
     if (Math.abs(prevMeasured - final) < 2) return;
 
-    const prefersReduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReduced =
+      typeof window !== "undefined" &&
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (prefersReduced) {
       setWrapHeight(final);
       return;
@@ -230,7 +245,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
 
     // Content grew — animate straightforwardly to the new final
     requestAnimationFrame(() => setWrapHeight(final));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items.length, hasNext, contentMax, showResults]);
 
   // Recompute max height when the viewport size changes or user scrolls while open
@@ -244,7 +259,9 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
         const list = listRef.current;
         if (!wrap || !list) return;
         const viewportHeight = window.innerHeight;
-        const panelTop = panelRef.current ? panelRef.current.getBoundingClientRect().top : wrap.getBoundingClientRect().top;
+        const panelTop = panelRef.current
+          ? panelRef.current.getBoundingClientRect().top
+          : wrap.getBoundingClientRect().top;
         const inputHeight = inputRef.current?.getBoundingClientRect().height ?? 56;
         const capped = Math.max(120, viewportHeight - panelTop - inputHeight - 64);
         const maxAllowed = Math.min(capped, Math.floor(viewportHeight * 0.72));
@@ -479,7 +496,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   if (!mounted) return null;
 
   return createPortal(
-        <div
+    <div
       role="dialog"
       aria-modal="true"
       aria-label="Search articles"
@@ -488,7 +505,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-            "fixed inset-0 z-100",
+        "fixed inset-0 z-100",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",
@@ -575,13 +592,13 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
           ref={resultsWrapRef}
           className="min-h-0 overflow-y-auto"
           style={{
-              height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
-              padding: 0,
-              opacity: showResults ? 1 : 0,
-              transform: showResults ? "translateY(0)" : "translateY(-6px)",
-              transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
-              willChange: "height, opacity, transform",
-            }}
+            height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
+            padding: 0,
+            opacity: showResults ? 1 : 0,
+            transform: showResults ? "translateY(0)" : "translateY(-6px)",
+            transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
+            willChange: "height, opacity, transform",
+          }}
         >
           <ul
             ref={listRef}
@@ -589,55 +606,58 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
             style={{ margin: 0, padding: 0, listStyle: "none" }}
           >
             {empty && (
-              <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">{tNoResults}</li>
+              <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
+                {tNoResults}
+              </li>
             )}
 
-            {(!loading && items.length > 0) &&
+            {!loading &&
+              items.length > 0 &&
               items.slice(0, visibleCount).map((it, i) => (
                 <li key={it.id}>
-                <button
-                  type="button"
-                  onMouseEnter={() => setHighlight(i)}
-                  onClick={() => {
-                    requestClose();
-                    router.push(`/posts/${it.slug}`);
-                  }}
-                  className={cn(
-                    "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
-                    "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
-                    i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
-                    // only the last rendered item should have bottom rounding
-                    i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
-                  )}
-                  aria-current={i === highlight ? "true" : undefined}
-                >
-                  {it.image ? (
-                    <Image
-                      src={it.image ?? ""}
-                      alt=""
-                      width={48}
-                      height={48}
-                      className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
-                      sizes="48px"
-                    />
-                  ) : (
-                    <div
-                      className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
-                      aria-hidden="true"
-                    />
-                  )}
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                      {it.title}
+                  <button
+                    type="button"
+                    onMouseEnter={() => setHighlight(i)}
+                    onClick={() => {
+                      requestClose();
+                      router.push(`/posts/${it.slug}`);
+                    }}
+                    className={cn(
+                      "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
+                      "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
+                      i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
+                      // only the last rendered item should have bottom rounding
+                      i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
+                    )}
+                    aria-current={i === highlight ? "true" : undefined}
+                  >
+                    {it.image ? (
+                      <Image
+                        src={it.image ?? ""}
+                        alt=""
+                        width={48}
+                        height={48}
+                        className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
+                        sizes="48px"
+                      />
+                    ) : (
+                      <div
+                        className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {it.title}
+                      </div>
+                      <div
+                        className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
+                        /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
+                        dangerouslySetInnerHTML={{ __html: it.excerpt }}
+                      />
                     </div>
-                    <div
-                      className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
-                      /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
-                      dangerouslySetInnerHTML={{ __html: it.excerpt }}
-                    />
-                  </div>
-                </button>
-              </li>
+                  </button>
+                </li>
               ))}
 
             {!loading && visibleCount < items.length && (

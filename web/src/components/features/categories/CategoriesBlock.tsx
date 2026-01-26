@@ -1,9 +1,9 @@
 import type { ReactElement } from "react";
+import { CEFR_SLUGS } from "@/core/cefr/levels";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
-import { CEFR_SLUGS } from "@/core/cefr/levels";
 
 type Locale = "en" | "ru" | "uk";
 type TagNode = { id: string; name: string; slug: string };
@@ -33,9 +33,9 @@ export default async function CategoriesBlock({
     CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
-  const defaultLocaleLocal: Locale = (DEFAULT_LOCALE === "de" ? "en" : (DEFAULT_LOCALE as Locale));
+  const defaultLocaleLocal: Locale = DEFAULT_LOCALE === "de" ? "en" : (DEFAULT_LOCALE as Locale);
   const effectiveLocale: Locale = locale ?? defaultLocaleLocal;
-  
+
   // For initial render, pass empty posts - client will fetch based on selected tag
   const firstTagSlug = visibleCategories.length > 0 ? visibleCategories[0].slug : null;
   const initialPosts: any[] = [];
@@ -111,12 +111,12 @@ export default async function CategoriesBlock({
         {/* Client component gets serializable props only */}
         <div className="mt-8">
           <CategoriesBlockClient
-          categories={visibleCategories}
-          initialPosts={initialPosts}
-          initialEndCursor={pageInfo.endCursor}
-          initialHasNextPage={pageInfo.hasNextPage}
-          pageSize={3}
-          locale={effectiveLocale}
+            categories={visibleCategories}
+            initialPosts={initialPosts}
+            initialEndCursor={pageInfo.endCursor}
+            initialHasNextPage={pageInfo.hasNextPage}
+            pageSize={3}
+            locale={effectiveLocale}
           />
         </div>
       </section>

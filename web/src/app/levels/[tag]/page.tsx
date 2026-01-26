@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { PostListItem } from "@/server/wp/api";
-import { getTagBySlug, getCategoryBySlug, getPostsByTag } from "@/server/wp/api";
+import { getCategoryBySlug, getPostsByTag, getTagBySlug } from "@/server/wp/api";
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 export const revalidate = 600;
@@ -32,9 +32,10 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   // emoji for this level (from UI config)
   const { CEFR_UI_CONFIG } = await import("@/core/cefr/levels");
   const emoji = code ? (CEFR_UI_CONFIG[code]?.emoji ?? "") : "";
-  const title = code && levelLabel
-    ? `${prefix} ${emoji ? `${emoji} ` : ""}${code} (${levelLabel}) — ${t.siteTitle}`
-    : `${prefix} ${term.name} — ${t.siteTitle}`;
+  const title =
+    code && levelLabel
+      ? `${prefix} ${emoji ? `${emoji} ` : ""}${code} (${levelLabel}) — ${t.siteTitle}`
+      : `${prefix} ${term.name} — ${t.siteTitle}`;
   return {
     title,
     description: term.description ?? `Posts tagged with “${term.name}”`,
@@ -80,10 +81,20 @@ export default async function LevelPage({
   // Build locale-specific tag slug: English uses "b1", Russian uses "b1-ru", Ukrainian uses "b1-uk"
   const localeTagSlug = lang === "en" ? tag : `${tag}-${lang}`;
 
-  const pageRes = await getPostsByTag({ first: PAGE_SIZE, after: null, locale: lang, tagSlug: localeTagSlug });
+  const pageRes = await getPostsByTag({
+    first: PAGE_SIZE,
+    after: null,
+    locale: lang,
+    tagSlug: localeTagSlug,
+  });
   const initialPosts = pageRes.posts as any[];
   const initialPageInfo = pageRes.pageInfo;
-  const query: { lang: LanguageSlug; categorySlug: null; tagSlug: string | null; level: string | null } = {
+  const query: {
+    lang: LanguageSlug;
+    categorySlug: null;
+    tagSlug: string | null;
+    level: string | null;
+  } = {
     lang,
     categorySlug: null,
     tagSlug: localeTagSlug,
@@ -100,7 +111,11 @@ export default async function LevelPage({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">{code && levelLabel ? `${prefix} ${emoji ? `${emoji} ` : ""}${code} (${levelLabel})` : `${prefix} ${term.name}`}</h1>
+      <h1 className="mb-6 text-3xl font-semibold">
+        {code && levelLabel
+          ? `${prefix} ${emoji ? `${emoji} ` : ""}${code} (${levelLabel})`
+          : `${prefix} ${term.name}`}
+      </h1>
 
       <PostsGridWithPagination
         key={`${lang}-tag-${tag}`}

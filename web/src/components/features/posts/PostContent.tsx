@@ -14,10 +14,5 @@ export default function PostContent({ html, className = "" }: Props) {
     className,
   ];
 
-  return (
-    <article
-      className={classes.join(" ")}
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
+  return <article className={classes.join(" ")} dangerouslySetInnerHTML={{ __html: html }} />;
 }

@@ -63,7 +63,12 @@ export default async function CategoryPage({
 
   // Fetch first paginated page upstream using locale-specific category slug
   const PAGE_SIZE = 3;
-  const pageRes = await getPostsByCategory({ first: PAGE_SIZE, after: null, locale: lang, categorySlug: localeCategorySlug });
+  const pageRes = await getPostsByCategory({
+    first: PAGE_SIZE,
+    after: null,
+    locale: lang,
+    categorySlug: localeCategorySlug,
+  });
   const initialPosts = pageRes.posts;
   const initialPageInfo = pageRes.pageInfo;
 

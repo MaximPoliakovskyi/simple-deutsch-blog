@@ -6,7 +6,7 @@
  * Do NOT import globals.css here. Importing the same CSS in both layout.tsx and
  * global-error.tsx causes Turbopack to generate conflicting chunks, resulting in:
  * "No link element found for chunk /_next/static/chunks/src_styles_globals_...css"
- * 
+ *
  * Since global-error.tsx replaces the root layout when an error occurs, the page
  * has already loaded with styles. We use inline styles for basic layout instead.
  */

@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { getLevelDescription, getLevelLabel } from "@/core/cefr/levels";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
-import { getLevelLabel, getLevelDescription } from "@/core/cefr/levels";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type Category = { id: string; name: string; slug: string };
@@ -33,27 +33,33 @@ export default function CategoryPills({
   }, [CEFR_ORDER]);
 
   // Map of sticker colors for each CEFR label (uppercase key)
-  const CEFR_STICKER: Record<string, string> = React.useMemo(() => ({
-    A1: "bg-green-500",
-    A2: "bg-yellow-400",
-    B1: "bg-orange-500",
-    B2: "bg-red-500",
-    C1: "bg-purple-500",
-    C2: "bg-black",
-  }), []);
+  const CEFR_STICKER: Record<string, string> = React.useMemo(
+    () => ({
+      A1: "bg-green-500",
+      A2: "bg-yellow-400",
+      B1: "bg-orange-500",
+      B2: "bg-red-500",
+      C1: "bg-purple-500",
+      C2: "bg-black",
+    }),
+    [],
+  );
 
   // Check if a category is a CEFR level
-  const isCefrLevel = React.useCallback((slug?: string): boolean => {
-    if (!slug) return false;
-    const upperSlug = slug.toUpperCase();
-    return CEFR_ORDER.includes(upperSlug);
-  }, [CEFR_ORDER]);
+  const isCefrLevel = React.useCallback(
+    (slug?: string): boolean => {
+      if (!slug) return false;
+      const upperSlug = slug.toUpperCase();
+      return CEFR_ORDER.includes(upperSlug);
+    },
+    [CEFR_ORDER],
+  );
 
   // Sorted categories: CEFR levels first (in order), then others
   const sortedCategories = React.useMemo(() => {
-    const cefr = categories.filter(c => isCefrLevel(c.slug));
-    const nonCefr = categories.filter(c => !isCefrLevel(c.slug));
-    
+    const cefr = categories.filter((c) => isCefrLevel(c.slug));
+    const nonCefr = categories.filter((c) => !isCefrLevel(c.slug));
+
     // Sort CEFR levels by CEFR_ORDER
     const sortedCefr = cefr.sort((a, b) => {
       const ia = CEFR_ORDER_MAP.get(a.slug?.toUpperCase() ?? "") ?? 999;
@@ -66,14 +72,17 @@ export default function CategoryPills({
   }, [categories, CEFR_ORDER_MAP, isCefrLevel]);
 
   // Helper to get CEFR level description by tag slug
-  const getTagDescription = React.useCallback((slug: string): string | undefined => {
-    // Prefer centralized CEFR descriptions when available, fall back to translations
-    const fromLevels = getLevelDescription(slug, locale ?? "en");
-    if (fromLevels) return fromLevels;
-    const normalized = slug.toLowerCase();
-    const key = `${normalized}Description`;
-    return t(key);
-  }, [t, locale]);
+  const getTagDescription = React.useCallback(
+    (slug: string): string | undefined => {
+      // Prefer centralized CEFR descriptions when available, fall back to translations
+      const fromLevels = getLevelDescription(slug, locale ?? "en");
+      if (fromLevels) return fromLevels;
+      const normalized = slug.toLowerCase();
+      const key = `${normalized}Description`;
+      return t(key);
+    },
+    [t, locale],
+  );
 
   // If `required` is true and no explicit initialSelected was provided, default
   // to the first category's slug when categories are available.
@@ -81,7 +90,7 @@ export default function CategoryPills({
     if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
 
     // Only prefer A1 if we're actually dealing with CEFR levels
-    if (sortedCategories.some(c => isCefrLevel(c.slug))) {
+    if (sortedCategories.some((c) => isCefrLevel(c.slug))) {
       const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
       if (a1) return a1.slug;
     }
@@ -108,7 +117,9 @@ export default function CategoryPills({
           // active only when the category slug matches the selected value
           const active = selected === cat.slug;
           const description = getTagDescription(cat.slug);
-          const displayName = getLevelLabel(cat.slug, locale ?? "en") ?? translateCategory(cat.name, cat.slug, locale);
+          const displayName =
+            getLevelLabel(cat.slug, locale ?? "en") ??
+            translateCategory(cat.name, cat.slug, locale);
           // compute sticker class safely to avoid 'undefined' being inserted
           return (
             <button
@@ -123,11 +134,11 @@ export default function CategoryPills({
                   return s === cat.slug ? null : cat.slug;
                 })
               }
-                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors cursor-pointer ${
-                  active
-                    ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
-                    : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
-                }`}
+              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors cursor-pointer ${
+                active
+                  ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                  : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
+              }`}
               title={description}
               aria-label={description ? `${displayName}: ${description}` : displayName}
             >

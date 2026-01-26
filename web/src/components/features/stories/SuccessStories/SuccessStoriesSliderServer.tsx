@@ -21,31 +21,34 @@ function normalizePosts(payload: unknown): WPPostCard[] {
 async function getSuccessStoryPosts(locale?: string): Promise<WPPostCard[]> {
   // Always fetch English success-stories first (they have the category)
   // Note: Categories use language-specific slugs (e.g., "success-stories" vs "success-stories-uk")
-  const categorySlug = locale === "uk" ? "success-stories-uk" : 
-                       locale === "ru" ? "success-stories-ru" : 
-                       "success-stories";
-  
+  const categorySlug =
+    locale === "uk"
+      ? "success-stories-uk"
+      : locale === "ru"
+        ? "success-stories-ru"
+        : "success-stories";
+
   const url = new URL("/api/posts", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000");
   url.searchParams.set("first", "8");
   url.searchParams.set("category", categorySlug);
-  
+
   const res = await fetch(url.toString(), { next: { revalidate: 0 } });
   if (!res.ok) return [];
-  
+
   const json = await res.json();
   const posts = normalizePosts(json);
-  
+
   return posts;
 }
 
 /** Server wrapper: fetch once, render the client slider. */
 export default async function SuccessStoriesSliderServer({ locale }: Props = {}) {
   const posts = await getSuccessStoryPosts(locale);
-  
+
   if (!posts.length) return null;
-  
+
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
-  
+
   // Prepare posts for rendering
   const preparedPosts = posts.map((p) => {
     // Estimate reading time from excerpt
@@ -58,19 +61,19 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
         minutes = Math.max(1, Math.ceil(words / 200));
       }
     }
-    
+
     // Format date
     const dateText = p.date
-      ? new Intl.DateTimeFormat(
-          locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US",
-          { dateStyle: "long", timeZone: "UTC" }
-        ).format(new Date(p.date))
+      ? new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
+          dateStyle: "long",
+          timeZone: "UTC",
+        }).format(new Date(p.date))
       : null;
-    
+
     // Build href
     const prefix = locale === "en" ? "" : `/${locale}`;
     const href = `${prefix}/posts/${p.slug}`;
-    
+
     return {
       ...p,
       readingText: minutes ? `${minutes} ${t.minRead}` : null,

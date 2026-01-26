@@ -9,7 +9,10 @@ import { searchPosts, type WPPostCard } from "@/server/wp/api";
 export const dynamic = "force-dynamic";
 
 type SearchParams = Promise<{ q?: string; after?: string }>;
-type SearchResult = { posts: WPPostCard[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
+type SearchResult = {
+  posts: WPPostCard[];
+  pageInfo: { endCursor: string | null; hasNextPage: boolean };
+};
 
 export async function generateMetadata({
   searchParams,
@@ -37,13 +40,19 @@ export default async function SearchPage(
   // For Russian/Ukrainian sites, don't search if query contains only Latin characters
   let posts: WPPostCard[] = [];
   let pageInfo = { endCursor: null as string | null, hasNextPage: false };
-  
-  const shouldSkipSearch = (locale === "uk" || locale === "ru") && q && /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
-  
+
+  const shouldSkipSearch =
+    (locale === "uk" || locale === "ru") && q && /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
+
   if (!shouldSkipSearch && q) {
     // Map UI locale to WordPress language code for filtering at WordPress level
     const wpLang = locale === "uk" ? "UK" : locale === "ru" ? "RU" : "EN";
-    const result: SearchResult = await searchPosts({ query: q, first: 10, after, language: wpLang });
+    const result: SearchResult = await searchPosts({
+      query: q,
+      first: 10,
+      after,
+      language: wpLang,
+    });
     posts = result.posts;
     pageInfo = result.pageInfo;
   }

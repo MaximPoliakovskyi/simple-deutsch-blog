@@ -14,13 +14,7 @@ type Props = {
   children?: ReactNode;
 };
 
-export default function StatusPage({
-  code,
-  title,
-  message,
-  actions = [],
-  children,
-}: Props) {
+export default function StatusPage({ code, title, message, actions = [], children }: Props) {
   return (
     <main className="min-h-[70vh] grid place-items-center px-6 py-16">
       <div className="text-center max-w-prose">

@@ -1,5 +1,5 @@
 import React from "react";
-import { TRANSLATIONS, DEFAULT_LOCALE, type Locale } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export default function TermsPage({ locale }: { locale?: Locale }) {
   const lang = (locale as Locale) ?? DEFAULT_LOCALE;
@@ -7,12 +7,17 @@ export default function TermsPage({ locale }: { locale?: Locale }) {
 
   const renderList = (key: string) => {
     const raw = t[key] || "";
-    const items = raw.split('\n').map((s) => s.trim()).filter(Boolean);
+    const items = raw
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (!items.length) return null;
     return (
-      <ul className="list-disc pl-6 space-y-2 text-[hsl(var(--fg-muted))]">{items.map((it, i) => (
-        <li key={i}>{it.replace(/^[-\s]+/, "")}</li>
-      ))}</ul>
+      <ul className="list-disc pl-6 space-y-2 text-[hsl(var(--fg-muted))]">
+        {items.map((it, i) => (
+          <li key={i}>{it.replace(/^[-\s]+/, "")}</li>
+        ))}
+      </ul>
     );
   };
 
@@ -57,7 +62,10 @@ export default function TermsPage({ locale }: { locale?: Locale }) {
 
         <h2>{t["terms.s11.title"]}</h2>
         <p>
-          {t["terms.s11.p"]} <a className="text-blue-600 dark:text-blue-400" href="mailto:hello@simpledeutsch.com">hello@simpledeutsch.com</a>
+          {t["terms.s11.p"]}{" "}
+          <a className="text-blue-600 dark:text-blue-400" href="mailto:hello@simpledeutsch.com">
+            hello@simpledeutsch.com
+          </a>
         </p>
       </div>
     </main>

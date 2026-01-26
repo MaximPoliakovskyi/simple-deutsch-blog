@@ -747,3 +747,39 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
     }
   }
 `;
+
+// Lightweight query for homepage initial load - reduced fields for better performance
+export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
+  query PostsFeedLightweight($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
+    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, language: $language }) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        slug
+        title
+        date
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        featuredImageUrl
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        tags {
+          nodes {
+            slug
+          }
+        }
+      }
+    }
+  }
+`;

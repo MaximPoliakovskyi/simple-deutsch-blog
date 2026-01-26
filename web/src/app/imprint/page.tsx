@@ -1,5 +1,5 @@
 import React from "react";
-import { TRANSLATIONS, DEFAULT_LOCALE, type Locale } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
 
 export default function ImprintPage({ locale }: { locale?: Locale }) {
   const lang = (locale as Locale) ?? DEFAULT_LOCALE;
@@ -19,12 +19,15 @@ export default function ImprintPage({ locale }: { locale?: Locale }) {
         <h2>{t["imprint.s1.title"]}</h2>
         <p>{t["imprint.s1.p"].split("\\n")[0]}</p>
         <p>
-          {t["imprint.s1.p"].split("\\n").slice(1).map((ln, i) => (
-            <React.Fragment key={i}>
-              {ln}
-              <br />
-            </React.Fragment>
-          ))}
+          {t["imprint.s1.p"]
+            .split("\\n")
+            .slice(1)
+            .map((ln, i) => (
+              <React.Fragment key={i}>
+                {ln}
+                <br />
+              </React.Fragment>
+            ))}
         </p>
 
         <h2>{t["imprint.s2.title"]}</h2>

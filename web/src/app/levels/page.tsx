@@ -1,8 +1,15 @@
 // app/levels/page.tsx
 import type { Metadata } from "next";
 import Link from "next/link";
+import {
+  CEFR_LEVELS,
+  CEFR_ORDER,
+  CEFR_SLUGS,
+  CEFR_UI_CONFIG,
+  getLevelDescription,
+  getLevelLabel,
+} from "@/core/cefr/levels";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { CEFR_LEVELS, CEFR_SLUGS, getLevelLabel, getLevelDescription, CEFR_ORDER, CEFR_UI_CONFIG } from "@/core/cefr/levels";
 import { getAllPostsForCounts, type PostListItem } from "@/server/wp/api";
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
@@ -56,7 +63,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
   function normalizeLevelSlug(slug: string): "a1" | "a2" | "b1" | "b2" | "c1" | "c2" | null {
     if (!slug) return null;
     const s = slug.toLowerCase().trim().replace(/_/g, "-");
-    let cleaned = s
+    const cleaned = s
       .replace(/^(?:cefrlevel-)/, "")
       .replace(/^(?:cefr-)/, "")
       .replace(/^(?:level-)/, "")
@@ -75,14 +82,10 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     return null;
   }
 
-  function detectCefrLevel(tag: { slug?: string; name?: string }):
-    | "a1"
-    | "a2"
-    | "b1"
-    | "b2"
-    | "c1"
-    | "c2"
-    | null {
+  function detectCefrLevel(tag: {
+    slug?: string;
+    name?: string;
+  }): "a1" | "a2" | "b1" | "b2" | "c1" | "c2" | null {
     const name = (tag.name ?? "").trim().toUpperCase();
     const exact = new Set(CEFR_SLUGS.map((s) => s.toUpperCase()));
     if (exact.has(name)) return name.toLowerCase() as any;
@@ -140,30 +143,26 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
           const code = (level.slug ?? "").toUpperCase();
           const ui = CEFR_UI_CONFIG[code] ?? { dotClass: "bg-neutral-400" };
           const titleLabel = (t[`cefr.${code}.title`] as string) ?? tagData.title;
-          const longDescription = (t[`cefr.${code}.description`] as string) ?? getLevelDescription(level.slug, lang) ?? tagData.description;
+          const longDescription =
+            (t[`cefr.${code}.description`] as string) ??
+            getLevelDescription(level.slug, lang) ??
+            tagData.description;
           return (
             <li
               key={level.slug}
               className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
             >
-              <Link
-                href={`${prefix}/levels/${level.slug}`}
-                className="group block"
-              >
+              <Link href={`${prefix}/levels/${level.slug}`} className="group block">
                 <div className="mb-1 flex items-baseline justify-between">
                   <div className="flex items-center gap-3">
                     <span className={`w-3 h-3 rounded-full ${ui.dotClass}`} />
-                          <h2 className="text-lg font-medium group-hover:underline">
-                            {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
-                          </h2>
+                    <h2 className="text-lg font-medium group-hover:underline">
+                      {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
+                    </h2>
                   </div>
-                  <span className="text-xs text-neutral-500">
-                    {formatPostCount(count, lang)}
-                  </span>
+                  <span className="text-xs text-neutral-500">{formatPostCount(count, lang)}</span>
                 </div>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                  {longDescription}
-                </p>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400">{longDescription}</p>
               </Link>
             </li>
           );

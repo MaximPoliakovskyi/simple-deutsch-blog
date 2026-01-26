@@ -7,8 +7,8 @@ import { generateTocFromHtml } from "@/core/content/generateToc";
 import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
 import type { PostDetail, PostListItem } from "@/server/wp/api";
+import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
@@ -124,7 +124,9 @@ export default async function PostPage({
   // Ensure current language is in links
   if (!languageLinks[desiredUiLang]) {
     languageLinks[desiredUiLang] =
-      desiredUiLang === DEFAULT_LOCALE ? `/posts/${post.slug}` : `/${desiredUiLang}/posts/${post.slug}`;
+      desiredUiLang === DEFAULT_LOCALE
+        ? `/posts/${post.slug}`
+        : `/${desiredUiLang}/posts/${post.slug}`;
   }
 
   // derive dynamic values
@@ -162,9 +164,10 @@ export default async function PostPage({
   // otherwise fall back to the Next `locale` prop and finally to DEFAULT_LOCALE.
   const _allParams = (await params) as unknown as Record<string, string | undefined>;
   const paramLang = _allParams?.lang as LanguageSlug | undefined;
-  const currentRouteLang: LanguageSlug = paramLang && (LANGUAGE_SLUGS as readonly string[]).includes(paramLang)
-    ? (paramLang as LanguageSlug)
-    : ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
+  const currentRouteLang: LanguageSlug =
+    paramLang && (LANGUAGE_SLUGS as readonly string[]).includes(paramLang)
+      ? (paramLang as LanguageSlug)
+      : ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
 
   const currentLang = postLanguageFromGraphQL ?? ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
 
@@ -178,101 +181,104 @@ export default async function PostPage({
     <>
       <PostLanguageLinksHydrator currentLang={desiredUiLang} links={languageLinks} />
       <main className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <article className="md:col-span-3">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
-            {post.title}
-          </h1>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <article className="md:col-span-3">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
+              {post.title}
+            </h1>
 
-          {showCategories ? (
-            <div className="mb-6 flex flex-wrap gap-2">
-              {visibleCategories.map((cat) => (
-                <Link
-                  key={cat?.slug}
-                  href={
-                    (locale ?? DEFAULT_LOCALE) === "en"
-                      ? `/categories/${cat?.slug}`
-                      : `/${locale}/categories/${cat?.slug}`
-                  }
-                  className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
-                >
-                  {translateCategory(cat?.name, cat?.slug, locale ?? DEFAULT_LOCALE)}
-                </Link>
-              ))}
-            </div>
-          ) : null}
-
-          <div className="flex items-center gap-4 mb-6">
-            <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">
-              {(authorName || "").charAt(0).toUpperCase()}
-            </div>
-            <div className="text-sm text-gray-600 dark:text-gray-400">
-              <div className="font-medium text-gray-900 dark:text-gray-100">{authorName}</div>
-              <div className="dark:text-gray-400">
-                {formattedDate} · {readMinutes} {t.minRead}
-              </div>
-            </div>
-          </div>
-
-          <div className="sd-card p-8 mb-6">
-            <h3 className="font-semibold text-lg mb-3">{t.tableOfContents}</h3>
-            {toc.length ? (
-              <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2">
-                {toc.map((t) => (
-                  <li key={t.id} className={t.depth > 2 ? "pl-4" : ""}>
-                    <a href={`#${t.id}`} className="hover:underline">
-                      {t.text}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-sm text-gray-600 dark:text-gray-400">{t.noHeadings}</div>
-            )}
-          </div>
-
-          {/* Render the post content using PostContent — content is sanitized server-side. */}
-          {contentHtml ? <PostContent html={contentHtml} /> : null}
-        </article>
-
-        <aside className="md:col-span-1">
-          <div className="sticky top-20 space-y-6">
-            {/* Promo rounded card (fill sidebar width) */}
-            <div className="sd-card px-6 py-6 w-full text-center">
-              <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">
-                {t.promoHeading}
-              </h3>
-              <div className="flex justify-center">
-                <a
-                  href="#"
-                  className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base"
-                >
-                  {t.promoCta}
-                </a>
-              </div>
-            </div>
-
-            {/* More articles (no background/borders, fill sidebar width) */}
-            <div className="px-3 py-3 rounded-xl w-full">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
-                {t.moreArticles}
-              </h4>
-              <ul className="text-sm text-gray-600 dark:text-gray-400">
-                {moreArticles.map((p) => (
-                  <li
-                    key={p.slug}
-                    className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
+            {showCategories ? (
+              <div className="mb-6 flex flex-wrap gap-2">
+                {visibleCategories.map((cat) => (
+                  <Link
+                    key={cat?.slug}
+                    href={
+                      (locale ?? DEFAULT_LOCALE) === "en"
+                        ? `/categories/${cat?.slug}`
+                        : `/${locale}/categories/${cat?.slug}`
+                    }
+                    className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
                   >
-                    <Link href={withLocaleHref(currentRouteLang, p.slug)} className="hover:underline block">
-                      {p.title}
-                    </Link>
-                  </li>
+                    {translateCategory(cat?.name, cat?.slug, locale ?? DEFAULT_LOCALE)}
+                  </Link>
                 ))}
-              </ul>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">
+                {(authorName || "").charAt(0).toUpperCase()}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="font-medium text-gray-900 dark:text-gray-100">{authorName}</div>
+                <div className="dark:text-gray-400">
+                  {formattedDate} · {readMinutes} {t.minRead}
+                </div>
+              </div>
             </div>
-          </div>
-        </aside>
-      </div>
+
+            <div className="sd-card p-8 mb-6">
+              <h3 className="font-semibold text-lg mb-3">{t.tableOfContents}</h3>
+              {toc.length ? (
+                <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2">
+                  {toc.map((t) => (
+                    <li key={t.id} className={t.depth > 2 ? "pl-4" : ""}>
+                      <a href={`#${t.id}`} className="hover:underline">
+                        {t.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-sm text-gray-600 dark:text-gray-400">{t.noHeadings}</div>
+              )}
+            </div>
+
+            {/* Render the post content using PostContent — content is sanitized server-side. */}
+            {contentHtml ? <PostContent html={contentHtml} /> : null}
+          </article>
+
+          <aside className="md:col-span-1">
+            <div className="sticky top-20 space-y-6">
+              {/* Promo rounded card (fill sidebar width) */}
+              <div className="sd-card px-6 py-6 w-full text-center">
+                <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">
+                  {t.promoHeading}
+                </h3>
+                <div className="flex justify-center">
+                  <a
+                    href="#"
+                    className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base"
+                  >
+                    {t.promoCta}
+                  </a>
+                </div>
+              </div>
+
+              {/* More articles (no background/borders, fill sidebar width) */}
+              <div className="px-3 py-3 rounded-xl w-full">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                  {t.moreArticles}
+                </h4>
+                <ul className="text-sm text-gray-600 dark:text-gray-400">
+                  {moreArticles.map((p) => (
+                    <li
+                      key={p.slug}
+                      className="py-4 border-b border-slate-200 dark:border-slate-700 last:border-0"
+                    >
+                      <Link
+                        href={withLocaleHref(currentRouteLang, p.slug)}
+                        className="hover:underline block"
+                      >
+                        {p.title}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </aside>
+        </div>
       </main>
     </>
   );

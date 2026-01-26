@@ -10,26 +10,37 @@ export async function fetchGraphQL<T>(
   const endpoint =
     process.env.NEXT_PUBLIC_WP_GRAPHQL_ENDPOINT ?? "https://cms.simple-deutsch.de/graphql";
 
-  const defaultInit: NextInit = init?.cache === "no-store" ? {} : { next: { revalidate: 600 } };
+  // Aggressive caching by default for better TTFB
+  const defaultInit: NextInit =
+    init?.cache === "no-store" ? {} : { next: { revalidate: 3600, tags: ["graphql"] } };
   const mergedNext = { ...defaultInit.next, ...init?.next };
   const finalInit = { ...defaultInit, ...init, next: mergedNext };
 
-  const res = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ query, variables }),
-    ...finalInit,
-  });
+  // Add timeout to prevent hanging requests (8s timeout for GraphQL)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`GraphQL HTTP ${res.status}: ${text}`);
-  }
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+      ...finalInit,
+    });
 
-  const json = (await res.json()) as GraphQLResponse<T>;
-  if (json.errors?.length) {
-    throw new Error(`GraphQL errors: ${json.errors.map((e) => e.message).join(" | ")}`);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`GraphQL HTTP ${res.status}: ${text}`);
+    }
+
+    const json = (await res.json()) as GraphQLResponse<T>;
+    if (json.errors?.length) {
+      throw new Error(`GraphQL errors: ${json.errors.map((e) => e.message).join(" | ")}`);
+    }
+    if (!json.data) throw new Error("GraphQL: empty response data");
+    return json.data;
+  } finally {
+    clearTimeout(timeoutId);
   }
-  if (!json.data) throw new Error("GraphQL: empty response data");
-  return json.data;
 }
