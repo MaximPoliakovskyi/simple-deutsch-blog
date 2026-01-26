@@ -1,7 +1,5 @@
 import React from "react";
-import { TRANSLATIONS, DEFAULT_LOCALE } from "@/core/i18n/i18n";
-
-type Locale = "en" | "ua" | "ru" | "de";
+import { TRANSLATIONS, DEFAULT_LOCALE, type Locale } from "@/core/i18n/i18n";
 
 export default function TermsPage({ locale }: { locale?: Locale }) {
   const lang = (locale as Locale) ?? DEFAULT_LOCALE;

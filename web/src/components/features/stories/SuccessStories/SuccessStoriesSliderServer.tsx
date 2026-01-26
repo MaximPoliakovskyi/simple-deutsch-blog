@@ -20,66 +20,22 @@ function normalizePosts(payload: unknown): WPPostCard[] {
 /** Fetch success stories posts and swap to translated versions if needed */
 async function getSuccessStoryPosts(locale?: string): Promise<WPPostCard[]> {
   // Always fetch English success-stories first (they have the category)
+  // Note: Categories use language-specific slugs (e.g., "success-stories" vs "success-stories-uk")
+  const categorySlug = locale === "uk" ? "success-stories-uk" : 
+                       locale === "ru" ? "success-stories-ru" : 
+                       "success-stories";
+  
   const url = new URL("/api/posts", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000");
   url.searchParams.set("first", "8");
-  url.searchParams.set("category", "success-stories");
+  url.searchParams.set("category", categorySlug);
   
   const res = await fetch(url.toString(), { next: { revalidate: 0 } });
   if (!res.ok) return [];
   
   const json = await res.json();
-  let englishPosts = normalizePosts(json);
+  const posts = normalizePosts(json);
   
-  if (!englishPosts.length) return [];
-  
-  // If Ukrainian locale, fetch Ukrainian versions of these posts
-  if (locale === "uk") {
-    const ukrainianPosts: WPPostCard[] = [];
-    
-    for (const englishPost of englishPosts) {
-      const ukTranslation = englishPost.translations?.find((t: any) => t.language?.code === "UK");
-      
-      if (ukTranslation?.slug) {
-        try {
-          const ukPost = await getPostBySlug(ukTranslation.slug);
-          if (ukPost) {
-            // Successfully fetched Ukrainian version
-            ukrainianPosts.push(ukPost);
-          }
-        } catch (err) {
-          console.error(`Failed to fetch Ukrainian post ${ukTranslation.slug}:`, err);
-        }
-      }
-    }
-    
-    return ukrainianPosts;
-  }
-  
-  // If Russian locale, fetch Russian versions of these posts
-  if (locale === "ru") {
-    const russianPosts: WPPostCard[] = [];
-    
-    for (const englishPost of englishPosts) {
-      const ruTranslation = englishPost.translations?.find((t: any) => t.language?.code === "RU");
-      
-      if (ruTranslation?.slug) {
-        try {
-          const ruPost = await getPostBySlug(ruTranslation.slug);
-          if (ruPost) {
-            // Successfully fetched Russian version
-            russianPosts.push(ruPost);
-          }
-        } catch (err) {
-          console.error(`Failed to fetch Russian post ${ruTranslation.slug}:`, err);
-        }
-      }
-    }
-    
-    return russianPosts;
-  }
-  
-  // For English, return as-is
-  return englishPosts;
+  return posts;
 }
 
 /** Server wrapper: fetch once, render the client slider. */
@@ -92,18 +48,14 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
   
   // Prepare posts for rendering
   const preparedPosts = posts.map((p) => {
-    // Estimate reading time
+    // Estimate reading time from excerpt
     let minutes: number | null = null;
-    if (p.readingMinutes != null) {
-      minutes = Math.max(1, Math.ceil(p.readingMinutes));
-    } else {
-      const html = p.content ?? p.excerpt ?? "";
-      if (html) {
-        const text = String(html).replace(/<[^>]+>/g, " ");
-        const words = (text.trim().match(/\S+/g) ?? []).length;
-        if (words >= 40) {
-          minutes = Math.max(1, Math.ceil(words / 200));
-        }
+    const html = p.excerpt ?? "";
+    if (html) {
+      const text = String(html).replace(/<[^>]+>/g, " ");
+      const words = (text.trim().match(/\S+/g) ?? []).length;
+      if (words >= 40) {
+        minutes = Math.max(1, Math.ceil(words / 200));
       }
     }
     

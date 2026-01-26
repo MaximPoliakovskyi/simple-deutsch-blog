@@ -1,7 +1,6 @@
 import { getPosts } from "@/server/wp/api";
 
 export const revalidate = 900;
-export const runtime = "edge";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
 const SITE_TITLE = process.env.NEXT_PUBLIC_SITE_TITLE ?? "Simple Deutsch";

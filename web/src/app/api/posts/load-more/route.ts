@@ -5,13 +5,18 @@ type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type LoadMoreBody = {
   first?: number;
   after?: string | null;
-  locale?: string; // language locale: en | ru | ua
+  locale?: string; // language locale: en | ru | uk
   mode?: "index" | "category" | "tag";
   categorySlug?: string | null;
   tagSlug?: string | null;
   level?: string | null;
   skipIds?: string[];
 };
+
+const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
+type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const isSupportedLocale = (locale: string | undefined): locale is SupportedLocale | undefined =>
+  locale === undefined || SUPPORTED_LOCALES.includes(locale as SupportedLocale);
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,12 +27,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid first param" }, { status: 400 });
     }
 
+    // Validate locale
+    const validLocale = isSupportedLocale(locale) ? locale : undefined;
+
     let res;
     if (mode === "category" && categorySlug) {
-      res = await getPostsByCategory({ first, after, locale: locale ?? undefined, categorySlug });
+      res = await getPostsByCategory({ first, after, locale: validLocale, categorySlug });
     } else if (mode === "tag" && tagSlug) {
       // getPostsByTag now handles iterative fetching internally
-      res = await getPostsByTag({ first, after, locale: locale ?? undefined, tagSlug });
+      res = await getPostsByTag({ first, after, locale: validLocale, tagSlug });
     } else {
       // Index mode; optionally filter by a CEFR level tag when provided.
       // To ensure we actually fill the requested "first" items when the index page
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
       const pageFetchSize = Math.max(first, 10);
 
       while (hasNext && collected.length < first) {
-        const r = await getPostsIndex({ first: pageFetchSize, after: cursor, locale: locale ?? undefined });
+        const r = await getPostsIndex({ first: pageFetchSize, after: cursor, locale: validLocale });
         const nodes = r.posts ?? [];
 
         let matching = nodes;

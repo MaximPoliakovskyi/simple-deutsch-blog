@@ -47,9 +47,8 @@ async function getPosts(first: number, locale?: string): Promise<PostsResponse> 
 export const revalidate = 300;
 
 export default async function HomePage({ locale }: { locale?: "en" | "ru" | "uk" } = {}) {
-  // Normalize locale: map old "ua" to "uk" for compatibility
-  const normalizedLocale = locale === "ua" ? "uk" : locale;
-  const effectiveLocale = normalizedLocale ?? "en";
+  // Use provided locale or default to English
+  const effectiveLocale = locale ?? "en";
   const PAGE_SIZE = 6;
 
   // Fetch more posts initially for client-side pagination

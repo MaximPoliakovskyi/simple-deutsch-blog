@@ -9,13 +9,13 @@ import { getCategoryBySlug, getPostsByCategory } from "@/server/wp/api";
 export const revalidate = 600;
 
 type Params = { category: string };
-type LanguageSlug = "en" | "ru" | "ua";
+type LanguageSlug = "en" | "ru" | "uk";
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
 const PAGE_SIZE = 3;
 
 // Language detection used across posts/category pages
-const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "ua"] as const;
+const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "uk"] as const;
 
 function getPostLanguage(post: {
   slug?: string;
@@ -47,7 +47,7 @@ export default async function CategoryPage({
   locale,
 }: {
   params: Promise<Params>;
-  locale?: "en" | "ru" | "ua";
+  locale?: "en" | "ru" | "uk";
 }) {
   const { category } = await params;
 

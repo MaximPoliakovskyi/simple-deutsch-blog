@@ -3,6 +3,11 @@ import { getPosts, getPostsByTagSlug, getPostsPageByCategory, getPostBySlug } fr
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
+const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
+type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
+const isSupportedLocale = (locale: string | null | undefined): locale is SupportedLocale | undefined =>
+  locale === null || locale === undefined || SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const lang = searchParams.get("lang");
@@ -11,8 +16,11 @@ export async function GET(req: Request) {
   const slug = searchParams.get("slug");
   const first = Number(searchParams.get("first")) || 200;
   
+  // Validate locale
+  const validLocale = isSupportedLocale(lang) ? lang : undefined;
+
   // When filtering by language, fetch more posts to ensure we get enough after filtering
-  const fetchCount = lang ? first * 2 : first;
+  const fetchCount = validLocale ? first * 2 : first;
 
   console.log(`[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`);
 
@@ -28,17 +36,17 @@ export async function GET(req: Request) {
       posts = post ? [post] : [];
       console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
     } else if (tag) {
-      const res = await getPostsByTagSlug(tag, fetchCount, undefined, lang ?? undefined);
+      const res = await getPostsByTagSlug(tag, fetchCount, undefined, validLocale);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`);
     } else if (category) {
-      const res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category, locale: lang ?? undefined });
+      const res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category, locale: validLocale });
       posts = res.posts;
       pageInfo = res.pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`);
-    } else if (lang) {
-      const res = await getPosts({ first: fetchCount, locale: lang });
+    } else if (validLocale) {
+      const res = await getPosts({ first: fetchCount, locale: validLocale });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts for locale "${lang}"`);
