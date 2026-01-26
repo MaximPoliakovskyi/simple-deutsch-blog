@@ -130,6 +130,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
         className={
           "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
           "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+          "cursor-pointer " +
           "sd-pill"
         }
         style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
@@ -186,9 +187,9 @@ function useLanguage() {
       localStorage.setItem("sd-locale", next);
     } catch {}
 
-    // If we're on a posts page, don't attempt to compute a generic path here.
+    // If we're on a posts page (with or without a slug), don't attempt to compute a generic path here.
     // Post-specific navigation will be handled by callers (NavLanguageDropdown).
-    if (pathname.startsWith("/posts/")) return;
+    if (pathname.startsWith("/posts") || pathname.startsWith("/en/posts") || pathname.startsWith("/ru/posts") || pathname.startsWith("/uk/posts")) return;
 
     // For non-post pages preserve the current path but swap locale prefix
     // strip existing locale prefix (/ru or /uk)
@@ -232,6 +233,13 @@ function usePostLanguageSwitch() {
       isPost = true;
       slug = parts[2] ?? null;
     }
+  } else if (parts[0] === "en") {
+    // Handle explicit /en prefix
+    siteLang = "en";
+    if (parts[1] === "posts") {
+      isPost = true;
+      slug = parts[2] ?? null;
+    }
   } else {
     siteLang = "en";
     if (parts[0] === "posts") {
@@ -259,8 +267,7 @@ function usePostLanguageSwitch() {
       setLocale(targetLang as Lang);
     } catch {}
 
-    if (isPost && !postLangLinks) return;
-
+    // Handle article page with translations available
     if (isPost && postLangLinks) {
       const href = postLangLinks.links[targetLang] ?? null;
       if (!href) return;
@@ -270,25 +277,37 @@ function usePostLanguageSwitch() {
       return;
     }
 
-    // If not on a post page, nothing more to do here
-    if (!isPost || !slug) return;
+    // Handle posts listing page (no specific article slug)
+    if (isPost && !slug) {
+      const newPath = targetLang === "en" ? "/posts" : `/${targetLang}/posts`;
+      if (newPath !== pathname) {
+        try {
+          await router.push(newPath);
+        } catch {}
+      }
+      return;
+    }
 
-    const parts = slug.split("-");
-    if (parts.length < 2) return; // invalid slug
-    const articleId = parts.slice(1).join("-");
-    const newPath = buildPostPath(targetLang, articleId);
+    // Handle specific article page without postLangLinks (shouldn't happen, but fallback)
+    if (isPost && slug && !postLangLinks) {
+      const parts = slug.split("-");
+      if (parts.length < 2) return; // invalid slug
+      const articleId = parts.slice(1).join("-");
+      const newPath = buildPostPath(targetLang, articleId);
 
-    try {
-      await router.push(newPath);
-    } catch {}
+      try {
+        await router.push(newPath);
+      } catch {}
+      return;
+    }
   };
 
-  return { currentSiteLang: siteLang as SiteLang, changeLang, languageLinks, isPost };
+  return { currentSiteLang: siteLang as SiteLang, changeLang, languageLinks, isPost, hasSlug: Boolean(slug) };
 }
 
 // Component: NavLanguageDropdown
 function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
-  const { currentSiteLang, changeLang, languageLinks, isPost } = usePostLanguageSwitch();
+  const { currentSiteLang, changeLang, languageLinks, isPost, hasSlug } = usePostLanguageSwitch();
 
   const LANGS = [
     { code: "en", label: "En" },
@@ -304,8 +323,8 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
   return (
     <>
       {visibleLangs.map((item, idx) => (
-        // Disable when we are on a post page and the translation is missing
-        // (languageLinks holds null for missing translations).
+        // Disable only when on a specific article page and the translation is missing.
+        // Allow switching on posts listing page (no slug).
         <li
           key={item.code}
           role="none"
@@ -314,7 +333,8 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
           }
         >
           {(() => {
-            const linkAvailable = !isPost ? true : Boolean(languageLinks?.[item.code as LangCode]);
+            // Enable if not on posts, or if on posts listing (no slug), or if article translation exists
+            const linkAvailable = !isPost || !hasSlug || Boolean(languageLinks?.[item.code as LangCode]);
             return (
           <button
             role="menuitem"
@@ -330,7 +350,7 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
               // Light-theme: slightly bright hover (original behaviour).
               // Dark-theme: subtle translucent white to gently lighten the grey.
               "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
-              (!linkAvailable ? "opacity-50 cursor-not-allowed" : "")
+              (!linkAvailable ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
             }
           >
             {item.label}

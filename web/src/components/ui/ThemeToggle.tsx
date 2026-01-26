@@ -64,6 +64,7 @@ export default function ThemeToggle() {
       className={
         "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
         "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+        "cursor-pointer " +
         "sd-pill"
       }
       style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}

@@ -72,7 +72,7 @@ export default function SuccessStoriesSlider({ posts = [], title = "Success stor
 
   const baseBtn =
     "h-10 w-10 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
-  const enabledBtn = "border-white/20 text-white hover:bg-white/10";
+  const enabledBtn = "border-white/20 text-white hover:bg-white/10 cursor-pointer";
   const disabledBtn = "border-white/10 bg-white/5 text-white/40 cursor-not-allowed";
 
   return (

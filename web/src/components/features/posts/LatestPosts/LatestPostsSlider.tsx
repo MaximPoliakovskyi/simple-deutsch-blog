@@ -59,7 +59,7 @@ export default function LatestPostsSlider({ posts = [], title = "Latest posts" }
   const baseBtn =
     "h-10 w-10 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
   const enabledBtn =
-    "border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-white/20 dark:text-white dark:hover:bg-white/10";
+    "border-neutral-300 text-neutral-700 hover:bg-neutral-100 cursor-pointer dark:border-white/20 dark:text-white dark:hover:bg-white/10";
   const disabledBtn =
     "border-neutral-200 text-neutral-400 cursor-not-allowed dark:border-white/10 dark:text-white/40";
 

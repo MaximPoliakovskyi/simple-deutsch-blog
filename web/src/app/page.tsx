@@ -7,7 +7,7 @@ import SuccessStoriesSliderServer from "@/components/features/stories/SuccessSto
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
 import { deduplicateCategories, filterOutCEFRLevels } from "@/core/content/categoryUtils";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { getAllCategories } from "@/server/wp/api";
+import { getAllCategories, getPosts as getWpPosts } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import type { WPPostCard } from "@/server/wp/api";
 
@@ -27,21 +27,31 @@ async function getBaseUrl() {
 }
 
 async function getPosts(first: number, locale?: string): Promise<PostsResponse> {
-  const base = await getBaseUrl();
-  const url = new URL("/api/posts", base);
-  url.searchParams.set("first", String(first));
-  if (locale) url.searchParams.set("lang", locale);
-
-  const res = await fetch(url, { next: { revalidate: 60 } } as RequestInit & {
-    next?: { revalidate?: number; tags?: string[] };
-  });
-  if (!res.ok) return { posts: [], pageInfo: { endCursor: null, hasNextPage: false } };
-
-  const json = await res.json();
-  return {
-    posts: (json.posts ?? json ?? []) as WPPostCard[],
-    pageInfo: (json.pageInfo ?? { endCursor: null, hasNextPage: false }) as PageInfo,
+  const fetchPage = async (lang?: "en" | "ru" | "uk"): Promise<PostsResponse> => {
+    try {
+      const res = await getWpPosts({ first, locale: lang });
+      const posts = (res.posts?.nodes ?? []) as WPPostCard[];
+      const pageInfo = (res.posts?.pageInfo ?? { endCursor: null, hasNextPage: false }) as PageInfo;
+      return { posts, pageInfo };
+    } catch (e) {
+      console.error("Failed to fetch posts directly:", e);
+      return { posts: [], pageInfo: { endCursor: null, hasNextPage: false } };
+    }
   };
+
+  // Try localized feed first; fall back to default locale if nothing is published yet.
+  const localized = await fetchPage(locale as any);
+  console.log(`[home] fetched ${localized.posts.length} posts for locale="${locale ?? "default"}"`);
+  if (localized.posts.length > 0) return localized;
+
+  if (locale) {
+    const fallback = await fetchPage();
+    console.log(`[home] fallback fetched ${fallback.posts.length} posts (default locale)`);
+    if (fallback.posts.length > 0) return fallback;
+    return fallback;
+  }
+
+  return localized;
 }
 
 export const revalidate = 300;

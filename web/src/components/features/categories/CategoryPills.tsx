@@ -123,7 +123,7 @@ export default function CategoryPills({
                   return s === cat.slug ? null : cat.slug;
                 })
               }
-                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors ${
+                className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors cursor-pointer ${
                   active
                     ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
                     : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"

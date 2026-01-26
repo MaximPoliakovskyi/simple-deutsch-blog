@@ -172,6 +172,7 @@ export default function HeroWithFilters({
               "transition duration-200 ease-out",
               "transform-gpu hover:scale-[1.03] motion-reduce:transform-none",
               "shadow-md hover:shadow-lg disabled:opacity-60",
+              "cursor-pointer disabled:cursor-not-allowed",
               "sd-pill",
               "focus-visible:outline-2 focus-visible:outline-offset-2",
             ].join(" ")}

@@ -41,10 +41,19 @@ export async function GET(req: Request) {
       pageInfo = res.posts?.pageInfo ?? pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`);
     } else if (category) {
-      const res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category, locale: validLocale });
+      // Try with the specified locale first
+      let res = await getPostsPageByCategory({ first: fetchCount, categorySlug: category, locale: validLocale });
       posts = res.posts;
       pageInfo = res.pageInfo;
       console.log(`[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`);
+      
+      // If locale-specific fetch returned nothing but a locale was requested, try without locale filter
+      if (posts.length === 0 && validLocale) {
+        const fallbackRes = await getPostsPageByCategory({ first, categorySlug: category, locale: undefined });
+        posts = fallbackRes.posts;
+        pageInfo = fallbackRes.pageInfo;
+        console.log(`[API /api/posts] Fallback: got ${posts.length} posts from category "${category}" (no locale filter)`);
+      }
     } else if (validLocale) {
       const res = await getPosts({ first: fetchCount, locale: validLocale });
       posts = res.posts?.nodes ?? [];

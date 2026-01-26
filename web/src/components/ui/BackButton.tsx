@@ -38,7 +38,7 @@ export default function BackButton() {
   // Reuse the exact class string used by the `En` language button so visuals match.
   // (copied from Navigation.tsx: LanguageDropdown button)
   const enButtonClasses =
-    "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none sd-pill";
+    "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none cursor-pointer sd-pill";
 
   return (
     <button

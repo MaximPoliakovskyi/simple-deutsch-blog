@@ -86,6 +86,7 @@ export function SearchButton({
             ? "transition transform-gpu duration-200 ease-out hover:scale-[1.03]"
             : "transition transform-gpu duration-200 ease-out hover:scale-[1.02]",
           "shadow-sm hover:shadow-md disabled:opacity-60",
+          "cursor-pointer",
           // use shared pill surface token so header/search pills match exactly
           "sd-pill",
           // focus outline
@@ -602,7 +603,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
                     router.push(`/posts/${it.slug}`);
                   }}
                   className={cn(
-                    "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none",
+                    "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
                     "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
                     i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
                     // only the last rendered item should have bottom rounding
