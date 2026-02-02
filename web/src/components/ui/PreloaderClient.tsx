@@ -242,6 +242,7 @@ export default function PreloaderClient() {
   if (!mounted) return null;
 
   return (
+    // biome-ignore lint/correctness/useUniqueElementIds: Singleton element targeted by global CSS.
     <div
       id="sd-preloader"
       aria-hidden={false}
@@ -249,8 +250,8 @@ export default function PreloaderClient() {
     >
       {/* CSS-only rotator shown before JS runs; hidden when jsReady === true */}
       <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
-        {WORDS.slice(0, 8).map((w, idx) => (
-          <span key={`rot-${idx}`} className="sd-rotator-word">
+        {WORDS.slice(0, 8).map((w) => (
+          <span key={`rot-${w}`} className="sd-rotator-word">
             {w}
           </span>
         ))}

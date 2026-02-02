@@ -2,6 +2,10 @@ import { getPosts } from "@/server/wp/api";
 
 export const revalidate = 900;
 
+// RSS must not be prerendered at build time (it depends on live WPGraphQL).
+// This avoids build failures when the CMS is temporarily unreachable.
+export const dynamic = "force-dynamic";
+
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
 const SITE_TITLE = process.env.NEXT_PUBLIC_SITE_TITLE ?? "Simple Deutsch";
 const SITE_DESCRIPTION =
@@ -9,7 +13,7 @@ const SITE_DESCRIPTION =
 
 type PostNode = { slug: string; title: string; excerpt: string | null; date: string };
 
-function escape(s: string) {
+function escapeXml(s: string) {
   return s
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -23,7 +27,7 @@ export async function GET() {
   const items = posts.nodes.map(
     (p: PostNode) => `
     <item>
-      <title>${escape(p.title)}</title>
+      <title>${escapeXml(p.title)}</title>
       <link>${SITE_URL}/en/posts/${p.slug}</link>
       <guid isPermaLink="true">${SITE_URL}/en/posts/${p.slug}</guid>
       <description><![CDATA[${p.excerpt ?? ""}]]></description>
@@ -34,10 +38,10 @@ export async function GET() {
   const rss = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>${escape(SITE_TITLE)}</title>
+    <title>${escapeXml(SITE_TITLE)}</title>
     <link>${SITE_URL}</link>
     <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />
-    <description>${escape(SITE_DESCRIPTION)}</description>
+    <description>${escapeXml(SITE_DESCRIPTION)}</description>
     <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${items.join("\n")}

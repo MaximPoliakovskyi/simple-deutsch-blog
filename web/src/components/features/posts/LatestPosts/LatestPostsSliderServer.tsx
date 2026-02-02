@@ -1,9 +1,8 @@
 import { headers } from "next/headers";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
-
-import type { Locale } from "@/i18n/locale";
 
 type Props = {
   locale?: Locale;
@@ -26,8 +25,9 @@ async function getBaseUrl(): Promise<string> {
 
 function normalizePosts(payload: unknown): WPPostCard[] {
   if (Array.isArray(payload)) return payload as WPPostCard[];
-  if (payload && typeof payload === "object" && Array.isArray((payload as any).posts)) {
-    return (payload as { posts: WPPostCard[] }).posts;
+  if (payload && typeof payload === "object") {
+    const maybe = payload as { posts?: unknown };
+    if (Array.isArray(maybe.posts)) return maybe.posts as WPPostCard[];
   }
   return [];
 }
@@ -49,13 +49,26 @@ async function getSliderPosts(locale?: string): Promise<WPPostCard[]> {
 }
 
 export default async function LatestPostsSliderServer({ locale }: Props = {}) {
-  const posts = (await getSliderPosts(locale)) as WPPostCard[];
+  const posts = await getSliderPosts(locale);
   if (!posts.length) return null;
   const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
   // Estimate reading minutes and compute stable date/href server-side
-  function estimateReadingMinutesFromContent(post: any): number | null {
-    if (post.readingMinutes != null) return Math.max(1, Math.ceil(post.readingMinutes));
-    const html = post.content ?? post.excerpt ?? "";
+  function estimateReadingMinutesFromContent(post: unknown): number | null {
+    if (!post || typeof post !== "object") return null;
+    const maybe = post as {
+      readingMinutes?: unknown;
+      content?: unknown;
+      excerpt?: unknown;
+    };
+
+    if (typeof maybe.readingMinutes === "number") {
+      return Math.max(1, Math.ceil(maybe.readingMinutes));
+    }
+
+    const html =
+      (typeof maybe.content === "string" ? maybe.content : null) ??
+      (typeof maybe.excerpt === "string" ? maybe.excerpt : null) ??
+      "";
     if (!html) return null;
     const text = String(html).replace(/<[^>]+>/g, " ");
     const words = (text.trim().match(/\S+/g) ?? []).length;
@@ -66,7 +79,7 @@ export default async function LatestPostsSliderServer({ locale }: Props = {}) {
 
   const mapped = posts.map((p) => {
     try {
-      const minutes = estimateReadingMinutesFromContent(p as any);
+      const minutes = estimateReadingMinutesFromContent(p);
       const dateText = p.date
         ? new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
             dateStyle: "long",
@@ -76,7 +89,7 @@ export default async function LatestPostsSliderServer({ locale }: Props = {}) {
       const prefix = locale === "en" ? "" : `/${locale}`;
       const href = `${prefix}/posts/${p.slug}`;
       return { ...p, readingText: minutes ? `${minutes} ${t.minRead}` : null, dateText, href };
-    } catch (e) {
+    } catch (_e) {
       const dateText = p.date
         ? new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
             dateStyle: "long",
@@ -89,5 +102,5 @@ export default async function LatestPostsSliderServer({ locale }: Props = {}) {
     }
   });
 
-  return <LatestPostsSlider posts={mapped as any} title={t.latestPosts} />;
+  return <LatestPostsSlider posts={mapped} title={t.latestPosts} />;
 }

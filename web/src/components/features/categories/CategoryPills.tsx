@@ -28,7 +28,9 @@ export default function CategoryPills({
   const CEFR_ORDER = React.useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
   const CEFR_ORDER_MAP = React.useMemo(() => {
     const m = new Map<string, number>();
-    CEFR_ORDER.forEach((s, i) => m.set(s, i));
+    CEFR_ORDER.forEach((s, i) => {
+      m.set(s, i);
+    });
     return m;
   }, [CEFR_ORDER]);
 

@@ -10,15 +10,14 @@ type Props = {
 };
 
 export default async function LocalizedCatchAll({ params }: Props) {
-  const { locale } = await params;
+  const { locale, slug } = await params;
   let validated: Locale;
   try {
-    validated = assertLocale(locale as any);
+    validated = assertLocale(locale);
   } catch {
     notFound();
   }
 
-  const { slug } = await params;
   if (slug && Array.isArray(slug) && slug.length > 0) {
     notFound();
   }

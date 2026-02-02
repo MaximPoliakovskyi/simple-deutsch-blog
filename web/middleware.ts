@@ -1,30 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server";
+import {
+  DEFAULT_LOCALE as LOCALE_FALLBACK,
+  parseLocaleFromPath,
+  SUPPORTED_LOCALES,
+} from "@/i18n/locale";
 
-import { parseLocaleFromPath, DEFAULT_LOCALE as LOCALE_FALLBACK } from "@/i18n/locale";
-import type { Locale } from "@/i18n/locale";
-
-function mapLang(tag?: string | null): Locale | null {
-  if (!tag) return null;
-  const t = tag.toLowerCase();
-  if (t.startsWith("uk") || t.startsWith("uk-")) return "uk";
-  if (t.startsWith("ru") || t.startsWith("ru-")) return "ru";
-  if (t.startsWith("en") || t.startsWith("en-")) return "en";
-  return null;
-}
-
-function pickFromAcceptLanguage(header?: string | null): Locale | null {
-  if (!header) return null;
-  const parts = header
-    .split(",")
-    .map((p) => p.trim())
-    .filter(Boolean);
-  for (const part of parts) {
-    const [lang] = part.split(";");
-    const mapped = mapLang(lang);
-    if (mapped) return mapped;
-  }
-  return null;
-}
+const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
 
 function isAsset(pathname: string) {
   return (
@@ -43,11 +24,6 @@ export function middleware(req: NextRequest) {
   try {
     const { nextUrl } = req;
     const pathname = nextUrl.pathname;
-
-    // Temporary debug log to ensure middleware is being hit
-    // (remove after verification)
-    // eslint-disable-next-line no-console
-    console.log("[MW HIT]", req.nextUrl.pathname);
 
     // Early bypass for Next.js internals and API routes so middleware
     // does not interfere with these technical endpoints.
@@ -68,7 +44,9 @@ export function middleware(req: NextRequest) {
 
     // Root -> English canonical entry point must be handled first for `/`.
     if (pathname === "/") {
-      const res = NextResponse.redirect(new URL("/en", req.url), 308);
+      const redirectUrl = nextUrl.clone();
+      redirectUrl.pathname = "/en";
+      const res = NextResponse.redirect(redirectUrl, 308);
       // Debug header to indicate the root redirect was executed
       res.headers.set("x-mw", "root-redirect");
       return res;
@@ -100,7 +78,7 @@ export function middleware(req: NextRequest) {
           redirectUrl.pathname = `${localePart}/${plural}/${newSlug}${suffix}`;
           return NextResponse.redirect(redirectUrl, 308);
         }
-      } catch (e) {
+      } catch {
         // fall through
       }
     }
@@ -113,7 +91,7 @@ export function middleware(req: NextRequest) {
         const redirectUrl = nextUrl.clone();
         redirectUrl.pathname = newPath;
         return NextResponse.redirect(redirectUrl, 308);
-      } catch (e) {
+      } catch {
         // fall through to normal handling on error
       }
     }
@@ -142,9 +120,11 @@ export function middleware(req: NextRequest) {
 
     // If path has an unknown two-letter prefix (/de, /fr, etc.), redirect to default
     const maybePrefix = pathname.match(/^\/(?<p>[a-zA-Z]{2})(?:\/|$)/);
-    if (maybePrefix && maybePrefix.groups) {
+    const prefix = maybePrefix?.groups?.p?.toLowerCase();
+    if (prefix && !SUPPORTED_LOCALE_SET.has(prefix)) {
       const redirectUrl = nextUrl.clone();
       const rest = pathname.replace(/^\/[a-zA-Z]{2}/, "");
+      redirectUrl.pathname = `/${String(LOCALE_FALLBACK)}${rest}`;
       return NextResponse.redirect(redirectUrl, 308);
     }
 
@@ -154,7 +134,7 @@ export function middleware(req: NextRequest) {
       redirectUrl.pathname = `/${String(LOCALE_FALLBACK)}${pathname}`;
       return NextResponse.redirect(redirectUrl, 308);
     }
-  } catch (e) {
+  } catch (_e) {
     const res = NextResponse.next();
     res.headers.set("x-mw", "pass");
     return res;

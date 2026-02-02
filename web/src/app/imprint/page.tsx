@@ -23,8 +23,8 @@ export default function ImprintPage({ locale }: { locale?: Locale }) {
           {t["imprint.s1.p"]
             .split("\\n")
             .slice(1)
-            .map((ln, i) => (
-              <React.Fragment key={i}>
+            .map((ln) => (
+              <React.Fragment key={ln}>
                 {ln}
                 <br />
               </React.Fragment>

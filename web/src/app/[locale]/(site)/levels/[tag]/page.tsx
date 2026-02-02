@@ -2,9 +2,9 @@
 
 import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { assertLocale, type Locale } from "@/i18n/locale";
 import { getTagBySlug } from "@/server/wp/api";
 import LevelPage from "../../../../levels/[tag]/page";
-import { assertLocale, type Locale } from "@/i18n/locale";
 
 type Props = {
   params: Promise<{ locale: string; tag: string }>;
@@ -13,8 +13,8 @@ type Props = {
 export async function generateMetadata({ params }: Props) {
   const { locale, tag } = await params;
   try {
-    const validated = assertLocale(locale as any);
-    const term = (await getTagBySlug(tag)) as any;
+    const validated = assertLocale(locale);
+    const term = await getTagBySlug(tag);
     if (!term) return { title: TRANSLATIONS[validated].levelNotFound };
 
     const t = TRANSLATIONS[validated];
@@ -37,10 +37,10 @@ export default async function LocalizedLevelPage({ params }: Props) {
   const { locale, tag } = await params;
   let validated: Locale;
   try {
-    validated = assertLocale(locale as any);
+    validated = assertLocale(locale);
   } catch {
     notFound();
   }
 
-  return await LevelPage({ params: Promise.resolve({ tag }), locale: validated } as any);
+  return LevelPage({ params: Promise.resolve({ tag }), locale: validated });
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 
 import type { Locale } from "@/i18n/locale";
@@ -16,8 +15,8 @@ export default function PrivacyPage({ locale }: { locale?: Locale }) {
     if (!items.length) return null;
     return (
       <ul className="list-disc pl-6 space-y-2 text-[hsl(var(--fg-muted))]">
-        {items.map((it, i) => (
-          <li key={i}>{it.replace(/^[-\s]+/, "")}</li>
+        {items.map((it) => (
+          <li key={`${key}:${it}`}>{it.replace(/^[-\s]+/, "")}</li>
         ))}
       </ul>
     );

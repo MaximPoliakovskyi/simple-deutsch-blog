@@ -244,7 +244,7 @@ export default async function PostPage({
                 </h3>
                 <div className="flex justify-center">
                   <a
-                    href="#"
+                    href="#top"
                     className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base"
                   >
                     {t.promoCta}

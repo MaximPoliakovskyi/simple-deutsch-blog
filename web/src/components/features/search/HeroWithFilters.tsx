@@ -14,6 +14,7 @@ const TypewriterWords = dynamic(() => import("@/components/ui/TypewriterWords"),
 });
 
 import type { Locale } from "@/i18n/locale";
+
 type Category = { id: string; name: string; slug: string };
 
 type Props = {
@@ -136,7 +137,7 @@ export default function HeroWithFilters({
 
         <p className="mt-6 sm:mt-8 mx-auto max-w-xl text-center text-[hsl(var(--fg-muted))] text-base sm:text-lg leading-relaxed">
           {t("heroDescription")}{" "}
-          <a className="inline text-blue-600 underline" href="#">
+          <a className="inline text-blue-600 underline" href="#top">
             {t("promoCta")}
           </a>
         </p>
@@ -163,6 +164,7 @@ export default function HeroWithFilters({
 
         {hasMore && (
           <button
+            type="button"
             onClick={loadMore}
             disabled={isLoading}
             className={[

@@ -109,6 +109,7 @@ export default function PostsGridWithPagination({
       {pageInfo.hasNextPage && posts.length >= pageSize && (
         <div className="flex justify-center">
           <button
+            type="button"
             className="mx-auto rounded-full px-5 py-2 text-sm font-medium transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
             onClick={loadMore}

@@ -3,7 +3,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { PostListItem } from "@/server/wp/api";
 import { getCategoryBySlug, getPostsByTag, getTagBySlug } from "@/server/wp/api";
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
@@ -87,7 +86,7 @@ export default async function LevelPage({
     locale: lang,
     tagSlug: localeTagSlug,
   });
-  const initialPosts = pageRes.posts as any[];
+  const initialPosts = pageRes.posts;
   const initialPageInfo = pageRes.pageInfo;
   const query: {
     lang: LanguageSlug;

@@ -4,13 +4,14 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { SearchButton } from "@/components/features/search/SearchOverlay";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { useI18n } from "@/core/i18n/LocaleProvider";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 import { parseLocaleFromPath } from "@/i18n/locale";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+
 // Note: Navigation is mounted in the root layout (outside the per-locale layout),
 // so it must derive the active locale from the URL prefix when present.
 
@@ -106,13 +107,12 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const onChange = (e: MediaQueryListEvent | MediaQueryList) =>
-      setUseHover(Boolean((e as any).matches));
-    if (mq.addEventListener) mq.addEventListener("change", onChange as any);
-    else mq.addListener(onChange as any);
+    const onChange = (e: MediaQueryListEvent) => setUseHover(e.matches);
+    if (mq.addEventListener) mq.addEventListener("change", onChange);
+    else mq.addListener(onChange);
     return () => {
-      if (mq.removeEventListener) mq.removeEventListener("change", onChange as any);
-      else mq.removeListener(onChange as any);
+      if (mq.removeEventListener) mq.removeEventListener("change", onChange);
+      else mq.removeListener(onChange);
     };
   }, []);
 
@@ -161,7 +161,7 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
         </span>
       </button>
 
-            {open && (
+      {open && (
         <ul
           ref={menuRef}
           aria-label={t("language")}
@@ -174,7 +174,10 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
           }
         >
           {/* Vertical-pill language switcher: stacked labels displayed as centered rows */}
-          <NavLanguageDropdown closeMenu={() => setOpen(false)} currentSiteLangOverride={routeLocale ?? currentLocale} />
+          <NavLanguageDropdown
+            closeMenu={() => setOpen(false)}
+            currentSiteLangOverride={routeLocale ?? currentLocale}
+          />
         </ul>
       )}
     </div>
@@ -182,8 +185,8 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
 }
 
 // Small helper hook used by the NavLanguageDropdown.
-// Returns current locale from `useI18n()` and a setter that persists
-// the preference. All navigation uses `buildLocalizedHref()` to generate
+// Returns current locale from `useI18n()` and a setter. All navigation uses
+// `buildLocalizedHref()` to generate
 // canonical prefixed links; we do NOT infer UI locale from the pathname.
 function useLanguage() {
   const router = useRouter();
@@ -191,13 +194,7 @@ function useLanguage() {
   const searchParams = useSearchParams();
   const { locale: currentLocale } = useI18n();
 
-  
-
-  function persistLocale(next: Lang) {
-    try {
-      localStorage.setItem("sd-locale", next);
-    } catch {}
-  }
+  function persistLocale(_next: Lang) {}
 
   function setLocale(next: Lang) {
     persistLocale(next);
@@ -292,7 +289,13 @@ function usePostLanguageSwitch() {
 }
 
 // Component: NavLanguageDropdown
-function NavLanguageDropdown({ closeMenu, currentSiteLangOverride }: { closeMenu?: () => void; currentSiteLangOverride?: Lang }) {
+function NavLanguageDropdown({
+  closeMenu,
+  currentSiteLangOverride,
+}: {
+  closeMenu?: () => void;
+  currentSiteLangOverride?: Lang;
+}) {
   const { currentSiteLang, changeLang, languageLinks, isPost, hasSlug } = usePostLanguageSwitch();
 
   const LANGS = [
@@ -325,12 +328,13 @@ function NavLanguageDropdown({ closeMenu, currentSiteLangOverride }: { closeMenu
               !isPost || !hasSlug || Boolean(languageLinks?.[item.code as LangCode]);
             return (
               <button
-                  role="menuitem"
-                  onClick={async () => {
-                    if (!linkAvailable) return;
-                    await changeLang(item.code as LangCode);
-                    closeMenu?.();
-                  }}
+                role="menuitem"
+                type="button"
+                onClick={async () => {
+                  if (!linkAvailable) return;
+                  await changeLang(item.code as LangCode);
+                  closeMenu?.();
+                }}
                 aria-disabled={!linkAvailable}
                 disabled={!linkAvailable}
                 className={
@@ -363,7 +367,7 @@ export default function Header() {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
-  
+
   // Navigation is outside the per-locale provider, so derive the active locale from the URL.
   const { locale: uiLocale } = useI18n();
   const routeLocale = (parseLocaleFromPath(pathname || "/") ?? uiLocale ?? "en") as Lang;
@@ -470,6 +474,7 @@ export default function Header() {
 
   // Reading progress: measure how far through `main article` the user has scrolled
   useEffect(() => {
+    if (!pathname) return;
     let rafId = 0;
     let ticking = false;
 
@@ -574,7 +579,10 @@ export default function Header() {
 
               {/* Search then language selector (matches screenshot: search first, small language pill to the right) */}
               <div className="flex items-center gap-4">
-                <SearchButton variant="default" ariaLabel={label("searchPlaceholder", "Find an article")} />
+                <SearchButton
+                  variant="default"
+                  ariaLabel={label("searchPlaceholder", "Find an article")}
+                />
                 <div className="relative">
                   <LanguageDropdown
                     currentLocale={currentLocale}
@@ -589,7 +597,10 @@ export default function Header() {
 
             {/* Mobile controls */}
             <div className="flex items-center gap-2 md:hidden">
-              <SearchButton ariaLabel={label("searchPlaceholder", "Find an article")} variant="icon" />
+              <SearchButton
+                ariaLabel={label("searchPlaceholder", "Find an article")}
+                variant="icon"
+              />
               {/* Add language pill to mobile header (client-side nav) */}
               <div className="relative">
                 <LanguageDropdown
@@ -631,8 +642,8 @@ export default function Header() {
           {/* Reading progress bar (fills as user reads the article)
               Positioned over the article column and only visible while reading */}
           <div
-                    aria-hidden
-                    className="fixed top-0 left-0 z-50 pointer-events-none w-screen inset-x-0 transition-opacity duration-300"
+            aria-hidden
+            className="fixed top-0 left-0 z-50 pointer-events-none w-screen inset-x-0 transition-opacity duration-300"
             style={{
               opacity: visible ? 1 : 0,
               top: navRef.current ? `${navRef.current.getBoundingClientRect().top}px` : "0px",

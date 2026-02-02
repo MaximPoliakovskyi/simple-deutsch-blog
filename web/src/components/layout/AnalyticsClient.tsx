@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import { Suspense } from "react";
 
 // Lazy load analytics to avoid blocking critical path
 const Analytics = dynamic(() => import("@vercel/analytics/react").then((m) => m.Analytics), {

@@ -1,17 +1,15 @@
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { buildLocalizedHref } from "@/core/i18n/localeLinks";
+import type { Locale } from "@/i18n/locale";
 import type { PostListItem, WPPostCard } from "@/server/wp/api";
 import { getPostsIndex } from "@/server/wp/api";
-import type { Locale } from "@/i18n/locale";
-import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 
 const PAGE_SIZE = 3;
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
-async function fetchFirstPage(
-  lang?: Locale,
-): Promise<{
+async function fetchFirstPage(lang?: Locale): Promise<{
   posts: Array<WPPostCard | PostListItem>;
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 }> {
@@ -25,9 +23,22 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
   const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
 
   // Compute stable server-side labels and hrefs to avoid hydration mismatches
-  function estimateReadingMinutesFromContent(post: any): number | null {
-    if (post.readingMinutes != null) return Math.max(1, Math.ceil(post.readingMinutes));
-    const html = post.content ?? post.excerpt ?? "";
+  function estimateReadingMinutesFromContent(post: unknown): number | null {
+    if (!post || typeof post !== "object") return null;
+    const maybe = post as {
+      readingMinutes?: unknown;
+      content?: unknown;
+      excerpt?: unknown;
+    };
+
+    if (typeof maybe.readingMinutes === "number") {
+      return Math.max(1, Math.ceil(maybe.readingMinutes));
+    }
+
+    const html =
+      (typeof maybe.content === "string" ? maybe.content : null) ??
+      (typeof maybe.excerpt === "string" ? maybe.excerpt : null) ??
+      "";
     if (!html) return null;
     const text = String(html).replace(/<[^>]+>/g, " ");
     const words = (text.trim().match(/\S+/g) ?? []).length;
@@ -36,7 +47,7 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
     return Math.max(1, Math.ceil(words / 200));
   }
 
-  const mappedPosts = posts.map((p: any) => {
+  const mappedPosts = posts.map((p) => {
     try {
       const minutes = estimateReadingMinutesFromContent(p);
       const dateText = p.date
@@ -45,16 +56,16 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
             timeZone: "UTC",
           }).format(new Date(p.date))
         : null;
-      const href = buildLocalizedHref(lang === "en" ? "en" : (lang as any), `/posts/${p.slug}`);
+      const href = buildLocalizedHref(lang, `/posts/${p.slug}`);
       return { ...p, readingText: minutes ? `${minutes} ${t.minRead}` : null, dateText, href };
-    } catch (e) {
+    } catch (_e) {
       const dateText = p.date
         ? new Intl.DateTimeFormat(lang === "uk" ? "uk-UA" : lang === "ru" ? "ru-RU" : "en-US", {
             dateStyle: "long",
             timeZone: "UTC",
           }).format(new Date(p.date))
         : null;
-      const href = buildLocalizedHref(lang === "en" ? "en" : (lang as any), `/posts/${p.slug}`);
+      const href = buildLocalizedHref(lang, `/posts/${p.slug}`);
       return { ...p, readingText: null, dateText, href };
     }
   });

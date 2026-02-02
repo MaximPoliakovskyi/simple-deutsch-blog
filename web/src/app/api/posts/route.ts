@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
+import type { Locale } from "@/i18n/locale";
+import { assertLocale } from "@/i18n/locale";
 import {
   getPostBySlug,
   getPosts,
   getPostsByTagSlug,
   getPostsPageByCategory,
 } from "@/server/wp/api";
-import { assertLocale } from "@/i18n/locale";
-import type { Locale } from "@/i18n/locale";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
@@ -19,9 +19,9 @@ export async function GET(req: Request) {
   const first = Number(searchParams.get("first")) || 200;
 
   // Validate locale (map legacy aliases via assertLocale)
-  let validLocale: Locale | undefined = undefined;
+  let validLocale: Locale | undefined;
   try {
-    validLocale = assertLocale(lang as any);
+    validLocale = assertLocale(lang);
   } catch {
     validLocale = undefined;
   }
@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   );
 
   try {
-    let posts: any[] = [];
+    let posts: unknown[] = [];
     let pageInfo: PageInfo = {
       hasNextPage: false,
       endCursor: null,

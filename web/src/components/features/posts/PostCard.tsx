@@ -130,11 +130,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
         {/* Media — smoother zoom wrapper */}
         <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div
-            className="
-              absolute inset-0
-              transform-gpu will-change-transform origin-center
-              group-hover:scale-[1.06] group-focus-within:scale-[1.06]
-            "
+            className="absolute inset-0 transform-gpu will-change-transform origin-center group-hover:scale-[1.06] group-focus-within:scale-[1.06]"
             style={{
               transitionProperty: "transform, scale",
               transitionDuration: "1200ms",
@@ -172,19 +168,8 @@ export default function PostCard({ post, className, priority = false }: PostCard
         )}
 
         {/* Title */}
-        <h3
-          className="
-            mt-1 text-[clamp(1.25rem,2.2vw,1.75rem)] font-semibold leading-snug tracking-tight
-          "
-        >
-          <span
-            className="
-              transition-colors duration-300
-              text-[hsl(var(--fg))]
-              group-hover:text-slate-600 group-focus-within:text-slate-600
-              dark:group-hover:text-slate-300 dark:group-focus-within:text-slate-300
-            "
-          >
+        <h3 className="mt-1 text-[clamp(1.25rem,2.2vw,1.75rem)] font-semibold leading-snug tracking-tight">
+          <span className="transition-colors duration-300 text-[hsl(var(--fg))] group-hover:text-slate-600 group-focus-within:text-slate-600 dark:group-hover:text-slate-300 dark:group-focus-within:text-slate-300">
             {post.title}
           </span>
         </h3>
@@ -198,9 +183,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
               key={cat.slug}
               href={`${prefix}/categories/${cat.slug}`}
               aria-label={`${t("viewCategoryAria")} ${getLevelLabel(cat.slug, locale) ?? translateCategory(cat.name, cat.slug, locale)}`}
-              className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 
-                         dark:border-white/10 dark:bg-white/5 dark:text-neutral-200
-                         hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+              className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
             >
               {getLevelLabel(cat.slug, locale) ?? translateCategory(cat.name, cat.slug, locale)}
             </Link>

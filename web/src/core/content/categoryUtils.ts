@@ -6,7 +6,7 @@ type CategoryNode = {
   id: string;
   name: string;
   slug: string;
-  [key: string]: any;
+  [key: string]: unknown;
 };
 
 /**

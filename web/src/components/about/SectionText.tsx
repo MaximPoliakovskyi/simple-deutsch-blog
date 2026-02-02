@@ -21,7 +21,7 @@ export default function SectionText({
   className,
 }: SectionTextProps) {
   return (
-    <div className={"w-full flex flex-col items-center " + (className ?? "")}>
+    <div className={`w-full flex flex-col items-center ${className ?? ""}`}>
       <div className="w-full max-w-232 mx-auto">
         <div className="mx-auto w-full max-w-[72ch] text-center md:text-left space-y-6 md:space-y-8">
           {title ? (
@@ -43,8 +43,8 @@ export default function SectionText({
 
           {paragraphs && (
             <div className="space-y-6 text-lg md:text-xl leading-relaxed text-(--sd-text-muted) hyphens-auto wrap-break-word">
-              {paragraphs.map((p, i) => (
-                <p key={i} className="md:text-left text-center">
+              {paragraphs.map((p) => (
+                <p key={p} className="md:text-left text-center">
                   {p}
                 </p>
               ))}

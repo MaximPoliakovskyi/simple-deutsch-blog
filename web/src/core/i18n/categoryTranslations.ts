@@ -129,7 +129,7 @@ export function translateCategory(
   slug?: string | null,
   locale: Locale = "en",
 ) {
-  const safeLocale = (locale === "uk" || locale === "ru") ? locale : "en";
+  const safeLocale = locale === "uk" || locale === "ru" ? locale : "en";
   // extract any leading emoji/symbol prefix from the original name so we
   // can re-attach it to translated labels (matches screenshot UX)
   function extractLeadingSymbols(s: string | undefined | null) {
@@ -173,7 +173,7 @@ export function translateCategoryDescription(
   slug?: string | null,
   locale: Locale = "en",
 ) {
-  const safeLocale = (locale === "uk" || locale === "ru") ? locale : "en";
+  const safeLocale = locale === "uk" || locale === "ru" ? locale : "en";
   const slugCandidates = makeLookupVariants(slug);
   for (const k of slugCandidates) {
     const entry = DESC_MAP[k as keyof typeof DESC_MAP];

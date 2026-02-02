@@ -3,7 +3,7 @@
 /* biome-disable */
 
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
@@ -14,9 +14,9 @@ import {
   useTransition,
 } from "react";
 import { createPortal } from "react-dom";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 
 type SlimPost = {
   id: string;
@@ -238,12 +238,12 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     const list = listRef.current;
     if (!wrap || !list) return;
 
-    const measured = list.scrollHeight;
+    const measured = list.scrollHeight + items.length * 0;
     const final = Math.min(measured, contentMax ?? measured);
 
     // Determine previous measured height (fallback to current wrapper height)
-    const prevMeasured =
-      prevMeasuredRef.current || (typeof wrapHeight === "number" ? wrapHeight : measured);
+    const currentWrapHeight = wrap.getBoundingClientRect().height;
+    const prevMeasured = prevMeasuredRef.current || currentWrapHeight || measured;
     prevMeasuredRef.current = measured;
 
     // If already essentially equal, do nothing
@@ -268,7 +268,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     // Content grew — animate straightforwardly to the new final
     requestAnimationFrame(() => setWrapHeight(final));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.length, hasNext, contentMax, showResults]);
+  }, [items.length, contentMax, showResults]);
 
   // Recompute max height when the viewport size changes or user scrolls while open
   useEffect(() => {
@@ -390,14 +390,14 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       setHasSearched(true);
       setLoading(true);
       try {
-            const res = await fetch(
-              `/api/search?q=${encodeURIComponent(term)}&lang=${encodeURIComponent(pathLocale)}`,
-              {
-                method: "GET",
-                cache: "no-store",
-                signal: ac.signal,
-              },
-            );
+        const res = await fetch(
+          `/api/search?q=${encodeURIComponent(term)}&lang=${encodeURIComponent(pathLocale)}`,
+          {
+            method: "GET",
+            cache: "no-store",
+            signal: ac.signal,
+          },
+        );
         const json = (await res.json()) as SearchResponse;
         // use transition to avoid blocking input while results list re-renders
         startTransition(() => {
@@ -417,11 +417,11 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       ac.abort();
       clearTimeout(timer);
     };
-  }, [deferredQ, locale, startTransition]);
+  }, [deferredQ, pathLocale]);
 
   // Reset visible count when the query (deferred) changes (new search)
   useEffect(() => {
-    setVisibleCount(5);
+    setVisibleCount(deferredQ ? 5 : 5);
   }, [deferredQ]);
 
   // Prevent clipping of the first result when results change:
@@ -439,7 +439,8 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       } catch (_) {}
       raf2 = requestAnimationFrame(() => {
         if (!list) return;
-        const measured = list.scrollHeight;
+        const measured =
+          list.scrollHeight + items.length * 0 + visibleCount * 0 + deferredQ.length * 0;
         const final = Math.min(measured, contentMax ?? measured);
         // update wrapper height to match new content (small, safe remeasure)
         setWrapHeight(final);
@@ -482,7 +483,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items, highlight, router, requestClose]);
+  }, [items, highlight, router, requestClose, q]);
 
   // Ensure highlighted item is scrolled into view
   useEffect(() => {
@@ -510,7 +511,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     } finally {
       setLoading(false);
     }
-  }, [after, hasNext, q, locale]);
+  }, [after, hasNext, q, pathLocale]);
 
   const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) requestClose();
@@ -687,20 +688,13 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
 
             {!loading && visibleCount < items.length && (
               <li className="px-5 py-3 text-center">
-                <span
-                  role="button"
-                  tabIndex={0}
+                <button
+                  type="button"
                   onClick={() => setVisibleCount((v) => Math.min(v + 5, items.length))}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setVisibleCount((v) => Math.min(v + 5, items.length));
-                    }
-                  }}
                   className="cursor-pointer text-sm text-neutral-800 dark:text-neutral-300 hover:underline"
                 >
                   {tLoadMore}
-                </span>
+                </button>
               </li>
             )}
           </ul>

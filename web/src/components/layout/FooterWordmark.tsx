@@ -63,8 +63,8 @@ export default function FooterWordmark({ className = "" }: Props) {
       });
     }
 
-    if ((document as any).fonts && (document as any).fonts.ready) {
-      (document as any).fonts.ready.then(measureAndFit).catch(() => measureAndFit());
+    if ("fonts" in document && document.fonts?.ready) {
+      document.fonts.ready.then(measureAndFit).catch(() => measureAndFit());
     } else {
       measureAndFit();
     }

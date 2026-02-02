@@ -1,5 +1,5 @@
-import type { Locale } from "@/i18n/locale";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
 
 export type CeFrLevel = {
   slug: string;

@@ -42,9 +42,10 @@ export default function BackButton() {
 
   return (
     <button
+      type="button"
       aria-label="Back"
       onClick={handleClick}
-      className={baseClasses + " " + enButtonClasses}
+      className={`${baseClasses} ${enButtonClasses}`}
       // Match `En` button accessibility and focus styling (same padding + outlineColor)
       style={{
         padding: 0,

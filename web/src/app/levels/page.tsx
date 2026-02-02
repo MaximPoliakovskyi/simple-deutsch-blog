@@ -34,6 +34,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
 
   const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
   type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
+  type CefrSlug = "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
   function getPostLanguage(post: {
     slug?: string;
     categories?: { nodes?: { slug?: string | null }[] } | null;
@@ -59,7 +60,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
   } catch (e) {
     // During prerender the external API may be unreachable; fallback to empty list
     console.error("Failed to fetch posts for levels page during prerender:", e);
-    allPosts = [] as any;
+    allPosts = [];
   }
 
   function getPostTags(post: PostListItem): Array<{ slug?: string; name?: string }> {
@@ -67,7 +68,13 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     return nodes.map((n) => ({ slug: n?.slug ?? "", name: n?.name ?? "" }));
   }
 
-  function normalizeLevelSlug(slug: string): "a1" | "a2" | "b1" | "b2" | "c1" | "c2" | null {
+  const CEFR_SET = new Set<CefrSlug>(["a1", "a2", "b1", "b2", "c1", "c2"]);
+
+  function isCefrSlug(value: string): value is CefrSlug {
+    return CEFR_SET.has(value as CefrSlug);
+  }
+
+  function normalizeLevelSlug(slug: string): CefrSlug | null {
     if (!slug) return null;
     const s = slug.toLowerCase().trim().replace(/_/g, "-");
     const cleaned = s
@@ -76,9 +83,8 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
       .replace(/^(?:level-)/, "")
       .replace(/^(?:ger-)/, "");
     const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
-    const valid = new Set(CEFR_SLUGS);
     for (const tok of tokens) {
-      if (valid.has(tok)) return tok as any;
+      if (isCefrSlug(tok)) return tok;
     }
     if (/\bc2\b/.test(cleaned)) return "c2";
     if (/\bc1\b/.test(cleaned)) return "c1";
@@ -94,8 +100,8 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     name?: string;
   }): "a1" | "a2" | "b1" | "b2" | "c1" | "c2" | null {
     const name = (tag.name ?? "").trim().toUpperCase();
-    const exact = new Set(CEFR_SLUGS.map((s) => s.toUpperCase()));
-    if (exact.has(name)) return name.toLowerCase() as any;
+    const lower = name.toLowerCase();
+    if (isCefrSlug(lower)) return lower;
     return normalizeLevelSlug(tag.slug ?? "");
   }
 
@@ -107,7 +113,9 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
       const lvl = detectCefrLevel(t);
       if (lvl) levelsForPost.add(lvl);
     });
-    levelsForPost.forEach((lvl) => countsMap.set(lvl, (countsMap.get(lvl) ?? 0) + 1));
+    levelsForPost.forEach((lvl) => {
+      countsMap.set(lvl, (countsMap.get(lvl) ?? 0) + 1);
+    });
   });
 
   function formatPostCount(count: number, locale: "en" | "ru" | "uk") {

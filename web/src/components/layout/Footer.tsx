@@ -4,9 +4,19 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
+import {
+  DEFAULT_LOCALE as DEFAULT_SUPPORTED_LOCALE,
+  type Locale,
+  SUPPORTED_LOCALES,
+} from "@/i18n/locale";
+
+const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
+function coerceLocale(value: string): Locale {
+  const v = value.toLowerCase();
+  return SUPPORTED_LOCALE_SET.has(v) ? (v as Locale) : DEFAULT_SUPPORTED_LOCALE;
+}
 
 const TYPO_STYLE = {
   fontSize: "var(--text-base)",
@@ -65,7 +75,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Cookie Settings", href: "/cookies" },
         ],
       },
-          // Language section removed from static config; rendered dynamically below
+      // Language section removed from static config; rendered dynamically below
     ],
   },
   uk: {
@@ -119,7 +129,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Мова",
         items: [
-            // language links removed
+          // language links removed
         ],
       },
     ],
@@ -175,12 +185,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Настройки файлов cookie", href: "/cookies" },
         ],
       },
-          {
-            title: "Язык",
-            items: [
-                // language links removed
-            ],
-          },
+      {
+        title: "Язык",
+        items: [
+          // language links removed
+        ],
+      },
     ],
   },
 };
@@ -193,16 +203,12 @@ export default function Footer() {
 
   function prefixHrefForLocale(href: string, locale: Locale) {
     if (!href || !href.startsWith("/")) return href;
-    const { buildLocalizedHref } = require("@/core/i18n/localeLinks");
     // buildLocalizedHref returns a canonical prefixed URL
-    return buildLocalizedHref(locale as any, href);
+    return buildLocalizedHref(locale, href);
   }
 
-  function handleLocaleSwitch(target: string) {
-    try {
-      localStorage.setItem("sd-locale", target);
-    } catch {}
-    const newPath = buildLocalizedHref(target as any, pathname);
+  function handleLocaleSwitch(target: Locale) {
+    const newPath = buildLocalizedHref(target, pathname);
     router.replace(newPath);
   }
 
@@ -214,8 +220,8 @@ export default function Footer() {
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [])
-              .map((section) => (
+            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? []).map(
+              (section) => (
                 <div key={section.title}>
                   <h3
                     className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
@@ -238,10 +244,11 @@ export default function Footer() {
                           item.href === "/impressum" ? dict.imprint || item.label : item.label;
 
                         if (isLangLink) {
-                          const target = item.href.replace("#", "");
+                          const target = coerceLocale(item.href.replace("#", ""));
                           return (
                             <li key={item.label}>
                               <button
+                                type="button"
                                 onClick={() => handleLocaleSwitch(target)}
                                 className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
                                 style={TYPO_STYLE}
@@ -282,7 +289,8 @@ export default function Footer() {
                     </ul>
                   </div>
                 </div>
-              ))}
+              ),
+            )}
 
             {/* Dynamic Language Section */}
             <div>
@@ -306,11 +314,6 @@ export default function Footer() {
                       <li key={l.code}>
                         <Link
                           href={href}
-                          onClick={() => {
-                            try {
-                              localStorage.setItem("sd-locale", target);
-                            } catch {}
-                          }}
                           className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
                           style={TYPO_STYLE}
                           aria-current={isCurrent ? "page" : undefined}

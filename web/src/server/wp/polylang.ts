@@ -50,17 +50,22 @@ export function parseTranslations(
     if (!parsed || typeof parsed !== "object") return {};
 
     const result: Partial<Record<"en" | "ru" | "uk", PolylangTranslation>> = {};
-    const validLangs = ["en", "ru", "uk"] as const;
+    const validLangSet = new Set(["en", "ru", "uk"] as const);
+
+    function isUiLocale(value: string): value is "en" | "ru" | "uk" {
+      return validLangSet.has(value as "en" | "ru" | "uk");
+    }
 
     for (const [lang, value] of Object.entries(parsed)) {
-      if (!validLangs.includes(lang as any)) continue; // Ignore unknown locales
+      if (!isUiLocale(lang)) continue; // Ignore unknown locales
       if (!value || typeof value !== "object") continue;
-      const maybeId = (value as any).id;
-      const maybeSlug = (value as any).slug;
-      const maybeUri = (value as any).uri;
+      const obj = value as Record<string, unknown>;
+      const maybeId = obj.id;
+      const maybeSlug = obj.slug;
+      const maybeUri = obj.uri;
       if (typeof maybeId !== "number") continue;
       if (typeof maybeSlug !== "string") continue;
-      result[lang as "en" | "ru" | "uk"] = {
+      result[lang] = {
         id: maybeId,
         slug: maybeSlug,
         uri: typeof maybeUri === "string" ? maybeUri : undefined,

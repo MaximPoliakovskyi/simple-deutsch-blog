@@ -219,6 +219,7 @@ export default function TypewriterWords({
   }, []);
 
   React.useLayoutEffect(() => {
+    void displayText;
     measureTypedWidth();
   }, [displayText, measureTypedWidth]);
 

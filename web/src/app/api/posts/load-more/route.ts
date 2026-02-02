@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { getPostsByCategory, getPostsByTag, getPostsIndex } from "@/server/wp/api";
-import { assertLocale } from "@/i18n/locale";
 import type { Locale } from "@/i18n/locale";
+import { assertLocale } from "@/i18n/locale";
+import type { WPPostCard } from "@/server/wp/api";
+import { getPostsByCategory, getPostsByTag, getPostsIndex } from "@/server/wp/api";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type LoadMoreBody = {
@@ -14,6 +15,12 @@ type LoadMoreBody = {
   level?: string | null;
   skipIds?: string[];
 };
+
+type PostWithTags = WPPostCard & {
+  tags?: { nodes?: Array<{ slug?: string | null; name?: string | null }> | null } | null;
+};
+
+type PostsPage = { posts: WPPostCard[]; pageInfo: PageInfo };
 
 // Removed local SUPPORTED_LOCALES helper; using assertLocale instead
 
@@ -35,14 +42,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Validate locale (map legacy aliases via assertLocale)
-    let validLocale: Locale | undefined = undefined;
+    let validLocale: Locale | undefined;
     try {
-      validLocale = assertLocale(locale as any);
+      validLocale = assertLocale(locale);
     } catch {
       validLocale = undefined;
     }
 
-    let res;
+    let res: PostsPage;
     if (mode === "category" && categorySlug) {
       res = await getPostsByCategory({ first, after, locale: validLocale, categorySlug });
     } else if (mode === "tag" && tagSlug) {
@@ -76,7 +83,7 @@ export async function POST(req: NextRequest) {
 
       const target = level?.toLowerCase() ?? null;
 
-      const collected: any[] = [];
+      const collected: PostWithTags[] = [];
       let cursor = after ?? null;
       let hasNext = true;
       let lastPageInfo: PageInfo = { hasNextPage: false, endCursor: null };
@@ -86,13 +93,13 @@ export async function POST(req: NextRequest) {
 
       while (hasNext && collected.length < first) {
         const r = await getPostsIndex({ first: pageFetchSize, after: cursor, locale: validLocale });
-        const nodes = r.posts ?? [];
+        const nodes: PostWithTags[] = r.posts ?? [];
 
         let matching = nodes;
         if (target) {
-          matching = nodes.filter((p: any) => {
-            const nodes = p?.tags?.nodes ?? [];
-            for (const t of nodes) {
+          matching = nodes.filter((p) => {
+            const tagNodes = p.tags?.nodes ?? [];
+            for (const t of tagNodes) {
               const m = normalizeLevelSlug(t?.slug ?? "") ?? normalizeLevelSlug(t?.name ?? "");
               if (m && m === target) return true;
             }
@@ -102,8 +109,8 @@ export async function POST(req: NextRequest) {
 
         // Skip any posts already visible on the client
         const seen = new Set(skipIds ?? []);
-        const keyOf = (p: any) =>
-          p?.id ?? (p?.databaseId !== undefined ? String(p.databaseId) : (p?.slug ?? ""));
+        const keyOf = (p: PostWithTags) =>
+          p.id ?? (p.databaseId !== undefined ? String(p.databaseId) : (p.slug ?? ""));
 
         for (const m of matching) {
           if (collected.length >= first) break;

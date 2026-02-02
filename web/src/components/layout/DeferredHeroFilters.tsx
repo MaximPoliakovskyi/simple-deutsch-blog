@@ -1,14 +1,14 @@
 import HeroWithFilters from "@/components/features/search/HeroWithFilters";
 import { deduplicateCategories, filterOutCEFRLevels } from "@/core/content/categoryUtils";
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { WPPostCard } from "@/server/wp/api";
 import { getAllCategories } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 
 type CategoryNode = { id: string; name: string; slug: string };
 
 type Props = {
-  initialPosts: any[];
+  initialPosts: WPPostCard[];
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
   pageSize: number;

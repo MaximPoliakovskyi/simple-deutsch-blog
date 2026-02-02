@@ -1,9 +1,7 @@
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { WPPostCard } from "@/server/wp/api";
-import { getPostBySlug } from "@/server/wp/api";
-import SuccessStoriesSlider from "./SuccessStoriesSlider";
-
 import type { Locale } from "@/i18n/locale";
+import type { WPPostCard } from "@/server/wp/api";
+import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
 type Props = {
   locale?: Locale;
@@ -11,8 +9,9 @@ type Props = {
 
 function normalizePosts(payload: unknown): WPPostCard[] {
   if (Array.isArray(payload)) return payload as WPPostCard[];
-  if (payload && typeof payload === "object" && Array.isArray((payload as any).posts)) {
-    return (payload as { posts: WPPostCard[] }).posts;
+  if (payload && typeof payload === "object") {
+    const maybe = payload as { posts?: unknown };
+    if (Array.isArray(maybe.posts)) return maybe.posts as WPPostCard[];
   }
   return [];
 }
@@ -87,7 +86,7 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
 
   return (
     <SuccessStoriesSlider
-      posts={preparedPosts as any}
+      posts={preparedPosts}
       title={t.successStories}
       description={t.successStoriesDescription}
     />

@@ -382,9 +382,7 @@ export async function getAllPostsByFilter(opts: {
   // Deduplicate by stable key: prefer id, then databaseId, then slug
   const map = new Map<string, PostListItem | WPPostCard>();
   for (const p of all) {
-    const key =
-      (p as any).id ??
-      ((p as any).databaseId !== undefined ? String((p as any).databaseId) : (p as any).slug);
+    const key = p.id ?? (p.databaseId !== undefined ? String(p.databaseId) : p.slug);
     if (!map.has(key)) map.set(key, p);
   }
 

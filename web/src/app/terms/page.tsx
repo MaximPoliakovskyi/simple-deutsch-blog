@@ -15,9 +15,10 @@ export default function TermsPage({ locale }: { locale?: Locale }) {
     if (!items.length) return null;
     return (
       <ul className="list-disc pl-6 space-y-2 text-[hsl(var(--fg-muted))]">
-        {items.map((it, i) => (
-          <li key={i}>{it.replace(/^[-\s]+/, "")}</li>
-        ))}
+        {items.map((it) => {
+          const clean = it.replace(/^[-\s]+/, "");
+          return <li key={clean}>{clean}</li>;
+        })}
       </ul>
     );
   };

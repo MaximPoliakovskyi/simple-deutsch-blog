@@ -1,30 +1,30 @@
 import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { assertLocale } from "@/i18n/locale";
 import NotFound from "../../not-found";
-import { assertLocale, type Locale } from "@/i18n/locale";
 
 type Props = {
-  params: Promise<{ locale: string }>;
+  params?: { locale?: string } | Promise<{ locale?: string }>;
 };
 
-export async function generateMetadata({ params }: Props) {
-  const p = params ?? {};
-  const resolved = typeof (p as any)?.then === "function" ? await p : p;
-  const locale = (resolved as any)?.locale;
+async function readLocaleParam(params: Props["params"]): Promise<string | undefined> {
+  const resolved = await params;
+  return resolved?.locale;
+}
+
+export async function generateMetadata(props?: Props) {
+  const locale = await readLocaleParam(props?.params);
   try {
-    const validated = assertLocale(locale as any);
+    const validated = assertLocale(locale);
     return { title: TRANSLATIONS[validated].pageNotFoundTitle };
   } catch {
     return {};
   }
 }
 
-export default async function LocalizedNotFound({ params }: Props) {
-  const p = params ?? {};
-  const resolved = typeof (p as any)?.then === "function" ? await p : p;
-  const locale = (resolved as any)?.locale;
-
+export default async function LocalizedNotFound(props?: Props) {
+  const locale = await readLocaleParam(props?.params);
   try {
-    const validated = assertLocale(locale as any);
+    const validated = assertLocale(locale);
     return <NotFound locale={validated} />;
   } catch {
     return <NotFound />;

@@ -4,9 +4,9 @@ import * as React from "react";
 import CategoryPills from "@/components/features/categories/CategoryPills";
 import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import type { Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 
-import type { Locale } from "@/i18n/locale";
 type Category = { id: string; name: string; slug: string };
 
 type Props = {
@@ -16,6 +16,15 @@ type Props = {
   initialHasNextPage: boolean;
   pageSize?: number;
   locale?: Locale;
+};
+
+type TranslationLike = {
+  slug?: string | null;
+  language?: { code?: string | null } | null;
+};
+
+type PostWithTranslations = WPPostCard & {
+  translations?: TranslationLike[] | null;
 };
 
 export default function CategoriesBlockClient({
@@ -64,20 +73,22 @@ export default function CategoriesBlockClient({
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
-        let posts = data.posts ?? [];
+        const data = (await res.json()) as { posts?: unknown };
+        let posts: PostWithTranslations[] = Array.isArray(data.posts)
+          ? (data.posts as PostWithTranslations[])
+          : [];
 
         if (cancelled) return;
 
         // If Ukrainian or Russian locale, fetch translated versions of posts
         if (shouldFetchEnglish && posts.length > 0) {
-          const translatedPosts: any[] = [];
+          const translatedPosts: PostWithTranslations[] = [];
           const targetLangCode = locale === "uk" ? "UK" : locale === "ru" ? "RU" : null;
 
           if (targetLangCode) {
             for (const post of posts) {
               const translation = post.translations?.find(
-                (t: any) => t.language?.code === targetLangCode,
+                (t) => t?.language?.code === targetLangCode,
               );
 
               if (translation?.slug) {
@@ -88,8 +99,11 @@ export default function CategoriesBlockClient({
                   const translatedRes = await fetch(translatedUrl.toString());
 
                   if (translatedRes.ok) {
-                    const translatedData = await translatedRes.json();
-                    const translatedPost = translatedData.posts?.[0];
+                    const translatedData = (await translatedRes.json()) as { posts?: unknown };
+                    const translatedPost =
+                      Array.isArray(translatedData.posts) && translatedData.posts.length > 0
+                        ? (translatedData.posts[0] as PostWithTranslations)
+                        : null;
                     if (translatedPost) {
                       translatedPosts.push(translatedPost);
                     }
@@ -159,6 +173,7 @@ export default function CategoriesBlockClient({
 
         {hasMore && (
           <button
+            type="button"
             onClick={loadMore}
             disabled={isLoading}
             className={[

@@ -1,14 +1,14 @@
 // app/layout.tsx
 
-import { Suspense } from "react";
-import type { ReactNode } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
-import BackButton from "@/components/ui/BackButton";
+import type { ReactNode } from "react";
+import { Suspense } from "react";
+import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
+import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
+import BackButton from "@/components/ui/BackButton";
 import PreloaderClient from "@/components/ui/PreloaderClient";
-import AnalyticsClient from "@/components/layout/AnalyticsClient";
-import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import "@/styles/globals.css";
 
@@ -43,21 +43,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
         <link rel="icon" href="/logo.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        
+
         {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
-        
+
         {/* Preload critical fonts for faster first paint */}
         <link
           rel="preload"
           href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
           as="style"
         />
-        
+
         {/* Prefetch common navigation pages (scope to default locale) */}
-        <link rel="prefetch" href={`/api/posts?first=12&lang=${DEFAULT_LOCALE}`} as="fetch" crossOrigin="anonymous" />
-        
+        <link
+          rel="prefetch"
+          href={`/api/posts?first=12&lang=${DEFAULT_LOCALE}`}
+          as="fetch"
+          crossOrigin="anonymous"
+        />
+
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
         <script src="/theme-init.js" />
       </head>

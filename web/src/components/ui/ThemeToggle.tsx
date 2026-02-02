@@ -16,7 +16,7 @@ export default function ThemeToggle() {
   }, []);
 
   function setTheme(next: Theme, _e?: MouseEvent<HTMLButtonElement>): void {
-    const root = document.documentElement;
+    const root = document.documentElement as HTMLElement & { __sd_theme_timer?: number };
     const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Avoid stacking timers when toggling quickly.
 
@@ -24,7 +24,7 @@ export default function ThemeToggle() {
     if (!prefersReduce) {
       // Clear any existing timers to avoid removing the class too early/late.
       try {
-        const existing = (root as any).__sd_theme_timer as number | undefined;
+        const existing = root.__sd_theme_timer;
         if (existing) window.clearTimeout(existing);
       } catch (_) {}
 
@@ -47,7 +47,7 @@ export default function ThemeToggle() {
         } catch (_) {}
       }, TRANSITION_MS);
       try {
-        (root as any).__sd_theme_timer = t;
+        root.__sd_theme_timer = t;
       } catch (_) {}
     }
   }

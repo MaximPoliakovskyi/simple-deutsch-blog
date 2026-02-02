@@ -1,10 +1,12 @@
 import type { ReactElement } from "react";
 import { CEFR_SLUGS } from "@/core/cefr/levels";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
+import type { WPPostCard } from "@/server/wp/api";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
-import type { Locale } from "@/i18n/locale";
+
 type TagNode = { id: string; name: string; slug: string };
 type Category = { id: string; name: string; slug: string };
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
@@ -32,12 +34,11 @@ export default async function CategoriesBlock({
     CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
-    const defaultLocaleLocal: Locale = (DEFAULT_LOCALE as Locale);
+  const defaultLocaleLocal: Locale = DEFAULT_LOCALE as Locale;
   const effectiveLocale: Locale = locale ?? defaultLocaleLocal;
 
   // For initial render, pass empty posts - client will fetch based on selected tag
-  const firstTagSlug = visibleCategories.length > 0 ? visibleCategories[0].slug : null;
-  const initialPosts: any[] = [];
+  const initialPosts: WPPostCard[] = [];
   const pageInfo: PageInfo = { endCursor: null, hasNextPage: false };
 
   return (
