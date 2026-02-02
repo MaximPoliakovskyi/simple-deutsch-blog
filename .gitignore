@@ -143,3 +143,9 @@ archive/
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Local perf/audit artifacts
+web/lighthouse*.json
+web/lh-report*.json
+web/lighthouse-nav-runs/
+web/smex-*.json

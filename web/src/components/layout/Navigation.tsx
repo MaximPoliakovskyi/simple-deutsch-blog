@@ -10,7 +10,9 @@ import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
-// locale parsing from path is removed from UI; UI reads locale from `useI18n()` only
+import { parseLocaleFromPath } from "@/i18n/locale";
+// Note: Navigation is mounted in the root layout (outside the per-locale layout),
+// so it must derive the active locale from the URL prefix when present.
 
 // LanguageDropdown uses the hooks imported above
 
@@ -191,10 +193,14 @@ function useLanguage() {
 
   
 
-  function setLocale(next: Lang) {
+  function persistLocale(next: Lang) {
     try {
       localStorage.setItem("sd-locale", next);
     } catch {}
+  }
+
+  function setLocale(next: Lang) {
+    persistLocale(next);
 
     try {
       const base = replaceLeadingLocale(pathname, next);
@@ -208,7 +214,16 @@ function useLanguage() {
     }
   }
 
-  return { locale: currentLocale as Lang, setLocale } as { locale: Lang; setLocale: (l: Lang) => void };
+  // Navigation lives in the root layout, outside the per-locale layout provider.
+  // Derive the *route* locale from the URL prefix when present, otherwise fall back
+  // to the i18n context locale (default "en").
+  const routeLocale = (parseLocaleFromPath(pathname) ?? currentLocale) as Lang;
+
+  return {
+    locale: routeLocale,
+    setLocale,
+    persistLocale,
+  } as { locale: Lang; setLocale: (l: Lang) => void; persistLocale: (l: Lang) => void };
 }
 // Hook: usePostLanguageSwitch
 // Parses current pathname to determine siteLang, isPost and slug, and
@@ -217,7 +232,7 @@ function useLanguage() {
 function usePostLanguageSwitch() {
   const router = useRouter();
   const pathname = usePathname() || "/";
-  const { locale: currentLocale, setLocale } = useLanguage();
+  const { locale: currentLocale, setLocale, persistLocale } = useLanguage();
   const { postLangLinks } = useI18n();
 
   const SITE_LANGS = ["en", "ru", "uk"] as const;
@@ -243,53 +258,28 @@ function usePostLanguageSwitch() {
     }
   }
 
-  function buildPostPath(targetLang: SiteLang, articleId: string) {
-    const path = `/posts/${targetLang}-${articleId}`;
-    return buildLocalizedHref(targetLang, path);
-  }
-
   const changeLang = async (targetLang: SiteLang) => {
     // If nothing to do, and siteLang equals currentLocale (both match), skip
     if (targetLang === siteLang && targetLang === currentLocale) return;
 
-    // Always update UI language preference
-    try {
-      setLocale(targetLang as Lang);
-    } catch {}
-
-    // Handle article page with translations available
-    if (isPost && postLangLinks) {
+    // Article detail pages: only navigate if we have an explicit translation URL.
+    // (Do not guess slugs; it leads to 404s when slugs naturally contain '-'.)
+    if (isPost && slug && postLangLinks) {
       const href = postLangLinks.links[targetLang] ?? null;
       if (!href) return;
+      try {
+        persistLocale(targetLang as Lang);
+      } catch {}
       try {
         await router.push(href);
       } catch {}
       return;
     }
 
-    // Handle posts listing page (no specific article slug)
-    if (isPost && !slug) {
-      const newPath = targetLang === "en" ? "/posts" : `/${targetLang}/posts`;
-      if (newPath !== pathname) {
-        try {
-          await router.push(newPath);
-        } catch {}
-      }
-      return;
-    }
-
-    // Handle specific article page without postLangLinks (shouldn't happen, but fallback)
-    if (isPost && slug && !postLangLinks) {
-      const parts = slug.split("-");
-      if (parts.length < 2) return; // invalid slug
-      const articleId = parts.slice(1).join("-");
-      const newPath = buildPostPath(targetLang, articleId);
-
-      try {
-        await router.push(newPath);
-      } catch {}
-      return;
-    }
+    // Non-article pages (and anything else): switch by replacing the locale prefix.
+    try {
+      setLocale(targetLang as Lang);
+    } catch {}
   };
 
   return {
@@ -304,9 +294,6 @@ function usePostLanguageSwitch() {
 // Component: NavLanguageDropdown
 function NavLanguageDropdown({ closeMenu, currentSiteLangOverride }: { closeMenu?: () => void; currentSiteLangOverride?: Lang }) {
   const { currentSiteLang, changeLang, languageLinks, isPost, hasSlug } = usePostLanguageSwitch();
-  const router = useRouter();
-  const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
 
   const LANGS = [
     { code: "en", label: "En" },
@@ -341,22 +328,7 @@ function NavLanguageDropdown({ closeMenu, currentSiteLangOverride }: { closeMenu
                   role="menuitem"
                   onClick={async () => {
                     if (!linkAvailable) return;
-                    // Prefer WordPress-provided translation link for post pages when available
-                    if (isPost && languageLinks?.[item.code as LangCode]) {
-                      try {
-                        await router.push(languageLinks[item.code as LangCode] as string);
-                      } catch {}
-                      closeMenu?.();
-                      return;
-                    }
-
-                    // Otherwise build the target path by replacing the leading locale and preserve query
-                    const base = replaceLeadingLocale(pathname, item.code as LangCode as Lang);
-                    const qs = searchParams?.toString();
-                    const newPath = qs ? `${base}?${qs}` : base;
-                    try {
-                      await router.push(newPath);
-                    } catch {}
+                    await changeLang(item.code as LangCode);
                     closeMenu?.();
                   }}
                 aria-disabled={!linkAvailable}
@@ -392,9 +364,10 @@ export default function Header() {
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
   
-  // Use the UI locale from the i18n provider (do not infer from pathname)
+  // Navigation is outside the per-locale provider, so derive the active locale from the URL.
   const { locale: uiLocale } = useI18n();
-  const currentLocale: Lang = (uiLocale || "en") as Lang;
+  const routeLocale = (parseLocaleFromPath(pathname || "/") ?? uiLocale ?? "en") as Lang;
+  const currentLocale: Lang = routeLocale;
 
   const buildLocaleRootHref = (target: "en" | "ru" | "uk") => buildLocalizedHref(target, "/");
 
@@ -403,26 +376,17 @@ export default function Header() {
     return buildLocalizedHref(target, p);
   };
 
-  const { t } = useI18n();
-  // Determine quick locale from pathname (updates immediately on client navigation)
-  const path = pathname || "/";
-  const pathLocale = ((): "en" | "ru" | "uk" => {
-    const seg = path.split("/")[1];
-    if (seg === "ru") return "ru";
-    if (seg === "uk") return "uk";
-    return "en";
-  })();
+  const { t: tFromProvider } = useI18n();
 
-  // helper: prefer renderer `t`, then fast TRANSLATIONS based on pathname-derived locale,
-  // then fallback string. This ensures labels update immediately when the URL changes.
+  // helper: prefer fast route-derived translations, then provider `t`, then fallback.
   const label = (key: string, fallback: string) => {
     try {
-      const v = t(key);
-      if (v && v !== key) return v;
+      const fast = TRANSLATIONS[currentLocale]?.[key];
+      if (fast && fast !== key) return fast;
     } catch {}
     try {
-      const fast = TRANSLATIONS[pathLocale]?.[key];
-      if (fast && fast !== key) return fast;
+      const v = tFromProvider(key);
+      if (v && v !== key) return v;
     } catch {}
     return fallback;
   };
@@ -510,15 +474,10 @@ export default function Header() {
     let ticking = false;
 
     const calculate = () => {
-      // Only run on article pages. Do NOT infer locale from pathname;
-      // check for posts segment presence instead.
-      if (!pathname || !pathname.includes("/posts/")) {
-        setProgress(0);
-        setVisible(false);
-        return;
-      }
-
-      const article = document.querySelector("main article") as HTMLElement | null;
+      const article =
+        (document.querySelector('[data-reading-target="post"]') as HTMLElement | null) ??
+        (document.querySelector("article.prose") as HTMLElement | null) ??
+        (document.querySelector("main article") as HTMLElement | null);
       if (!article) {
         setProgress(0);
         setVisible(false);
@@ -528,29 +487,28 @@ export default function Header() {
       const rect = article.getBoundingClientRect();
       const articleLeft = rect.left;
       const articleWidth = rect.width;
+      const navHeight = navRef.current?.offsetHeight ?? 0;
       const articleTop = rect.top + window.scrollY;
       const articleHeight = article.offsetHeight;
       const scrollY = window.scrollY;
       const viewportHeight = window.innerHeight;
 
-      const maxScroll = Math.max(0, articleHeight - viewportHeight);
+      const start = Math.max(0, articleTop - navHeight);
+      const end = Math.max(start + 1, articleTop + articleHeight - viewportHeight);
       let percent = 0;
 
-      if (scrollY < articleTop) {
+      if (scrollY <= start) {
         percent = 0;
-      } else if (maxScroll === 0) {
+      } else if (scrollY >= end) {
         percent = 100;
       } else {
-        percent = Math.min(100, Math.max(0, ((scrollY - articleTop) / maxScroll) * 100));
+        percent = Math.min(100, Math.max(0, ((scrollY - start) / (end - start)) * 100));
       }
-
-      const intersects = rect.bottom > 0 && rect.top < viewportHeight;
-      const isReading = scrollY >= articleTop;
 
       setProgress(Number(percent.toFixed(2)));
       setProgressLeft(Math.round(articleLeft));
       setProgressWidth(Math.round(articleWidth));
-      setVisible(intersects || isReading);
+      setVisible(true);
     };
 
     const onScroll = () => {
@@ -588,7 +546,7 @@ export default function Header() {
               href={buildLocaleRootHref(currentLocale)}
               onClick={handleLogoClick}
               className="text-xl font-semibold tracking-tight"
-              aria-label={t("home") ?? "Home"}
+              aria-label={label("home", "Home")}
             >
               simple-deutsch.de
             </Link>
@@ -620,9 +578,9 @@ export default function Header() {
                 <div className="relative">
                   <LanguageDropdown
                     currentLocale={currentLocale}
-                    routeLocale={pathLocale}
+                    routeLocale={currentLocale}
                     buildHref={(target: Lang) => buildLocalePath(pathname || "/", target)}
-                    t={t}
+                    t={tFromProvider}
                   />
                 </div>
                 <ThemeToggle />
@@ -636,9 +594,9 @@ export default function Header() {
               <div className="relative">
                 <LanguageDropdown
                   currentLocale={currentLocale}
-                  routeLocale={pathLocale}
+                  routeLocale={currentLocale}
                   buildHref={(target: Lang) => buildLocalePath(pathname || "/", target)}
-                  t={t}
+                  t={tFromProvider}
                 />
               </div>
               <button
@@ -783,7 +741,7 @@ export default function Header() {
                   onClick={() => setOpen(false)}
                   className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  {t("search")}
+                  {label("search", "Search")}
                 </Link>
               </li>
               <li>
@@ -796,8 +754,8 @@ export default function Header() {
                   className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   {isDarkMobile
-                    ? (t("lightMode") ?? "Light theme")
-                    : (t("darkMode") ?? "Dark theme")}
+                    ? label("lightMode", "Light theme")
+                    : label("darkMode", "Dark theme")}
                 </button>
               </li>
               {/* language links removed from mobile drawer — language switch is available via the pill in the header */}

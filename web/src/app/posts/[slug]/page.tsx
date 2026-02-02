@@ -23,7 +23,8 @@ function getPostLanguageFromGraphQL(post: PostDetail | null): LanguageSlug | nul
 const buildLocalizedPostPath = (lang: LanguageSlug, slugValue?: string | null) => {
   if (!slugValue) return null;
   const cleanSlug = slugValue.replace(/^\/+/g, "").replace(/\/+$/g, "");
-  return lang === DEFAULT_LOCALE ? `/posts/${cleanSlug}` : `/${lang}/posts/${cleanSlug}`;
+  // Always return canonical, prefixed routes (avoids middleware redirects like /posts/* -> /en/posts/*).
+  return `/${lang}/posts/${cleanSlug}`;
 };
 
 // Hard-disable caching: always render language-specific content dynamically
@@ -123,10 +124,7 @@ export default async function PostPage({
 
   // Ensure current language is in links
   if (!languageLinks[desiredUiLang]) {
-    languageLinks[desiredUiLang] =
-      desiredUiLang === DEFAULT_LOCALE
-        ? `/posts/${post.slug}`
-        : `/${desiredUiLang}/posts/${post.slug}`;
+    languageLinks[desiredUiLang] = `/${desiredUiLang}/posts/${post.slug}`;
   }
 
   // derive dynamic values
@@ -171,8 +169,7 @@ export default async function PostPage({
 
   const currentLang = postLanguageFromGraphQL ?? ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
 
-  const withLocaleHref = (lang: string, postSlug: string) =>
-    lang === DEFAULT_LOCALE ? `/posts/${postSlug}` : `/${lang}/posts/${postSlug}`;
+  const withLocaleHref = (lang: string, postSlug: string) => `/${lang}/posts/${postSlug}`;
 
   // fetch related / more posts for the sidebar — LANGUAGE ONLY (no topic/category logic)
   const moreArticles = await fetchMoreArticles(currentLang, post.slug);
@@ -182,7 +179,7 @@ export default async function PostPage({
       <PostLanguageLinksHydrator currentLang={desiredUiLang} links={languageLinks} />
       <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <article className="md:col-span-3">
+          <article className="md:col-span-3" data-reading-target="post">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
               {post.title}
             </h1>

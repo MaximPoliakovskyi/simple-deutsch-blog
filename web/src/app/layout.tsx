@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
+import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import "@/styles/globals.css";
 
@@ -67,24 +68,26 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        {/* Preloader with 1.5s minimum display time */}
-        <PreloaderClient />
+        <LocaleProviderFromPath>
+          {/* Preloader with 1.5s minimum display time */}
+          <PreloaderClient />
 
-        {/* Global navigation with SSR skeleton for fast FCP */}
-        <HydratedNavigation />
+          {/* Global navigation with SSR skeleton for fast FCP */}
+          <HydratedNavigation />
 
-        {/* Main page content - add top spacing so content sits further below the nav */}
-        <div className="mt-8 md:mt-12" aria-hidden />
-        {children}
+          {/* Main page content - add top spacing so content sits further below the nav */}
+          <div className="mt-8 md:mt-12" aria-hidden />
+          {children}
 
-        {/* Global back button that appears after scrolling */}
-        <BackButton />
+          {/* Global back button that appears after scrolling */}
+          <BackButton />
 
-        {/* Homepage-only components are rendered by their pages now. */}
-        <Footer />
+          {/* Homepage-only components are rendered by their pages now. */}
+          <Footer />
 
-        {/* Load analytics only in production and defer to avoid blocking */}
-        <AnalyticsClient isProd={isProd} />
+          {/* Load analytics only in production and defer to avoid blocking */}
+          <AnalyticsClient isProd={isProd} />
+        </LocaleProviderFromPath>
       </body>
     </html>
   );
