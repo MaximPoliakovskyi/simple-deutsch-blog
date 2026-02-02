@@ -3,7 +3,7 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { WPPostCard } from "@/server/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
 
-type Locale = "en" | "ru" | "uk";
+import type { Locale } from "@/i18n/locale";
 
 type Props = {
   locale?: Locale;

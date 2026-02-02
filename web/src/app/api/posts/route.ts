@@ -5,15 +5,10 @@ import {
   getPostsByTagSlug,
   getPostsPageByCategory,
 } from "@/server/wp/api";
+import { assertLocale } from "@/i18n/locale";
+import type { Locale } from "@/i18n/locale";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
-
-const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (
-  locale: string | null | undefined,
-): locale is SupportedLocale | undefined =>
-  locale === null || locale === undefined || SUPPORTED_LOCALES.includes(locale as SupportedLocale);
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -23,8 +18,13 @@ export async function GET(req: Request) {
   const slug = searchParams.get("slug");
   const first = Number(searchParams.get("first")) || 200;
 
-  // Validate locale
-  const validLocale = isSupportedLocale(lang) ? lang : undefined;
+  // Validate locale (map legacy aliases via assertLocale)
+  let validLocale: Locale | undefined = undefined;
+  try {
+    validLocale = assertLocale(lang as any);
+  } catch {
+    validLocale = undefined;
+  }
 
   // When filtering by language, fetch more posts to ensure we get enough after filtering
   const fetchCount = validLocale ? first * 2 : first;

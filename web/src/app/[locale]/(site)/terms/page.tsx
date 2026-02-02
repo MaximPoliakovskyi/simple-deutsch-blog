@@ -9,33 +9,36 @@
 import { notFound } from "next/navigation";
 import TermsPage from "../../../terms/page";
 
-const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (locale: string): locale is SupportedLocale =>
-  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+import { assertLocale, type Locale } from "@/i18n/locale";
 
 type Props = {
   params: Promise<{ locale: string }>;
 };
 
 export async function generateStaticParams() {
-  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
+  return ["en", "ru", "uk"].map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
-  if (!isSupportedLocale(locale)) return {};
-  return {
-    title: undefined,
-  };
+  try {
+    const validated = assertLocale(locale as any);
+    return { title: undefined };
+  } catch {
+    return {};
+  }
 }
 
 export default async function LocalizedTerms({ params }: Props) {
   const { locale } = await params;
-
-  if (!isSupportedLocale(locale)) {
+  let validated: Locale;
+  try {
+    validated = assertLocale(locale as any);
+  } catch {
     notFound();
   }
 
-  return <TermsPage locale={locale as any} />;
+  // validated above; proceed
+
+  return <TermsPage locale={validated} />;
 }

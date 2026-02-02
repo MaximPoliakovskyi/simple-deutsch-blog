@@ -11,6 +11,7 @@
  * has already loaded with styles. We use inline styles for basic layout instead.
  */
 import StatusPage from "@/components/ui/StatusPage";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 
 export default function GlobalError({
   error,
@@ -25,7 +26,7 @@ export default function GlobalError({
     : "Ein globaler Fehler ist aufgetreten. Bitte laden Sie die Seite neu.";
 
   return (
-    <html lang="de">
+    <html lang={DEFAULT_LOCALE}>
       <body
         style={{
           margin: 0,

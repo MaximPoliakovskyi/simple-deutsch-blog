@@ -2,20 +2,35 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 import { SearchButton } from "@/components/features/search/SearchOverlay";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { buildLocalizedHref } from "@/core/i18n/localeLinks";
+// locale parsing from path is removed from UI; UI reads locale from `useI18n()` only
 
 // LanguageDropdown uses the hooks imported above
 
 type Lang = "en" | "ru" | "uk";
 
+// Helper: replace only the leading locale segment in a path
+function replaceLeadingLocale(path: string, target: Lang) {
+  const p = path || "/";
+  const segs = p.split("/").filter(Boolean);
+  if (segs.length === 0) return `/${target}`;
+  if (["en", "ru", "uk"].includes(segs[0])) segs[0] = target;
+  else segs.unshift(target);
+  return `/${segs.join("/")}`;
+}
+
 type LanguageDropdownProps = {
   currentLocale: Lang;
   buildHref: (target: Lang) => string;
   t: (k: string) => string;
+  routeLocale?: Lang;
 };
 
 const HOVER_DELAY_MS = 150; // delay before closing menu on mouseleave
@@ -25,7 +40,7 @@ const HOVER_DELAY_MS = 150; // delay before closing menu on mouseleave
  * Shows short labels (Eng / Укр / Рус) and cycles to the next language on click.
  * Uses client-side navigation (router.push) to preserve SPA behavior and update the URL.
  */
-function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps) {
+function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: LanguageDropdownProps) {
   const [open, setOpen] = useState(false);
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLUListElement | null>(null);
@@ -34,7 +49,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
   // All languages ordered; when rendering we place the selected locale at the top
   const _order: Lang[] = ["en", "uk", "ru"];
   // Short labels for the pill / stacked items
-  const labelsShort: Record<Lang, string> = { en: "En", uk: "Ук", ru: "Ру" };
+  const labelsShort: Record<Lang, string> = { en: "EN", uk: "УК", ru: "РУ" };
   const labelsFull: Record<Lang, string> = { en: "English", uk: "Українська", ru: "Русский" };
 
   useEffect(() => {
@@ -139,10 +154,12 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
         title={labelsFull[currentLocale]}
       >
         <span className="sr-only">{t("language")}</span>
-        <span className="leading-none">{labelsShort[currentLocale]}</span>
+        <span className="leading-none text-neutral-900 dark:text-neutral-100">
+          {labelsShort[routeLocale ?? currentLocale]}
+        </span>
       </button>
 
-      {open && (
+            {open && (
         <ul
           ref={menuRef}
           aria-label={t("language")}
@@ -155,7 +172,7 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
           }
         >
           {/* Vertical-pill language switcher: stacked labels displayed as centered rows */}
-          <NavLanguageDropdown closeMenu={() => setOpen(false)} />
+          <NavLanguageDropdown closeMenu={() => setOpen(false)} currentSiteLangOverride={routeLocale ?? currentLocale} />
         </ul>
       )}
     </div>
@@ -163,56 +180,35 @@ function LanguageDropdown({ currentLocale, buildHref, t }: LanguageDropdownProps
 }
 
 // Small helper hook used by the NavLanguageDropdown.
-// Returns current locale (derived from pathname) and a setter that persists
-// the preference. Navigation decisions (for posts) are performed by the
-// component that calls `setLocale` and `router.push` as needed.
+// Returns current locale from `useI18n()` and a setter that persists
+// the preference. All navigation uses `buildLocalizedHref()` to generate
+// canonical prefixed links; we do NOT infer UI locale from the pathname.
 function useLanguage() {
   const router = useRouter();
   const pathname = usePathname() || "/";
-  // Determine locale from either a leading locale prefix (/ru or /uk)
-  // or from post slugs (/posts/{lang}-{rest}). Default to 'en'.
-  const locale: Lang = (() => {
-    if (!pathname) return "en";
-    if (pathname.startsWith("/posts/")) {
-      const slug = pathname.replace("/posts/", "");
-      const maybe = slug.split("-")[0];
-      return (["en", "ru", "uk"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
-    }
-    if (pathname.startsWith("/ru")) return "ru";
-    if (pathname.startsWith("/uk")) return "uk";
-    return "en";
-  })();
+  const searchParams = useSearchParams();
+  const { locale: currentLocale } = useI18n();
+
+  
 
   function setLocale(next: Lang) {
     try {
       localStorage.setItem("sd-locale", next);
     } catch {}
 
-    // If we're on a posts page (with or without a slug), don't attempt to compute a generic path here.
-    // Post-specific navigation will be handled by callers (NavLanguageDropdown).
-    if (
-      pathname.startsWith("/posts") ||
-      pathname.startsWith("/en/posts") ||
-      pathname.startsWith("/ru/posts") ||
-      pathname.startsWith("/uk/posts")
-    )
-      return;
-
-    // For non-post pages preserve the current path but swap locale prefix
-    // strip existing locale prefix (/ru or /uk)
-    const stripped = pathname.replace(/^\/(ru|uk)(?=\/|$)/, "") || "/";
-
-    const newPath =
-      next === "en" ? stripped : stripped === "/" ? `/${next}` : `/${next}${stripped}`;
-
-    if (newPath !== pathname) {
-      try {
-        router.push(newPath);
-      } catch {}
+    try {
+      const base = replaceLeadingLocale(pathname, next);
+      const qs = searchParams?.toString();
+      const newPath = qs ? `${base}?${qs}` : base;
+      if (newPath !== pathname) router.push(newPath);
+    } catch {
+      // Fallback to root of target locale if anything fails
+      const root = `/${next}`;
+      if (root !== pathname) router.push(root);
     }
   }
 
-  return { locale, setLocale } as { locale: Lang; setLocale: (l: Lang) => void };
+  return { locale: currentLocale as Lang, setLocale } as { locale: Lang; setLocale: (l: Lang) => void };
 }
 // Hook: usePostLanguageSwitch
 // Parses current pathname to determine siteLang, isPost and slug, and
@@ -227,42 +223,29 @@ function usePostLanguageSwitch() {
   const SITE_LANGS = ["en", "ru", "uk"] as const;
   type SiteLang = (typeof SITE_LANGS)[number];
 
-  // parse pathname parts
-  const parts = pathname.split("/").filter(Boolean);
-
-  let siteLang: SiteLang = "en";
-  let isPost = false;
-  let slug: string | null = null;
-
-  if (parts[0] === "ru" || parts[0] === "uk") {
-    siteLang = parts[0] as SiteLang;
-    if (parts[1] === "posts") {
-      isPost = true;
-      slug = parts[2] ?? null;
-    }
-  } else if (parts[0] === "en") {
-    // Handle explicit /en prefix
-    siteLang = "en";
-    if (parts[1] === "posts") {
-      isPost = true;
-      slug = parts[2] ?? null;
-    }
-  } else {
-    siteLang = "en";
-    if (parts[0] === "posts") {
-      isPost = true;
-      slug = parts[1] ?? null;
-    }
-  }
-
-  const languageLinks = isPost ? (postLangLinks?.links ?? null) : null;
+  // Determine site language from i18n context (UI must not infer from pathname)
+  let siteLang: SiteLang = currentLocale as SiteLang;
+  const languageLinks = postLangLinks?.links ?? null;
   const currentFromLinks = (postLangLinks?.currentLang as SiteLang | undefined) ?? null;
   if (currentFromLinks) siteLang = currentFromLinks;
 
+  // Determine whether current path is a post page without inferring a locale.
+  // We look for the '/posts/' segment and extract the slug if present.
+  const postsIdx = pathname.indexOf("/posts/");
+  let isPost = false;
+  let slug: string | null = null;
+  if (postsIdx !== -1) {
+    isPost = true;
+    const after = pathname.substring(postsIdx + "/posts/".length);
+    if (after) {
+      const nextSlash = after.indexOf("/");
+      slug = nextSlash === -1 ? after : after.substring(0, nextSlash);
+    }
+  }
+
   function buildPostPath(targetLang: SiteLang, articleId: string) {
-    const slug = `${targetLang}-${articleId}`;
-    if (targetLang === "en") return `/posts/${slug}`;
-    return `/${targetLang}/posts/${slug}`;
+    const path = `/posts/${targetLang}-${articleId}`;
+    return buildLocalizedHref(targetLang, path);
   }
 
   const changeLang = async (targetLang: SiteLang) => {
@@ -319,8 +302,11 @@ function usePostLanguageSwitch() {
 }
 
 // Component: NavLanguageDropdown
-function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
+function NavLanguageDropdown({ closeMenu, currentSiteLangOverride }: { closeMenu?: () => void; currentSiteLangOverride?: Lang }) {
   const { currentSiteLang, changeLang, languageLinks, isPost, hasSlug } = usePostLanguageSwitch();
+  const router = useRouter();
+  const pathname = usePathname() || "/";
+  const searchParams = useSearchParams();
 
   const LANGS = [
     { code: "en", label: "En" },
@@ -331,7 +317,8 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
   type LangCode = (typeof LANGS)[number]["code"];
 
   // Exclude the currently selected language (it's shown in the closed pill)
-  const visibleLangs = LANGS.filter((l) => l.code !== currentSiteLang);
+  const effectiveCurrent = currentSiteLangOverride ?? currentSiteLang;
+  const visibleLangs = LANGS.filter((l) => l.code !== effectiveCurrent);
 
   return (
     <>
@@ -351,16 +338,31 @@ function NavLanguageDropdown({ closeMenu }: { closeMenu?: () => void }) {
               !isPost || !hasSlug || Boolean(languageLinks?.[item.code as LangCode]);
             return (
               <button
-                role="menuitem"
-                onClick={() => {
-                  if (!linkAvailable) return;
-                  changeLang(item.code as LangCode);
-                  closeMenu?.();
-                }}
+                  role="menuitem"
+                  onClick={async () => {
+                    if (!linkAvailable) return;
+                    // Prefer WordPress-provided translation link for post pages when available
+                    if (isPost && languageLinks?.[item.code as LangCode]) {
+                      try {
+                        await router.push(languageLinks[item.code as LangCode] as string);
+                      } catch {}
+                      closeMenu?.();
+                      return;
+                    }
+
+                    // Otherwise build the target path by replacing the leading locale and preserve query
+                    const base = replaceLeadingLocale(pathname, item.code as LangCode as Lang);
+                    const qs = searchParams?.toString();
+                    const newPath = qs ? `${base}?${qs}` : base;
+                    try {
+                      await router.push(newPath);
+                    } catch {}
+                    closeMenu?.();
+                  }}
                 aria-disabled={!linkAvailable}
                 disabled={!linkAvailable}
                 className={
-                  "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-(--sd-accent) " +
+                  "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
                   // Light-theme: slightly bright hover (original behaviour).
                   // Dark-theme: subtle translucent white to gently lighten the grey.
                   "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
@@ -389,48 +391,41 @@ export default function Header() {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
-  const id = useId();
-  const titleId = `mobile-menu-title-${id}`;
-  // determine current locale from pathname. For post pages the language
-  // is encoded in the post slug (/posts/{lang}-{rest}), otherwise check
-  // for a leading locale prefix (/ru or /uk). Default to 'en'.
-  const currentLocale: Lang = (() => {
-    if (!pathname) return "en";
-    if (pathname.startsWith("/posts/")) {
-      const slug = pathname.replace("/posts/", "");
-      const maybe = slug.split("-")[0];
-      return (["en", "ru", "uk"] as const).includes(maybe as Lang) ? (maybe as Lang) : "en";
-    }
-    if (pathname.startsWith("/ru")) return "ru";
-    if (pathname.startsWith("/uk")) return "uk";
-    return "en";
-  })();
+  
+  // Use the UI locale from the i18n provider (do not infer from pathname)
+  const { locale: uiLocale } = useI18n();
+  const currentLocale: Lang = (uiLocale || "en") as Lang;
 
-  const stripLocale = (p: string | null | undefined) => {
-    if (!p) return "/";
-    const stripped = p.replace(/^\/(ru|uk)(?=\/|$)/, "");
-    return stripped === "" ? "/" : stripped;
-  };
-
-  const buildLocaleHref = (target: "en" | "ru" | "uk") => {
-    // For most navigation links we want to preserve the current path,
-    // but the site logo should always go to the locale root (home page).
-    const base = stripLocale(pathname);
-    if (target === "en") return base;
-    return base === "/" ? `/${target}` : `/${target}${base}`;
-  };
-
-  const buildLocaleRootHref = (target: "en" | "ru" | "uk") => {
-    return target === "en" ? "/" : `/${target}`;
-  };
+  const buildLocaleRootHref = (target: "en" | "ru" | "uk") => buildLocalizedHref(target, "/");
 
   const buildLocalePath = (path: string, target: "en" | "ru" | "uk" = currentLocale) => {
-    // Ensure leading slash
     const p = path.startsWith("/") ? path : `/${path}`;
-    return target === "en" ? p : `/${target}${p}`;
+    return buildLocalizedHref(target, p);
   };
 
   const { t } = useI18n();
+  // Determine quick locale from pathname (updates immediately on client navigation)
+  const path = pathname || "/";
+  const pathLocale = ((): "en" | "ru" | "uk" => {
+    const seg = path.split("/")[1];
+    if (seg === "ru") return "ru";
+    if (seg === "uk") return "uk";
+    return "en";
+  })();
+
+  // helper: prefer renderer `t`, then fast TRANSLATIONS based on pathname-derived locale,
+  // then fallback string. This ensures labels update immediately when the URL changes.
+  const label = (key: string, fallback: string) => {
+    try {
+      const v = t(key);
+      if (v && v !== key) return v;
+    } catch {}
+    try {
+      const fast = TRANSLATIONS[pathLocale]?.[key];
+      if (fast && fast !== key) return fast;
+    } catch {}
+    return fallback;
+  };
   // Use router only when needed; keep the logo interaction simple and
   // reliable by closing the mobile menu and letting Next's Link handle
   // the navigation (progressive enhancement + prefetching).
@@ -463,12 +458,14 @@ export default function Header() {
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
-    const root = document.documentElement;
     if (!open) return;
-    const prev = root.style.overflow;
-    root.style.overflow = "hidden";
+    try {
+      lockScroll();
+    } catch {}
     return () => {
-      root.style.overflow = prev;
+      try {
+        unlockScroll();
+      } catch {}
     };
   }, [open]);
 
@@ -513,9 +510,9 @@ export default function Header() {
     let ticking = false;
 
     const calculate = () => {
-      // Only run on article pages. Normalize locale prefixes like /ru, /ua.
-      const normalizedPath = pathname?.replace(/^\/(ru|ua)(?=\/)/, "") ?? pathname;
-      if (!normalizedPath || !normalizedPath.startsWith("/posts/")) {
+      // Only run on article pages. Do NOT infer locale from pathname;
+      // check for posts segment presence instead.
+      if (!pathname || !pathname.includes("/posts/")) {
         setProgress(0);
         setVisible(false);
         return;
@@ -600,30 +597,31 @@ export default function Header() {
             <div className="hidden items-center gap-6 md:flex">
               <Link
                 href={buildLocalePath("/posts")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
               >
-                {t("posts")}
+                {label("posts", "Posts")}
               </Link>
               <Link
                 href={buildLocalePath("/categories")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
               >
-                {t("categories")}
+                {label("categories", "Categories")}
               </Link>
               <Link
                 href={buildLocalePath("/levels")}
-                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:text-neutral-300"
+                className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
               >
-                {t("levels")}
+                {label("levels", "Levels")}
               </Link>
 
               {/* Search then language selector (matches screenshot: search first, small language pill to the right) */}
               <div className="flex items-center gap-4">
-                <SearchButton variant="default" ariaLabel={t("searchPlaceholder")} />
+                <SearchButton variant="default" ariaLabel={label("searchPlaceholder", "Find an article")} />
                 <div className="relative">
                   <LanguageDropdown
                     currentLocale={currentLocale}
-                    buildHref={(target: Lang) => buildLocalePath(stripLocale(pathname), target)}
+                    routeLocale={pathLocale}
+                    buildHref={(target: Lang) => buildLocalePath(pathname || "/", target)}
                     t={t}
                   />
                 </div>
@@ -633,12 +631,13 @@ export default function Header() {
 
             {/* Mobile controls */}
             <div className="flex items-center gap-2 md:hidden">
-              <SearchButton ariaLabel={t("searchPlaceholder")} variant="icon" />
+              <SearchButton ariaLabel={label("searchPlaceholder", "Find an article")} variant="icon" />
               {/* Add language pill to mobile header (client-side nav) */}
               <div className="relative">
                 <LanguageDropdown
                   currentLocale={currentLocale}
-                  buildHref={(target: Lang) => buildLocaleHref(target)}
+                  routeLocale={pathLocale}
+                  buildHref={(target: Lang) => buildLocalePath(pathname || "/", target)}
                   t={t}
                 />
               </div>
@@ -646,9 +645,8 @@ export default function Header() {
                 ref={toggleRef}
                 type="button"
                 aria-expanded={open}
-                aria-controls="mobile-fullscreen-menu"
                 onClick={() => setOpen((v) => !v)}
-                className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                className="rounded p-2 outline-none ring-0 transition hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 aria-label={open ? "Menü schließen" : "Menü öffnen"}
                 title={open ? "Menü schließen" : "Menü öffnen"}
               >
@@ -675,8 +673,8 @@ export default function Header() {
           {/* Reading progress bar (fills as user reads the article)
               Positioned over the article column and only visible while reading */}
           <div
-            aria-hidden
-            className="fixed top-0 left-0 z-50 pointer-events-none w-screen transition-opacity duration-300"
+                    aria-hidden
+                    className="fixed top-0 left-0 z-50 pointer-events-none w-screen inset-x-0 transition-opacity duration-300"
             style={{
               opacity: visible ? 1 : 0,
               top: navRef.current ? `${navRef.current.getBoundingClientRect().top}px` : "0px",
@@ -684,7 +682,7 @@ export default function Header() {
           >
             <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden rounded">
               <div
-                className="h-full bg-(--sd-accent) transition-transform duration-300 ease-out"
+                className="h-full bg-[var(--sd-accent)] transition-transform duration-300 ease-out"
                 style={{
                   transform: `scaleX(${progress / 100})`,
                   transformOrigin: "left",
@@ -709,11 +707,10 @@ export default function Header() {
           aria-hidden="true"
         />
         <div
-          id={`mobile-fullscreen-menu-${id}`}
           ref={panelRef}
           role="dialog"
           aria-modal="true"
-          aria-labelledby={titleId}
+          aria-label={label("mobileMenu", "Mobile menu")}
           className={[
             "absolute inset-0",
             "bg-[hsl(var(--bg))]",
@@ -729,7 +726,6 @@ export default function Header() {
                 handleLogoClick();
               }}
               className="text-xl font-semibold tracking-tight"
-              id={titleId}
               ref={firstFocusRef}
             >
               simple-deutsch.de
@@ -737,7 +733,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setOpen(false)}
-              className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+              className="rounded p-2 hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
               aria-label="Menü schließen"
               title="Menü schließen"
             >
@@ -758,34 +754,34 @@ export default function Header() {
                 <Link
                   href={buildLocalePath("/posts")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  {t("posts")}
+                  {label("posts", "Posts")}
                 </Link>
               </li>
               <li>
                 <Link
                   href={buildLocalePath("/categories")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  {t("categories")}
+                  {label("categories", "Categories")}
                 </Link>
               </li>
               <li>
                 <Link
                   href={buildLocalePath("/levels")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
-                  {t("levels")}
+                  {label("levels", "Levels")}
                 </Link>
               </li>
               <li>
                 <Link
                   href={buildLocalePath("/search")}
                   onClick={() => setOpen(false)}
-                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                  className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   {t("search")}
                 </Link>
@@ -797,7 +793,7 @@ export default function Header() {
                     toggleMobileTheme();
                     // keep menu open so user sees the change, or close if preferred
                   }}
-                  className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-(--sd-accent) dark:hover:bg-neutral-800/60"
+                  className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
                 >
                   {isDarkMobile
                     ? (t("lightMode") ?? "Light theme")

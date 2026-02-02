@@ -2,7 +2,7 @@
 
 import AboutPage from "@/components/pages/about/AboutPage";
 
-type Locale = "en" | "uk" | "ru" | "de";
+import type { Locale } from "@/i18n/locale";
 
 export default function AboutPageWrapper(_props: { locale?: Locale }) {
   return <AboutPage />;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 const WORDS = [
   "Weiter so",
@@ -65,7 +66,6 @@ function pick(exclude?: string) {
 export default function PreloaderClient() {
   const [mounted, setMounted] = useState(true);
   const [hiding, setHiding] = useState(false);
-  const prevOverflowRef = useRef<string | null>(null);
 
   // Render no static word on the server; use the CSS rotator for SSR-visible
   // words and let the JS flipper initialize on the client. This avoids a
@@ -106,11 +106,9 @@ export default function PreloaderClient() {
       timeouts.current = [];
     }
 
-    // Disable scroll while the preloader is active. Save previous overflow to restore later.
-    const root = document.documentElement;
+    // Disable scroll while the preloader is active using centralized lock
     try {
-      prevOverflowRef.current = root.style.overflow ?? null;
-      root.style.overflow = "hidden";
+      lockScroll();
     } catch (_) {}
 
     function start() {
@@ -213,8 +211,7 @@ export default function PreloaderClient() {
         clearAll();
         // restore page scroll before we hide DOM
         try {
-          const prev = prevOverflowRef.current;
-          document.documentElement.style.overflow = prev ?? "";
+          unlockScroll();
         } catch (_) {}
         setHiding(true);
         window.setTimeout(() => setMounted(false), 600);
@@ -236,8 +233,7 @@ export default function PreloaderClient() {
       clearAll();
       // restore overflow on cleanup in case hide path didn't run
       try {
-        const prev = prevOverflowRef.current;
-        document.documentElement.style.overflow = prev ?? "";
+        unlockScroll();
       } catch (_) {}
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

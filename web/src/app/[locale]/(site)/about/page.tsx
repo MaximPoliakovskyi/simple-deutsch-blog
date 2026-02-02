@@ -2,11 +2,7 @@
 
 import { notFound } from "next/navigation";
 import AboutPage from "../../../about/page";
-
-const SUPPORTED_LOCALES = ["ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (locale: string): locale is SupportedLocale =>
-  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+import { assertLocale, type Locale } from "@/i18n/locale";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -14,10 +10,12 @@ type Props = {
 
 export default async function LocalizedAbout({ params }: Props) {
   const { locale } = await params;
-
-  if (!isSupportedLocale(locale)) {
+  let validated: Locale;
+  try {
+    validated = assertLocale(locale as any);
+  } catch {
     notFound();
   }
 
-  return <AboutPage locale={locale as any} />;
+  return <AboutPage locale={validated as any} />;
 }

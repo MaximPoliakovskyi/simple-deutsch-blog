@@ -3,22 +3,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
+import { parseLocaleFromPath } from "@/i18n/locale";
 
 export default function NotFound({ locale }: { locale?: Locale }) {
   const pathname = usePathname();
 
   const inferred = (() => {
     if (locale) return locale as Locale;
-    const first = pathname?.split("/")[1];
-    if (first === "ru") return "ru" as Locale;
-    if (first === "uk" || first === "ua") return "uk" as Locale; // Support legacy "ua" path
-    return DEFAULT_LOCALE;
+    const p = parseLocaleFromPath(pathname || "/");
+    return (p as Locale) ?? DEFAULT_LOCALE;
   })();
 
   const lang = inferred ?? DEFAULT_LOCALE;
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  const homeHref = lang === "ru" ? "/ru" : lang === "uk" ? "/uk" : "/";
+  const homeHref = `/${lang}`;
 
   return (
     // Fullscreen overlay above everything (including header)

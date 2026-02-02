@@ -1,7 +1,7 @@
 // src/server/wp/fetchPosts.ts
 import { headers } from "next/headers";
 
-export type Locale = "en" | "ru" | "uk";
+import type { Locale } from "@/i18n/locale";
 
 async function resolveBaseUrl(): Promise<string> {
   const envBase = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXT_PUBLIC_SITE_URL || "";

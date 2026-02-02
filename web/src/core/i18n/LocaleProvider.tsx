@@ -1,8 +1,8 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
 
 type I18nContext = {
   locale: Locale;
@@ -27,26 +27,32 @@ const Context = createContext<I18nContext>({
   setPostLangLinks: () => {},
 });
 
-export function LocaleProvider({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-
+export function LocaleProvider({
+  children,
+  locale: providedLocale,
+}: {
+  children: React.ReactNode;
+  locale?: Locale;
+}) {
   const [postLangLinks, setPostLangLinks] = useState<PostLangLinks | null>(null);
 
-  const locale: Locale = pathname?.startsWith("/ru")
-    ? "ru"
-    : pathname?.startsWith("/uk")
-      ? "uk"
-      : "en";
+  const locale: Locale = (providedLocale as Locale) ?? DEFAULT_LOCALE;
+
+  if (process.env.NODE_ENV !== "production" && !providedLocale) {
+    // Developer reminder: locale should be resolved server-side and passed in explicitly
+    // Avoid keeping implicit client-side detection.
+    // eslint-disable-next-line no-console
+    console.warn(
+      "LocaleProvider: no locale provided — falling back to DEFAULT_LOCALE. Pass explicit locale (server-resolved).",
+    );
+  }
 
   // set html lang attribute on mount/update
   useEffect(() => {
     try {
       const html = document.documentElement;
       if (!html) return;
-      if (locale === "uk")
-        html.lang = "uk"; // Ukrainian language code
-      else if (locale === "ru") html.lang = "ru";
-      else html.lang = "en";
+      html.lang = locale === "uk" ? "uk" : locale === "ru" ? "ru" : "en";
     } catch (_e) {
       // noop
     }

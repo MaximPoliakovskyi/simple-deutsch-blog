@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-const SUPPORTED = ["en", "ru", "uk"] as const;
-type Locale = (typeof SUPPORTED)[number];
+import { parseLocaleFromPath, DEFAULT_LOCALE as LOCALE_FALLBACK } from "@/i18n/locale";
+import type { Locale } from "@/i18n/locale";
 
 function mapLang(tag?: string | null): Locale | null {
   if (!tag) return null;
@@ -44,12 +44,37 @@ export function middleware(req: NextRequest) {
     const { nextUrl } = req;
     const pathname = nextUrl.pathname;
 
+    // Temporary debug log to ensure middleware is being hit
+    // (remove after verification)
+    // eslint-disable-next-line no-console
+    console.log("[MW HIT]", req.nextUrl.pathname);
+
+    // Early bypass for Next.js internals and API routes so middleware
+    // does not interfere with these technical endpoints.
+    if (pathname.startsWith("/_next/") || pathname.startsWith("/api/")) {
+      const res = NextResponse.next();
+      res.headers.set("x-mw", "pass");
+      return res;
+    }
+
     if (isAsset(pathname)) {
       const res = NextResponse.next();
       // Cache static assets aggressively
       res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      // Debug header to show middleware passed for assets
+      res.headers.set("x-mw", "pass");
       return res;
     }
+
+    // Root -> English canonical entry point must be handled first for `/`.
+    if (pathname === "/") {
+      const res = NextResponse.redirect(new URL("/en", req.url), 308);
+      // Debug header to indicate the root redirect was executed
+      res.headers.set("x-mw", "root-redirect");
+      return res;
+    }
+
+    // (root handled above)
 
     // Redirect legacy category slugs to updated slugs, preserve locale prefix
     // examples:
@@ -93,41 +118,50 @@ export function middleware(req: NextRequest) {
       }
     }
 
-    // If path already contains a locale prefix, do nothing
-    const hasLocalePrefix = /^\/(ru|uk|en)(?:\/|$)/i.test(pathname);
-    if (hasLocalePrefix) {
+    // Determine locale prefix in pathname (server-side only)
+    const parsed = parseLocaleFromPath(pathname);
+
+    // If path already contains a valid locale prefix, allow with cache headers
+    if (parsed) {
       const res = NextResponse.next();
-      // Add cache headers for HTML pages (not API routes)
       if (!pathname.includes("/api/")) {
         res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
       }
+      res.headers.set("x-mw", "pass");
       return res;
     }
 
-    // If cookie exists, honor it
-    const cookieValue = req.cookies.get("site_locale")?.value;
-    if (cookieValue) return NextResponse.next();
-
-    // No cookie — detect from Accept-Language and set cookie for client
-    const accept = req.headers.get("accept-language");
-    const detected = pickFromAcceptLanguage(accept) ?? "en";
-
-    const res = NextResponse.next();
-    // Add cache headers for HTML pages
-    if (!pathname.includes("/api/")) {
-      res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
+    // Redirect legacy /ua/* to /uk/*
+    if (/^\/ua(?:\/|$)/i.test(pathname)) {
+      const redirectUrl = nextUrl.clone();
+      redirectUrl.pathname = pathname.replace(/^\/ua/i, "/uk");
+      return NextResponse.redirect(redirectUrl, 308);
     }
-    try {
-      res.cookies.set("site_locale", detected, { path: "/", maxAge: 60 * 60 * 24 * 365 });
-    } catch {
-      // ignore if cookies API not available
+
+    // Note: root is handled earlier to ensure a single-hop redirect.
+
+    // If path has an unknown two-letter prefix (/de, /fr, etc.), redirect to default
+    const maybePrefix = pathname.match(/^\/(?<p>[a-zA-Z]{2})(?:\/|$)/);
+    if (maybePrefix && maybePrefix.groups) {
+      const redirectUrl = nextUrl.clone();
+      const rest = pathname.replace(/^\/[a-zA-Z]{2}/, "");
+      return NextResponse.redirect(redirectUrl, 308);
     }
-    return res;
+
+    // No locale prefix — canonicalize by prefixing default locale
+    {
+      const redirectUrl = nextUrl.clone();
+      redirectUrl.pathname = `/${String(LOCALE_FALLBACK)}${pathname}`;
+      return NextResponse.redirect(redirectUrl, 308);
+    }
   } catch (e) {
-    return NextResponse.next();
+    const res = NextResponse.next();
+    res.headers.set("x-mw", "pass");
+    return res;
   }
 }
 
 export const config = {
+  // Simplified matcher: run middleware for all app paths.
   matcher: ["/:path*"],
 };

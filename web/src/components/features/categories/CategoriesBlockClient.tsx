@@ -6,7 +6,7 @@ import PostCard from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { WPPostCard } from "@/server/wp/api";
 
-type Locale = "en" | "ru" | "uk";
+import type { Locale } from "@/i18n/locale";
 type Category = { id: string; name: string; slug: string };
 
 type Props = {

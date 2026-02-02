@@ -3,7 +3,7 @@
 /* biome-disable */
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   useCallback,
   useDeferredValue,
@@ -15,6 +15,8 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 
 type SlimPost = {
   id: string;
@@ -134,11 +136,31 @@ type SearchOverlayProps = {
 
 export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProps) {
   const { t, locale } = useI18n();
-  const tPlaceholder = t("searchPlaceholder");
-  const tSearchLabel = t("searchAria");
-  const CLEAR_LABEL = t("search.clear");
-  const tNoResults = t("noResults");
-  const tLoadMore = t("loadMore");
+  const pathname = usePathname() || "/";
+  const pathLocale = ((): "en" | "ru" | "uk" => {
+    const seg = pathname.split("/")[1];
+    if (seg === "ru") return "ru";
+    if (seg === "uk") return "uk";
+    return "en";
+  })();
+
+  const label = (key: string, fallback: string) => {
+    try {
+      const v = t(key);
+      if (v && v !== key) return v;
+    } catch {}
+    try {
+      const fast = TRANSLATIONS[pathLocale]?.[key];
+      if (fast && fast !== key) return fast;
+    } catch {}
+    return fallback;
+  };
+
+  const tPlaceholder = label("searchPlaceholder", "Find an article");
+  const tSearchLabel = label("searchAria", "Search");
+  const CLEAR_LABEL = label("search.clear", "Clear");
+  const tNoResults = label("noResults", "No results. Try a different term.");
+  const tLoadMore = label("loadMore", "Load more");
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -290,8 +312,9 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   // Lock scroll and trigger **smooth enter animation**
   useEffect(() => {
     setMounted(true);
-    const prev = document.documentElement.style.overflow;
-    document.documentElement.style.overflow = "hidden";
+    try {
+      lockScroll();
+    } catch {}
 
     // Use double rAF to ensure initial styles are committed before we flip to "show"
     const id = requestAnimationFrame(() => {
@@ -300,7 +323,9 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
 
     return () => {
       cancelAnimationFrame(id);
-      document.documentElement.style.overflow = prev;
+      try {
+        unlockScroll();
+      } catch {}
     };
   }, []);
 
@@ -365,14 +390,14 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       setHasSearched(true);
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/search?q=${encodeURIComponent(term)}&lang=${encodeURIComponent(locale)}`,
-          {
-            method: "GET",
-            cache: "no-store",
-            signal: ac.signal,
-          },
-        );
+            const res = await fetch(
+              `/api/search?q=${encodeURIComponent(term)}&lang=${encodeURIComponent(pathLocale)}`,
+              {
+                method: "GET",
+                cache: "no-store",
+                signal: ac.signal,
+              },
+            );
         const json = (await res.json()) as SearchResponse;
         // use transition to avoid blocking input while results list re-renders
         startTransition(() => {
@@ -473,7 +498,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}&lang=${encodeURIComponent(locale)}`,
+        `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}&lang=${encodeURIComponent(pathLocale)}`,
         { method: "GET", cache: "no-store" },
       );
       const json = (await res.json()) as SearchResponse;

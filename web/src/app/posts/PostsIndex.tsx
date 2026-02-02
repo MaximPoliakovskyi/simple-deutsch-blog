@@ -2,31 +2,20 @@ import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPa
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import type { PostListItem, WPPostCard } from "@/server/wp/api";
 import { getPostsIndex } from "@/server/wp/api";
-import type { Locale } from "@/server/wp/fetchPosts";
+import type { Locale } from "@/i18n/locale";
+import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 
 const PAGE_SIZE = 3;
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
-// Normalize locale: map old "ua" to "uk" for compatibility
-function normalizeLocale(locale?: string): "en" | "ru" | "uk" | undefined {
-  if (!locale) return undefined;
-  if (locale === "ua") return "uk"; // Support legacy "ua"
-  if (locale === "en" || locale === "ru" || locale === "uk") return locale;
-  return undefined;
-}
-
 async function fetchFirstPage(
-  lang?: string,
+  lang?: Locale,
 ): Promise<{
   posts: Array<WPPostCard | PostListItem>;
   pageInfo: { hasNextPage: boolean; endCursor: string | null };
 }> {
-  const res = await getPostsIndex({
-    first: PAGE_SIZE,
-    after: null,
-    locale: normalizeLocale(lang) ?? undefined,
-  });
+  const res = await getPostsIndex({ first: PAGE_SIZE, after: null, locale: lang ?? undefined });
   return { posts: res.posts, pageInfo: res.pageInfo };
 }
 
@@ -56,8 +45,7 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
             timeZone: "UTC",
           }).format(new Date(p.date))
         : null;
-      const prefix = lang === "en" ? "" : `/${lang}`;
-      const href = `${prefix}/posts/${p.slug}`;
+      const href = buildLocalizedHref(lang === "en" ? "en" : (lang as any), `/posts/${p.slug}`);
       return { ...p, readingText: minutes ? `${minutes} ${t.minRead}` : null, dateText, href };
     } catch (e) {
       const dateText = p.date
@@ -66,8 +54,7 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
             timeZone: "UTC",
           }).format(new Date(p.date))
         : null;
-      const prefix = lang === "en" ? "" : `/${lang}`;
-      const href = `${prefix}/posts/${p.slug}`;
+      const href = buildLocalizedHref(lang === "en" ? "en" : (lang as any), `/posts/${p.slug}`);
       return { ...p, readingText: null, dateText, href };
     }
   });

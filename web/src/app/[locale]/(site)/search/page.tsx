@@ -3,11 +3,7 @@
 import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import SearchPage from "../../../search/page";
-
-const SUPPORTED_LOCALES = ["ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (locale: string): locale is SupportedLocale =>
-  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+import { assertLocale, type Locale } from "@/i18n/locale";
 
 type SearchParams = Promise<{ q?: string; after?: string }>;
 
@@ -18,21 +14,24 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
-  if (!isSupportedLocale(locale)) return {};
-
-  return {
-    title: `${TRANSLATIONS[locale].search} — ${TRANSLATIONS[locale].siteTitle}`,
-  };
+  try {
+    const validated = assertLocale(locale as any);
+    return { title: `${TRANSLATIONS[validated].search} — ${TRANSLATIONS[validated].siteTitle}` };
+  } catch {
+    return {};
+  }
 }
 
 export default async function LocalizedSearchPage({ params, searchParams }: Props) {
   const { locale } = await params;
-
-  if (!isSupportedLocale(locale)) {
+  let validated: Locale;
+  try {
+    validated = assertLocale(locale as any);
+  } catch {
     notFound();
   }
 
   const sp = searchParams ?? Promise.resolve({});
 
-  return <SearchPage searchParams={sp} locale={locale} />;
+  return <SearchPage searchParams={sp} locale={validated} />;
 }

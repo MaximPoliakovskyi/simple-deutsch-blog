@@ -1,7 +1,7 @@
 import React from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 
-type Locale = "en" | "uk" | "ru" | "de";
+import type { Locale } from "@/i18n/locale";
 
 export default function PrivacyPage({ locale }: { locale?: Locale }) {
   const lang = (locale as Locale) ?? DEFAULT_LOCALE;
@@ -24,7 +24,7 @@ export default function PrivacyPage({ locale }: { locale?: Locale }) {
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12">
+    <main className="mx-auto max-w-7xl px-4 py-12">
       <div className="mx-auto max-w-3xl prose dark:prose-invert">
         <h1>{t["privacy.title"]}</h1>
         <p className="text-sm text-muted-foreground">

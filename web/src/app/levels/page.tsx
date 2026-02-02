@@ -53,7 +53,14 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     return null;
   }
 
-  const allPosts = await getAllPostsForCounts(lang);
+  let allPosts: Awaited<ReturnType<typeof getAllPostsForCounts>> = [];
+  try {
+    allPosts = await getAllPostsForCounts(lang);
+  } catch (e) {
+    // During prerender the external API may be unreachable; fallback to empty list
+    console.error("Failed to fetch posts for levels page during prerender:", e);
+    allPosts = [] as any;
+  }
 
   function getPostTags(post: PostListItem): Array<{ slug?: string; name?: string }> {
     const nodes = post.tags?.nodes ?? [];
@@ -67,7 +74,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
       .replace(/^(?:cefrlevel-)/, "")
       .replace(/^(?:cefr-)/, "")
       .replace(/^(?:level-)/, "")
-      .replace(/^(?:de-|ger-)/, "");
+      .replace(/^(?:ger-)/, "");
     const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
     const valid = new Set(CEFR_SLUGS);
     for (const tok of tokens) {

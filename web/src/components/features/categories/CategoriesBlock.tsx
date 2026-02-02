@@ -4,8 +4,7 @@ import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
 import CategoriesBlockClient from "./CategoriesBlockClient";
-
-type Locale = "en" | "ru" | "uk";
+import type { Locale } from "@/i18n/locale";
 type TagNode = { id: string; name: string; slug: string };
 type Category = { id: string; name: string; slug: string };
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
@@ -33,7 +32,7 @@ export default async function CategoriesBlock({
     CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
-  const defaultLocaleLocal: Locale = DEFAULT_LOCALE === "de" ? "en" : (DEFAULT_LOCALE as Locale);
+    const defaultLocaleLocal: Locale = (DEFAULT_LOCALE as Locale);
   const effectiveLocale: Locale = locale ?? defaultLocaleLocal;
 
   // For initial render, pass empty posts - client will fetch based on selected tag

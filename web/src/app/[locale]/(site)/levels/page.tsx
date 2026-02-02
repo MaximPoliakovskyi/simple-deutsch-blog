@@ -3,11 +3,7 @@
 import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import LevelsIndexPage from "../../../levels/page";
-
-const SUPPORTED_LOCALES = ["ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (locale: string): locale is SupportedLocale =>
-  SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+import { assertLocale, type Locale } from "@/i18n/locale";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -15,19 +11,22 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
-  if (!isSupportedLocale(locale)) return {};
-
-  return {
-    title: `${TRANSLATIONS[locale].levels} — ${TRANSLATIONS[locale].siteTitle}`,
-  };
+  try {
+    const validated = assertLocale(locale as any);
+    return { title: `${TRANSLATIONS[validated].levels} — ${TRANSLATIONS[validated].siteTitle}` };
+  } catch {
+    return {};
+  }
 }
 
 export default async function LocalizedLevelsPage({ params }: Props) {
   const { locale } = await params;
-
-  if (!isSupportedLocale(locale)) {
+  let validated: Locale;
+  try {
+    validated = assertLocale(locale as any);
+  } catch {
     notFound();
   }
 
-  return <LevelsIndexPage locale={locale} />;
+  return <LevelsIndexPage locale={validated} />;
 }

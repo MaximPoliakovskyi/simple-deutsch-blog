@@ -180,7 +180,7 @@ export default async function PostPage({
   return (
     <>
       <PostLanguageLinksHydrator currentLang={desiredUiLang} links={languageLinks} />
-      <main className="container mx-auto px-4 py-8">
+      <main className="mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <article className="md:col-span-3">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">

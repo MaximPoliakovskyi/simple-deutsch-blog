@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useId } from "react";
-import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import type { Locale } from "@/i18n/locale";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 
@@ -64,14 +65,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Cookie Settings", href: "/cookies" },
         ],
       },
-      {
-        title: "Language",
-        items: [
-          { label: "Українська", href: "#ua" },
-          { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
-        ],
-      },
+          // Language section removed from static config; rendered dynamically below
     ],
   },
   uk: {
@@ -125,9 +119,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
       {
         title: "Мова",
         items: [
-          { label: "Українська", href: "#uk" },
-          { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
+            // language links removed
         ],
       },
     ],
@@ -183,14 +175,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Настройки файлов cookie", href: "/cookies" },
         ],
       },
-      {
-        title: "Язык",
-        items: [
-          { label: "Українська", href: "#ua" },
-          { label: "Русский", href: "#ru" },
-          { label: "English", href: "#en" },
-        ],
-      },
+          {
+            title: "Язык",
+            items: [
+                // language links removed
+            ],
+          },
     ],
   },
 };
@@ -203,10 +193,9 @@ export default function Footer() {
 
   function prefixHrefForLocale(href: string, locale: Locale) {
     if (!href || !href.startsWith("/")) return href;
-    if (locale === "en") return href;
-    const re = /^\/(ua|ru|en|de)(\/|$)/;
-    if (re.test(href)) return href.replace(re, `/${locale}$2`);
-    return href === "/" ? `/${locale}` : `/${locale}${href}`;
+    const { buildLocalizedHref } = require("@/core/i18n/localeLinks");
+    // buildLocalizedHref returns a canonical prefixed URL
+    return buildLocalizedHref(locale as any, href);
   }
 
   function handleLocaleSwitch(target: string) {
@@ -223,10 +212,10 @@ export default function Footer() {
     <footer className="bg-[#FFFFFF] dark:bg-[#0B101E]">
       {/* main footer background area (no inner background so it inherits from footer root) */}
       <div>
-        <div className="mx-auto w-full max-w-7xl px-6 lg:px-8 pt-12 pb-12">
+        <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? []).map(
-              (section) => (
+            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [])
+              .map((section) => (
                 <div key={section.title}>
                   <h3
                     className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
@@ -293,15 +282,54 @@ export default function Footer() {
                     </ul>
                   </div>
                 </div>
-              ),
-            )}
+              ))}
+
+            {/* Dynamic Language Section */}
+            <div>
+              <h3
+                className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
+                style={TYPO_STYLE}
+              >
+                {locale === "en" ? "Language" : locale === "uk" ? "Мова" : "Язык"}
+              </h3>
+              <div className="mt-3">
+                <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
+                  {[
+                    { code: "uk", label: locale === "uk" ? "Українська" : "Українська" },
+                    { code: "ru", label: locale === "ru" ? "Русский" : "Русский" },
+                    { code: "en", label: locale === "en" ? "English" : "English" },
+                  ].map((l) => {
+                    const target = l.code as "en" | "ru" | "uk";
+                    const href = buildLocalizedHref(target, pathname);
+                    const isCurrent = locale === target;
+                    return (
+                      <li key={l.code}>
+                        <Link
+                          href={href}
+                          onClick={() => {
+                            try {
+                              localStorage.setItem("sd-locale", target);
+                            } catch {}
+                          }}
+                          className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
+                          style={TYPO_STYLE}
+                          aria-current={isCurrent ? "page" : undefined}
+                        >
+                          {l.label}
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* bottom bar area: full-width background with container-aligned content (no bg here) */}
       <div>
-        <div className="mx-auto w-full max-w-7xl px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-7xl px-4 lg:px-8">
           {/* divider aligned to container: light mode black/10, dark mode white/10 */}
           <div className="h-px w-full bg-black/10 dark:bg-white/10" />
 

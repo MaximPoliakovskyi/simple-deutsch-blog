@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 
 type Props = {
   placeholder?: string;
@@ -19,9 +20,27 @@ export default function SearchBox({
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const pathname = usePathname();
   const inputRef = useRef<HTMLInputElement>(null);
   const { t, locale } = useI18n();
+  const pathname = usePathname() || "/";
+  const pathLocale = ((): "en" | "ru" | "uk" => {
+    const seg = pathname.split("/")[1];
+    if (seg === "ru") return "ru";
+    if (seg === "uk") return "uk";
+    return "en";
+  })();
+
+  const label = (key: string, fallback: string) => {
+    try {
+      const v = t(key);
+      if (v && v !== key) return v;
+    } catch {}
+    try {
+      const fast = TRANSLATIONS[pathLocale]?.[key];
+      if (fast && fast !== key) return fast;
+    } catch {}
+    return fallback;
+  };
 
   const initial = (searchParams.get("q") ?? "").trim();
   const [value, setValue] = useState(initial);
@@ -35,9 +54,9 @@ export default function SearchBox({
 
   // Immediate navigation on input change handled in `onChange`
 
-  const finalPlaceholder = placeholder ?? t("searchPlaceholder");
-  const finalAria = t("searchAria");
-  const finalClear = t("search.clear");
+  const finalPlaceholder = placeholder ?? label("searchPlaceholder", "Find an article");
+  const finalAria = label("searchAria", "Search");
+  const finalClear = label("search.clear", "Clear");
 
   return (
     <div className={`flex items-center gap-2 ${className}`}>
@@ -51,8 +70,8 @@ export default function SearchBox({
           const next = e.target.value;
           setValue(next);
           const q = next.trim();
-          // Preserve locale prefix in search URL
-          const localePrefix = locale && locale !== "en" ? `/${locale}` : "";
+          // Preserve locale prefix in search URL using the path-derived locale
+          const localePrefix = pathLocale && pathLocale !== "en" ? `/${pathLocale}` : "";
           const nextUrl = q
             ? `${localePrefix}/search?q=${encodeURIComponent(q)}`
             : `${localePrefix}/search`;
@@ -80,7 +99,7 @@ export default function SearchBox({
           "border-[#E6E7EB]",
           "dark:text-neutral-100 dark:placeholder-neutral-400 dark:border-white/10",
           // focus (no UA blue outline)
-          "appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-(--sd-accent) focus:ring-offset-0",
+          "appearance-none outline-none focus:outline-none focus:ring-2 focus:ring-[var(--sd-accent)] focus:ring-offset-0",
         ].join(" ")}
       />
 

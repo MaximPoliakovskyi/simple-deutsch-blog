@@ -1,5 +1,5 @@
 // Minimal translations for the site. Add keys as needed.
-export type Locale = "en" | "uk" | "ru" | "de";
+import type { Locale } from "@/i18n/locale";
 
 type Translations = Record<string, string>;
 
@@ -771,23 +771,10 @@ const ru: Translations = {
     "© {year} Simple Deutsch. Платформа для изучения немецкого языка. Все права защищены.",
 };
 
-// German translations: reuse English defaults and override as needed.
-const de: Translations = {
-  ...en,
-  siteTitle: "Simple Deutsch",
-  "footer.copyright":
-    "© {year} Simple Deutsch. Plattform zum Deutschlernen. Alle Rechte vorbehalten.",
-  /* German notFound keys (override English default if needed) */
-  "notFound.title": "Seite nicht gefunden",
-  "notFound.description": "Die gesuchte Seite existiert nicht oder wurde verschoben.",
-  "notFound.backToHome": "Zur Startseite",
-};
-
 export const TRANSLATIONS: Record<Locale, Translations> = {
   en,
   uk,
   ru,
-  de,
 };
 
 export const DEFAULT_LOCALE: Locale = "en";
@@ -795,7 +782,7 @@ export const DEFAULT_LOCALE: Locale = "en";
 // Merge in content translations from JSON files (about page)
 import aboutEn from "@/content/i18n/about.en.json";
 import aboutRu from "@/content/i18n/about.ru.json";
-import aboutUk from "@/content/i18n/about.ua.json";
+import aboutUk from "@/content/i18n/about.uk.json";
 
 // Note: extend base translation objects with about.* keys
 Object.assign(en, aboutEn as Translations);

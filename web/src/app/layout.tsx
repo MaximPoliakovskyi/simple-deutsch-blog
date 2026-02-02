@@ -9,7 +9,6 @@ import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import { LocaleProvider } from "@/core/i18n/LocaleProvider";
 import "@/styles/globals.css";
 
 const geistSans = Geist({
@@ -37,7 +36,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   const isProd = process.env.NODE_ENV === "production";
 
   return (
-    <html lang="de" suppressHydrationWarning data-scroll-behavior="smooth">
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         {/* Document title and favicon */}
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
@@ -55,8 +54,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           as="style"
         />
         
-        {/* Prefetch common navigation pages */}
-        <link rel="prefetch" href="/api/posts?first=12" as="fetch" crossOrigin="anonymous" />
+        {/* Prefetch common navigation pages (scope to default locale) */}
+        <link rel="prefetch" href={`/api/posts?first=12&lang=${DEFAULT_LOCALE}`} as="fetch" crossOrigin="anonymous" />
         
         {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
         <script src="/theme-init.js" />
@@ -72,19 +71,17 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <PreloaderClient />
 
         {/* Global navigation with SSR skeleton for fast FCP */}
-        <LocaleProvider>
-          <HydratedNavigation />
+        <HydratedNavigation />
 
-          {/* Main page content - add top spacing so content sits further below the nav */}
-          <div className="mt-8 md:mt-12" aria-hidden />
-          {children}
+        {/* Main page content - add top spacing so content sits further below the nav */}
+        <div className="mt-8 md:mt-12" aria-hidden />
+        {children}
 
-          {/* Global back button that appears after scrolling */}
-          <BackButton />
+        {/* Global back button that appears after scrolling */}
+        <BackButton />
 
-          {/* Homepage-only components are rendered by their pages now. */}
-          <Footer />
-        </LocaleProvider>
+        {/* Homepage-only components are rendered by their pages now. */}
+        <Footer />
 
         {/* Load analytics only in production and defer to avoid blocking */}
         <AnalyticsClient isProd={isProd} />

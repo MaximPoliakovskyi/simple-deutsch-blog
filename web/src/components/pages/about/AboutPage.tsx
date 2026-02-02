@@ -12,8 +12,8 @@ export default function AboutPage() {
   const { t } = useI18n();
 
   return (
-    <main className="min-h-[70vh] bg-(--sd-page-bg) text-(--sd-text)">
-      <section className="mx-auto max-w-6xl px-6 pt-24 text-center">
+    <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
+      <section className="mx-auto max-w-7xl px-4 pt-24 text-center">
         <div className="logo-wrapper flex justify-center mb-8">
           <ScrollRotateLogo degPerPx={0.15} clamp={360}>
             <Image
@@ -27,25 +27,25 @@ export default function AboutPage() {
         </div>
 
         <div className="w-full max-w-300 mx-auto px-4">
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-(--sd-text) mb-8 text-center">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-[var(--sd-text)] mb-8 text-center">
             <span className="block">{t("about.hero.title")}</span>
             <span className="block">{t("about.hero.subtitle")}</span>
           </h1>
         </div>
 
         <SectionText>
-          <p className="mt-0 text-base sm:text-lg md:text-xl leading-relaxed text-(--sd-text-muted) max-w-232 mx-auto text-center">
+          <p className="mt-0 text-base sm:text-lg md:text-xl leading-relaxed text-[var(--sd-text-muted)] max-w-232 mx-auto text-center">
             {t("about.hero.description")}
           </p>
         </SectionText>
       </section>
 
       {/* Editorial content flow: vertical sequence (text → image) x3 */}
-      <section className="mx-auto w-full max-w-6xl px-6 pt-20 md:pt-28">
+      <section className="mx-auto w-full max-w-7xl px-4 pt-20 md:pt-28">
         <div className="flex flex-col items-center space-y-16 md:space-y-20">
           {/* 1) Text block */}
           <SectionText title={t("about.sections.realLife.title")}>
-            <div className="space-y-4 text-lg leading-relaxed text-(--sd-text-muted)">
+            <div className="space-y-4 text-lg leading-relaxed text-[var(--sd-text-muted)]">
               <p className="md:text-left text-center">{t("about.sections.realLife.p1")}</p>
               <p className="md:text-left text-center">{t("about.sections.realLife.p2")}</p>
               <p className="md:text-left text-center">{t("about.sections.realLife.p3")}</p>
@@ -59,7 +59,7 @@ export default function AboutPage() {
 
           {/* 5) Text block */}
           <SectionText title={t("about.sections.consistency.title")}>
-            <div className="space-y-6 text-lg md:text-xl leading-[1.6] text-(--sd-text-muted) hyphens-auto wrap-break-word">
+            <div className="space-y-6 text-lg md:text-xl leading-[1.6] text-[var(--sd-text-muted)] hyphens-auto wrap-break-word">
               <p className="md:text-left text-center">{t("about.sections.consistency.p1")}</p>
 
               <p className="md:text-left text-center">{t("about.sections.consistency.p2")}</p>
@@ -68,7 +68,7 @@ export default function AboutPage() {
 
               <p className="md:text-left text-center">{t("about.sections.consistency.p4")}</p>
 
-              <blockquote className="mx-auto italic text-xl text-(--sd-text-muted) my-10 border-l-2 border-(--sd-border) pl-4 md:pl-6">
+              <blockquote className="mx-auto italic text-xl text-[var(--sd-text-muted)] my-10 border-l-2 border-[var(--sd-border)] pl-4 md:pl-6">
                 {t("about.sections.consistency.quote")}
               </blockquote>
 
@@ -81,9 +81,9 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Intermediate text section: separates editorial visuals from testimonials */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-12 md:py-20">
+      <section className="mx-auto w-full max-w-7xl px-4 py-12 md:py-20">
         <SectionText title={t("about.sections.fits.title")}>
-          <div className="space-y-6 text-lg leading-relaxed text-(--sd-text-muted)">
+          <div className="space-y-6 text-lg leading-relaxed text-[var(--sd-text-muted)]">
             <p className="md:text-left text-center">{t("about.sections.fits.p1")}</p>
             <p className="md:text-left text-center">{t("about.sections.fits.p2")}</p>
           </div>
@@ -94,7 +94,7 @@ export default function AboutPage() {
       <section className="w-full bg-[#0B0D16] py-16 md:py-24">
         {/* Force-dark scope: local dark class ensures `dark:` utilities apply here */}
         <div className="dark sd-dark-scope">
-          <div className="mx-auto w-full max-w-6xl px-6">
+          <div className="mx-auto w-full max-w-7xl px-4">
             <div className="text-center mx-auto max-w-3xl mb-6">
               <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-white">
                 {t("about.testimonials.heading")}
@@ -151,7 +151,7 @@ export default function AboutPage() {
         </div>
       </section>
       {/* Final CTA — encourages action, last section on page */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-28 md:py-32">
+      <section className="mx-auto w-full max-w-7xl px-4 py-28 md:py-32">
         <SectionText
           title={
             <h2 className="text-3xl sm:text-4xl font-semibold text-(--sd-text)">

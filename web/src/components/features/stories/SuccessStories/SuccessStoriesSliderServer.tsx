@@ -3,7 +3,7 @@ import type { WPPostCard } from "@/server/wp/api";
 import { getPostBySlug } from "@/server/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
-type Locale = "en" | "ru" | "uk";
+import type { Locale } from "@/i18n/locale";
 
 type Props = {
   locale?: Locale;
@@ -31,6 +31,9 @@ async function getSuccessStoryPosts(locale?: string): Promise<WPPostCard[]> {
   const url = new URL("/api/posts", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000");
   url.searchParams.set("first", "8");
   url.searchParams.set("category", categorySlug);
+  if (locale) {
+    url.searchParams.set("lang", locale);
+  }
 
   const res = await fetch(url.toString(), { next: { revalidate: 0 } });
   if (!res.ok) return [];

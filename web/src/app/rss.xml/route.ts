@@ -24,8 +24,8 @@ export async function GET() {
     (p: PostNode) => `
     <item>
       <title>${escape(p.title)}</title>
-      <link>${SITE_URL}/posts/${p.slug}</link>
-      <guid isPermaLink="true">${SITE_URL}/posts/${p.slug}</guid>
+      <link>${SITE_URL}/en/posts/${p.slug}</link>
+      <guid isPermaLink="true">${SITE_URL}/en/posts/${p.slug}</guid>
       <description><![CDATA[${p.excerpt ?? ""}]]></description>
       <pubDate>${new Date(p.date).toUTCString()}</pubDate>
     </item>`,
@@ -38,7 +38,7 @@ export async function GET() {
     <link>${SITE_URL}</link>
     <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />
     <description>${escape(SITE_DESCRIPTION)}</description>
-    <language>de</language>
+    <language>en</language>
     <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
 ${items.join("\n")}
   </channel>

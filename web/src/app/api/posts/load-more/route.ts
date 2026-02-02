@@ -1,5 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getPostsByCategory, getPostsByTag, getPostsIndex } from "@/server/wp/api";
+import { assertLocale } from "@/i18n/locale";
+import type { Locale } from "@/i18n/locale";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type LoadMoreBody = {
@@ -13,10 +15,7 @@ type LoadMoreBody = {
   skipIds?: string[];
 };
 
-const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const isSupportedLocale = (locale: string | undefined): locale is SupportedLocale | undefined =>
-  locale === undefined || SUPPORTED_LOCALES.includes(locale as SupportedLocale);
+// Removed local SUPPORTED_LOCALES helper; using assertLocale instead
 
 export async function POST(req: NextRequest) {
   try {
@@ -35,8 +34,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid first param" }, { status: 400 });
     }
 
-    // Validate locale
-    const validLocale = isSupportedLocale(locale) ? locale : undefined;
+    // Validate locale (map legacy aliases via assertLocale)
+    let validLocale: Locale | undefined = undefined;
+    try {
+      validLocale = assertLocale(locale as any);
+    } catch {
+      validLocale = undefined;
+    }
 
     let res;
     if (mode === "category" && categorySlug) {
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
           .replace(/^(?:cefrlevel-)/, "")
           .replace(/^(?:cefr-)/, "")
           .replace(/^(?:level-)/, "")
-          .replace(/^(?:de-|ger-)/, "");
+          .replace(/^(?:ger-)/, "");
         const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
         for (const tok of tokens) {
           if (["a1", "a2", "b1", "b2", "c1", "c2"].includes(tok)) return tok;
