@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import PostCard, { type PostCardPost } from "@/components/features/posts/PostCard";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { PostListItem, WPPostCard } from "@/server/wp/api";

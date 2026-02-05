@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { CEFR_SLUGS } from "@/core/cefr/levels";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import { getAllTags } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
@@ -34,8 +34,7 @@ export default async function CategoriesBlock({
     CEFR_SLUGS.includes((t.slug || "").toLowerCase()),
   );
 
-  const defaultLocaleLocal: Locale = DEFAULT_LOCALE as Locale;
-  const effectiveLocale: Locale = locale ?? defaultLocaleLocal;
+  const effectiveLocale: Locale = locale ?? DEFAULT_LOCALE;
 
   // For initial render, pass empty posts - client will fetch based on selected tag
   const initialPosts: WPPostCard[] = [];
@@ -45,7 +44,7 @@ export default async function CategoriesBlock({
     // Match success stories slider background (full-bleed dark band)
     <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
       <section
-        aria-label={TRANSLATIONS[locale ?? DEFAULT_LOCALE].levels}
+        aria-label={TRANSLATIONS[effectiveLocale].levels}
         data-categories-scope
         className="mx-auto max-w-7xl px-4 py-10 text-white"
       >
@@ -101,10 +100,10 @@ export default async function CategoriesBlock({
 
         <div className="space-y-2">
           <h2 className="text-3xl font-extrabold mb-8">
-            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsHeading}
+            {TRANSLATIONS[effectiveLocale].levelsHeading}
           </h2>
           <p className="text-base leading-relaxed text-gray-300 max-w-2xl">
-            {TRANSLATIONS[locale ?? DEFAULT_LOCALE].levelsDescription}
+            {TRANSLATIONS[effectiveLocale].levelsDescription}
           </p>
         </div>
 

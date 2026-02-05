@@ -29,9 +29,9 @@ type PostWithTranslations = WPPostCard & {
 
 export default function CategoriesBlockClient({
   categories,
-  initialPosts,
-  initialEndCursor,
-  initialHasNextPage,
+  initialPosts: _initialPosts,
+  initialEndCursor: _initialEndCursor,
+  initialHasNextPage: _initialHasNextPage,
   pageSize = 3,
   locale,
 }: Props) {

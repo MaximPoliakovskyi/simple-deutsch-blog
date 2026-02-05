@@ -325,6 +325,7 @@ html.dark .prose a.sd-pill {
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
+  /* biome-ignore lint/style/noDescendingSpecificity: global reduced-motion reset intentionally applies to all elements */
   * {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     animation-duration: 0.01ms !important;

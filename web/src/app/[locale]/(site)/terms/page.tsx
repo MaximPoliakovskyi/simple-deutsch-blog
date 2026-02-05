@@ -7,7 +7,7 @@
 // - /ua/terms     -> renders Ukrainian title from i18n: "Умови користування"
 
 import { notFound } from "next/navigation";
-import { assertLocale, type Locale } from "@/i18n/locale";
+import { assertLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
 import TermsPage from "../../../terms/page";
 
 type Props = {
@@ -15,7 +15,7 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  return ["en", "ru", "uk"].map((locale) => ({ locale }));
+  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
 }
 
 export async function generateMetadata({ params }: Props) {

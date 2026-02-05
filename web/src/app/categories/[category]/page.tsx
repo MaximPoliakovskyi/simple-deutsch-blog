@@ -3,34 +3,13 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { getCategoryBySlug, getPostsByCategory } from "@/server/wp/api";
 
 export const revalidate = 600;
 
 type Params = { category: string };
-type LanguageSlug = "en" | "ru" | "uk";
-type PageInfo = { hasNextPage: boolean; endCursor: string | null };
-
-const PAGE_SIZE = 3;
-
-// Language detection used across posts/category pages
-const LANGUAGE_SLUGS: readonly LanguageSlug[] = ["en", "ru", "uk"] as const;
-
-function getPostLanguage(post: {
-  slug?: string;
-  categories?: { nodes?: { slug?: string | null }[] } | null;
-}): LanguageSlug | null {
-  const catLang = post.categories?.nodes
-    ?.map((c) => c?.slug)
-    .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
-  if (catLang) return catLang as LanguageSlug;
-
-  const prefix = post.slug?.split("-")[0];
-  if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
-    return prefix as LanguageSlug;
-  return null;
-}
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { category } = await params;
@@ -47,7 +26,7 @@ export default async function CategoryPage({
   locale,
 }: {
   params: Promise<Params>;
-  locale?: "en" | "ru" | "uk";
+  locale?: Locale;
 }) {
   const { category } = await params;
 
@@ -55,7 +34,7 @@ export default async function CategoryPage({
   if (!term) return notFound();
   // Derive current language for this page. Locale from App Router will be
   // provided for localized routes (/ru, /ua). Default to English.
-  const lang: LanguageSlug = (locale ?? "en") as LanguageSlug;
+  const lang: Locale = locale ?? DEFAULT_LOCALE;
 
   // Build locale-specific category slug (categories use language suffixes like tags)
   // English: "success-stories", Russian: "success-stories-ru", Ukrainian: "success-stories-uk"
@@ -72,8 +51,8 @@ export default async function CategoryPage({
   const initialPosts = pageRes.posts;
   const initialPageInfo = pageRes.pageInfo;
 
-  const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
-  const translatedName = translateCategory(term.name, term.slug, lang ?? "en");
+  const t = TRANSLATIONS[lang];
+  const translatedName = translateCategory(term.name, term.slug, lang);
   const label = t.categoryLabel ?? "Category:";
 
   return (

@@ -16,6 +16,7 @@ import {
 import { createPortal } from "react-dom";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 type SlimPost = {
@@ -134,15 +135,10 @@ type SearchOverlayProps = {
   openMethod?: OpenMethod;
 };
 
-export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProps) {
-  const { t, locale } = useI18n();
+export default function SearchOverlay({ onClose, openMethod: _openMethod }: SearchOverlayProps) {
+  const { t } = useI18n();
   const pathname = usePathname() || "/";
-  const pathLocale = ((): "en" | "ru" | "uk" => {
-    const seg = pathname.split("/")[1];
-    if (seg === "ru") return "ru";
-    if (seg === "uk") return "uk";
-    return "en";
-  })();
+  const pathLocale: Locale = parseLocaleFromPath(pathname) ?? DEFAULT_LOCALE;
 
   const label = (key: string, fallback: string) => {
     try {
@@ -170,12 +166,12 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   const deferredQ = useDeferredValue(q); // keep input responsive while results update
   const [items, setItems] = useState<SlimPost[]>([]);
   const [highlight, setHighlight] = useState(0);
-  const [hasNext, setHasNext] = useState(false);
-  const [after, setAfter] = useState<string | null>(null);
+  const [, setHasNext] = useState(false);
+  const [, setAfter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [visibleCount, setVisibleCount] = useState<number>(5);
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   // Animated results wrapper state
   const resultsWrapRef = useRef<HTMLDivElement | null>(null);
@@ -183,7 +179,6 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
   const [showResults, setShowResults] = useState(false);
   const [wrapHeight, setWrapHeight] = useState<string | number>(0);
   const [contentMax, setContentMax] = useState<number | null>(null);
-  const OPEN_MS = 340;
   const CLOSE_MS = 180;
   const RESIZE_MS = 260;
 
@@ -211,10 +206,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
       // opening: animate from 0 -> final px
       setWrapHeight(0);
       // respect reduced motion
-      const prefersReduced =
-        typeof window !== "undefined" &&
-        window.matchMedia &&
-        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const prefersReduced = window?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       if (prefersReduced) {
         setWrapHeight(final);
         return;
@@ -249,10 +241,7 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     // If already essentially equal, do nothing
     if (Math.abs(prevMeasured - final) < 2) return;
 
-    const prefersReduced =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReduced = window?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (prefersReduced) {
       setWrapHeight(final);
       return;
@@ -492,26 +481,6 @@ export default function SearchOverlay({ onClose, openMethod }: SearchOverlayProp
     const el = list.children[highlight] as HTMLElement | undefined;
     if (el) el.scrollIntoView({ block: "nearest" });
   }, [highlight]);
-
-  const loadMore = useCallback(async () => {
-    if (!hasNext || !after) return;
-    const term = q.trim();
-    setLoading(true);
-    try {
-      const res = await fetch(
-        `/api/search?q=${encodeURIComponent(term)}&after=${encodeURIComponent(after)}&lang=${encodeURIComponent(pathLocale)}`,
-        { method: "GET", cache: "no-store" },
-      );
-      const json = (await res.json()) as SearchResponse;
-      setItems((prev) => [...prev, ...json.posts]);
-      setAfter(json.pageInfo.endCursor);
-      setHasNext(json.pageInfo.hasNextPage);
-    } catch {
-      // ignore
-    } finally {
-      setLoading(false);
-    }
-  }, [after, hasNext, q, pathLocale]);
 
   const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) requestClose();

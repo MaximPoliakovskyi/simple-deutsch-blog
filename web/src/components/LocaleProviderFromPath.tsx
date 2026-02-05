@@ -12,6 +12,6 @@ import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/i18n/locale"
  */
 export default function LocaleProviderFromPath({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const locale = (parseLocaleFromPath(pathname) ?? DEFAULT_LOCALE) as Locale;
+  const locale: Locale = parseLocaleFromPath(pathname) ?? DEFAULT_LOCALE;
   return <LocaleProvider locale={locale}>{children}</LocaleProvider>;
 }

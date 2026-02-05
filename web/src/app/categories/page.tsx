@@ -4,12 +4,11 @@ import Link from "next/link";
 import { deduplicateCategories } from "@/core/content/categoryUtils";
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
 import { translateCategory, translateCategoryDescription } from "@/core/i18n/categoryTranslations";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { getAllCategories, getPostsPageByCategory } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
-import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
-type LanguageSlug = "en" | "ru" | "uk";
 type CategoryNode = {
   id: string;
   name: string;
@@ -27,11 +26,7 @@ export const metadata: Metadata = {
   description: "Explore posts by category.",
 };
 
-export default async function CategoriesIndexPage({
-  locale,
-}: {
-  locale?: "en" | "ru" | "uk";
-} = {}) {
+export default async function CategoriesIndexPage({ locale }: { locale?: Locale } = {}) {
   // Your API expects one argument (e.g., { first: number })
   const { categories } = await getAllCategories({ first: 100 });
 
@@ -41,32 +36,8 @@ export default async function CategoriesIndexPage({
   // Remove language duplicates and filter hidden categories
   const visible = filterHiddenCategories(deduplicateCategories(nodes));
 
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
-
-  // derive language for counting posts per-language
-  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "uk";
-
-  // Helper to detect post language (same logic used elsewhere)
-  const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
-  type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
-  function getPostLanguage(post: {
-    slug?: string;
-    categories?: { nodes?: { slug?: string | null }[] } | null;
-    language?: { code?: string | null } | null;
-  }): LanguageSlug | null {
-    const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
-    if (fromLangField) return fromLangField as LanguageSlug;
-
-    const catLang = post.categories?.nodes
-      ?.map((c) => c?.slug)
-      .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
-    if (catLang) return catLang as LanguageSlug;
-
-    const prefix = post.slug?.split("-")[0];
-    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
-      return prefix as LanguageSlug;
-    return null;
-  }
+  const lang = locale ?? DEFAULT_LOCALE;
+  const t = TRANSLATIONS[lang];
 
   // For each visible category fetch a reasonably-sized page of posts and
   // count how many match the current language. We fetch in parallel.
@@ -101,7 +72,7 @@ export default async function CategoriesIndexPage({
   );
   const countsMap = new Map(countsBySlug as Array<readonly [string, number]>);
 
-  function formatPostCount(count: number, locale: "en" | "ru" | "uk") {
+  function formatPostCount(count: number, locale: Locale) {
     if (locale === "en") {
       return `${count} ${count === 1 ? "post" : "posts"}`;
     }
@@ -138,16 +109,12 @@ export default async function CategoriesIndexPage({
             >
               {/* Prefer a locale-specific description when available */}
               <Link
-                href={
-                  (locale ?? DEFAULT_LOCALE) === "en"
-                    ? `/categories/${cat.slug}`
-                    : `/${locale}/categories/${cat.slug}`
-                }
+                href={lang === "en" ? `/categories/${cat.slug}` : `/${lang}/categories/${cat.slug}`}
                 className="group block"
               >
                 <div className="mb-1 flex items-baseline justify-between">
                   <h2 className="text-lg font-medium group-hover:underline">
-                    {translateCategory(cat.name, cat.slug, locale ?? "en")}
+                    {translateCategory(cat.name, cat.slug, lang)}
                   </h2>
                   {(() => {
                     const count = countsMap.get(cat.slug) ?? 0;
@@ -162,7 +129,7 @@ export default async function CategoriesIndexPage({
                   const translated = translateCategoryDescription(
                     cat?.description,
                     cat?.slug,
-                    locale ?? "en",
+                    lang,
                   );
                   const final = translated ?? cat?.description ?? null;
                   if (final) {
@@ -174,7 +141,7 @@ export default async function CategoriesIndexPage({
                   }
                   return (
                     <p className="text-sm text-neutral-500">
-                      Browse posts in {translateCategory(cat?.name, cat?.slug, locale ?? "en")}.
+                      Browse posts in {translateCategory(cat?.name, cat?.slug, lang)}.
                     </p>
                   );
                 })()}

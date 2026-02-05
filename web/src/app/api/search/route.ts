@@ -3,7 +3,6 @@ import { searchPosts } from "@/server/wp/api";
 
 export const dynamic = "force-dynamic";
 
-type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 type SearchPost = {
   id: string;
   slug: string;

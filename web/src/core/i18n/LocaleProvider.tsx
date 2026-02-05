@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 type I18nContext = {
   locale: Locale;
@@ -11,7 +11,7 @@ type I18nContext = {
   setPostLangLinks: (links: PostLangLinks | null) => void;
 };
 
-export type SiteLang = "en" | "ru" | "uk";
+export type SiteLang = Locale;
 
 export type PostLangLinks = {
   currentLang: SiteLang;
@@ -36,7 +36,7 @@ export function LocaleProvider({
 }) {
   const [postLangLinks, setPostLangLinks] = useState<PostLangLinks | null>(null);
 
-  const locale: Locale = (providedLocale as Locale) ?? DEFAULT_LOCALE;
+  const locale: Locale = providedLocale ?? DEFAULT_LOCALE;
 
   if (process.env.NODE_ENV !== "production" && !providedLocale) {
     // Developer reminder: locale should be resolved server-side and passed in explicitly

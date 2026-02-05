@@ -6,14 +6,13 @@ import PostLanguageLinksHydrator from "@/components/features/posts/PostLanguageL
 import { generateTocFromHtml } from "@/core/content/generateToc";
 import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { PostDetail, PostListItem } from "@/server/wp/api";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
+import type { PostDetail } from "@/server/wp/api";
 import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
-const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
-type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
-type PageInfo = { hasNextPage: boolean; endCursor: string | null };
+type LanguageSlug = Locale;
 
 function getPostLanguageFromGraphQL(post: PostDetail | null): LanguageSlug | null {
   if (!post?.language?.code) return null;
@@ -81,7 +80,7 @@ export default async function PostPage({
   locale,
 }: {
   params: ParamsPromise;
-  locale?: "en" | "ru" | "uk";
+  locale?: Locale;
 }) {
   const { slug } = await params; // ✅ must await
 
@@ -89,7 +88,8 @@ export default async function PostPage({
   if (!post) return notFound();
 
   const postLanguageFromGraphQL = getPostLanguageFromGraphQL(post);
-  const desiredUiLang: LanguageSlug = (locale ?? DEFAULT_LOCALE) as LanguageSlug;
+  const resolvedLocale = locale ?? DEFAULT_LOCALE;
+  const desiredUiLang: LanguageSlug = resolvedLocale;
 
   // Build language links from translations[] array
   const languageLinks: Record<LanguageSlug, string | null> = { en: null, ru: null, uk: null };
@@ -131,13 +131,13 @@ export default async function PostPage({
   const authorName = post.author?.node?.name ?? "Unknown author";
   const date = post.date ? new Date(post.date) : null;
   // Format date according to the page locale (map our site locale -> Intl locale)
-  const localeForDate = (locale ?? DEFAULT_LOCALE) === "uk" ? "uk-UA" : (locale ?? DEFAULT_LOCALE);
+  const localeForDate = resolvedLocale === "uk" ? "uk-UA" : resolvedLocale;
   const formattedDate = date
     ? date.toLocaleDateString(localeForDate, { year: "numeric", month: "long", day: "numeric" })
     : "";
   // Show all non-language categories (do not show language category)
   const visibleCategories = (post.categories?.nodes ?? [])
-    .filter((c) => c && !(LANGUAGE_SLUGS as readonly string[]).includes(c.slug ?? ""))
+    .filter((c) => c && !isLocale(c.slug ?? ""))
     .filter((c) => !isHiddenCategory(c?.name, c?.slug));
   const showCategories = visibleCategories.length > 0;
 
@@ -155,19 +155,17 @@ export default async function PostPage({
   const { html: contentHtml, toc } = post.content
     ? generateTocFromHtml(post.content)
     : { html: "", toc: [] };
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  const t = TRANSLATIONS[resolvedLocale];
 
   // Determine the current route/site language.
   // Prefer a `lang` route param when present (for pages under /[lang]/...),
   // otherwise fall back to the Next `locale` prop and finally to DEFAULT_LOCALE.
   const _allParams = (await params) as unknown as Record<string, string | undefined>;
-  const paramLang = _allParams?.lang as LanguageSlug | undefined;
+  const paramLang = _allParams?.lang;
   const currentRouteLang: LanguageSlug =
-    paramLang && (LANGUAGE_SLUGS as readonly string[]).includes(paramLang)
-      ? (paramLang as LanguageSlug)
-      : ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
+    paramLang && isLocale(paramLang) ? paramLang : resolvedLocale;
 
-  const currentLang = postLanguageFromGraphQL ?? ((locale ?? DEFAULT_LOCALE) as LanguageSlug);
+  const currentLang = postLanguageFromGraphQL ?? resolvedLocale;
 
   const withLocaleHref = (lang: string, postSlug: string) => `/${lang}/posts/${postSlug}`;
 
@@ -190,13 +188,13 @@ export default async function PostPage({
                   <Link
                     key={cat?.slug}
                     href={
-                      (locale ?? DEFAULT_LOCALE) === "en"
+                      resolvedLocale === "en"
                         ? `/categories/${cat?.slug}`
-                        : `/${locale}/categories/${cat?.slug}`
+                        : `/${resolvedLocale}/categories/${cat?.slug}`
                     }
                     className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
                   >
-                    {translateCategory(cat?.name, cat?.slug, locale ?? DEFAULT_LOCALE)}
+                    {translateCategory(cat?.name, cat?.slug, resolvedLocale)}
                   </Link>
                 ))}
               </div>

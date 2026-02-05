@@ -4,12 +4,12 @@ import Link from "next/link";
 import {
   CEFR_LEVELS,
   CEFR_ORDER,
-  CEFR_SLUGS,
   CEFR_UI_CONFIG,
   getLevelDescription,
   getLevelLabel,
 } from "@/core/cefr/levels";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import { getAllPostsForCounts, type PostListItem } from "@/server/wp/api";
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
@@ -20,10 +20,10 @@ export const metadata: Metadata = {
   description: "Explore posts by level.",
 };
 
-export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru" | "uk" } = {}) {
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+export default async function LevelsIndexPage({ locale }: { locale?: Locale } = {}) {
+  const lang = locale ?? DEFAULT_LOCALE;
+  const t = TRANSLATIONS[lang];
   const prefix = locale && locale !== DEFAULT_LOCALE ? `/${locale}` : "";
-  const lang = (locale ?? DEFAULT_LOCALE) as "en" | "ru" | "uk";
 
   const cefrOrderMap = new Map<string, number>(CEFR_ORDER.map((s, i) => [s.toLowerCase(), i]));
   const cefrLevels = [...CEFR_LEVELS].sort((a, b) => {
@@ -32,25 +32,22 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     return ia - ib;
   });
 
-  const LANGUAGE_SLUGS = ["en", "ru", "uk"] as const;
-  type LanguageSlug = (typeof LANGUAGE_SLUGS)[number];
   type CefrSlug = "a1" | "a2" | "b1" | "b2" | "c1" | "c2";
   function getPostLanguage(post: {
     slug?: string;
     categories?: { nodes?: { slug?: string | null }[] } | null;
     language?: { code?: string | null } | null;
-  }): LanguageSlug | null {
+  }): Locale | null {
     const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
-    if (fromLangField) return fromLangField as LanguageSlug;
+    if (fromLangField) return fromLangField;
 
     const catLang = post.categories?.nodes
       ?.map((c) => c?.slug)
-      .find((s) => s && (LANGUAGE_SLUGS as readonly string[]).includes(s));
-    if (catLang) return catLang as LanguageSlug;
+      .find((s): s is Locale => isLocale(s));
+    if (catLang) return catLang;
 
     const prefix = post.slug?.split("-")[0];
-    if (prefix && (LANGUAGE_SLUGS as readonly string[]).includes(prefix))
-      return prefix as LanguageSlug;
+    if (prefix && isLocale(prefix)) return prefix;
     return null;
   }
 
@@ -107,7 +104,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
 
   const countsMap = new Map<string, number>(cefrLevels.map((l) => [l.slug, 0]));
   allPosts.forEach((post) => {
-    if (getPostLanguage(post) !== (lang as LanguageSlug)) return;
+    if (getPostLanguage(post) !== lang) return;
     const levelsForPost = new Set<"a1" | "a2" | "b1" | "b2" | "c1" | "c2">();
     getPostTags(post).forEach((t) => {
       const lvl = detectCefrLevel(t);
@@ -118,7 +115,7 @@ export default async function LevelsIndexPage({ locale }: { locale?: "en" | "ru"
     });
   });
 
-  function formatPostCount(count: number, locale: "en" | "ru" | "uk") {
+  function formatPostCount(count: number, locale: Locale) {
     if (locale === "en") {
       return `${count} ${count === 1 ? "post" : "posts"}`;
     }

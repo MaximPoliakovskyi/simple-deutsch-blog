@@ -1,6 +1,6 @@
-import { parseLocaleFromPath } from "@/i18n/locale";
+import { type Locale, parseLocaleFromPath } from "@/i18n/locale";
 
-export type SiteLang = "en" | "ru" | "uk";
+export type SiteLang = Locale;
 
 /**
  * Build a canonical, fully-prefixed href for the target language.

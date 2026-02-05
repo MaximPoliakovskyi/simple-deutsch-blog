@@ -777,8 +777,6 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
   ru,
 };
 
-export const DEFAULT_LOCALE: Locale = "en";
-
 // Merge in content translations from JSON files (about page)
 import aboutEn from "@/content/i18n/about.en.json";
 import aboutRu from "@/content/i18n/about.ru.json";

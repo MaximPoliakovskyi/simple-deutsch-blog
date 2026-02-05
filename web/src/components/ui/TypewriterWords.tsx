@@ -21,21 +21,22 @@ interface TypewriterWordsProps {
  */
 function useMeasureWordWidths(
   words: string[],
-  containerClassName: string,
+  _containerClassName: string,
   onMaxWidthChange?: (maxWidthPx: number) => void,
 ) {
   const measureRef = React.useRef<HTMLSpanElement>(null);
   const [maxWidthPx, setMaxWidthPx] = React.useState(0);
 
   const measureWidths = React.useCallback(() => {
-    if (!measureRef.current) return;
+    const measureEl = measureRef.current;
+    if (!measureEl) return;
 
     let maxWidth = 0;
 
     // Measure each word
     words.forEach((word) => {
-      measureRef.current!.textContent = word;
-      const width = measureRef.current!.offsetWidth;
+      measureEl.textContent = word;
+      const width = measureEl.offsetWidth;
       if (width > maxWidth) {
         maxWidth = width;
       }

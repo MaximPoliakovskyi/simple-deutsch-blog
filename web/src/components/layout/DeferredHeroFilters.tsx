@@ -1,6 +1,7 @@
 import HeroWithFilters from "@/components/features/search/HeroWithFilters";
 import { deduplicateCategories, filterOutCEFRLevels } from "@/core/content/categoryUtils";
 import { filterHiddenCategories } from "@/core/content/hiddenCategories";
+import type { Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import { getAllCategories } from "@/server/wp/api";
 import { extractConnectionNodes } from "@/server/wp/normalizeConnection";
@@ -12,7 +13,7 @@ type Props = {
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
   pageSize: number;
-  locale: "en" | "ru" | "uk";
+  locale: Locale;
 };
 
 export default async function DeferredHeroFilters({

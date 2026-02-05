@@ -1,13 +1,11 @@
 import PostsGridWithPagination from "@/components/features/posts/PostsGridWithPagination";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
-import type { Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { PostListItem, WPPostCard } from "@/server/wp/api";
 import { getPostsIndex } from "@/server/wp/api";
 
 const PAGE_SIZE = 3;
-
-type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
 async function fetchFirstPage(lang?: Locale): Promise<{
   posts: Array<WPPostCard | PostListItem>;
@@ -18,9 +16,9 @@ async function fetchFirstPage(lang?: Locale): Promise<{
 }
 
 export default async function PostsIndex({ locale }: { locale?: Locale }) {
-  const lang = locale ?? "en";
+  const lang = locale ?? DEFAULT_LOCALE;
   const { posts, pageInfo } = await fetchFirstPage(lang);
-  const t = TRANSLATIONS[lang ?? DEFAULT_LOCALE];
+  const t = TRANSLATIONS[lang];
 
   // Compute stable server-side labels and hrefs to avoid hydration mismatches
   function estimateReadingMinutesFromContent(post: unknown): number | null {

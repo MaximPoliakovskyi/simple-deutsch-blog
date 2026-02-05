@@ -2,14 +2,14 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import { Suspense } from "react";
 import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import BackButton from "@/components/ui/BackButton";
 import PreloaderClient from "@/components/ui/PreloaderClient";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import "@/styles/globals.css";
 
 const geistSans = Geist({

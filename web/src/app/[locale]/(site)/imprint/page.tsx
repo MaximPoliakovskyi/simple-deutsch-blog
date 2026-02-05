@@ -1,6 +1,6 @@
 // src/app/[locale]/(site)/imprint/page.tsx
 import { notFound } from "next/navigation";
-import { assertLocale, type Locale } from "@/i18n/locale";
+import { assertLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
 import ImprintPage from "../../../imprint/page";
 
 type Props = {
@@ -8,7 +8,7 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  return ["en", "ru", "uk"].map((locale) => ({ locale }));
+  return SUPPORTED_LOCALES.map((locale) => ({ locale }));
 }
 
 export default async function LocalizedImprint({ params }: Props) {

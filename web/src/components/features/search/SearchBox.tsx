@@ -4,6 +4,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
+import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/i18n/locale";
 
 type Props = {
   placeholder?: string;
@@ -16,19 +17,14 @@ export default function SearchBox({
   placeholder,
   className = "",
   autoFocus = false,
-  debounceMs = 0,
+  debounceMs: _debounceMs = 0,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const pathname = usePathname() || "/";
-  const pathLocale = ((): "en" | "ru" | "uk" => {
-    const seg = pathname.split("/")[1];
-    if (seg === "ru") return "ru";
-    if (seg === "uk") return "uk";
-    return "en";
-  })();
+  const pathLocale: Locale = parseLocaleFromPath(pathname) ?? DEFAULT_LOCALE;
 
   const label = (key: string, fallback: string) => {
     try {

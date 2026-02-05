@@ -1,9 +1,9 @@
 import React from "react";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 export default function ImprintPage({ locale }: { locale?: Locale }) {
-  const lang = (locale as Locale) ?? DEFAULT_LOCALE;
+  const lang = locale ?? DEFAULT_LOCALE;
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
 
   const lastUpdated = (t["imprint.lastUpdated"] || "Last updated: {date}").replace(

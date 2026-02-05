@@ -1,22 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useId } from "react";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
-import {
-  DEFAULT_LOCALE as DEFAULT_SUPPORTED_LOCALE,
-  type Locale,
-  SUPPORTED_LOCALES,
-} from "@/i18n/locale";
-
-const SUPPORTED_LOCALE_SET = new Set<string>(SUPPORTED_LOCALES);
-function coerceLocale(value: string): Locale {
-  const v = value.toLowerCase();
-  return SUPPORTED_LOCALE_SET.has(v) ? (v as Locale) : DEFAULT_SUPPORTED_LOCALE;
-}
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 const TYPO_STYLE = {
   fontSize: "var(--text-base)",
@@ -75,7 +63,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Cookie Settings", href: "/cookies" },
         ],
       },
-      // Language section removed from static config; rendered dynamically below
+      // Language switcher intentionally omitted from footer; navigation owns locale switching.
     ],
   },
   uk: {
@@ -124,12 +112,6 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Політика конфіденційності", href: "/privacy" },
           { label: "Умови користування", href: "/terms" },
           { label: "Налаштування файлів cookie", href: "/cookies" },
-        ],
-      },
-      {
-        title: "Мова",
-        items: [
-          // language links removed
         ],
       },
     ],
@@ -185,31 +167,17 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Настройки файлов cookie", href: "/cookies" },
         ],
       },
-      {
-        title: "Язык",
-        items: [
-          // language links removed
-        ],
-      },
     ],
   },
 };
 
 export default function Footer() {
-  const pathname = usePathname() || "/";
-  const router = useRouter();
-
   const { locale } = useI18n();
 
   function prefixHrefForLocale(href: string, locale: Locale) {
     if (!href || !href.startsWith("/")) return href;
     // buildLocalizedHref returns a canonical prefixed URL
     return buildLocalizedHref(locale, href);
-  }
-
-  function handleLocaleSwitch(target: Locale) {
-    const newPath = buildLocalizedHref(target, pathname);
-    router.replace(newPath);
   }
 
   // Footer: light theme uses pure white (#FFFFFF); dark theme uses deep navy (#0B101E).
@@ -232,32 +200,12 @@ export default function Footer() {
                   <div className="mt-3">
                     <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
                       {section.items.map((item) => {
-                        const isLangLink =
-                          section.title ===
-                            (locale === "en" ? "Language" : locale === "uk" ? "Мова" : "Язык") &&
-                          item.href.startsWith("#");
                         // label resolution: use translations for the Impressum route
                         const dict =
                           TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] ||
                           TRANSLATIONS[DEFAULT_LOCALE];
                         const resolvedLabel =
                           item.href === "/impressum" ? dict.imprint || item.label : item.label;
-
-                        if (isLangLink) {
-                          const target = coerceLocale(item.href.replace("#", ""));
-                          return (
-                            <li key={item.label}>
-                              <button
-                                type="button"
-                                onClick={() => handleLocaleSwitch(target)}
-                                className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
-                                style={TYPO_STYLE}
-                              >
-                                {item.label}
-                              </button>
-                            </li>
-                          );
-                        }
 
                         if (item.external) {
                           return (
@@ -291,41 +239,6 @@ export default function Footer() {
                 </div>
               ),
             )}
-
-            {/* Dynamic Language Section */}
-            <div>
-              <h3
-                className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
-                style={TYPO_STYLE}
-              >
-                {locale === "en" ? "Language" : locale === "uk" ? "Мова" : "Язык"}
-              </h3>
-              <div className="mt-3">
-                <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
-                  {[
-                    { code: "uk", label: locale === "uk" ? "Українська" : "Українська" },
-                    { code: "ru", label: locale === "ru" ? "Русский" : "Русский" },
-                    { code: "en", label: locale === "en" ? "English" : "English" },
-                  ].map((l) => {
-                    const target = l.code as "en" | "ru" | "uk";
-                    const href = buildLocalizedHref(target, pathname);
-                    const isCurrent = locale === target;
-                    return (
-                      <li key={l.code}>
-                        <Link
-                          href={href}
-                          className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)]"
-                          style={TYPO_STYLE}
-                          aria-current={isCurrent ? "page" : undefined}
-                        >
-                          {l.label}
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            </div>
           </div>
         </div>
       </div>

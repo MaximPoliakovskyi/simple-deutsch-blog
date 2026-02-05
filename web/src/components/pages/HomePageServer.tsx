@@ -3,14 +3,15 @@ import CategoriesBlock from "@/components/features/categories/CategoriesBlock";
 import LatestPostsSliderServer from "@/components/features/posts/LatestPosts/LatestPostsSliderServer";
 import SuccessStoriesSliderServer from "@/components/features/stories/SuccessStories/SuccessStoriesSliderServer";
 import DeferredHeroFilters from "@/components/layout/DeferredHeroFilters";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import { getPosts as getWpPosts } from "@/server/wp/api";
 
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 type PostsResponse = { posts: WPPostCard[]; pageInfo: PageInfo };
 
-async function fetchPosts(first: number, locale?: "en" | "ru" | "uk"): Promise<PostsResponse> {
+async function fetchPosts(first: number, locale?: Locale): Promise<PostsResponse> {
   try {
     const res = await getWpPosts({ first, locale });
     const posts = (res.posts?.nodes ?? []) as WPPostCard[];
@@ -24,11 +25,11 @@ async function fetchPosts(first: number, locale?: "en" | "ru" | "uk"): Promise<P
 
 export const revalidate = 60;
 
-export default async function HomePage({ locale }: { locale?: "en" | "ru" | "uk" } = {}) {
+export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   const effectiveLocale = locale ?? DEFAULT_LOCALE;
   const PAGE_SIZE = 6;
   const { posts, pageInfo } = await fetchPosts(PAGE_SIZE * 2, effectiveLocale);
-  const t = TRANSLATIONS[effectiveLocale ?? DEFAULT_LOCALE];
+  const t = TRANSLATIONS[effectiveLocale];
 
   function estimateReadingMinutesFromContent(post: unknown): number | null {
     if (!post || typeof post !== "object") return null;

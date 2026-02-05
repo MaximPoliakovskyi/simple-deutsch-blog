@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
 
@@ -32,7 +32,7 @@ function normalizePosts(payload: unknown): WPPostCard[] {
   return [];
 }
 
-async function getSliderPosts(locale?: string): Promise<WPPostCard[]> {
+async function getSliderPosts(locale?: Locale): Promise<WPPostCard[]> {
   const base = await getBaseUrl();
   const url = new URL("/api/posts", base);
   url.searchParams.set("first", "8");

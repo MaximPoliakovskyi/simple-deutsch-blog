@@ -2,7 +2,8 @@
 import type { Metadata } from "next";
 import PostCard from "@/components/features/posts/PostCard";
 import SearchBox from "@/components/features/search/SearchBox";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import { searchPosts, type WPPostCard } from "@/server/wp/api";
 
 // Dynamic render for fresh search each request
@@ -28,25 +29,28 @@ export async function generateMetadata({
 }
 
 export default async function SearchPage(
-  { searchParams, locale }: { searchParams: SearchParams; locale?: "en" | "ru" | "uk" } = {
+  { searchParams, locale }: { searchParams: SearchParams; locale?: Locale } = {
     searchParams: Promise.resolve({}),
   },
 ) {
   const sp = await searchParams; // Next 15: must await dynamic APIs
   const q = (sp.q ?? "").trim();
   const after = sp.after ?? null;
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
+  const effectiveLocale = locale ?? DEFAULT_LOCALE;
+  const t = TRANSLATIONS[effectiveLocale];
 
   // For Russian/Ukrainian sites, don't search if query contains only Latin characters
   let posts: WPPostCard[] = [];
   let pageInfo = { endCursor: null as string | null, hasNextPage: false };
 
   const shouldSkipSearch =
-    (locale === "uk" || locale === "ru") && q && /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
+    (effectiveLocale === "uk" || effectiveLocale === "ru") &&
+    q &&
+    /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
 
   if (!shouldSkipSearch && q) {
     // Map UI locale to WordPress language code for filtering at WordPress level
-    const wpLang = locale === "uk" ? "UK" : locale === "ru" ? "RU" : "EN";
+    const wpLang = effectiveLocale === "uk" ? "UK" : effectiveLocale === "ru" ? "RU" : "EN";
     const result: SearchResult = await searchPosts({
       query: q,
       first: 10,

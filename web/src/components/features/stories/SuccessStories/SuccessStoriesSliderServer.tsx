@@ -1,5 +1,5 @@
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/core/i18n/i18n";
-import type { Locale } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
@@ -17,7 +17,7 @@ function normalizePosts(payload: unknown): WPPostCard[] {
 }
 
 /** Fetch success stories posts and swap to translated versions if needed */
-async function getSuccessStoryPosts(locale?: string): Promise<WPPostCard[]> {
+async function getSuccessStoryPosts(locale?: Locale): Promise<WPPostCard[]> {
   // Always fetch English success-stories first (they have the category)
   // Note: Categories use language-specific slugs (e.g., "success-stories" vs "success-stories-uk")
   const categorySlug =

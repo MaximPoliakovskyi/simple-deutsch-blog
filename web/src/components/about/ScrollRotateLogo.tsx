@@ -22,10 +22,7 @@ export default function ScrollRotateLogo({ children, degPerPx = 0.15, clamp = nu
     if (!node) return;
 
     // Respect reduced motion
-    const prefersReduced =
-      typeof window !== "undefined" &&
-      window.matchMedia &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReduced = window?.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     node.style.willChange = "transform";
     node.style.transformOrigin = "center";
     node.style.transform = "rotate(0deg)";

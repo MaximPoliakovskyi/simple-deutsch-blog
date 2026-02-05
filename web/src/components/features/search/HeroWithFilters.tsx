@@ -29,8 +29,8 @@ type Props = {
 export default function HeroWithFilters({
   categories,
   initialPosts,
-  initialEndCursor,
-  initialHasNextPage,
+  initialEndCursor: _initialEndCursor,
+  initialHasNextPage: _initialHasNextPage,
   pageSize = 6,
   locale,
 }: Props) {
