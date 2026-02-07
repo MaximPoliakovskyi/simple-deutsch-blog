@@ -1,4 +1,4 @@
-// src/components/PostCard.tsx
+﻿// src/components/PostCard.tsx
 "use client";
 
 import Image from "next/image";
@@ -37,6 +37,8 @@ export type PostCardPost = {
   featuredImage?: FeaturedImageNode | FeaturedImageFlat | null;
   featuredImageUrl?: string | null;
   readingMinutes?: number | null;
+  readingWords?: number | null;
+  readingWordsPerMinute?: number | null;
   readingText?: string | null;
   dateText?: string | null;
   href?: string | null;
@@ -77,33 +79,8 @@ function extractImage(p: PostCardPost) {
   return { url: "", alt: "" };
 }
 
-function estimateReadingMinutes(post: PostCardPost): number | null {
-  // Prefer an explicit readingMinutes field from the API.
-  if (post.readingMinutes != null) return Math.max(1, Math.ceil(post.readingMinutes));
-
-  // Calculate from the full content for accuracy. With the updated queries,
-  // content should now be available in all list views.
-  const html = post.content ?? post.excerpt ?? "";
-
-  // If no content or excerpt available, don't show reading time
-  if (!html) return null;
-
-  // Strip HTML tags and count words
-  const text = html.replace(/<[^>]+>/g, " ");
-  const words = (text.trim().match(/\S+/g) ?? []).length;
-
-  // Only show reading time if there's meaningful content (at least 40 words)
-  // This avoids showing "1 min read" for very short posts or excerpts
-  const MIN_WORDS_FOR_ESTIMATE = 40;
-  if (words < MIN_WORDS_FOR_ESTIMATE) return null;
-
-  // Average reading speed: 200 words per minute
-  return Math.max(1, Math.ceil(words / 200));
-}
-
 export default function PostCard({ post, className, priority = false }: PostCardProps) {
   const img = extractImage(post);
-  const minutes = estimateReadingMinutes(post);
 
   const { t, locale } = useI18n();
 
@@ -127,7 +104,7 @@ export default function PostCard({ post, className, priority = false }: PostCard
   return (
     <article className={["group", className].filter(Boolean).join(" ")}>
       <Link href={href} className="block" aria-label={post.title}>
-        {/* Media — smoother zoom wrapper */}
+        {/* Media - smoother zoom wrapper */}
         <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div
             className="absolute inset-0 transform-gpu will-change-transform origin-center group-hover:scale-[1.06] group-focus-within:scale-[1.06]"
@@ -155,15 +132,14 @@ export default function PostCard({ post, className, priority = false }: PostCard
           </div>
         </div>
 
-        {/* Meta (date • reading time) */}
-        {((post.dateText ?? computedDateText) || minutes) && (
+        {/* Meta (date + reading time) */}
+        {((post.dateText ?? computedDateText) || post.readingText) && (
           <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
             {post.dateText ?? computedDateText}{" "}
-            {(post.dateText ?? computedDateText) &&
-            (post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)) ? (
-              <span aria-hidden>·</span>
+            {(post.dateText ?? computedDateText) && post.readingText ? (
+              <span aria-hidden>{"\u00B7"}</span>
             ) : null}{" "}
-            {post.readingText ?? (minutes ? `${minutes} ${t("minRead")}` : null)}
+            {post.readingText}
           </p>
         )}
 

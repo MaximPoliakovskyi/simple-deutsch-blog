@@ -9,6 +9,7 @@ import {
   GET_POSTS_BY_TAG_SLUG,
   GET_TAG_BY_SLUG,
 } from "@/server/wp/queries";
+import { withReadingTimeForList } from "@/server/wp/readingTime";
 import type { Connection, PostListItem, Tag, Term } from "@/server/wp/types";
 
 export async function getCategoryBySlug(slug: string, locale?: Locale) {
@@ -108,6 +109,11 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
       nodes: posts.nodes.filter((post) => post.language?.code === targetLang),
     };
   }
+
+  posts = {
+    ...posts,
+    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+  };
 
   return {
     tag,

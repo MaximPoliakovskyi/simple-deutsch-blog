@@ -169,15 +169,19 @@ html.theme-infect.theme-infect-active::before {
 /* When toggling theme we want most visual tokens to interpolate smoothly.
    Apply transitions broadly while respecting prefers-reduced-motion. */
 html.theme-transition,
-html.theme-transition * {
-  transition-property: background-color, color, border-color, box-shadow, fill, stroke;
-  transition-duration: 300ms;
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition-property: background-color, color, border-color, box-shadow, fill, stroke, filter;
+  transition-duration: 350ms;
   transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
   html.theme-transition,
-  html.theme-transition * {
+  html.theme-transition *,
+  html.theme-transition *::before,
+  html.theme-transition *::after {
     /* Avoid forcing transitions for users who prefer reduced motion. */
     transition: none !important;
   }
@@ -413,18 +417,12 @@ body {
   background-color: hsl(var(--bg));
 }
 
-/* Ensure the root background/color interpolate smoothly when theme tokens change.
-   This targets the highest-level elements so most pages update without needing
-   every child to have an explicit transition. Respects prefers-reduced-motion. */
+/* Prevent a site-wide horizontal scrollbar caused by elements that
+   use 100vw or slight overflow (e.g. wide embeds or alignfull blocks).
+   `overflow-x: clip` avoids showing a scrollbar while still clipping
+   content; fall back to `hidden` for browsers that don't support `clip`. */
 html,
 body {
-  transition-property: background-color, color;
-  transition-duration: 350ms;
-  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
-  /* Prevent a site-wide horizontal scrollbar caused by elements that
-     use 100vw or slight overflow (e.g. wide embeds or alignfull blocks).
-     `overflow-x: clip` avoids showing a scrollbar while still clipping
-     content; fall back to `hidden` for browsers that don't support `clip`. */
   overflow-x: clip;
 }
 

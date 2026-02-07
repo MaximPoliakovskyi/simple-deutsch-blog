@@ -1,55 +1,23 @@
 "use client";
-import type { MouseEvent } from "react";
 import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
-const TRANSITION_MS = 350; // Match CSS transition duration
+import { applyTheme, subscribeRootTheme, type Theme } from "@/core/theme/client";
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
   const [isDark, setIsDark] = useState(false);
 
   useEffect(() => {
-    const root = document.documentElement;
-    setIsDark(root.classList.contains("dark"));
-    setMounted(true);
+    const unsubscribe = subscribeRootTheme((theme) => {
+      setIsDark(theme === "dark");
+      setMounted(true);
+    });
+
+    return unsubscribe;
   }, []);
 
-  function setTheme(next: Theme, _e?: MouseEvent<HTMLButtonElement>): void {
-    const root = document.documentElement as HTMLElement & { __sd_theme_timer?: number };
-    const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Avoid stacking timers when toggling quickly.
-
-    // Add a short transition class so token-based colors interpolate smoothly.
-    if (!prefersReduce) {
-      // Clear any existing timers to avoid removing the class too early/late.
-      try {
-        const existing = root.__sd_theme_timer;
-        if (existing) window.clearTimeout(existing);
-      } catch (_) {}
-
-      root.classList.add("theme-transition");
-    }
-
-    if (next === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
-
-    try {
-      localStorage.setItem("sd-theme", next);
-    } catch {}
-    setIsDark(next === "dark");
-
-    // Remove transition class after the CSS duration has elapsed.
-    if (!prefersReduce) {
-      const t = window.setTimeout(() => {
-        try {
-          root.classList.remove("theme-transition");
-        } catch (_) {}
-      }, TRANSITION_MS);
-      try {
-        root.__sd_theme_timer = t;
-      } catch (_) {}
-    }
+  function setTheme(next: Theme): void {
+    if (!mounted) return;
+    applyTheme(next);
   }
 
   if (!mounted) return null;
@@ -57,7 +25,7 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={(e) => setTheme(isDark ? "light" : "dark", e)}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
       aria-pressed={isDark}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}

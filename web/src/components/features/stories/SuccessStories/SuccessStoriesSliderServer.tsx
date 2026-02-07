@@ -34,14 +34,6 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
 
   const t = TRANSLATIONS[effectiveLocale];
   const preparedPosts = posts.map((post) => {
-    let minutes: number | null = null;
-    const html = post.excerpt ?? "";
-    if (html) {
-      const text = String(html).replace(/<[^>]+>/g, " ");
-      const words = (text.trim().match(/\S+/g) ?? []).length;
-      if (words >= 40) minutes = Math.max(1, Math.ceil(words / 200));
-    }
-
     const dateText = post.date
       ? new Intl.DateTimeFormat(
           effectiveLocale === "uk" ? "uk-UA" : effectiveLocale === "ru" ? "ru-RU" : "en-US",
@@ -54,7 +46,7 @@ export default async function SuccessStoriesSliderServer({ locale }: Props = {})
 
     return {
       ...post,
-      readingText: minutes ? `${minutes} ${t.minRead}` : null,
+      readingText: post.readingText ?? null,
       dateText,
       href,
     };

@@ -61,6 +61,10 @@ export type PostListItem = {
   tags?: { nodes: Array<{ name: string; slug: string }> };
   language?: PostLanguage | null;
   translations?: PostTranslation[] | null;
+  readingMinutes?: number | null;
+  readingWords?: number | null;
+  readingWordsPerMinute?: number | null;
+  readingText?: string | null;
 };
 
 export type Connection<TNode> = {
@@ -79,12 +83,17 @@ export type WPPostCard = {
   slug: string;
   title: string;
   excerpt: string;
+  content?: string | null;
   date: string;
   featuredImage?: { node?: WPImage | null } | null;
   featuredImageUrl?: string | null;
   author?: { node?: WPAuthor | null } | null;
   categories?: { nodes: { id?: string; name: string; slug: string }[] };
   language?: PostLanguage | null;
+  readingMinutes?: number | null;
+  readingWords?: number | null;
+  readingWordsPerMinute?: number | null;
+  readingText?: string | null;
 };
 
 export type PostsConnectionResponse = {

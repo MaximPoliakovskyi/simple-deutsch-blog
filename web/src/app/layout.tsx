@@ -25,12 +25,18 @@ const geistMono = Geist_Mono({
   preload: true,
 });
 
-/**
- * Runs before paint to set the theme without a flash.
- * Reads localStorage 'sd-theme' or falls back to system preference.
- * Applies `.dark` class to <html> for Tailwind v4 @custom-variant dark.
- */
-/* theme init moved to /public/theme-init.js to avoid inline injection */
+const THEME_INIT_SCRIPT = `
+(() => {
+  try {
+    const key = "sd-theme";
+    const stored = localStorage.getItem(key);
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = stored === "dark" || stored === "light" ? stored : (prefersDark ? "dark" : "light");
+    const root = document.documentElement;
+    root.classList.toggle("dark", theme === "dark");
+  } catch (_) {}
+})();
+`;
 
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -63,8 +69,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           crossOrigin="anonymous"
         />
 
-        {/* Small, static script that reads localStorage and sets a CSS class to avoid flash-of-unstyled-content (FOUC). */}
-        <script src="/theme-init.js" />
+        {/* Apply theme before paint to avoid flash and hydration drift. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         className={[

@@ -13,6 +13,7 @@ import {
   GET_POSTS_INDEX,
   POSTS_CONNECTION,
 } from "@/server/wp/queries";
+import { withReadingTime, withReadingTimeForList } from "@/server/wp/readingTime";
 import type {
   Connection,
   NextInit,
@@ -35,7 +36,7 @@ export async function getPostsByCategorySlug(
   locale?: Locale,
 ) {
   const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
+  const data = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
     GET_POSTS_BY_CATEGORY_SLUG,
     {
       slug,
@@ -48,6 +49,12 @@ export async function getPostsByCategorySlug(
       policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:by-category-slug"] },
     },
   );
+  return {
+    posts: {
+      ...data.posts,
+      nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    },
+  };
 }
 
 export async function getPosts(
@@ -80,7 +87,7 @@ export async function getPosts(
   const locale = typeof arg1 === "number" ? undefined : arg1.locale;
   const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
 
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
+  const data = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
     GET_POSTS,
     {
       first,
@@ -94,6 +101,12 @@ export async function getPosts(
       policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:index"] },
     },
   );
+  return {
+    posts: {
+      ...data.posts,
+      nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    },
+  };
 }
 
 export async function getPostBySlug(slug: string, init?: NextInit) {
@@ -106,7 +119,9 @@ export async function getPostBySlug(slug: string, init?: NextInit) {
       policy: init?.policy ?? { type: "ISR", revalidate: 120, tags: ["posts", "post:detail"] },
     },
   );
-  return data.post ?? null;
+  const post = data.post ?? null;
+  if (!post) return null;
+  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostByUri(uri: string, init?: NextInit) {
@@ -119,7 +134,9 @@ export async function getPostByUri(uri: string, init?: NextInit) {
       policy: init?.policy ?? { type: "DYNAMIC" },
     },
   );
-  return data.post ?? null;
+  const post = data.post ?? null;
+  if (!post) return null;
+  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostByDatabaseId(id: number, init?: NextInit) {
@@ -132,7 +149,9 @@ export async function getPostByDatabaseId(id: number, init?: NextInit) {
       policy: init?.policy ?? { type: "DYNAMIC" },
     },
   );
-  return data.post ?? null;
+  const post = data.post ?? null;
+  if (!post) return null;
+  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostsPage(params: { first: number; after?: string | null }) {
@@ -147,7 +166,10 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   );
 
   const edges = data.posts?.edges ?? [];
-  const nodes = edges.map((e) => e.node);
+  const nodes = withReadingTimeForList(
+    edges.map((e) => e.node),
+    DEFAULT_LOCALE,
+  );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return { posts: nodes, pageInfo };
@@ -180,7 +202,10 @@ export async function getPostsPageFiltered(params: {
   );
 
   const edges = data.posts?.edges ?? [];
-  const nodes = edges.map((e) => e.node);
+  const nodes = withReadingTimeForList(
+    edges.map((e) => e.node),
+    locale ?? DEFAULT_LOCALE,
+  );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return { posts: nodes, pageInfo };
@@ -237,7 +262,10 @@ export async function getPostsByCategory(params: {
       ? fallbackNodes.filter((post) => post.language?.code === targetLang)
       : fallbackNodes;
 
-    return { posts: filteredFallback, pageInfo: fallbackPageInfo };
+    return {
+      posts: withReadingTimeForList(filteredFallback, locale ?? DEFAULT_LOCALE),
+      pageInfo: fallbackPageInfo,
+    };
   }
 
   const nodes = data.category?.posts?.nodes ?? [];
@@ -246,7 +274,10 @@ export async function getPostsByCategory(params: {
     : nodes;
   const pageInfo = data.category?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
-  return { posts: filteredNodes, pageInfo };
+  return {
+    posts: withReadingTimeForList(filteredNodes, locale ?? DEFAULT_LOCALE),
+    pageInfo,
+  };
 }
 
 export async function getPostsByTag(params: {
@@ -277,7 +308,10 @@ export async function getPostsByTag(params: {
     : nodes;
   const pageInfo = data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
-  return { posts: filteredNodes, pageInfo };
+  return {
+    posts: withReadingTimeForList(filteredNodes, locale ?? DEFAULT_LOCALE),
+    pageInfo,
+  };
 }
 
 export async function getPostsIndex(params: {
@@ -298,7 +332,10 @@ export async function getPostsIndex(params: {
   );
 
   const edges = data.posts?.edges ?? [];
-  const nodes = edges.map((e) => e.node);
+  const nodes = withReadingTimeForList(
+    edges.map((e) => e.node),
+    locale ?? DEFAULT_LOCALE,
+  );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
   return { posts: nodes, pageInfo };
 }
@@ -403,7 +440,7 @@ export async function getPostsPageByCategory(params: {
     },
   );
 
-  const nodes = res.posts?.nodes ?? [];
+  const nodes = withReadingTimeForList(res.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE);
   const pageInfo = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
   return { posts: nodes, pageInfo };
 }

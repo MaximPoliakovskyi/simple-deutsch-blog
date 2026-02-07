@@ -2,7 +2,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { assertLocale, type Locale } from "@/i18n/locale";
-import PostPage, { generateMetadata as baseGenerateMetadata } from "../../../../posts/[slug]/page";
+import {
+  generatePostMetadata as baseGenerateMetadata,
+  renderPostPage,
+} from "../../../../posts/[slug]/postPage.server";
 
 export const revalidate = 120;
 
@@ -31,5 +34,5 @@ export default async function LocalizedPostPage({ params }: Props) {
   } catch {
     notFound();
   }
-  return PostPage({ params: Promise.resolve({ slug }), locale: validated });
+  return renderPostPage({ params: Promise.resolve({ slug }), locale: validated });
 }

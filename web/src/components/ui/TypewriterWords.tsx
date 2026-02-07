@@ -209,34 +209,6 @@ export default function TypewriterWords({
     onMaxWidthChange,
   );
 
-  // Track the rendered width of the currently typed text for cursor positioning
-  const typedTextRef = React.useRef<HTMLSpanElement>(null);
-  const [typedWidthPx, setTypedWidthPx] = React.useState(0);
-
-  const measureTypedWidth = React.useCallback(() => {
-    if (!typedTextRef.current) return;
-    const width = typedTextRef.current.getBoundingClientRect().width;
-    setTypedWidthPx(width);
-  }, []);
-
-  React.useLayoutEffect(() => {
-    void displayText;
-    measureTypedWidth();
-  }, [displayText, measureTypedWidth]);
-
-  React.useEffect(() => {
-    const resizeHandler = () => measureTypedWidth();
-    window.addEventListener("resize", resizeHandler);
-    return () => window.removeEventListener("resize", resizeHandler);
-  }, [measureTypedWidth]);
-
-  const cursorLeftPx = React.useMemo(() => {
-    if (!maxWidthPx) return undefined;
-    if (typedWidthPx === 0) return maxWidthPx / 2; // Center when empty
-    const centeredStart = maxWidthPx / 2 - typedWidthPx / 2; // left edge of centered text
-    return centeredStart + typedWidthPx; // end of text
-  }, [maxWidthPx, typedWidthPx]);
-
   // Check for prefers-reduced-motion
   React.useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -273,29 +245,17 @@ export default function TypewriterWords({
         }}
         aria-hidden="true"
       >
-        {/* Centered typed text; measured for cursor positioning */}
-        <span ref={typedTextRef} className="inline-block">
-          {displayText}
+        <span className="inline-flex items-start justify-center">
+          <span className="inline-block">{displayText}</span>
+          {showCursor && !prefersReducedMotion ? (
+            <span
+              className="caret-realistic ml-px inline-block leading-none pointer-events-none"
+              aria-hidden="true"
+            >
+              |
+            </span>
+          ) : null}
         </span>
-
-        {showCursor && !prefersReducedMotion && cursorLeftPx !== undefined && (
-          <span
-            className="absolute caret-realistic"
-            style={{
-              left: `${cursorLeftPx}px`,
-              top: 0,
-              height: "1em",
-              width: "2px",
-              marginLeft: "0px",
-              lineHeight: "inherit",
-              pointerEvents: "none",
-              transition: "left 90ms ease-out",
-            }}
-            aria-hidden="true"
-          >
-            |
-          </span>
-        )}
       </span>
 
       {/* Inline keyframes for cursor blink animation */}

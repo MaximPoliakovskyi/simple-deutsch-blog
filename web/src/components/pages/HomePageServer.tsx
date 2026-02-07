@@ -3,7 +3,6 @@ import CategoriesBlock from "@/components/features/categories/CategoriesBlock";
 import LatestPostsSliderServer from "@/components/features/posts/LatestPosts/LatestPostsSliderServer";
 import SuccessStoriesSliderServer from "@/components/features/stories/SuccessStories/SuccessStoriesSliderServer";
 import DeferredHeroFilters from "@/components/layout/DeferredHeroFilters";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 import { getPosts as getWpPosts } from "@/server/wp/api";
@@ -29,35 +28,9 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   const effectiveLocale = locale ?? DEFAULT_LOCALE;
   const PAGE_SIZE = 6;
   const { posts, pageInfo } = await fetchPosts(PAGE_SIZE * 2, effectiveLocale);
-  const t = TRANSLATIONS[effectiveLocale];
-
-  function estimateReadingMinutesFromContent(post: unknown): number | null {
-    if (!post || typeof post !== "object") return null;
-    const maybe = post as {
-      readingMinutes?: unknown;
-      content?: unknown;
-      excerpt?: unknown;
-    };
-
-    if (typeof maybe.readingMinutes === "number") {
-      return Math.max(1, Math.ceil(maybe.readingMinutes));
-    }
-
-    const html =
-      (typeof maybe.content === "string" ? maybe.content : null) ??
-      (typeof maybe.excerpt === "string" ? maybe.excerpt : null) ??
-      "";
-    if (!html) return null;
-    const text = String(html).replace(/<[^>]+>/g, " ");
-    const words = (text.trim().match(/\S+/g) ?? []).length;
-    const MIN_WORDS_FOR_ESTIMATE = 40;
-    if (words < MIN_WORDS_FOR_ESTIMATE) return null;
-    return Math.max(1, Math.ceil(words / 200));
-  }
 
   const mappedPosts = posts.map((p) => {
     try {
-      const minutes = estimateReadingMinutesFromContent(p);
       const dateText = p.date
         ? new Intl.DateTimeFormat(
             effectiveLocale === "uk" ? "uk-UA" : effectiveLocale === "ru" ? "ru-RU" : "en-US",
@@ -69,7 +42,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
         : null;
       const prefix = effectiveLocale === "en" ? "" : `/${effectiveLocale}`;
       const href = `${prefix}/posts/${p.slug}`;
-      return { ...p, readingText: minutes ? `${minutes} ${t.minRead}` : null, dateText, href };
+      return { ...p, readingText: p.readingText ?? null, dateText, href };
     } catch (_e) {
       const dateText = p.date
         ? new Intl.DateTimeFormat(

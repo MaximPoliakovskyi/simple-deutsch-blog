@@ -13,6 +13,7 @@ import type { NavLocale } from "@/components/layout/navConfig";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
+import { applyTheme, subscribeRootTheme, type Theme } from "@/core/theme/client";
 import { DEFAULT_LOCALE, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
@@ -47,7 +48,7 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [visible, setVisible] = useState<boolean>(false);
-  const [isDarkMobile, setIsDarkMobile] = useState<boolean>(false);
+  const [mobileTheme, setMobileTheme] = useState<Theme>("light");
   const navRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
   const [_progressLeft, setProgressLeft] = useState<number | null>(null);
@@ -126,22 +127,12 @@ export default function Header() {
     // If we later want a client-only transition we can call `router.push(href)`.
   };
 
-  // Mobile theme state/toggle for the burger menu textual item
+  // Keep mobile label in sync with the single root theme source.
   useEffect(() => {
-    const root = document.documentElement;
-    setIsDarkMobile(root.classList.contains("dark"));
+    return subscribeRootTheme((theme) => {
+      setMobileTheme(theme);
+    });
   }, []);
-
-  const toggleMobileTheme = () => {
-    const root = document.documentElement;
-    const nextIsDark = !root.classList.contains("dark");
-    if (nextIsDark) root.classList.add("dark");
-    else root.classList.remove("dark");
-    try {
-      localStorage.setItem("sd-theme", nextIsDark ? "dark" : "light");
-    } catch {}
-    setIsDarkMobile(nextIsDark);
-  };
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -265,7 +256,7 @@ export default function Header() {
       {/* Semantic navigation landmark */}
       <nav
         ref={navRef}
-        className="sticky top-0 z-40 bg-[hsl(var(--bg))]/90 backdrop-blur"
+        className="sticky top-0 z-40 bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
         aria-label="Main navigation"
       >
         <div>
@@ -328,7 +319,7 @@ export default function Header() {
         panelRef={panelRef}
         firstFocusRef={firstFocusRef}
         currentLocale={currentLocale}
-        isDarkMobile={isDarkMobile}
+        isDarkMobile={mobileTheme === "dark"}
         buildLocalePath={buildLocalePath}
         buildLocaleRootHref={buildLocaleRootHref}
         label={label}
@@ -338,7 +329,7 @@ export default function Header() {
           handleLogoClick();
         }}
         onToggleTheme={() => {
-          toggleMobileTheme();
+          applyTheme(mobileTheme === "dark" ? "light" : "dark");
           // keep menu open so user sees the change, or close if preferred
         }}
       />
