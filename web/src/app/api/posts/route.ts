@@ -41,7 +41,7 @@ export async function GET(req: Request) {
     };
 
     if (slug) {
-      const post = await getPostBySlug(slug);
+      const post = await getPostBySlug(slug, { locale: validLocale, policy: { type: "DYNAMIC" } });
       posts = post ? [post] : [];
       console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
     } else if (tag) {

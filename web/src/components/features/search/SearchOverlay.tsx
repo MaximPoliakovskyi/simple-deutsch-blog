@@ -14,7 +14,6 @@ import {
   useTransition,
 } from "react";
 import { createPortal } from "react-dom";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
@@ -40,95 +39,6 @@ function cn(...a: Array<string | false | null | undefined>): string {
 const DROPDOWN_RADIUS = "rounded-2xl";
 const LAST_ITEM_RADIUS = "rounded-b-2xl";
 
-/** Public button to open the overlay */
-export function SearchButton({
-  className = "",
-  variant = "default",
-  ariaLabel = "Find an article",
-}: {
-  className?: string;
-  variant?: "default" | "icon";
-  ariaLabel?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [openMethod, setOpenMethod] = useState<OpenMethod>(undefined);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        // Only open from the visible button instance. Multiple SearchButton
-        // components are mounted (desktop + mobile), so guard by checking
-        // whether this button is actually visible in the layout.
-        const btn = buttonRef.current;
-        if (!btn) return;
-        // offsetParent is null for display: none (and some other hidden cases).
-        const isVisible = btn.offsetParent !== null;
-        if (!isVisible) return;
-        e.preventDefault();
-        // mark that overlay was opened via keyboard so the overlay can
-        // adapt its appearance if desired
-        setOpenMethod("keyboard");
-        setOpen(true);
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => {
-          setOpenMethod("click");
-          setOpen(true);
-        }}
-        className={cn(
-          // base layout — pill for default, round for icon
-          "flex text-sm focus:outline-none",
-          // pill appearance (default) / compact circle (icon)
-          variant === "icon"
-            ? "items-center justify-center w-9.5 h-9.5 rounded-full p-0"
-            : "items-center gap-2 rounded-full px-5 py-2",
-          // transitions and micro-interaction (smaller scale for the labeled pill)
-          variant === "icon"
-            ? "transition transform-gpu duration-200 ease-out hover:scale-[1.03]"
-            : "transition transform-gpu duration-200 ease-out hover:scale-[1.02]",
-          "shadow-sm hover:shadow-md disabled:opacity-60",
-          "cursor-pointer",
-          // use shared pill surface token so header/search pills match exactly
-          "sd-pill",
-          // focus outline
-          "focus-visible:outline-2 focus-visible:outline-offset-2",
-          className,
-        )}
-        style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
-        aria-label={ariaLabel}
-        title={`${ariaLabel} (Ctrl+K)`}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M11 4a7 7 0 015.29 11.71l3.5 3.5-1.41 1.41-3.5-3.5A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z"
-            fill="currentColor"
-          />
-        </svg>
-        {variant === "default" && <span>{ariaLabel}</span>}
-      </button>
-      {open && (
-        <SearchOverlay
-          onClose={() => {
-            setOpen(false);
-            setOpenMethod(undefined);
-          }}
-          openMethod={openMethod}
-        />
-      )}
-    </>
-  );
-}
-
 /** The overlay itself — rendered in a portal to <body> so it covers the entire page */
 type SearchOverlayProps = {
   onClose: () => void;
@@ -144,10 +54,6 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     try {
       const v = t(key);
       if (v && v !== key) return v;
-    } catch {}
-    try {
-      const fast = TRANSLATIONS[pathLocale]?.[key];
-      if (fast && fast !== key) return fast;
     } catch {}
     return fallback;
   };

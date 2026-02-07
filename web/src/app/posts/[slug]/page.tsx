@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import PostContent from "@/components/features/posts/PostContent";
 import PostLanguageLinksHydrator from "@/components/features/posts/PostLanguageLinksHydrator";
 import { generateTocFromHtml } from "@/core/content/generateToc";
@@ -8,6 +9,8 @@ import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
+import type { LocaleTranslationMap } from "@/i18n/pathMapping";
+import { buildI18nAlternates } from "@/i18n/seo";
 import type { PostDetail } from "@/server/wp/api";
 import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
@@ -26,20 +29,56 @@ const buildLocalizedPostPath = (lang: LanguageSlug, slugValue?: string | null) =
   return `/${lang}/posts/${cleanSlug}`;
 };
 
-// Hard-disable caching: always render language-specific content dynamically
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+function buildPostTranslationMap(
+  post: PostDetail,
+  currentLocale: LanguageSlug,
+): Record<LanguageSlug, string | null> {
+  const links: Record<LanguageSlug, string | null> = { en: null, ru: null, uk: null };
+
+  if (post.translations && Array.isArray(post.translations)) {
+    post.translations.forEach((translation) => {
+      const uiLang = mapGraphQLEnumToUi(translation.language?.code);
+      if (!uiLang) return;
+
+      const pathFromSlug = buildLocalizedPostPath(uiLang, translation.slug);
+      if (pathFromSlug) {
+        links[uiLang] = pathFromSlug;
+        return;
+      }
+
+      if (translation.uri) {
+        try {
+          const parsed = new URL(
+            translation.uri,
+            process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de",
+          );
+          const normalizedPath = parsed.pathname.replace(/\/+$|^\/+/g, "");
+          links[uiLang] = normalizedPath ? `/${normalizedPath}` : null;
+        } catch (err) {
+          console.error("Failed to normalize translation URI", err);
+          links[uiLang] = null;
+        }
+      }
+    });
+  }
+
+  if (!links[currentLocale]) {
+    links[currentLocale] = `/${currentLocale}/posts/${post.slug}`;
+  }
+
+  return links;
+}
+
+export const revalidate = 120;
 
 // 👇 In Next 15, params is async. Type it as a Promise and ALWAYS await it.
 type ParamsPromise = Promise<{ slug: string }>;
 
-async function fetchPost(slug: string) {
-  const post = await getPostBySlug(slug, {
-    cache: "no-store",
-    next: { revalidate: 0 },
-  });
-  return post;
-}
+const fetchPost = cache(async (slug: string, locale: Locale) =>
+  getPostBySlug(slug, {
+    locale,
+  }),
+);
 
 async function fetchMoreArticles(currentLang: LanguageSlug, currentSlug: string) {
   try {
@@ -55,18 +94,26 @@ async function fetchMoreArticles(currentLang: LanguageSlug, currentSlug: string)
   }
 }
 
-export async function generateMetadata({ params }: { params: ParamsPromise }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  locale,
+}: {
+  params: ParamsPromise;
+  locale?: Locale;
+}): Promise<Metadata> {
   const { slug } = await params;
-
-  const post = await fetchPost(slug);
+  const resolvedLocale = locale ?? DEFAULT_LOCALE;
+  const post = await fetchPost(slug, resolvedLocale);
   if (!post) return { title: TRANSLATIONS[DEFAULT_LOCALE].postNotFound };
 
   const title = post.seo?.title ?? post.title ?? "Simple Deutsch";
   const description = post.seo?.metaDesc ?? undefined;
+  const translationMap: LocaleTranslationMap = buildPostTranslationMap(post, resolvedLocale);
 
   return {
     title,
     description,
+    alternates: buildI18nAlternates(`/posts/${slug}`, resolvedLocale, { translationMap }),
     openGraph: {
       title,
       description,
@@ -83,49 +130,15 @@ export default async function PostPage({
   locale?: Locale;
 }) {
   const { slug } = await params; // ✅ must await
+  const resolvedLocale = locale ?? DEFAULT_LOCALE;
 
-  const post = await fetchPost(slug);
+  const post = await fetchPost(slug, resolvedLocale);
   if (!post) return notFound();
 
   const postLanguageFromGraphQL = getPostLanguageFromGraphQL(post);
-  const resolvedLocale = locale ?? DEFAULT_LOCALE;
   const desiredUiLang: LanguageSlug = resolvedLocale;
 
-  // Build language links from translations[] array
-  const languageLinks: Record<LanguageSlug, string | null> = { en: null, ru: null, uk: null };
-
-  // Set links for all available translations
-  if (post.translations && Array.isArray(post.translations)) {
-    post.translations.forEach((translation) => {
-      const uiLang = mapGraphQLEnumToUi(translation.language?.code);
-      if (uiLang) {
-        const pathFromSlug = buildLocalizedPostPath(uiLang, translation.slug);
-
-        if (pathFromSlug) {
-          languageLinks[uiLang] = pathFromSlug;
-          return;
-        }
-
-        if (translation.uri) {
-          try {
-            const parsed = new URL(translation.uri, "https://simple-deutsch.de");
-            const normalizedPath = parsed.pathname.replace(/\/+$|^\/+/g, "");
-            languageLinks[uiLang] = normalizedPath ? `/${normalizedPath}` : null;
-            return;
-          } catch (err) {
-            console.error("Failed to normalize translation URI", err);
-          }
-        }
-
-        languageLinks[uiLang] = null;
-      }
-    });
-  }
-
-  // Ensure current language is in links
-  if (!languageLinks[desiredUiLang]) {
-    languageLinks[desiredUiLang] = `/${desiredUiLang}/posts/${post.slug}`;
-  }
+  const languageLinks = buildPostTranslationMap(post, desiredUiLang);
 
   // derive dynamic values
   const authorName = post.author?.node?.name ?? "Unknown author";

@@ -1,15 +1,19 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import AboutMedia from "@/components/about/AboutMedia";
 import ScrollRotateLogo from "@/components/about/ScrollRotateLogo";
 import SectionText from "@/components/about/SectionText";
 import TestimonialCard from "@/components/about/TestimonialCard";
-import { useI18n } from "@/core/i18n/LocaleProvider";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
-export default function AboutPage() {
-  const { t } = useI18n();
+type AboutPageProps = {
+  locale?: Locale;
+};
+
+export default function AboutPage({ locale = DEFAULT_LOCALE }: AboutPageProps) {
+  const dict = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
+  const t = (key: string) => dict[key] ?? key;
 
   return (
     <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">

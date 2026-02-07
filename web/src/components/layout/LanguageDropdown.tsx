@@ -4,7 +4,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { NavLocale } from "@/components/layout/navConfig";
 import { useI18n } from "@/core/i18n/LocaleProvider";
-import { isLocale, type Locale, parseLocaleFromPath } from "@/i18n/locale";
+import { type Locale, parseLocaleFromPath } from "@/i18n/locale";
+import { mapPathToLocale } from "@/i18n/pathMapping";
 
 type Lang = NavLocale;
 
@@ -17,95 +18,33 @@ type LanguageDropdownProps = {
 
 const HOVER_DELAY_MS = 150;
 
-function replaceLeadingLocale(path: string, target: Lang) {
-  const p = path || "/";
-  const segs = p.split("/").filter(Boolean);
-  if (segs.length === 0) return `/${target}`;
-  if (isLocale(segs[0])) segs[0] = target;
-  else segs.unshift(target);
-  return `/${segs.join("/")}`;
-}
-
-function useLanguage() {
-  const router = useRouter();
-  const pathname = usePathname() || "/";
-  const searchParams = useSearchParams();
-  const { locale: currentLocale } = useI18n();
-
-  function persistLocale(_next: Lang) {}
-
-  function setLocale(next: Lang) {
-    persistLocale(next);
-
-    try {
-      const base = replaceLeadingLocale(pathname, next);
-      const qs = searchParams?.toString();
-      const newPath = qs ? `${base}?${qs}` : base;
-      if (newPath !== pathname) router.push(newPath);
-    } catch {
-      const root = `/${next}`;
-      if (root !== pathname) router.push(root);
-    }
-  }
-
-  const routeLocale = parseLocaleFromPath(pathname) ?? currentLocale;
-
-  return {
-    locale: routeLocale,
-    setLocale,
-    persistLocale,
-  } as { locale: Lang; setLocale: (l: Lang) => void; persistLocale: (l: Lang) => void };
-}
-
 function usePostLanguageSwitch() {
   const router = useRouter();
   const pathname = usePathname() || "/";
-  const { locale: currentLocale, setLocale, persistLocale } = useLanguage();
-  const { postLangLinks } = useI18n();
+  const searchParams = useSearchParams();
+  const { locale: currentLocale, postLangLinks } = useI18n();
 
-  let siteLang: Locale = currentLocale;
-  const languageLinks = postLangLinks?.links ?? null;
-  const currentFromLinks = postLangLinks?.currentLang ?? null;
-  if (currentFromLinks) siteLang = currentFromLinks;
-
-  const postsIdx = pathname.indexOf("/posts/");
-  let isPost = false;
-  let slug: string | null = null;
-  if (postsIdx !== -1) {
-    isPost = true;
-    const after = pathname.substring(postsIdx + "/posts/".length);
-    if (after) {
-      const nextSlash = after.indexOf("/");
-      slug = nextSlash === -1 ? after : after.substring(0, nextSlash);
-    }
-  }
+  const routeLocale = parseLocaleFromPath(pathname) ?? currentLocale;
+  const siteLang: Locale = postLangLinks?.currentLang ?? routeLocale;
+  const query = searchParams?.toString();
+  const pathWithQuery = query ? `${pathname}?${query}` : pathname;
 
   const changeLang = async (targetLang: Locale) => {
-    if (targetLang === siteLang && targetLang === currentLocale) return;
-
-    if (isPost && slug && postLangLinks) {
-      const href = postLangLinks.links[targetLang] ?? null;
-      if (!href) return;
-      try {
-        persistLocale(targetLang);
-      } catch {}
-      try {
-        await router.push(href);
-      } catch {}
-      return;
-    }
+    if (targetLang === siteLang && targetLang === routeLocale) return;
 
     try {
-      setLocale(targetLang);
+      const href = mapPathToLocale(pathWithQuery, targetLang, {
+        translationMap: postLangLinks?.links,
+      });
+      if (href !== pathWithQuery) {
+        await router.push(href);
+      }
     } catch {}
   };
 
   return {
     currentSiteLang: siteLang,
     changeLang,
-    languageLinks,
-    isPost,
-    hasSlug: Boolean(slug),
   };
 }
 
@@ -116,7 +55,7 @@ function NavLanguageDropdown({
   closeMenu?: () => void;
   currentSiteLangOverride?: Lang;
 }) {
-  const { currentSiteLang, changeLang, languageLinks, isPost, hasSlug } = usePostLanguageSwitch();
+  const { currentSiteLang, changeLang } = usePostLanguageSwitch();
 
   const LANGS = [
     { code: "en", label: "En" },
@@ -137,29 +76,20 @@ function NavLanguageDropdown({
             idx < visibleLangs.length - 1 ? "border-b border-neutral-100 dark:border-white/6" : ""
           }
         >
-          {(() => {
-            const linkAvailable = !isPost || !hasSlug || Boolean(languageLinks?.[item.code]);
-            return (
-              <button
-                role="menuitem"
-                type="button"
-                onClick={async () => {
-                  if (!linkAvailable) return;
-                  await changeLang(item.code);
-                  closeMenu?.();
-                }}
-                aria-disabled={!linkAvailable}
-                disabled={!linkAvailable}
-                className={
-                  "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
-                  "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] " +
-                  (!linkAvailable ? "opacity-50 cursor-not-allowed" : "cursor-pointer")
-                }
-              >
-                {item.label}
-              </button>
-            );
-          })()}
+          <button
+            role="menuitem"
+            type="button"
+            onClick={async () => {
+              await changeLang(item.code);
+              closeMenu?.();
+            }}
+            className={
+              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
+              "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] cursor-pointer"
+            }
+          >
+            {item.label}
+          </button>
         </li>
       ))}
     </>
@@ -251,7 +181,7 @@ export default function LanguageDropdown({
       e.preventDefault();
       setOpen(true);
       setTimeout(() => {
-        const first = menuRef.current?.querySelector<HTMLAnchorElement>("a");
+        const first = menuRef.current?.querySelector<HTMLButtonElement>("button");
         first?.focus();
       }, 0);
     } else if (e.key === "Escape") {

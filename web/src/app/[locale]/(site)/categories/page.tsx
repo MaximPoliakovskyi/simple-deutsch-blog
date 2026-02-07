@@ -3,6 +3,7 @@
 import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
+import { buildI18nAlternates } from "@/i18n/seo";
 import CategoriesIndexPage from "../../../categories/page";
 
 type Props = {
@@ -15,6 +16,7 @@ export async function generateMetadata({ params }: Props) {
     const validated = assertLocale(locale);
     return {
       title: `${TRANSLATIONS[validated].categories} — ${TRANSLATIONS[validated].siteTitle}`,
+      alternates: buildI18nAlternates("/categories", validated),
     };
   } catch {
     return {};

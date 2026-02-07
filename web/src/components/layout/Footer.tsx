@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
@@ -172,7 +171,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
 };
 
 export default function Footer() {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
 
   function prefixHrefForLocale(href: string, locale: Locale) {
     if (!href || !href.startsWith("/")) return href;
@@ -200,12 +199,8 @@ export default function Footer() {
                   <div className="mt-3">
                     <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
                       {section.items.map((item) => {
-                        // label resolution: use translations for the Impressum route
-                        const dict =
-                          TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] ||
-                          TRANSLATIONS[DEFAULT_LOCALE];
                         const resolvedLabel =
-                          item.href === "/impressum" ? dict.imprint || item.label : item.label;
+                          item.href === "/impressum" ? t("imprint") || item.label : item.label;
 
                         if (item.external) {
                           return (
@@ -252,11 +247,8 @@ export default function Footer() {
           {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
           <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">
             {(() => {
-              const dict =
-                TRANSLATIONS[(locale as keyof typeof TRANSLATIONS) ?? DEFAULT_LOCALE] ||
-                TRANSLATIONS[DEFAULT_LOCALE];
               const template =
-                dict["footer.copyright"] ||
+                t("footer.copyright") ||
                 "© {year} Simple Deutsch. All rights reserved. German-language learning platform.";
               return template.replace("{year}", String(new Date().getFullYear()));
             })()}

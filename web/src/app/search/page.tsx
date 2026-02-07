@@ -56,6 +56,7 @@ export default async function SearchPage(
       first: 10,
       after,
       language: wpLang,
+      locale: effectiveLocale,
     });
     posts = result.posts;
     pageInfo = result.pageInfo;

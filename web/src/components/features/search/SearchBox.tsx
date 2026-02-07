@@ -2,7 +2,6 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/i18n/locale";
 
@@ -30,10 +29,6 @@ export default function SearchBox({
     try {
       const v = t(key);
       if (v && v !== key) return v;
-    } catch {}
-    try {
-      const fast = TRANSLATIONS[pathLocale]?.[key];
-      if (fast && fast !== key) return fast;
     } catch {}
     return fallback;
   };

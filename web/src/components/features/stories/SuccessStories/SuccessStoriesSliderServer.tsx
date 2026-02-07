@@ -1,83 +1,59 @@
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
+import { getPostsByCategory } from "@/server/wp/api";
 import SuccessStoriesSlider from "./SuccessStoriesSlider";
 
 type Props = {
   locale?: Locale;
 };
 
-function normalizePosts(payload: unknown): WPPostCard[] {
-  if (Array.isArray(payload)) return payload as WPPostCard[];
-  if (payload && typeof payload === "object") {
-    const maybe = payload as { posts?: unknown };
-    if (Array.isArray(maybe.posts)) return maybe.posts as WPPostCard[];
-  }
-  return [];
+function getCategorySlug(locale: Locale): string {
+  if (locale === "uk") return "success-stories-uk";
+  if (locale === "ru") return "success-stories-ru";
+  return "success-stories";
 }
 
-/** Fetch success stories posts and swap to translated versions if needed */
-async function getSuccessStoryPosts(locale?: Locale): Promise<WPPostCard[]> {
-  // Always fetch English success-stories first (they have the category)
-  // Note: Categories use language-specific slugs (e.g., "success-stories" vs "success-stories-uk")
-  const categorySlug =
-    locale === "uk"
-      ? "success-stories-uk"
-      : locale === "ru"
-        ? "success-stories-ru"
-        : "success-stories";
+async function getSuccessStoryPosts(locale: Locale): Promise<WPPostCard[]> {
+  const categorySlug = getCategorySlug(locale);
+  const response = await getPostsByCategory({
+    first: 8,
+    after: null,
+    locale,
+    categorySlug,
+  });
 
-  const url = new URL("/api/posts", process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000");
-  url.searchParams.set("first", "8");
-  url.searchParams.set("category", categorySlug);
-  if (locale) {
-    url.searchParams.set("lang", locale);
-  }
-
-  const res = await fetch(url.toString(), { next: { revalidate: 0 } });
-  if (!res.ok) return [];
-
-  const json = await res.json();
-  const posts = normalizePosts(json);
-
-  return posts;
+  return response.posts ?? [];
 }
 
-/** Server wrapper: fetch once, render the client slider. */
 export default async function SuccessStoriesSliderServer({ locale }: Props = {}) {
-  const posts = await getSuccessStoryPosts(locale);
+  const effectiveLocale = locale ?? DEFAULT_LOCALE;
+  const posts = await getSuccessStoryPosts(effectiveLocale);
 
   if (!posts.length) return null;
 
-  const t = TRANSLATIONS[locale ?? DEFAULT_LOCALE];
-
-  // Prepare posts for rendering
-  const preparedPosts = posts.map((p) => {
-    // Estimate reading time from excerpt
+  const t = TRANSLATIONS[effectiveLocale];
+  const preparedPosts = posts.map((post) => {
     let minutes: number | null = null;
-    const html = p.excerpt ?? "";
+    const html = post.excerpt ?? "";
     if (html) {
       const text = String(html).replace(/<[^>]+>/g, " ");
       const words = (text.trim().match(/\S+/g) ?? []).length;
-      if (words >= 40) {
-        minutes = Math.max(1, Math.ceil(words / 200));
-      }
+      if (words >= 40) minutes = Math.max(1, Math.ceil(words / 200));
     }
 
-    // Format date
-    const dateText = p.date
-      ? new Intl.DateTimeFormat(locale === "uk" ? "uk-UA" : locale === "ru" ? "ru-RU" : "en-US", {
-          dateStyle: "long",
-          timeZone: "UTC",
-        }).format(new Date(p.date))
+    const dateText = post.date
+      ? new Intl.DateTimeFormat(
+          effectiveLocale === "uk" ? "uk-UA" : effectiveLocale === "ru" ? "ru-RU" : "en-US",
+          { dateStyle: "long", timeZone: "UTC" },
+        ).format(new Date(post.date))
       : null;
 
-    // Build href
-    const prefix = locale === "en" ? "" : `/${locale}`;
-    const href = `${prefix}/posts/${p.slug}`;
+    const prefix = effectiveLocale === "en" ? "" : `/${effectiveLocale}`;
+    const href = `${prefix}/posts/${post.slug}`;
 
     return {
-      ...p,
+      ...post,
       readingText: minutes ? `${minutes} ${t.minRead}` : null,
       dateText,
       href,

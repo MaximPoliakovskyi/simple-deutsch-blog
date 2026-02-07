@@ -4,8 +4,7 @@ import { notFound } from "next/navigation";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import PostPage, { generateMetadata as baseGenerateMetadata } from "../../../../posts/[slug]/page";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 // using central assertLocale; removed local SUPPORTED_LOCALES
 
@@ -15,12 +14,13 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
+  let validated: Locale;
   try {
-    assertLocale(locale);
+    validated = assertLocale(locale);
   } catch {
     return { title: "404" };
   }
-  return baseGenerateMetadata({ params: Promise.resolve({ slug }) });
+  return baseGenerateMetadata({ params: Promise.resolve({ slug }), locale: validated });
 }
 
 export default async function LocalizedPostPage({ params }: Props) {

@@ -1,4 +1,17 @@
 // next.config.mjs
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
+
+const DEV_WATCH_IGNORED = [
+  "**/.next/**",
+  "**/.tmp/**",
+  "**/tsconfig.tsbuildinfo",
+  "**/devserver.log",
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Enable streaming and concurrent features for better performance
@@ -27,6 +40,20 @@ const nextConfig = {
   onDemandEntries: {
     maxInactiveAge: 60 * 1000, // 1 minute
     pagesBufferLength: 5,
+  },
+  webpack: (config, { dev }) => {
+    if (!dev) return config;
+
+    config.watchOptions = {
+      ...(config.watchOptions ?? {}),
+      ignored: DEV_WATCH_IGNORED,
+      // Optional fallback for unstable file events on some Windows setups.
+      ...(process.env.NEXT_WATCH_POLLING === "1"
+        ? { poll: Number(process.env.NEXT_WATCH_POLL_INTERVAL ?? 1000), aggregateTimeout: 300 }
+        : {}),
+    };
+
+    return config;
   },
   headers: async () => {
     return [
@@ -60,4 +87,4 @@ const nextConfig = {
     ];
   },
 };
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

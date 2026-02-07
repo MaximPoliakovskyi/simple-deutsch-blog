@@ -1,13 +1,8 @@
 // src/app/[locale]/(site)/terms/page.tsx
-// Localized route for /[locale]/terms — reuses the main TermsPage component.
-// Verification checklist (minimal):
-// - /terms        -> renders English title "Terms of Service" (existing behavior)
-// - /en/terms     -> renders English title "Terms of Service"
-// - /ru/terms     -> renders Russian title from i18n: "Условия использования" (or localized key)
-// - /ua/terms     -> renders Ukrainian title from i18n: "Умови користування"
 
 import { notFound } from "next/navigation";
 import { assertLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
+import { buildI18nAlternates } from "@/i18n/seo";
 import TermsPage from "../../../terms/page";
 
 type Props = {
@@ -21,8 +16,11 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { locale } = await params;
   try {
-    assertLocale(locale);
-    return { title: undefined };
+    const validated = assertLocale(locale);
+    return {
+      title: undefined,
+      alternates: buildI18nAlternates("/terms", validated),
+    };
   } catch {
     return {};
   }
@@ -36,8 +34,6 @@ export default async function LocalizedTerms({ params }: Props) {
   } catch {
     notFound();
   }
-
-  // validated above; proceed
 
   return <TermsPage locale={validated} />;
 }

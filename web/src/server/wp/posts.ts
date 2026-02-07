@@ -1,4 +1,5 @@
 import type { Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 import { fetchGraphQL } from "@/server/wp/client";
 import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
 import {
@@ -21,6 +22,12 @@ import type {
   WPPostCard,
 } from "@/server/wp/types";
 
+function isSchemaMismatchError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!message.includes("GraphQL errors:")) return false;
+  return /not defined by type|Unknown argument|Cannot query field|Unknown type/.test(message);
+}
+
 export async function getPostsByCategorySlug(
   slug: string,
   first = 12,
@@ -28,12 +35,19 @@ export async function getPostsByCategorySlug(
   locale?: Locale,
 ) {
   const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS_BY_CATEGORY_SLUG, {
-    slug,
-    first,
-    after: after ?? null,
-    language: language ?? null,
-  });
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
+    GET_POSTS_BY_CATEGORY_SLUG,
+    {
+      slug,
+      first,
+      after: after ?? null,
+      language: language ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:by-category-slug"] },
+    },
+  );
 }
 
 export async function getPosts(
@@ -66,22 +80,45 @@ export async function getPosts(
   const locale = typeof arg1 === "number" ? undefined : arg1.locale;
   const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
 
-  return fetchGraphQL<{ posts: Connection<PostListItem> }>(GET_POSTS, {
-    first,
-    after: after ?? null,
-    categoryIn: null,
-    tagIn: null,
-    language: language ?? null,
-  });
+  return fetchGraphQL<{ posts: Connection<PostListItem> }>(
+    GET_POSTS,
+    {
+      first,
+      after: after ?? null,
+      categoryIn: null,
+      tagIn: null,
+      language: language ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:index"] },
+    },
+  );
 }
 
 export async function getPostBySlug(slug: string, init?: NextInit) {
-  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_SLUG, { slug }, init);
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(
+    GET_POST_BY_SLUG,
+    { slug },
+    {
+      ...init,
+      locale: init?.locale ?? DEFAULT_LOCALE,
+      policy: init?.policy ?? { type: "ISR", revalidate: 120, tags: ["posts", "post:detail"] },
+    },
+  );
   return data.post ?? null;
 }
 
 export async function getPostByUri(uri: string, init?: NextInit) {
-  const data = await fetchGraphQL<{ post: PostDetail | null }>(GET_POST_BY_URI, { uri }, init);
+  const data = await fetchGraphQL<{ post: PostDetail | null }>(
+    GET_POST_BY_URI,
+    { uri },
+    {
+      ...init,
+      locale: init?.locale ?? DEFAULT_LOCALE,
+      policy: init?.policy ?? { type: "DYNAMIC" },
+    },
+  );
   return data.post ?? null;
 }
 
@@ -89,7 +126,11 @@ export async function getPostByDatabaseId(id: number, init?: NextInit) {
   const data = await fetchGraphQL<{ post: PostDetail | null }>(
     GET_POST_BY_DATABASE_ID,
     { id },
-    init,
+    {
+      ...init,
+      locale: init?.locale ?? DEFAULT_LOCALE,
+      policy: init?.policy ?? { type: "DYNAMIC" },
+    },
   );
   return data.post ?? null;
 }
@@ -99,7 +140,10 @@ export async function getPostsPage(params: { first: number; after?: string | nul
   const data = await fetchGraphQL<PostsConnectionResponse>(
     POSTS_CONNECTION,
     { first, after: after ?? null },
-    { next: { revalidate: 300 } },
+    {
+      locale: DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:connection"] },
+    },
   );
 
   const edges = data.posts?.edges ?? [];
@@ -129,7 +173,10 @@ export async function getPostsPageFiltered(params: {
       tagIn: tagIds,
       language: language ?? null,
     },
-    { next: { revalidate: 300 } },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:filtered"] },
+    },
   );
 
   const edges = data.posts?.edges ?? [];
@@ -146,19 +193,60 @@ export async function getPostsByCategory(params: {
   categorySlug: string;
 }) {
   const { first, after, locale, categorySlug } = params;
-  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
-  void language;
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
 
-  const data = await fetchGraphQL<{
+  const requestInit: NextInit = {
+    locale: locale ?? DEFAULT_LOCALE,
+    policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:category"] },
+  };
+
+  let data: {
     category?: {
       posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
     };
-  }>(GET_POSTS_BY_CATEGORY, { first, after, categorySlug }, { next: { revalidate: 300 } });
+  };
+
+  try {
+    data = await fetchGraphQL<{
+      category?: {
+        posts?: {
+          pageInfo: { hasNextPage: boolean; endCursor: string | null };
+          nodes: WPPostCard[];
+        };
+      };
+    }>(GET_POSTS_BY_CATEGORY, { first, after, categorySlug }, requestInit);
+  } catch (error) {
+    if (!isSchemaMismatchError(error)) {
+      throw error;
+    }
+    console.warn(
+      `[wp] getPostsByCategory schema mismatch for "${categorySlug}", falling back to non-language filter.`,
+      error,
+    );
+    const fallback = await fetchGraphQL<{
+      posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
+    }>(
+      GET_POSTS_BY_CATEGORY_SLUG,
+      { slug: categorySlug, first, after: after ?? null, language: null },
+      requestInit,
+    );
+
+    const fallbackNodes = fallback.posts?.nodes ?? [];
+    const fallbackPageInfo = fallback.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
+    const filteredFallback = targetLang
+      ? fallbackNodes.filter((post) => post.language?.code === targetLang)
+      : fallbackNodes;
+
+    return { posts: filteredFallback, pageInfo: fallbackPageInfo };
+  }
 
   const nodes = data.category?.posts?.nodes ?? [];
+  const filteredNodes = targetLang
+    ? nodes.filter((post) => post.language?.code === targetLang)
+    : nodes;
   const pageInfo = data.category?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
-  return { posts: nodes, pageInfo };
+  return { posts: filteredNodes, pageInfo };
 }
 
 export async function getPostsByTag(params: {
@@ -168,19 +256,28 @@ export async function getPostsByTag(params: {
   tagSlug: string;
 }) {
   const { first, after, locale, tagSlug } = params;
-  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
-  void language;
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
 
   const data = await fetchGraphQL<{
     tag?: {
       posts?: { pageInfo: { hasNextPage: boolean; endCursor: string | null }; nodes: WPPostCard[] };
     };
-  }>(GET_POSTS_BY_TAG, { first, after, tagSlug }, { next: { revalidate: 300 } });
+  }>(
+    GET_POSTS_BY_TAG,
+    { first, after, tagSlug },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:tag"] },
+    },
+  );
 
   const nodes = data.tag?.posts?.nodes ?? [];
+  const filteredNodes = targetLang
+    ? nodes.filter((post) => post.language?.code === targetLang)
+    : nodes;
   const pageInfo = data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
-  return { posts: nodes, pageInfo };
+  return { posts: filteredNodes, pageInfo };
 }
 
 export async function getPostsIndex(params: {
@@ -194,7 +291,10 @@ export async function getPostsIndex(params: {
   const data = await fetchGraphQL<PostsConnectionResponse>(
     GET_POSTS_INDEX,
     { first, after: after ?? null, language: language ?? null },
-    { next: { revalidate: 300 } },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:index"] },
+    },
   );
 
   const edges = data.posts?.edges ?? [];
@@ -297,7 +397,10 @@ export async function getPostsPageByCategory(params: {
   }>(
     GET_POSTS_BY_CATEGORY_SLUG,
     { slug: categorySlug, first, after: after ?? null, language: language ?? null },
-    { next: { revalidate: 300 } },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:by-category-slug"] },
+    },
   );
 
   const nodes = res.posts?.nodes ?? [];

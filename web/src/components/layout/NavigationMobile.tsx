@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import type { RefObject } from "react";
-import { SearchButton } from "@/components/features/search/SearchOverlay";
+import SearchButton from "@/components/features/search/SearchButton";
 import LanguageDropdown from "@/components/layout/LanguageDropdown";
 import NavLinks from "@/components/layout/NavLinks";
 import type { NavLocale } from "@/components/layout/navConfig";

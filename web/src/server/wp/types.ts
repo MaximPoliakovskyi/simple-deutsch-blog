@@ -1,6 +1,11 @@
+import type { CachePolicy } from "@/core/api/fetching";
 import type { Locale } from "@/i18n/locale";
 
-export type NextInit = RequestInit & { next?: { revalidate?: number; tags?: string[] } };
+export type NextInit = RequestInit & {
+  next?: { revalidate?: number; tags?: string[] };
+  locale?: Locale;
+  policy?: CachePolicy;
+};
 
 export type Term = {
   id: string;
@@ -94,4 +99,5 @@ export type SearchPostsArgs = {
   first?: number;
   after?: string | null;
   language?: "EN" | "RU" | "UK" | null;
+  locale?: Locale;
 };

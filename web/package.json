@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev",
+    "watch:offenders": "node ./scripts/watch-offenders.mjs . 25 1000",
     "build": "next build --turbopack",
     "start": "next start",
     "format": "biome format --write .",
@@ -11,7 +13,10 @@
     "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm run build",
-    "smoke": "playwright test"
+    "smoke": "playwright test",
+    "test:i18n-routing": "tsc --module commonjs --moduleResolution node --target es2022 --outDir .tmp/i18n-tests --rootDir src/i18n --esModuleInterop --skipLibCheck src/i18n/locale.ts src/i18n/pathMapping.ts src/i18n/seo.ts src/i18n/pathMapping.test.ts src/i18n/seo.test.ts && node --test .tmp/i18n-tests/pathMapping.test.js .tmp/i18n-tests/seo.test.js && node -e \"require('node:fs').rmSync('.tmp/i18n-tests',{ recursive: true, force: true })\"",
+    "analyze": "node ./scripts/analyze-build.mjs",
+    "perf:build": "node ./scripts/perf-build.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",

@@ -1,46 +1,44 @@
-type NextInit = RequestInit & { next?: { revalidate?: number; tags?: string[] } };
+import { type CachePolicy, fetchGraphQL as fetchGraphQLWithPolicy } from "@/core/api/fetching";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
+import type { NextInit } from "@/server/wp/types";
 
-type GraphQLResponse<T> = { data?: T; errors?: Array<{ message: string }> };
+type GraphQLOptions = NextInit;
+
+function resolvePolicy(init?: GraphQLOptions): CachePolicy {
+  if (init?.policy) return init.policy;
+
+  if (init?.cache === "no-store" || init?.next?.revalidate === 0) {
+    return { type: "DYNAMIC" };
+  }
+
+  if (init?.cache === "force-cache") {
+    return { type: "STATIC", tags: init.next?.tags };
+  }
+
+  if (typeof init?.next?.revalidate === "number") {
+    return { type: "ISR", revalidate: init.next.revalidate, tags: init.next?.tags };
+  }
+
+  // Default to short ISR for CMS-backed content.
+  return { type: "ISR", revalidate: 300, tags: ["graphql"] };
+}
 
 export async function fetchGraphQL<T>(
   query: string,
   variables?: Record<string, unknown>,
-  init?: NextInit,
+  init?: GraphQLOptions,
 ): Promise<T> {
   const endpoint =
     process.env.NEXT_PUBLIC_WP_GRAPHQL_ENDPOINT ?? "https://cms.simple-deutsch.de/graphql";
+  const { locale, policy, ...requestInit } = init ?? {};
 
-  // Aggressive caching by default for better TTFB
-  const defaultInit: NextInit =
-    init?.cache === "no-store" ? {} : { next: { revalidate: 3600, tags: ["graphql"] } };
-  const mergedNext = { ...defaultInit.next, ...init?.next };
-  const finalInit = { ...defaultInit, ...init, next: mergedNext };
-
-  // Add timeout to prevent hanging requests (8s timeout for GraphQL)
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 8000);
-
-  try {
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, variables }),
-      signal: controller.signal,
-      ...finalInit,
-    });
-
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`GraphQL HTTP ${res.status}: ${text}`);
-    }
-
-    const json = (await res.json()) as GraphQLResponse<T>;
-    if (json.errors?.length) {
-      throw new Error(`GraphQL errors: ${json.errors.map((e) => e.message).join(" | ")}`);
-    }
-    if (!json.data) throw new Error("GraphQL: empty response data");
-    return json.data;
-  } finally {
-    clearTimeout(timeoutId);
-  }
+  return fetchGraphQLWithPolicy<T>({
+    endpoint,
+    query,
+    variables,
+    locale: locale ?? DEFAULT_LOCALE,
+    policy: policy ?? resolvePolicy(init),
+    init: requestInit,
+    timeoutMs: 8000,
+  });
 }

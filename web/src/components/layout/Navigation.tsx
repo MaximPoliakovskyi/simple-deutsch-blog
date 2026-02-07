@@ -13,7 +13,7 @@ import type { NavLocale } from "@/components/layout/navConfig";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
-import { DEFAULT_LOCALE, parseLocaleFromPath } from "@/i18n/locale";
+import { DEFAULT_LOCALE, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 // Note: Navigation is mounted in the root layout (outside the per-locale layout),
@@ -21,7 +21,29 @@ import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 type Lang = NavLocale;
 
+function normalizePathname(pathname: string | null): string {
+  if (!pathname) return "/";
+  let normalized = pathname;
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.trim();
+  if (basePath) {
+    const cleanBasePath = basePath.startsWith("/") ? basePath : `/${basePath}`;
+    if (normalized === cleanBasePath) {
+      normalized = "/";
+    } else if (normalized.startsWith(`${cleanBasePath}/`)) {
+      normalized = normalized.slice(cleanBasePath.length);
+    }
+  }
+
+  if (normalized.length > 1) {
+    normalized = normalized.replace(/\/+$/, "");
+  }
+
+  return normalized || "/";
+}
+
 export default function Header() {
+  const [hasMounted, setHasMounted] = useState(false);
   const [open, setOpen] = useState(false);
   const [progress, setProgress] = useState<number>(0);
   const [visible, setVisible] = useState<boolean>(false);
@@ -35,9 +57,42 @@ export default function Header() {
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
 
   // Navigation is outside the per-locale provider, so derive the active locale from the URL.
-  const { locale: uiLocale } = useI18n();
-  const routeLocale = parseLocaleFromPath(pathname || "/") ?? uiLocale ?? DEFAULT_LOCALE;
+  const { locale: uiLocale, t: tFromProvider } = useI18n();
+  const normalizedPathname = normalizePathname(pathname);
+  const segments = normalizedPathname.split("/").filter(Boolean);
+  const localeFromPath =
+    segments.length > 0 ? parseLocaleFromPath(`/${segments[0].toLowerCase()}`) : null;
+  const isLocaleRoot =
+    segments.length === 1 && localeFromPath !== null && SUPPORTED_LOCALES.includes(localeFromPath);
+  const shouldEnableProgressBar = hasMounted && !isLocaleRoot;
+  const routeLocale = parseLocaleFromPath(normalizedPathname) ?? uiLocale ?? DEFAULT_LOCALE;
   const currentLocale: Lang = routeLocale;
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (process.env.NEXT_PUBLIC_DEBUG_PROGRESSBAR !== "1") return;
+    console.log("[progressbar-debug]", {
+      pathname,
+      normalizedPathname,
+      segments,
+      locale: routeLocale,
+      isLocaleRoot,
+      hasMounted,
+      shouldEnableProgressBar,
+    });
+  }, [
+    pathname,
+    normalizedPathname,
+    routeLocale,
+    isLocaleRoot,
+    segments,
+    hasMounted,
+    shouldEnableProgressBar,
+  ]);
 
   const buildLocaleRootHref = (target: Lang) => buildLocalizedHref(target, "/");
 
@@ -45,8 +100,6 @@ export default function Header() {
     const p = path.startsWith("/") ? path : `/${path}`;
     return buildLocalizedHref(target, p);
   };
-
-  const { t: tFromProvider } = useI18n();
 
   // helper: prefer fast route-derived translations, then provider `t`, then fallback.
   const label = (key: string, fallback: string) => {
@@ -140,7 +193,11 @@ export default function Header() {
 
   // Reading progress: measure how far through `main article` the user has scrolled
   useEffect(() => {
-    if (!pathname) return;
+    if (!pathname || !shouldEnableProgressBar) {
+      setProgress(0);
+      setVisible(false);
+      return;
+    }
     let rafId = 0;
     let ticking = false;
 
@@ -201,7 +258,7 @@ export default function Header() {
       window.removeEventListener("resize", onScroll);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [pathname]);
+  }, [pathname, shouldEnableProgressBar]);
 
   return (
     <>
@@ -242,25 +299,28 @@ export default function Header() {
           </div>
           {/* Reading progress bar (fills as user reads the article)
               Positioned over the article column and only visible while reading */}
-          <div
-            aria-hidden
-            className="fixed top-0 left-0 z-50 pointer-events-none w-screen inset-x-0 transition-opacity duration-300"
-            style={{
-              opacity: visible ? 1 : 0,
-              top: navRef.current ? `${navRef.current.getBoundingClientRect().top}px` : "0px",
-            }}
-          >
-            <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden rounded">
-              <div
-                className="h-full bg-[var(--sd-accent)] transition-transform duration-300 ease-out"
-                style={{
-                  transform: `scaleX(${progress / 100})`,
-                  transformOrigin: "left",
-                  willChange: "transform",
-                }}
-              />
+          {shouldEnableProgressBar && (
+            <div
+              data-progress-bar="reading"
+              aria-hidden
+              className="fixed top-0 left-0 z-50 pointer-events-none w-screen inset-x-0 transition-opacity duration-300"
+              style={{
+                opacity: visible ? 1 : 0,
+                top: navRef.current ? `${navRef.current.getBoundingClientRect().top}px` : "0px",
+              }}
+            >
+              <div className="h-1 w-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden rounded">
+                <div
+                  className="h-full bg-[var(--sd-accent)] transition-transform duration-300 ease-out"
+                  style={{
+                    transform: `scaleX(${progress / 100})`,
+                    transformOrigin: "left",
+                    willChange: "transform",
+                  }}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </nav>
       <NavigationMobileDrawer

@@ -1,7 +1,5 @@
 import { getPosts } from "@/server/wp/api";
 
-export const revalidate = 900;
-
 // RSS must not be prerendered at build time (it depends on live WPGraphQL).
 // This avoids build failures when the CMS is temporarily unreachable.
 export const dynamic = "force-dynamic";
