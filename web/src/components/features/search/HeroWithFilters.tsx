@@ -39,7 +39,6 @@ export default function HeroWithFilters({
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [measuredWidthPx, setMeasuredWidthPx] = React.useState<number | null>(null);
 
   // Locale-aware animated words for hero headline (line 3)
   // Each locale provides its own word list
@@ -115,22 +114,17 @@ export default function HeroWithFilters({
           <br />
           {t("heroLine2")}
           <br />
-          <span
-            className="inline-block"
-            style={{
-              width: measuredWidthPx ? `${measuredWidthPx}px` : `${stableWidthCh}ch`,
-            }}
-          >
+          <span className="inline-block whitespace-nowrap align-baseline">
             <TypewriterWords
               words={animatedWords}
               className="text-blue-600"
               containerClassName="font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1]"
+              fallbackWidthCh={stableWidthCh}
               typeMsPerChar={100}
               deleteMsPerChar={60}
               pauseAfterTypeMs={2200}
               pauseAfterDeleteMs={600}
               showCursor={true}
-              onMaxWidthChange={setMeasuredWidthPx}
             />
           </span>
         </h1>

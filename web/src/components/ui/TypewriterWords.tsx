@@ -6,12 +6,12 @@ interface TypewriterWordsProps {
   words: string[];
   className?: string;
   containerClassName?: string; // Classes for the outer container (e.g., font and size)
+  fallbackWidthCh?: number; // Optional fallback stage width before pixel measurement is ready
   typeMsPerChar?: number;
   deleteMsPerChar?: number;
   pauseAfterTypeMs?: number;
   pauseAfterDeleteMs?: number;
   showCursor?: boolean;
-  onMaxWidthChange?: (maxWidthPx: number) => void; // Callback to notify parent of measured width
 }
 
 /**
@@ -21,8 +21,6 @@ interface TypewriterWordsProps {
  */
 function useMeasureWordWidths(
   words: string[],
-  _containerClassName: string,
-  onMaxWidthChange?: (maxWidthPx: number) => void,
 ) {
   const measureRef = React.useRef<HTMLSpanElement>(null);
   const [maxWidthPx, setMaxWidthPx] = React.useState(0);
@@ -45,8 +43,7 @@ function useMeasureWordWidths(
     // Add small padding for cursor space
     const finalWidth = maxWidth + 8;
     setMaxWidthPx(finalWidth);
-    onMaxWidthChange?.(finalWidth);
-  }, [words, onMaxWidthChange]);
+  }, [words]);
 
   React.useEffect(() => {
     measureWidths();
@@ -57,7 +54,9 @@ function useMeasureWordWidths(
     };
 
     window.addEventListener("resize", resizeHandler);
-    return () => window.removeEventListener("resize", resizeHandler);
+    return () => {
+      window.removeEventListener("resize", resizeHandler);
+    };
   }, [measureWidths]);
 
   return { measureRef, maxWidthPx };
@@ -176,19 +175,19 @@ function useTypewriter({
  *   words={["work", "travel", "life"]}
  *   className="text-blue-600"
  *   containerClassName="font-extrabold text-5xl sm:text-6xl md:text-7xl"
- *   onMaxWidthChange={(w) => setStageWidth(w)}
+ *   fallbackWidthCh={8}
  * />
  */
 export default function TypewriterWords({
   words,
   className = "",
   containerClassName = "",
+  fallbackWidthCh,
   typeMsPerChar = 100,
   deleteMsPerChar = 60,
   pauseAfterTypeMs = 2200,
   pauseAfterDeleteMs = 600,
   showCursor = true,
-  onMaxWidthChange,
 }: TypewriterWordsProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
   const currentText = useTypewriter({
@@ -200,14 +199,11 @@ export default function TypewriterWords({
   });
 
   // For reduced motion, show the first word statically
-  const displayText = prefersReducedMotion ? words[0] : currentText;
+  const firstWord = words[0] ?? "";
+  const displayText = prefersReducedMotion ? firstWord : currentText;
 
   // Measure pixel widths of all words
-  const { measureRef, maxWidthPx } = useMeasureWordWidths(
-    words,
-    containerClassName,
-    onMaxWidthChange,
-  );
+  const { measureRef, maxWidthPx } = useMeasureWordWidths(words);
 
   // Check for prefers-reduced-motion
   React.useEffect(() => {
@@ -218,9 +214,25 @@ export default function TypewriterWords({
       setPrefersReducedMotion(e.matches);
     };
 
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", handleChange);
+      return () => mediaQuery.removeEventListener("change", handleChange);
+    }
+
+    mediaQuery.addListener(handleChange);
+    return () => mediaQuery.removeListener(handleChange);
   }, []);
+
+  const longestWord = React.useMemo(
+    () =>
+      words.reduce((longest, word) => {
+        return word.length > longest.length ? word : longest;
+      }, ""),
+    [words],
+  );
+
+  const widthFallback = Math.max(1, fallbackWidthCh ?? longestWord.length + 0.3);
+  const stableWidth = maxWidthPx > 0 ? `${maxWidthPx}px` : `${widthFallback}ch`;
 
   return (
     <>
@@ -237,24 +249,32 @@ export default function TypewriterWords({
 
       {/* Stage with fixed width; keeps line centered and stable */}
       <span
-        className={`relative block whitespace-nowrap text-center ${containerClassName} ${className}`}
+        className={`relative inline-block whitespace-nowrap align-baseline ${containerClassName} ${className}`}
         style={{
-          width: maxWidthPx ? `${maxWidthPx}px` : undefined,
-          minHeight: "1em",
-          margin: "0 auto",
+          width: stableWidth,
+          minWidth: stableWidth,
+          verticalAlign: "baseline",
         }}
         aria-hidden="true"
       >
-        <span className="inline-flex items-start justify-center">
-          <span className="inline-block">{displayText}</span>
-          {showCursor && !prefersReducedMotion ? (
-            <span
-              className="caret-realistic ml-px inline-block leading-none pointer-events-none"
-              aria-hidden="true"
-            >
-              |
-            </span>
-          ) : null}
+        {/* Invisible sizer keeps the line box height and baseline stable. */}
+        <span className="invisible inline-block pointer-events-none select-none">
+          {longestWord || "\u00A0"}
+        </span>
+
+        {/* Center only the word; keep cursor absolutely positioned so it cannot offset centering. */}
+        <span className="pointer-events-none absolute inset-0">
+          <span className="absolute top-0 left-1/2 inline-flex -translate-x-1/2 items-baseline whitespace-nowrap transform-gpu">
+            <span className="inline-block">{displayText || "\u00A0"}</span>
+            {showCursor && !prefersReducedMotion ? (
+              <span
+                className="caret-realistic absolute left-full ml-px leading-none pointer-events-none"
+                aria-hidden="true"
+              >
+                |
+              </span>
+            ) : null}
+          </span>
         </span>
       </span>
 
@@ -262,6 +282,8 @@ export default function TypewriterWords({
       <style jsx>{`
         .caret-realistic {
           animation: caret-blink 1.25s ease-in-out infinite;
+          will-change: opacity;
+          transform: translateZ(0);
         }
 
         @keyframes caret-blink {
