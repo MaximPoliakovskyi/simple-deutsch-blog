@@ -9,6 +9,9 @@ import {
   GET_POSTS,
   GET_POSTS_BY_CATEGORY,
   GET_POSTS_BY_CATEGORY_SLUG,
+  GET_RELATED_LATEST_POSTS,
+  GET_RELATED_POSTS_BY_CATEGORY_SLUG,
+  GET_RELATED_POSTS_BY_TAG_SLUG,
   GET_POSTS_BY_TAG,
   GET_POSTS_INDEX,
   POSTS_CONNECTION,
@@ -54,6 +57,97 @@ export async function getPostsByCategorySlug(
       ...data.posts,
       nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
     },
+  };
+}
+
+export async function getRelatedPostsByCategorySlug(params: {
+  slug: string;
+  first?: number;
+  after?: string | null;
+  locale?: Locale;
+}) {
+  const { slug, first = 9, after, locale } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+
+  const data = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
+    GET_RELATED_POSTS_BY_CATEGORY_SLUG,
+    {
+      slug,
+      first,
+      after: after ?? null,
+      language: language ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:related", "posts:category"] },
+    },
+  );
+
+  return {
+    posts: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    pageInfo: data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
+  };
+}
+
+export async function getRelatedPostsByTagSlug(params: {
+  slug: string;
+  first?: number;
+  after?: string | null;
+  locale?: Locale;
+}) {
+  const { slug, first = 9, after, locale } = params;
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
+
+  const data = await fetchGraphQL<{
+    tag: {
+      posts: Connection<PostListItem>;
+    } | null;
+  }>(
+    GET_RELATED_POSTS_BY_TAG_SLUG,
+    {
+      slug,
+      first,
+      after: after ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:related", "posts:tag"] },
+    },
+  );
+
+  const nodes = data.tag?.posts?.nodes ?? [];
+  const filtered = targetLang ? nodes.filter((post) => post.language?.code === targetLang) : nodes;
+
+  return {
+    posts: withReadingTimeForList(filtered, locale ?? DEFAULT_LOCALE),
+    pageInfo: data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
+  };
+}
+
+export async function getLatestPostsForRelated(params: {
+  first?: number;
+  after?: string | null;
+  locale?: Locale;
+}) {
+  const { first = 12, after, locale } = params;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+
+  const data = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
+    GET_RELATED_LATEST_POSTS,
+    {
+      first,
+      after: after ?? null,
+      language: language ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:related", "posts:latest"] },
+    },
+  );
+
+  return {
+    posts: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    pageInfo: data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
   };
 }
 

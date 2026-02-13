@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import LevelsIndexPage from "../../../levels/page";
+import { LevelsIndexContent } from "../../../levels/LevelsIndexContent";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -32,5 +32,5 @@ export default async function LocalizedLevelsPage({ params }: Props) {
     notFound();
   }
 
-  return <LevelsIndexPage locale={validated} />;
+  return <LevelsIndexContent locale={validated} />;
 }

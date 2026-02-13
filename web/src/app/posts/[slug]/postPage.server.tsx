@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import PostContent from "@/components/features/posts/PostContent";
 import PostLanguageLinksHydrator from "@/components/features/posts/PostLanguageLinksHydrator";
+import RelatedArticles from "@/components/features/posts/RelatedArticles";
 import { generateTocFromHtml } from "@/core/content/generateToc";
 import { isHiddenCategory } from "@/core/content/hiddenCategories";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
@@ -151,6 +152,8 @@ export async function renderPostPage({
     .filter((c) => c && !isLocale(c.slug ?? ""))
     .filter((c) => !isHiddenCategory(c?.name, c?.slug));
   const showCategories = visibleCategories.length > 0;
+  const relatedCategorySlugs = visibleCategories.map((cat) => cat?.slug ?? "").filter(Boolean);
+  const relatedTagSlugs = (post.tags?.nodes ?? []).map((tag) => tag?.slug ?? "").filter(Boolean);
 
   // Generate a table-of-contents and inject anchor ids into headings
   const { html: contentHtml, toc } = post.content
@@ -277,6 +280,14 @@ export async function renderPostPage({
             </div>
           </aside>
         </div>
+        <RelatedArticles
+          locale={resolvedLocale}
+          currentPostId={post.id}
+          currentPostDatabaseId={post.databaseId}
+          currentPostSlug={post.slug}
+          categorySlugs={relatedCategorySlugs}
+          tagSlugs={relatedTagSlugs}
+        />
       </main>
     </>
   );

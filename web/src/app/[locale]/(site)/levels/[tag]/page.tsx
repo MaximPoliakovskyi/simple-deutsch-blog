@@ -5,7 +5,7 @@ import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
 import { getTagBySlug } from "@/server/wp/api";
-import LevelPage from "../../../../levels/[tag]/page";
+import { LevelPageContent } from "../../../../levels/[tag]/LevelPageContent";
 
 type Props = {
   params: Promise<{ locale: string; tag: string }>;
@@ -51,5 +51,5 @@ export default async function LocalizedLevelPage({ params }: Props) {
     notFound();
   }
 
-  return LevelPage({ params: Promise.resolve({ tag }), locale: validated });
+  return <LevelPageContent tag={tag} locale={validated} />;
 }

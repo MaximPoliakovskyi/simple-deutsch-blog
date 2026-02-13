@@ -48,6 +48,12 @@ export const GET_POST_BY_SLUG = /* GraphQL */ `
           slug
         }
       }
+      tags {
+        nodes {
+          name
+          slug
+        }
+      }
     }
   }
 `;
@@ -183,6 +189,12 @@ export const GET_POST_BY_URI = /* GraphQL */ `
           slug
         }
       }
+      tags {
+        nodes {
+          name
+          slug
+        }
+      }
     }
   }
 `;
@@ -230,6 +242,12 @@ export const GET_POST_BY_DATABASE_ID = /* GraphQL */ `
         }
       }
       categories {
+        nodes {
+          name
+          slug
+        }
+      }
+      tags {
         nodes {
           name
           slug
@@ -743,6 +761,132 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
           endCursor
           hasNextPage
         }
+      }
+    }
+  }
+`;
+
+// Lightweight related-post queries (minimal fields for card rendering + reading time)
+export const GET_RELATED_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
+  query RelatedPostsByCategorySlug(
+    $slug: String!
+    $first: Int!
+    $after: String
+    $language: LanguageCodeFilterEnum
+  ) {
+    posts(
+      first: $first
+      after: $after
+      where: {
+        categoryName: $slug
+        orderby: { field: DATE, order: DESC }
+        status: PUBLISH
+        language: $language
+      }
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        databaseId
+        slug
+        title
+        date
+        excerpt
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        featuredImageUrl
+      }
+    }
+  }
+`;
+
+export const GET_RELATED_POSTS_BY_TAG_SLUG = /* GraphQL */ `
+  query RelatedPostsByTagSlug($slug: ID!, $first: Int!, $after: String) {
+    tag(id: $slug, idType: SLUG) {
+      posts(
+        first: $first
+        after: $after
+        where: { orderby: { field: DATE, order: DESC }, status: PUBLISH }
+      ) {
+        pageInfo {
+          hasNextPage
+          endCursor
+        }
+        nodes {
+          id
+          databaseId
+          slug
+          title
+          date
+          excerpt
+          language {
+            code
+            slug
+            locale
+          }
+          categories {
+            nodes {
+              name
+              slug
+            }
+          }
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+            }
+          }
+          featuredImageUrl
+        }
+      }
+    }
+  }
+`;
+
+export const GET_RELATED_LATEST_POSTS = /* GraphQL */ `
+  query RelatedLatestPosts($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
+    posts(
+      first: $first
+      after: $after
+      where: { orderby: { field: DATE, order: DESC }, status: PUBLISH, language: $language }
+    ) {
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+      nodes {
+        id
+        databaseId
+        slug
+        title
+        date
+        excerpt
+        categories {
+          nodes {
+            name
+            slug
+          }
+        }
+        featuredImage {
+          node {
+            sourceUrl
+            altText
+          }
+        }
+        featuredImageUrl
       }
     }
   }

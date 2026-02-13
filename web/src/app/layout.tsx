@@ -45,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang={DEFAULT_LOCALE} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
+        <meta charSet="UTF-8" />
         {/* Document title and favicon */}
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
         <link rel="icon" href="/logo.ico" />

@@ -24,8 +24,13 @@ export default async function DeferredHeroFilters({
   locale,
 }: Props) {
   // Load categories on-demand; will be streamed separately
-  const catsResp = await getAllCategories({ first: 50 });
-  const allCategories = extractConnectionNodes<CategoryNode>(catsResp?.categories);
+  let allCategories: CategoryNode[] = [];
+  try {
+    const catsResp = await getAllCategories({ first: 50, locale });
+    allCategories = extractConnectionNodes<CategoryNode>(catsResp?.categories);
+  } catch (error) {
+    console.error("Failed to load hero categories:", error);
+  }
 
   const categoryNodes = filterOutCEFRLevels(
     deduplicateCategories(filterHiddenCategories(allCategories)),

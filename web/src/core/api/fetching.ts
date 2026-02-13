@@ -91,6 +91,37 @@ function mergeNext(
   };
 }
 
+function mergeSignals(
+  timeoutSignal: AbortSignal,
+  requestSignal?: AbortSignal | null,
+): { signal: AbortSignal; cleanup: () => void } {
+  if (!requestSignal) {
+    return { signal: timeoutSignal, cleanup: () => {} };
+  }
+
+  if (typeof AbortSignal.any === "function") {
+    return { signal: AbortSignal.any([requestSignal, timeoutSignal]), cleanup: () => {} };
+  }
+
+  const controller = new AbortController();
+  const onTimeoutAbort = () => controller.abort(timeoutSignal.reason);
+  const onRequestAbort = () => controller.abort(requestSignal.reason);
+
+  if (timeoutSignal.aborted) onTimeoutAbort();
+  else timeoutSignal.addEventListener("abort", onTimeoutAbort, { once: true });
+
+  if (requestSignal.aborted) onRequestAbort();
+  else requestSignal.addEventListener("abort", onRequestAbort, { once: true });
+
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      timeoutSignal.removeEventListener("abort", onTimeoutAbort);
+      requestSignal.removeEventListener("abort", onRequestAbort);
+    },
+  };
+}
+
 export async function fetchJson<T>(
   input: string | URL,
   options: {
@@ -106,9 +137,10 @@ export async function fetchJson<T>(
   const policyWithLocale = withLocaleTags(options.policy, locale, scope);
   const policyInit = policyToInit(policyWithLocale);
 
-  const controller = new AbortController();
+  const timeoutController = new AbortController();
+  const mergedSignal = mergeSignals(timeoutController.signal, options.init?.signal);
   const timeoutMs = options.timeoutMs ?? 8000;
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
 
   try {
     const headers = new Headers(options.init?.headers);
@@ -119,7 +151,7 @@ export async function fetchJson<T>(
       ...policyInit,
       next: mergeNext(policyInit.next, options.init?.next),
       headers,
-      signal: controller.signal,
+      signal: mergedSignal.signal,
     });
 
     if (!response.ok) {
@@ -128,8 +160,17 @@ export async function fetchJson<T>(
     }
 
     return (await response.json()) as T;
+  } catch (error) {
+    const requestWasAborted = options.init?.signal?.aborted ?? false;
+    const timeoutTriggered = timeoutController.signal.aborted;
+    if (error instanceof Error && error.name === "AbortError" && timeoutTriggered && !requestWasAborted) {
+      throw new Error(`Request timed out after ${timeoutMs}ms for ${String(input)}`);
+    }
+
+    throw error;
   } finally {
     clearTimeout(timeoutId);
+    mergedSignal.cleanup();
   }
 }
 

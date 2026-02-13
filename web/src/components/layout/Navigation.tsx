@@ -43,6 +43,36 @@ function normalizePathname(pathname: string | null): string {
   return normalized || "/";
 }
 
+// Routes where the global top progress bar should never be shown.
+const PROGRESS_BAR_DISABLED_ROUTES = new Set([
+  "/categories",
+  "/categories/exercises-practice",
+  "/categories/grammar",
+  "/levels/a2",
+]);
+
+const PROGRESS_BAR_DISABLED_PREFIXES = ["/categories/"];
+
+function isProgressBarDisabledPath(pathname: string): boolean {
+  if (PROGRESS_BAR_DISABLED_ROUTES.has(pathname)) return true;
+  return PROGRESS_BAR_DISABLED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
+function getCanonicalPathname(pathname: string): string {
+  const normalized = normalizePathname(pathname);
+  const segments = normalized.split("/").filter(Boolean);
+  if (segments.length === 0) return "/";
+
+  // Normalize `/en/foo` -> `/foo` so route checks work for localized and non-localized URLs.
+  const maybeLocale = parseLocaleFromPath(`/${segments[0].toLowerCase()}`);
+  if (maybeLocale) {
+    const withoutLocale = segments.slice(1).join("/");
+    return withoutLocale ? `/${withoutLocale}` : "/";
+  }
+
+  return normalized;
+}
+
 export default function Header() {
   const [hasMounted, setHasMounted] = useState(false);
   const [open, setOpen] = useState(false);
@@ -56,16 +86,20 @@ export default function Header() {
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
+  const lastDebugPathRef = useRef<string | null>(null);
 
   // Navigation is outside the per-locale provider, so derive the active locale from the URL.
   const { locale: uiLocale, t: tFromProvider } = useI18n();
   const normalizedPathname = normalizePathname(pathname);
   const segments = normalizedPathname.split("/").filter(Boolean);
+  const segmentsKey = segments.join("/");
   const localeFromPath =
     segments.length > 0 ? parseLocaleFromPath(`/${segments[0].toLowerCase()}`) : null;
   const isLocaleRoot =
     segments.length === 1 && localeFromPath !== null && SUPPORTED_LOCALES.includes(localeFromPath);
-  const shouldEnableProgressBar = hasMounted && !isLocaleRoot;
+  const canonicalPathname = getCanonicalPathname(normalizedPathname);
+  const isProgressBarDisabledRoute = isProgressBarDisabledPath(canonicalPathname);
+  const shouldEnableProgressBar = hasMounted && !isLocaleRoot && !isProgressBarDisabledRoute;
   const routeLocale = parseLocaleFromPath(normalizedPathname) ?? uiLocale ?? DEFAULT_LOCALE;
   const currentLocale: Lang = routeLocale;
 
@@ -76,24 +110,22 @@ export default function Header() {
   useEffect(() => {
     if (process.env.NODE_ENV === "production") return;
     if (process.env.NEXT_PUBLIC_DEBUG_PROGRESSBAR !== "1") return;
+    if (lastDebugPathRef.current === normalizedPathname) return;
+    lastDebugPathRef.current = normalizedPathname;
+
     console.log("[progressbar-debug]", {
       pathname,
       normalizedPathname,
       segments,
+      segmentsKey,
       locale: routeLocale,
       isLocaleRoot,
+      canonicalPathname,
+      isProgressBarDisabledRoute,
       hasMounted,
       shouldEnableProgressBar,
     });
-  }, [
-    pathname,
-    normalizedPathname,
-    routeLocale,
-    isLocaleRoot,
-    segments,
-    hasMounted,
-    shouldEnableProgressBar,
-  ]);
+  });
 
   const buildLocaleRootHref = (target: Lang) => buildLocalizedHref(target, "/");
 
