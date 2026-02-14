@@ -26,6 +26,7 @@
 
 /* ── Design tokens ────────────────────────────────────────────────────────── */
 :root {
+  --scrollbar-comp: 0px;
   /* Hue/Sat/Light tokens for easy theming with hsl() */
   --brand: 222 47% 11%;
   --fg: 222 22% 12%;
@@ -96,6 +97,11 @@ html.dark {
 /* Keep layout stable when scrollbars appear/disappear */
 html {
   scrollbar-gutter: stable;
+}
+
+html.scroll-locked {
+  overflow: hidden;
+  padding-right: var(--scrollbar-comp);
 }
 
 /* Optional fallback to force a vertical scrollbar on all pages to avoid layout shift

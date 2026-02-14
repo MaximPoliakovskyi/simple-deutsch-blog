@@ -16,17 +16,17 @@ import {
   TransitionNavContext,
   type TransitionPhase,
 } from "@/components/transition/useTransitionNav";
-import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scrollLock";
 
-const ENTER_MS = 650;
-const EXIT_MS = 650;
-const COVERED_MS = 50;
-const READY_MAX_MS = 2000;
+const ENTER_MS = 520;
+const EXIT_MS = 520;
+const COVERED_MS = 60;
+const READY_MAX_MS = 1800;
 const WATCHDOG_BUFFER_MS = 150;
-const NAV_INDEX_KEY = "__navIndex";
+const GLOBAL_STUCK_TIMEOUT_MS = 3200;
 const DEBUG = process.env.NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION === "1";
 
-type TransitionMode = "push" | "pop";
+type TransitionMode = "push";
 
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
@@ -51,22 +51,6 @@ function toPathname(href: string, currentPathname: string) {
   } catch {
     return normalizeRoutePathname(href.startsWith("/") ? href : currentPathname);
   }
-}
-
-function readNavIndex(state: unknown): number | null {
-  if (!state || typeof state !== "object") return null;
-  const maybeIndex = (state as Record<string, unknown>)[NAV_INDEX_KEY];
-  return typeof maybeIndex === "number" && Number.isFinite(maybeIndex) ? maybeIndex : null;
-}
-
-function withNavIndex(state: unknown, navIndex: number) {
-  if (state && typeof state === "object") {
-    return {
-      ...(state as Record<string, unknown>),
-      [NAV_INDEX_KEY]: navIndex,
-    };
-  }
-  return { [NAV_INDEX_KEY]: navIndex };
 }
 
 function waitDoubleRaf() {
@@ -105,28 +89,20 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState(0);
   const [targetPathname, setTargetPathname] = useState<string | null>(null);
 
-  const [debugToken, setDebugToken] = useState(0);
-  const [debugTargetPathname, setDebugTargetPathname] = useState<string | null>(null);
-
   const phaseRef = useRef<TransitionPhase>("idle");
-  const directionRef = useRef<TransitionDirection>("forward");
   const pathnameRef = useRef(pathname);
   const targetPathnameRef = useRef<string | null>(null);
   const targetHrefRef = useRef<string | null>(null);
+  const modeRef = useRef<TransitionMode>("push");
   const activeTokenRef = useRef(0);
   const tokenCounterRef = useRef(0);
-  const modeRef = useRef<TransitionMode>("push");
   const pushedTokenRef = useRef<number | null>(null);
-  const historyIndexRef = useRef(0);
 
   const phaseWatchdogRef = useRef<number | null>(null);
+  const globalStuckWatchdogRef = useRef<number | null>(null);
   const pathnameWaitersRef = useRef<
     Array<{ token: number; pathname: string; resolve: () => void }>
   >([]);
-  const readyWaitersRef = useRef<Array<{ token: number; pathname: string; resolve: () => void }>>(
-    [],
-  );
-  const readySignalsRef = useRef(new Set<string>());
 
   const isActive = phase !== "idle";
 
@@ -135,7 +111,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     console.log("[route-transition]", {
       event,
       phase: phaseRef.current,
-      direction: directionRef.current,
       token: activeTokenRef.current,
       pathname: pathnameRef.current,
       targetPathname: targetPathnameRef.current,
@@ -167,8 +142,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       setTargetPathname(null);
       setToken(0);
       setPhaseSafe("idle");
-      setDebugToken(0);
-      setDebugTargetPathname(null);
       logDev("reset-idle", { reason });
     },
     [clearPhaseWatchdog, logDev, setPhaseSafe],
@@ -203,22 +176,14 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
   const beginTransition = useCallback(
     ({
-      nextDirection,
-      nextMode,
       nextTargetPathname,
       nextTargetHref,
-      trigger,
-      allowReplaceActive,
     }: {
-      nextDirection: TransitionDirection;
-      nextMode: TransitionMode;
       nextTargetPathname: string;
-      nextTargetHref: string | null;
-      trigger: "logo" | "language" | "popstate";
-      allowReplaceActive: boolean;
+      nextTargetHref: string;
     }) => {
-      if (!allowReplaceActive && phaseRef.current !== "idle") {
-        logDev("begin-blocked", { trigger, phase: phaseRef.current });
+      if (phaseRef.current !== "idle") {
+        logDev("begin-blocked", { phase: phaseRef.current });
         return false;
       }
 
@@ -227,30 +192,17 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       const nextToken = tokenCounterRef.current + 1;
       tokenCounterRef.current = nextToken;
       activeTokenRef.current = nextToken;
-      directionRef.current = nextDirection;
-      modeRef.current = nextMode;
       targetPathnameRef.current = nextTargetPathname;
       targetHrefRef.current = nextTargetHref;
       pushedTokenRef.current = null;
 
-      setDirection(nextDirection);
+      setDirection("forward");
       setToken(nextToken);
       setTargetPathname(nextTargetPathname);
       setPhaseSafe("entering");
 
       lockScroll();
-
-      setDebugToken(nextToken);
-      setDebugTargetPathname(nextTargetPathname);
-
-      logDev("begin", {
-        trigger,
-        nextMode,
-        nextDirection,
-        nextTargetPathname,
-        nextTargetHref,
-        token: nextToken,
-      });
+      logDev("begin", { nextTargetPathname, nextTargetHref, token: nextToken });
       return true;
     },
     [clearPhaseWatchdog, logDev, setPhaseSafe],
@@ -261,18 +213,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       if (!href) return false;
       const nextPathname = toPathname(href, pathnameRef.current);
       if (nextPathname === pathnameRef.current) return false;
+
       if (prefersReducedMotion) {
         router.push(href);
         return true;
       }
-      return beginTransition({
-        nextDirection: "forward",
-        nextMode: "push",
-        nextTargetPathname: nextPathname,
-        nextTargetHref: href,
-        trigger: "logo",
-        allowReplaceActive: false,
-      });
+
+      return beginTransition({ nextTargetPathname: nextPathname, nextTargetHref: href });
     },
     [beginTransition, prefersReducedMotion, router],
   );
@@ -280,38 +227,14 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const navigateFromLanguageSwitch = useCallback(
     (href: string) => {
       if (!href) return false;
-      const nextPathname = toPathname(href, pathnameRef.current);
-      if (nextPathname === pathnameRef.current) return false;
-      if (prefersReducedMotion) {
-        router.push(href);
-        return true;
-      }
-      return beginTransition({
-        nextDirection: "forward",
-        nextMode: "push",
-        nextTargetPathname: nextPathname,
-        nextTargetHref: href,
-        trigger: "language",
-        allowReplaceActive: false,
-      });
+      router.push(href);
+      return true;
     },
-    [beginTransition, prefersReducedMotion, router],
+    [router],
   );
 
-  const signalRouteReady = useCallback((readyPathname: string, readyToken: number) => {
-    const normalizedPathname = normalizeRoutePathname(readyPathname);
-    const key = `${readyToken}:${normalizedPathname}`;
-    readySignalsRef.current.add(key);
-
-    const remaining: typeof readyWaitersRef.current = [];
-    for (const waiter of readyWaitersRef.current) {
-      if (waiter.token === readyToken && waiter.pathname === normalizedPathname) {
-        waiter.resolve();
-      } else {
-        remaining.push(waiter);
-      }
-    }
-    readyWaitersRef.current = remaining;
+  const signalRouteReady = useCallback((_readyPathname: string, _readyToken: number) => {
+    // Not used in this minimal logo-only transition flow.
   }, []);
 
   useEffect(() => {
@@ -327,72 +250,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     }
     pathnameWaitersRef.current = remaining;
   }, [pathname]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const historyRef = window.history;
-    const initialIndex = readNavIndex(historyRef.state) ?? 0;
-    historyIndexRef.current = initialIndex;
-    if (readNavIndex(historyRef.state) === null) {
-      historyRef.replaceState(
-        withNavIndex(historyRef.state, initialIndex),
-        "",
-        window.location.href,
-      );
-    }
-
-    const originalPushState = historyRef.pushState.bind(historyRef);
-    const originalReplaceState = historyRef.replaceState.bind(historyRef);
-
-    historyRef.pushState = ((state: unknown, title: string, url?: string | URL | null) => {
-      const nextIndex = historyIndexRef.current + 1;
-      historyIndexRef.current = nextIndex;
-      originalPushState(withNavIndex(state, nextIndex), title, url);
-    }) as History["pushState"];
-
-    historyRef.replaceState = ((state: unknown, title: string, url?: string | URL | null) => {
-      const indexFromState = readNavIndex(state);
-      const nextIndex = indexFromState ?? historyIndexRef.current;
-      historyIndexRef.current = nextIndex;
-      originalReplaceState(withNavIndex(state, nextIndex), title, url);
-    }) as History["replaceState"];
-
-    const onPopState = (event: PopStateEvent) => {
-      const nextIndex = readNavIndex(event.state) ?? Math.max(0, historyIndexRef.current - 1);
-      const previousIndex = historyIndexRef.current;
-      historyIndexRef.current = nextIndex;
-
-      if (readNavIndex(event.state) === null) {
-        historyRef.replaceState(
-          withNavIndex(historyRef.state, nextIndex),
-          "",
-          window.location.href,
-        );
-      }
-
-      if (prefersReducedMotion) return;
-
-      const nextPathname = normalizeRoutePathname(window.location.pathname);
-      const popDirection: TransitionDirection = nextIndex < previousIndex ? "back" : "forward";
-
-      beginTransition({
-        nextDirection: popDirection,
-        nextMode: "pop",
-        nextTargetPathname: nextPathname,
-        nextTargetHref: null,
-        trigger: "popstate",
-        allowReplaceActive: true,
-      });
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-      historyRef.pushState = originalPushState;
-      historyRef.replaceState = originalReplaceState;
-    };
-  }, [beginTransition, prefersReducedMotion]);
 
   useEffect(() => {
     if (phase === "idle") {
@@ -422,13 +279,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (phase === "waiting_ready") {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn("[route-transition] readiness timeout; forcing exit", {
-            token: expectedToken,
-            pathname: pathnameRef.current,
-            targetPathname: targetPathnameRef.current,
-          });
-        }
         goExiting("ready-watchdog", expectedToken);
         return;
       }
@@ -446,7 +296,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     const expectedToken = activeTokenRef.current;
     const href = targetHrefRef.current;
 
-    if (modeRef.current === "push" && href && pushedTokenRef.current !== expectedToken) {
+    if (href && pushedTokenRef.current !== expectedToken) {
       pushedTokenRef.current = expectedToken;
       reactStartTransition(() => {
         router.push(href);
@@ -495,39 +345,10 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    const waitForReady = (waitToken: number, waitPathname: string, timeoutMs: number) => {
-      const key = `${waitToken}:${waitPathname}`;
-      if (readySignalsRef.current.has(key)) return Promise.resolve(true);
-
-      return new Promise<boolean>((resolve) => {
-        let settled = false;
-
-        const finish = (value: boolean) => {
-          if (settled) return;
-          settled = true;
-          window.clearTimeout(timeoutId);
-          readyWaitersRef.current = readyWaitersRef.current.filter((x) => x.resolve !== onReady);
-          resolve(value);
-        };
-
-        const onReady = () => finish(true);
-
-        const timeoutId = window.setTimeout(() => finish(false), timeoutMs);
-        readyWaitersRef.current.push({
-          token: waitToken,
-          pathname: waitPathname,
-          resolve: onReady,
-        });
-      });
-    };
-
     let cancelled = false;
-    const startedAt = performance.now();
-
-    const remaining = () => Math.max(1, READY_MAX_MS - (performance.now() - startedAt));
 
     const run = async () => {
-      const pathMatched = await waitForPathname(expectedToken, expectedPathname, remaining());
+      const pathMatched = await waitForPathname(expectedToken, expectedPathname, READY_MAX_MS);
       if (!pathMatched || cancelled) {
         goExiting("path-timeout", expectedToken);
         return;
@@ -538,16 +359,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
       if (activeTokenRef.current !== expectedToken || phaseRef.current !== "waiting_ready") return;
 
-      const readyMatched = await waitForReady(expectedToken, expectedPathname, remaining());
-      if (!readyMatched && process.env.NODE_ENV !== "production") {
-        console.warn("[route-transition] RouteReady timeout; forcing exit", {
-          token: expectedToken,
-          expectedPathname,
-          currentPathname: pathnameRef.current,
-        });
-      }
-      if (cancelled) return;
-      goExiting(readyMatched ? "ready" : "ready-timeout", expectedToken);
+      goExiting("ready", expectedToken);
     };
 
     void run();
@@ -556,6 +368,43 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [goExiting, phase]);
+
+  useEffect(() => {
+    if (phase !== "idle") return;
+    unlockScroll();
+  }, [phase]);
+
+  useEffect(() => {
+    if (globalStuckWatchdogRef.current !== null) {
+      window.clearTimeout(globalStuckWatchdogRef.current);
+      globalStuckWatchdogRef.current = null;
+    }
+    if (phase === "idle") return;
+
+    const expectedToken = activeTokenRef.current;
+    globalStuckWatchdogRef.current = window.setTimeout(() => {
+      if (phaseRef.current === "idle") return;
+      if (activeTokenRef.current !== expectedToken) return;
+
+      logDev("global-stuck-reset", { phase: phaseRef.current, expectedToken });
+      setPhaseSafe("idle");
+      activeTokenRef.current = 0;
+      targetPathnameRef.current = null;
+      targetHrefRef.current = null;
+      pushedTokenRef.current = null;
+      modeRef.current = "push";
+      setTargetPathname(null);
+      setToken(0);
+      forceUnlockScroll();
+    }, GLOBAL_STUCK_TIMEOUT_MS);
+
+    return () => {
+      if (globalStuckWatchdogRef.current !== null) {
+        window.clearTimeout(globalStuckWatchdogRef.current);
+        globalStuckWatchdogRef.current = null;
+      }
+    };
+  }, [logDev, phase, setPhaseSafe]);
 
   const settleOverlayPhase = useCallback(
     (source: "transitionend" | "transitioncancel") => {
@@ -590,7 +439,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return () => {
       clearPhaseWatchdog();
-      unlockScroll();
+      if (globalStuckWatchdogRef.current !== null) {
+        window.clearTimeout(globalStuckWatchdogRef.current);
+        globalStuckWatchdogRef.current = null;
+      }
+      forceUnlockScroll();
     };
   }, [clearPhaseWatchdog]);
 
@@ -633,21 +486,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         <Image
           src="/main-logo.svg"
           alt=""
-          width={140}
-          height={140}
+          width={220}
+          height={220}
           className="rt-overlay__logo"
           priority
         />
       </div>
-      {DEBUG && (
-        <div className="rt-debug-hud" aria-hidden="true">
-          <div>{`phase: ${phase}`}</div>
-          <div>{`direction: ${direction}`}</div>
-          <div>{`token: ${debugToken}`}</div>
-          <div>{`pathname: ${pathname}`}</div>
-          <div>{`targetPathname: ${debugTargetPathname ?? "-"}`}</div>
-        </div>
-      )}
     </TransitionNavContext.Provider>
   );
 }

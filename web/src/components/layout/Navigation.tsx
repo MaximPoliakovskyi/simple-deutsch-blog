@@ -23,6 +23,17 @@ import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
 type Lang = NavLocale;
 
+function scrollToTopWithMotionPreference() {
+  if (typeof window === "undefined") return;
+  let behavior: ScrollBehavior = "smooth";
+  try {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      behavior = "auto";
+    }
+  } catch {}
+  window.scrollTo({ top: 0, left: 0, behavior });
+}
+
 function normalizePathname(pathname: string | null): string {
   if (!pathname) return "/";
   let normalized = pathname;
@@ -154,6 +165,14 @@ export default function Header() {
     // Close the mobile menu so the UI doesn't remain open during navigation.
     setOpen(false);
     if (!isUnmodifiedLeftClick(event)) return;
+
+    const isHomepage = normalizedPathname === normalizePathname(logoHref);
+    if (isHomepage) {
+      event.preventDefault();
+      scrollToTopWithMotionPreference();
+      return;
+    }
+
     event.preventDefault();
     transition.navigateFromLogo(logoHref);
   };

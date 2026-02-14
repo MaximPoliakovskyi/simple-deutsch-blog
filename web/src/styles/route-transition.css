@@ -1,7 +1,7 @@
 .rt-overlay {
-  --rt-enter-ms: 650ms;
-  --rt-exit-ms: 650ms;
-  --rt-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --rt-enter-ms: 520ms;
+  --rt-exit-ms: 520ms;
+  --rt-ease: cubic-bezier(0.42, 0, 0.58, 1);
   --rt-start-x: -110%;
   --rt-end-x: 110%;
 
@@ -47,7 +47,7 @@
 }
 
 .rt-overlay__logo {
-  width: clamp(96px, 12vw, 144px);
+  width: clamp(138px, 17vw, 220px);
   height: auto;
 }
 

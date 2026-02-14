@@ -67,6 +67,15 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const focusSearchInput = useCallback(() => {
+    const input = inputRef.current;
+    if (!input) return;
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
+  }, []);
 
   const [q, setQ] = useState("");
   const deferredQ = useDeferredValue(q); // keep input responsive while results update
@@ -247,7 +256,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         if (q) {
           e.preventDefault();
           setQ("");
-          inputRef.current?.focus();
+          focusSearchInput();
           return;
         }
         requestClose();
@@ -255,15 +264,15 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [q, requestClose]);
+  }, [focusSearchInput, q, requestClose]);
 
   // Focus input after the panel is visible to avoid flash
   useEffect(() => {
     if (show) {
-      const id = setTimeout(() => inputRef.current?.focus(), 10);
+      const id = setTimeout(() => focusSearchInput(), 10);
       return () => clearTimeout(id);
     }
-  }, [show]);
+  }, [focusSearchInput, show]);
 
   // Debounced search with cancellation
   useEffect(() => {
@@ -354,7 +363,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         if (q) {
           e.preventDefault();
           setQ("");
-          inputRef.current?.focus();
+          focusSearchInput();
           return;
         }
         requestClose();
@@ -378,7 +387,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [items, highlight, router, requestClose, q]);
+  }, [focusSearchInput, items, highlight, router, requestClose, q]);
 
   // Ensure highlighted item is scrolled into view
   useEffect(() => {
@@ -478,7 +487,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
               type="button"
               onClick={() => {
                 setQ("");
-                inputRef.current?.focus();
+                focusSearchInput();
               }}
               className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
               aria-label={CLEAR_LABEL}
