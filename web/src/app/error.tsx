@@ -3,6 +3,7 @@
 
 import { useEffect } from "react";
 import StatusPage from "@/components/ui/StatusPage";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 
 export default function AppError({
   error,
@@ -25,7 +26,7 @@ export default function AppError({
       message={message}
       actions={[
         { type: "button", onClick: () => reset(), label: "Try again" },
-        { type: "link", href: "/", label: "Back to home" },
+        { type: "link", href: `/${DEFAULT_LOCALE}`, label: "Back to home" },
       ]}
     >
       {!isDev && error.digest ? (

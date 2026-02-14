@@ -11,13 +11,7 @@ type TagNode = {
   description?: string | null;
 };
 
-export async function LevelPageContent({
-  tag,
-  locale,
-}: {
-  tag: string;
-  locale: Locale;
-}) {
+export async function LevelPageContent({ tag, locale }: { tag: string; locale: Locale }) {
   const term = (await getTagBySlug(tag)) as TagNode | null;
   if (!term) return notFound();
   const PAGE_SIZE = 3;

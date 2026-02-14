@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { RefObject } from "react";
+import type { MouseEvent, RefObject } from "react";
 import SearchButton from "@/components/features/search/SearchButton";
 import LanguageDropdown from "@/components/layout/LanguageDropdown";
 import NavLinks from "@/components/layout/NavLinks";
@@ -30,7 +30,7 @@ type MobileDrawerProps = {
   buildLocaleRootHref: (target: Lang) => string;
   label: (key: string, fallback: string) => string;
   onCloseMenu: () => void;
-  onLogoClick: () => void;
+  onLogoClick: (event: MouseEvent<HTMLAnchorElement>) => void;
   onToggleTheme: () => void;
 };
 

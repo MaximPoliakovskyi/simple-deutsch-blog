@@ -9,11 +9,11 @@ import {
   GET_POSTS,
   GET_POSTS_BY_CATEGORY,
   GET_POSTS_BY_CATEGORY_SLUG,
+  GET_POSTS_BY_TAG,
+  GET_POSTS_INDEX,
   GET_RELATED_LATEST_POSTS,
   GET_RELATED_POSTS_BY_CATEGORY_SLUG,
   GET_RELATED_POSTS_BY_TAG_SLUG,
-  GET_POSTS_BY_TAG,
-  GET_POSTS_INDEX,
   POSTS_CONNECTION,
 } from "@/server/wp/queries";
 import { withReadingTime, withReadingTimeForList } from "@/server/wp/readingTime";

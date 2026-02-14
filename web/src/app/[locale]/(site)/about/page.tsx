@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import AboutPage from "../../../about/page";
+import { AboutPageContent } from "../../../about/page";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -32,5 +32,5 @@ export default async function LocalizedAbout({ params }: Props) {
     notFound();
   }
 
-  return <AboutPage locale={validated} />;
+  return <AboutPageContent locale={validated} />;
 }

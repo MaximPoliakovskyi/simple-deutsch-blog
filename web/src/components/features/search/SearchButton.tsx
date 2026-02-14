@@ -1,7 +1,7 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import SearchOverlay from "./SearchOverlay";
 
 type OpenMethod = "click" | "keyboard" | undefined;
 
@@ -31,14 +31,7 @@ function maybeDetachShortcutListener() {
   isListenerAttached = false;
 }
 
-const SearchOverlay = dynamic(() => import("./SearchOverlay"), {
-  ssr: false,
-  loading: () => null,
-});
-
-function preloadSearchOverlay() {
-  void import("./SearchOverlay");
-}
+function preloadSearchOverlay() {}
 
 /** Public button to open the overlay */
 export default function SearchButton({

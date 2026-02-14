@@ -163,7 +163,12 @@ export async function fetchJson<T>(
   } catch (error) {
     const requestWasAborted = options.init?.signal?.aborted ?? false;
     const timeoutTriggered = timeoutController.signal.aborted;
-    if (error instanceof Error && error.name === "AbortError" && timeoutTriggered && !requestWasAborted) {
+    if (
+      error instanceof Error &&
+      error.name === "AbortError" &&
+      timeoutTriggered &&
+      !requestWasAborted
+    ) {
       throw new Error(`Request timed out after ${timeoutMs}ms for ${String(input)}`);
     }
 

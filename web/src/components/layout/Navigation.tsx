@@ -2,14 +2,15 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 import NavigationDesktop from "@/components/layout/NavigationDesktop";
 import {
   NavigationMobileControls,
   NavigationMobileDrawer,
 } from "@/components/layout/NavigationMobile";
 import type { NavLocale } from "@/components/layout/navConfig";
+import { isUnmodifiedLeftClick, useTransitionNav } from "@/components/transition/useTransitionNav";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
@@ -146,17 +147,15 @@ export default function Header() {
     } catch {}
     return fallback;
   };
-  // Use router only when needed; keep the logo interaction simple and
-  // reliable by closing the mobile menu and letting Next's Link handle
-  // the navigation (progressive enhancement + prefetching).
-  // We keep router import available for later UX improvements.
-  const _router = useRouter();
+  const logoHref = buildLocaleRootHref(currentLocale);
+  const transition = useTransitionNav();
 
-  const handleLogoClick = (_e?: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLogoClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     // Close the mobile menu so the UI doesn't remain open during navigation.
     setOpen(false);
-    // Let the Link's native navigation run (keeps prefetching & SEO).
-    // If we later want a client-only transition we can call `router.push(href)`.
+    if (!isUnmodifiedLeftClick(event)) return;
+    event.preventDefault();
+    transition.navigateFromLogo(logoHref);
   };
 
   // Keep mobile label in sync with the single root theme source.
@@ -294,7 +293,7 @@ export default function Header() {
         <div>
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:py-5">
             <Link
-              href={buildLocaleRootHref(currentLocale)}
+              href={logoHref}
               onClick={handleLogoClick}
               className="text-xl font-semibold tracking-tight"
               aria-label={label("home", "Home")}
@@ -356,10 +355,7 @@ export default function Header() {
         buildLocaleRootHref={buildLocaleRootHref}
         label={label}
         onCloseMenu={() => setOpen(false)}
-        onLogoClick={() => {
-          // close the menu; allow Link to perform the navigation
-          handleLogoClick();
-        }}
+        onLogoClick={handleLogoClick}
         onToggleTheme={() => {
           applyTheme(mobileTheme === "dark" ? "light" : "dark");
           // keep menu open so user sees the change, or close if preferred

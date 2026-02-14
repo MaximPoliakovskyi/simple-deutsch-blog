@@ -1,6 +1,14 @@
 let lockCount = 0;
 let prevOverflow: string | null = null;
 let prevPaddingRight: string | null = null;
+let cachedScrollbarWidth: number | null = null;
+
+function getScrollbarWidth() {
+  if (cachedScrollbarWidth !== null) return cachedScrollbarWidth;
+  const docEl = document.documentElement;
+  cachedScrollbarWidth = Math.max(0, window.innerWidth - docEl.clientWidth);
+  return cachedScrollbarWidth;
+}
 
 export function lockScroll() {
   if (typeof window === "undefined") return;
@@ -10,7 +18,7 @@ export function lockScroll() {
   try {
     const docEl = document.documentElement;
     const body = document.body;
-    const scrollbarWidth = window.innerWidth - docEl.clientWidth;
+    const scrollbarWidth = getScrollbarWidth();
     docEl.style.setProperty("--scrollbar-comp", `${scrollbarWidth}px`);
     prevOverflow = docEl.style.overflow ?? null;
     prevPaddingRight = body.style.paddingRight ?? null;

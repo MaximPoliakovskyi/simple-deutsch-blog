@@ -4,9 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import SearchPage from "../../../search/page";
-
-type SearchParams = Promise<{ q?: string; after?: string }>;
+import { SearchPageContent, type SearchParams } from "../../../search/page";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -46,5 +44,5 @@ export default async function LocalizedSearchPage({ params, searchParams }: Prop
 
   const sp = searchParams ?? Promise.resolve({});
 
-  return <SearchPage searchParams={sp} locale={validated} />;
+  return <SearchPageContent searchParams={sp} locale={validated} />;
 }

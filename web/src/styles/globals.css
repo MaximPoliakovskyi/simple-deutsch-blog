@@ -229,6 +229,65 @@ html.theme-reveal.theme-reveal-active::before {
   }
 }
 
+/* Route transition overlay */
+.sd-route-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  opacity: 0;
+  transform: translate3d(-100%, 0, 0);
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 120ms ease;
+  will-change: transform;
+  backface-visibility: hidden;
+  contain: layout style paint;
+}
+
+.sd-route-overlay--dir-forward {
+  transform: translate3d(-100%, 0, 0);
+}
+
+.sd-route-overlay--dir-back {
+  transform: translate3d(100%, 0, 0);
+}
+
+.sd-route-overlay--active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: all;
+}
+
+.sd-route-overlay--entering,
+.sd-route-overlay--covered {
+  transform: translate3d(0%, 0, 0);
+}
+
+.sd-route-overlay--exiting {
+  transform: translate3d(100%, 0, 0);
+}
+
+.sd-route-overlay--dir-back.sd-route-overlay--exiting {
+  transform: translate3d(-100%, 0, 0);
+}
+
+.sd-route-overlay__logo {
+  width: clamp(96px, 12vw, 144px);
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-route-overlay {
+    transition: none;
+  }
+}
+
 /* Accessible focus baseline */
 :focus-visible {
   outline: 2px solid var(--sd-accent);

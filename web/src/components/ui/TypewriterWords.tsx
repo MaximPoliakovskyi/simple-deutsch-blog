@@ -19,9 +19,7 @@ interface TypewriterWordsProps {
  * Handles responsive font size changes via resize events.
  * Returns the maximum width in pixels and provides a ref for the measurement element.
  */
-function useMeasureWordWidths(
-  words: string[],
-) {
+function useMeasureWordWidths(words: string[]) {
   const measureRef = React.useRef<HTMLSpanElement>(null);
   const [maxWidthPx, setMaxWidthPx] = React.useState(0);
 

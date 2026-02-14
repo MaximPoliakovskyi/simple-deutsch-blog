@@ -1,8 +1,9 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { NavLocale } from "@/components/layout/navConfig";
+import { useTransitionNav } from "@/components/transition/useTransitionNav";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { type Locale, parseLocaleFromPath } from "@/i18n/locale";
 import { mapPathToLocale } from "@/i18n/pathMapping";
@@ -19,7 +20,7 @@ type LanguageDropdownProps = {
 const HOVER_DELAY_MS = 150;
 
 function usePostLanguageSwitch() {
-  const router = useRouter();
+  const transition = useTransitionNav();
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
   const { locale: currentLocale, postLangLinks } = useI18n();
@@ -37,7 +38,7 @@ function usePostLanguageSwitch() {
         translationMap: postLangLinks?.links,
       });
       if (href !== pathWithQuery) {
-        await router.push(href);
+        transition.navigateFromLanguageSwitch(href);
       }
     } catch {}
   };

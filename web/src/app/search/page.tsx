@@ -9,7 +9,7 @@ import { searchPosts, type WPPostCard } from "@/server/wp/api";
 // Dynamic render for fresh search each request
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ q?: string; after?: string }>;
+export type SearchParams = Promise<{ q?: string; after?: string }>;
 type SearchResult = {
   posts: WPPostCard[];
   pageInfo: { endCursor: string | null; hasNextPage: boolean };
@@ -28,11 +28,13 @@ export async function generateMetadata({
   };
 }
 
-export default async function SearchPage(
-  { searchParams, locale }: { searchParams: SearchParams; locale?: Locale } = {
-    searchParams: Promise.resolve({}),
-  },
-) {
+export async function SearchPageContent({
+  searchParams,
+  locale,
+}: {
+  searchParams: SearchParams;
+  locale?: Locale;
+}) {
   const sp = await searchParams; // Next 15: must await dynamic APIs
   const q = (sp.q ?? "").trim();
   const after = sp.after ?? null;
@@ -97,4 +99,8 @@ export default async function SearchPage(
       ) : null}
     </main>
   );
+}
+
+export default async function SearchPage({ searchParams }: { searchParams: SearchParams }) {
+  return <SearchPageContent searchParams={searchParams} locale={DEFAULT_LOCALE} />;
 }

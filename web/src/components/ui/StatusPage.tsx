@@ -1,5 +1,4 @@
 // src/components/StatusPage.tsx
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 type LinkAction = { type: "link"; href: string; label: string };
@@ -32,13 +31,13 @@ export default function StatusPage({ code, title, message, actions = [], childre
           {actions.map((a, i) => {
             const key = a.type === "link" ? `link-${a.href}` : `btn-${a.label}-${i}`;
             return a.type === "link" ? (
-              <Link
+              <a
                 key={key}
                 href={a.href}
                 className="rounded-lg border px-4 py-2 text-sm hover:bg-foreground/5"
               >
                 {a.label}
-              </Link>
+              </a>
             ) : (
               <button
                 key={key}

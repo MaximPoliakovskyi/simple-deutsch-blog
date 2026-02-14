@@ -6,11 +6,14 @@ import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
+import { RouteReady } from "@/components/transition/RouteReady";
+import { RouteTransitionProvider } from "@/components/transition/RouteTransitionProvider";
 import BackButton from "@/components/ui/BackButton";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import "@/styles/globals.css";
+import "@/styles/route-transition.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -83,19 +86,21 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <LocaleProviderFromPath>
           {/* Preloader with 1.5s minimum display time */}
           <PreloaderClient />
+          <RouteTransitionProvider>
+            {/* Global navigation with SSR skeleton for fast FCP */}
+            <HydratedNavigation />
+            <RouteReady />
 
-          {/* Global navigation with SSR skeleton for fast FCP */}
-          <HydratedNavigation />
+            {/* Main page content - add top spacing so content sits further below the nav */}
+            <div className="mt-8 md:mt-12" aria-hidden />
+            {children}
 
-          {/* Main page content - add top spacing so content sits further below the nav */}
-          <div className="mt-8 md:mt-12" aria-hidden />
-          {children}
+            {/* Global back button that appears after scrolling */}
+            <BackButton />
 
-          {/* Global back button that appears after scrolling */}
-          <BackButton />
-
-          {/* Homepage-only components are rendered by their pages now. */}
-          <Footer />
+            {/* Homepage-only components are rendered by their pages now. */}
+            <Footer />
+          </RouteTransitionProvider>
 
           {/* Load analytics only in production and defer to avoid blocking */}
           <AnalyticsClient isProd={isProd} />

@@ -1,19 +1,12 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import * as React from "react";
 import CategoryPills from "@/components/features/categories/CategoryPills";
 import PostCard from "@/components/features/posts/PostCard";
+import TypewriterWords from "@/components/ui/TypewriterWords";
 import { useI18n } from "@/core/i18n/LocaleProvider";
-import type { WPPostCard } from "@/server/wp/api";
-
-// Defer TypewriterWords loading to not block initial paint
-const TypewriterWords = dynamic(() => import("@/components/ui/TypewriterWords"), {
-  ssr: false,
-  loading: () => <span className="text-blue-600">work</span>,
-});
-
 import type { Locale } from "@/i18n/locale";
+import type { WPPostCard } from "@/server/wp/api";
 
 type Category = { id: string; name: string; slug: string };
 

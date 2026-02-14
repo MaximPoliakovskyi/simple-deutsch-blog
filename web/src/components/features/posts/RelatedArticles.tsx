@@ -1,6 +1,6 @@
 import PostCard from "@/components/features/posts/PostCard";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { type Locale } from "@/i18n/locale";
+import type { Locale } from "@/i18n/locale";
 import {
   getLatestPostsForRelated,
   getRelatedPostsByCategorySlug,

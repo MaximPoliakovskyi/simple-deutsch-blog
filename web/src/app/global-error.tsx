@@ -43,7 +43,7 @@ export default function GlobalError({
           message={message}
           actions={[
             { type: "button", onClick: () => reset(), label: "Neu laden" },
-            { type: "link", href: "/", label: "Zur Startseite" },
+            { type: "link", href: `/${DEFAULT_LOCALE}`, label: "Zur Startseite" },
           ]}
         >
           {!isDev && error.digest ? (
