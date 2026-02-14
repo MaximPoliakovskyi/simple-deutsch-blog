@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import CategoriesBlock from "@/components/features/categories/CategoriesBlock";
 import LatestPostsSliderServer from "@/components/features/posts/LatestPosts/LatestPostsSliderServer";
 import SuccessStoriesSliderServer from "@/components/features/stories/SuccessStories/SuccessStoriesSliderServer";
@@ -62,26 +61,18 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   return (
     <>
       <main className="mx-auto max-w-7xl px-4 py-12">
-        <Suspense fallback={null}>
-          <DeferredHeroFilters
-            initialPosts={mappedPosts}
-            initialEndCursor={pageInfo.endCursor}
-            initialHasNextPage={pageInfo.hasNextPage}
-            pageSize={PAGE_SIZE}
-            locale={effectiveLocale}
-          />
-        </Suspense>
+        <DeferredHeroFilters
+          initialPosts={mappedPosts}
+          initialEndCursor={pageInfo.endCursor}
+          initialHasNextPage={pageInfo.hasNextPage}
+          pageSize={PAGE_SIZE}
+          locale={effectiveLocale}
+        />
       </main>
 
-      <Suspense fallback={null}>
-        <SuccessStoriesSliderServer locale={effectiveLocale} />
-      </Suspense>
-      <Suspense fallback={null}>
-        <LatestPostsSliderServer locale={effectiveLocale} />
-      </Suspense>
-      <Suspense fallback={null}>
-        <CategoriesBlock locale={effectiveLocale} />
-      </Suspense>
+      <SuccessStoriesSliderServer locale={effectiveLocale} />
+      <LatestPostsSliderServer locale={effectiveLocale} />
+      <CategoriesBlock locale={effectiveLocale} />
     </>
   );
 }

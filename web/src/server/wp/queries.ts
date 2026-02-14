@@ -766,6 +766,61 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
   }
 `;
 
+export const GET_POSTS_BY_TAG_DATABASE_ID = /* GraphQL */ `
+  query PostsByTagDatabaseId($tagId: ID!, $first: Int!, $after: String) {
+    tag(id: $tagId, idType: DATABASE_ID) {
+      name
+      slug
+      posts(first: $first, after: $after) {
+        nodes {
+          id
+          slug
+          title
+          date
+          excerpt
+          content
+          language {
+            code
+            slug
+            locale
+          }
+          translations {
+            databaseId
+            slug
+            uri
+            language {
+              code
+              slug
+              locale
+            }
+          }
+          featuredImage {
+            node {
+              sourceUrl
+              altText
+              mediaDetails {
+                width
+                height
+              }
+            }
+          }
+          featuredImageUrl
+          categories {
+            nodes {
+              name
+              slug
+            }
+          }
+        }
+        pageInfo {
+          endCursor
+          hasNextPage
+        }
+      }
+    }
+  }
+`;
+
 // Lightweight related-post queries (minimal fields for card rendering + reading time)
 export const GET_RELATED_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
   query RelatedPostsByCategorySlug(

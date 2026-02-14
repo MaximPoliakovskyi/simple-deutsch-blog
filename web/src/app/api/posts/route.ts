@@ -4,6 +4,7 @@ import { assertLocale } from "@/i18n/locale";
 import {
   getPostBySlug,
   getPosts,
+  getPostsByTagDatabaseId,
   getPostsByTagSlug,
   getPostsPageByCategory,
 } from "@/server/wp/api";
@@ -15,8 +16,12 @@ export async function GET(req: Request) {
   const lang = searchParams.get("lang");
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");
+  const tagIdRaw = searchParams.get("tagId");
+  const canonicalTagIdRaw = searchParams.get("canonicalTagId");
   const slug = searchParams.get("slug");
   const first = Number(searchParams.get("first")) || 200;
+  const tagId = tagIdRaw ? Number(tagIdRaw) : NaN;
+  const canonicalTagId = canonicalTagIdRaw ? Number(canonicalTagIdRaw) : NaN;
 
   // Validate locale (map legacy aliases via assertLocale)
   let validLocale: Locale | undefined;
@@ -30,7 +35,7 @@ export async function GET(req: Request) {
   const fetchCount = validLocale ? first * 2 : first;
 
   console.log(
-    `[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`,
+    `[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", tagId="${tagIdRaw}", canonicalTagId="${canonicalTagIdRaw}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`,
   );
 
   try {
@@ -44,6 +49,46 @@ export async function GET(req: Request) {
       const post = await getPostBySlug(slug, { locale: validLocale, policy: { type: "DYNAMIC" } });
       posts = post ? [post] : [];
       console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
+    } else if (!Number.isNaN(tagId) && tagId > 0) {
+      const res = await getPostsByTagDatabaseId(tagId, fetchCount, undefined, validLocale);
+      posts = res.posts?.nodes ?? [];
+      pageInfo = res.posts?.pageInfo ?? pageInfo;
+      console.log(
+        `[API /api/posts] Got ${posts.length} posts from tagId "${tagId}" with locale "${lang}"`,
+      );
+
+      if (
+        posts.length === 0 &&
+        !Number.isNaN(canonicalTagId) &&
+        canonicalTagId > 0 &&
+        canonicalTagId !== tagId
+      ) {
+        const fallbackLocalized = await getPostsByTagDatabaseId(
+          canonicalTagId,
+          fetchCount,
+          undefined,
+          validLocale,
+        );
+        posts = fallbackLocalized.posts?.nodes ?? [];
+        pageInfo = fallbackLocalized.posts?.pageInfo ?? pageInfo;
+        console.log(
+          `[API /api/posts] Fallback localized canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
+        );
+
+        if (posts.length === 0) {
+          const fallbackAnyLang = await getPostsByTagDatabaseId(
+            canonicalTagId,
+            fetchCount,
+            undefined,
+            undefined,
+          );
+          posts = fallbackAnyLang.posts?.nodes ?? [];
+          pageInfo = fallbackAnyLang.posts?.pageInfo ?? pageInfo;
+          console.log(
+            `[API /api/posts] Fallback any-language canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
+          );
+        }
+      }
     } else if (tag) {
       const res = await getPostsByTagSlug(tag, fetchCount, undefined, validLocale);
       posts = res.posts?.nodes ?? [];

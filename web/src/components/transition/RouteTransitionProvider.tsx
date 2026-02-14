@@ -26,8 +26,6 @@ const WATCHDOG_BUFFER_MS = 150;
 const GLOBAL_STUCK_TIMEOUT_MS = 3200;
 const DEBUG = process.env.NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION === "1";
 
-type TransitionMode = "push";
-
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
   const basePathRaw = process.env.NEXT_PUBLIC_BASE_PATH?.trim();
@@ -93,7 +91,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const pathnameRef = useRef(pathname);
   const targetPathnameRef = useRef<string | null>(null);
   const targetHrefRef = useRef<string | null>(null);
-  const modeRef = useRef<TransitionMode>("push");
   const activeTokenRef = useRef(0);
   const tokenCounterRef = useRef(0);
   const pushedTokenRef = useRef<number | null>(null);
@@ -101,6 +98,10 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const phaseWatchdogRef = useRef<number | null>(null);
   const globalStuckWatchdogRef = useRef<number | null>(null);
   const pathnameWaitersRef = useRef<
+    Array<{ token: number; pathname: string; resolve: () => void }>
+  >([]);
+  const readySignalsRef = useRef<Map<number, Set<string>>>(new Map());
+  const routeReadyWaitersRef = useRef<
     Array<{ token: number; pathname: string; resolve: () => void }>
   >([]);
 
@@ -125,6 +126,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const clearRouteReadyState = useCallback(() => {
+    readySignalsRef.current.clear();
+    routeReadyWaitersRef.current = [];
+  }, []);
+
   const setPhaseSafe = useCallback((nextPhase: TransitionPhase) => {
     phaseRef.current = nextPhase;
     setPhase(nextPhase);
@@ -133,18 +139,19 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const resetToIdle = useCallback(
     (reason: string) => {
       clearPhaseWatchdog();
+      clearRouteReadyState();
+      pathnameWaitersRef.current = [];
       unlockScroll();
       activeTokenRef.current = 0;
       targetPathnameRef.current = null;
       targetHrefRef.current = null;
       pushedTokenRef.current = null;
-      modeRef.current = "push";
       setTargetPathname(null);
       setToken(0);
       setPhaseSafe("idle");
       logDev("reset-idle", { reason });
     },
-    [clearPhaseWatchdog, logDev, setPhaseSafe],
+    [clearPhaseWatchdog, clearRouteReadyState, logDev, setPhaseSafe],
   );
 
   const goCovered = useCallback(
@@ -188,6 +195,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       }
 
       clearPhaseWatchdog();
+      clearRouteReadyState();
+      pathnameWaitersRef.current = [];
 
       const nextToken = tokenCounterRef.current + 1;
       tokenCounterRef.current = nextToken;
@@ -195,6 +204,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       targetPathnameRef.current = nextTargetPathname;
       targetHrefRef.current = nextTargetHref;
       pushedTokenRef.current = null;
+      readySignalsRef.current.set(nextToken, new Set());
 
       setDirection("forward");
       setToken(nextToken);
@@ -205,7 +215,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       logDev("begin", { nextTargetPathname, nextTargetHref, token: nextToken });
       return true;
     },
-    [clearPhaseWatchdog, logDev, setPhaseSafe],
+    [clearPhaseWatchdog, clearRouteReadyState, logDev, setPhaseSafe],
   );
 
   const navigateFromLogo = useCallback(
@@ -227,15 +237,41 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const navigateFromLanguageSwitch = useCallback(
     (href: string) => {
       if (!href) return false;
-      router.push(href);
-      return true;
+      const nextPathname = toPathname(href, pathnameRef.current);
+      if (nextPathname === pathnameRef.current) return false;
+
+      if (prefersReducedMotion) {
+        router.push(href);
+        return true;
+      }
+
+      return beginTransition({ nextTargetPathname: nextPathname, nextTargetHref: href });
     },
-    [router],
+    [beginTransition, prefersReducedMotion, router],
   );
 
-  const signalRouteReady = useCallback((_readyPathname: string, _readyToken: number) => {
-    // Not used in this minimal logo-only transition flow.
-  }, []);
+  const signalRouteReady = useCallback(
+    (readyPathname: string, readyToken: number) => {
+      if (!readyToken || readyToken !== activeTokenRef.current) return;
+
+      const normalizedPathname = normalizeRoutePathname(readyPathname);
+      const readySet = readySignalsRef.current.get(readyToken) ?? new Set<string>();
+      readySet.add(normalizedPathname);
+      readySignalsRef.current.set(readyToken, readySet);
+
+      const remaining: typeof routeReadyWaitersRef.current = [];
+      for (const waiter of routeReadyWaitersRef.current) {
+        if (waiter.pathname === normalizedPathname && waiter.token === readyToken) {
+          waiter.resolve();
+        } else {
+          remaining.push(waiter);
+        }
+      }
+      routeReadyWaitersRef.current = remaining;
+      logDev("route-ready", { readyPathname: normalizedPathname, readyToken });
+    },
+    [logDev],
+  );
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -345,10 +381,48 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       });
     };
 
+    const waitForRouteReadySignal = (
+      waitToken: number,
+      waitPathname: string,
+      timeoutMs: number,
+    ) => {
+      const readySet = readySignalsRef.current.get(waitToken);
+      if (readySet?.has(waitPathname) && activeTokenRef.current === waitToken) {
+        return Promise.resolve(true);
+      }
+
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+
+        const finish = (value: boolean) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          routeReadyWaitersRef.current = routeReadyWaitersRef.current.filter(
+            (x) => x.resolve !== onMatch,
+          );
+          resolve(value);
+        };
+
+        const onMatch = () => finish(true);
+        const timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+        routeReadyWaitersRef.current.push({
+          token: waitToken,
+          pathname: waitPathname,
+          resolve: onMatch,
+        });
+      });
+    };
+
     let cancelled = false;
+    const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+    const remainingMs = () => {
+      const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+      return Math.max(0, READY_MAX_MS - (now - startedAt));
+    };
 
     const run = async () => {
-      const pathMatched = await waitForPathname(expectedToken, expectedPathname, READY_MAX_MS);
+      const pathMatched = await waitForPathname(expectedToken, expectedPathname, remainingMs());
       if (!pathMatched || cancelled) {
         goExiting("path-timeout", expectedToken);
         return;
@@ -357,6 +431,22 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
       await waitDoubleRaf();
       if (cancelled) return;
+      if (activeTokenRef.current !== expectedToken || phaseRef.current !== "waiting_ready") return;
+
+      const readyMatched = await waitForRouteReadySignal(
+        expectedToken,
+        expectedPathname,
+        remainingMs(),
+      );
+      if (!readyMatched || cancelled) {
+        if (process.env.NODE_ENV !== "production") {
+          console.warn(
+            `[route-transition] route-ready timeout for ${expectedPathname} (token ${expectedToken})`,
+          );
+        }
+        goExiting("ready-timeout", expectedToken);
+        return;
+      }
       if (activeTokenRef.current !== expectedToken || phaseRef.current !== "waiting_ready") return;
 
       goExiting("ready", expectedToken);
@@ -388,11 +478,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
       logDev("global-stuck-reset", { phase: phaseRef.current, expectedToken });
       setPhaseSafe("idle");
+      clearRouteReadyState();
+      pathnameWaitersRef.current = [];
       activeTokenRef.current = 0;
       targetPathnameRef.current = null;
       targetHrefRef.current = null;
       pushedTokenRef.current = null;
-      modeRef.current = "push";
       setTargetPathname(null);
       setToken(0);
       forceUnlockScroll();
@@ -404,7 +495,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         globalStuckWatchdogRef.current = null;
       }
     };
-  }, [logDev, phase, setPhaseSafe]);
+  }, [clearRouteReadyState, logDev, phase, setPhaseSafe]);
 
   const settleOverlayPhase = useCallback(
     (source: "transitionend" | "transitioncancel") => {
@@ -439,13 +530,15 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return () => {
       clearPhaseWatchdog();
+      clearRouteReadyState();
+      pathnameWaitersRef.current = [];
       if (globalStuckWatchdogRef.current !== null) {
         window.clearTimeout(globalStuckWatchdogRef.current);
         globalStuckWatchdogRef.current = null;
       }
       forceUnlockScroll();
     };
-  }, [clearPhaseWatchdog]);
+  }, [clearPhaseWatchdog, clearRouteReadyState]);
 
   const contextValue = useMemo(
     () => ({

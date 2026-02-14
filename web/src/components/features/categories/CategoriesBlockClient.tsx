@@ -7,10 +7,17 @@ import { useI18n } from "@/core/i18n/LocaleProvider";
 import type { Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
 
-type Category = { id: string; name: string; slug: string };
+type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  tagDatabaseId: number;
+  canonicalTagDatabaseId: number;
+};
 
 type Props = {
   categories: Category[];
+  initialSelectedCategory?: string | null;
   initialPosts: WPPostCard[];
   initialEndCursor: string | null;
   initialHasNextPage: boolean;
@@ -18,18 +25,10 @@ type Props = {
   locale?: Locale;
 };
 
-type TranslationLike = {
-  slug?: string | null;
-  language?: { code?: string | null } | null;
-};
-
-type PostWithTranslations = WPPostCard & {
-  translations?: TranslationLike[] | null;
-};
-
 export default function CategoriesBlockClient({
   categories,
-  initialPosts: _initialPosts,
+  initialSelectedCategory,
+  initialPosts,
   initialEndCursor: _initialEndCursor,
   initialHasNextPage: _initialHasNextPage,
   pageSize = 3,
@@ -41,12 +40,21 @@ export default function CategoriesBlockClient({
     const a1 = categories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
     return a1 ? a1.slug : categories.length > 0 ? categories[0].slug : null;
   }, [categories]);
+  const selectedOnMount = initialSelectedCategory ?? preferredInitial;
 
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(preferredInitial);
-  const [allPosts, setAllPosts] = React.useState<WPPostCard[]>([]);
+  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(new Map());
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(selectedOnMount);
+  const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!selectedOnMount) return;
+    cacheRef.current.set(selectedOnMount, initialPosts);
+    setAllPosts(initialPosts);
+    setDisplayedCount(pageSize);
+  }, [initialPosts, pageSize, selectedOnMount]);
 
   // Fetch all posts for the selected tag
   React.useEffect(() => {
@@ -54,70 +62,42 @@ export default function CategoriesBlockClient({
 
     async function fetchAllPosts() {
       if (!selectedCategory) return;
+      const selectedTag = categories.find((category) => category.slug === selectedCategory);
+      if (!selectedTag) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(`[levels] Unknown selected level "${selectedCategory}".`);
+        }
+        setAllPosts([]);
+        return;
+      }
+
+      const cached = cacheRef.current.get(selectedCategory);
+      if (cached) {
+        setAllPosts(cached);
+        setDisplayedCount(pageSize);
+        setIsFetching(false);
+        setIsLoading(false);
+        return;
+      }
 
       setIsFetching(true);
       setIsLoading(true);
       try {
-        // For Ukrainian and Russian locales, fetch English posts first (then translate)
-        const shouldFetchEnglish = locale === "uk" || locale === "ru";
-        const fetchLang = shouldFetchEnglish ? undefined : locale;
-
         const url = new URL("/api/posts", window.location.origin);
-        // Fetch a large batch to get all available posts for this tag
         url.searchParams.set("first", "100");
-        url.searchParams.set("tag", selectedCategory);
-        if (fetchLang) {
-          url.searchParams.set("lang", fetchLang);
-        }
+        url.searchParams.set("tagId", String(selectedTag.tagDatabaseId));
+        url.searchParams.set("canonicalTagId", String(selectedTag.canonicalTagDatabaseId));
+        if (locale) url.searchParams.set("lang", locale);
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
         const data = (await res.json()) as { posts?: unknown };
-        let posts: PostWithTranslations[] = Array.isArray(data.posts)
-          ? (data.posts as PostWithTranslations[])
-          : [];
+        const posts: WPPostCard[] = Array.isArray(data.posts) ? (data.posts as WPPostCard[]) : [];
 
         if (cancelled) return;
 
-        // If Ukrainian or Russian locale, fetch translated versions of posts
-        if (shouldFetchEnglish && posts.length > 0) {
-          const translatedPosts: PostWithTranslations[] = [];
-          const targetLangCode = locale === "uk" ? "UK" : locale === "ru" ? "RU" : null;
-
-          if (targetLangCode) {
-            for (const post of posts) {
-              const translation = post.translations?.find(
-                (t) => t?.language?.code === targetLangCode,
-              );
-
-              if (translation?.slug) {
-                try {
-                  // Fetch translated version
-                  const translatedUrl = new URL("/api/posts", window.location.origin);
-                  translatedUrl.searchParams.set("slug", translation.slug);
-                  const translatedRes = await fetch(translatedUrl.toString());
-
-                  if (translatedRes.ok) {
-                    const translatedData = (await translatedRes.json()) as { posts?: unknown };
-                    const translatedPost =
-                      Array.isArray(translatedData.posts) && translatedData.posts.length > 0
-                        ? (translatedData.posts[0] as PostWithTranslations)
-                        : null;
-                    if (translatedPost) {
-                      translatedPosts.push(translatedPost);
-                    }
-                  }
-                } catch (err) {
-                  console.error(`Failed to fetch ${locale} post ${translation.slug}:`, err);
-                }
-              }
-            }
-
-            posts = translatedPosts;
-          }
-        }
-
+        cacheRef.current.set(selectedCategory, posts);
         setAllPosts(posts);
         setDisplayedCount(pageSize);
       } catch (error) {
@@ -137,7 +117,7 @@ export default function CategoriesBlockClient({
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory, locale, pageSize]);
+  }, [selectedCategory, categories, locale, pageSize]);
 
   const loadMore = React.useCallback(() => {
     setDisplayedCount((prev) => prev + pageSize);
@@ -151,7 +131,7 @@ export default function CategoriesBlockClient({
       <div className="mb-1">
         <CategoryPills
           categories={categories}
-          initialSelected={preferredInitial}
+          initialSelected={selectedOnMount}
           onSelect={(slug) => setSelectedCategory(slug)}
           alignment="left"
           required={true}

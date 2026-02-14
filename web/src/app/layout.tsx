@@ -4,7 +4,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
-import Footer from "@/components/layout/Footer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import Providers from "@/components/Providers";
 import { RouteReady } from "@/components/transition/RouteReady";
@@ -94,11 +93,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
             {/* Main page content - add top spacing so content sits further below the nav */}
             <div className="mt-8 md:mt-12" aria-hidden />
-            <Providers>
-              {children}
-              {/* Homepage-only components are rendered by their pages now. */}
-              <Footer />
-            </Providers>
+            <Providers>{children}</Providers>
 
             {/* Global back button that appears after scrolling */}
             <BackButton />

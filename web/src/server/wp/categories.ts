@@ -6,6 +6,7 @@ import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,
   GET_CATEGORY_BY_SLUG,
+  GET_POSTS_BY_TAG_DATABASE_ID,
   GET_POSTS_BY_TAG_SLUG,
   GET_TAG_BY_SLUG,
 } from "@/server/wp/queries";
@@ -102,6 +103,51 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
 
   const tag = data.tag ?? null;
 
+  let posts = tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } };
+  if (targetLang && posts.nodes) {
+    posts = {
+      ...posts,
+      nodes: posts.nodes.filter((post) => post.language?.code === targetLang),
+    };
+  }
+
+  posts = {
+    ...posts,
+    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+  };
+
+  return {
+    tag,
+    posts,
+  };
+}
+
+export async function getPostsByTagDatabaseId(
+  tagDatabaseId: number,
+  first = 12,
+  after?: string,
+  locale?: Locale,
+) {
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
+  const data = await fetchGraphQL<{
+    tag: {
+      name: string;
+      slug: string;
+      posts: {
+        nodes: PostListItem[];
+        pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      };
+    } | null;
+  }>(
+    GET_POSTS_BY_TAG_DATABASE_ID,
+    { tagId: String(tagDatabaseId), first, after: after ?? null },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:tag-id"] },
+    },
+  );
+
+  const tag = data.tag ?? null;
   let posts = tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } };
   if (targetLang && posts.nodes) {
     posts = {
