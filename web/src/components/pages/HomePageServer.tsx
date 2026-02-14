@@ -62,18 +62,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   return (
     <>
       <main className="mx-auto max-w-7xl px-4 py-12">
-        <Suspense
-          fallback={
-            <div className="space-y-8">
-              <div className="h-12 bg-gray-200 rounded-lg animate-pulse" />
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                {Array.from({ length: 4 }, (_, n) => n).map((n) => (
-                  <div key={n} className="h-64 bg-gray-200 rounded-lg animate-pulse" />
-                ))}
-              </div>
-            </div>
-          }
-        >
+        <Suspense fallback={null}>
           <DeferredHeroFilters
             initialPosts={mappedPosts}
             initialEndCursor={pageInfo.endCursor}
@@ -84,13 +73,13 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
         </Suspense>
       </main>
 
-      <Suspense fallback={<div className="h-96" />}>
+      <Suspense fallback={null}>
         <SuccessStoriesSliderServer locale={effectiveLocale} />
       </Suspense>
-      <Suspense fallback={<div className="h-96" />}>
+      <Suspense fallback={null}>
         <LatestPostsSliderServer locale={effectiveLocale} />
       </Suspense>
-      <Suspense fallback={<div className="h-64" />}>
+      <Suspense fallback={null}>
         <CategoriesBlock locale={effectiveLocale} />
       </Suspense>
     </>
