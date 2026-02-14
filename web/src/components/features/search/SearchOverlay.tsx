@@ -1,7 +1,9 @@
 // src/components/SearchOverlay.tsx
 "use client";
+
 /* biome-disable */
 
+import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -67,6 +69,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const prefersReducedMotion = useReducedMotion();
   const focusSearchInput = useCallback(() => {
     const input = inputRef.current;
     if (!input) return;
@@ -211,7 +214,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   // --- mount/unmount animation state ---
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false); // drives enter/exit transitions
-  const EXIT_MS = 400; // keep in sync with CSS below
+  const TRANSITION_MS = prefersReducedMotion ? 0 : 200;
 
   // Lock scroll and trigger **smooth enter animation**
   useEffect(() => {
@@ -219,6 +222,15 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     try {
       lockScroll();
     } catch {}
+
+    if (prefersReducedMotion) {
+      setShow(true);
+      return () => {
+        try {
+          unlockScroll();
+        } catch {}
+      };
+    }
 
     // Use double rAF to ensure initial styles are committed before we flip to "show"
     const id = requestAnimationFrame(() => {
@@ -231,23 +243,21 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         unlockScroll();
       } catch {}
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   const requestClose = useCallback(() => {
-    // First collapse the results area smoothly, then hide the panel
+    // Collapse results and close panel/backdrop.
     setShowResults(false);
-    // give the results wrapper time to animate closed
-    const collapseDelay = RESIZE_MS + 20;
-    let t2: number | undefined;
-    const t = window.setTimeout(() => {
-      setShow(false); // play panel exit animation
-      t2 = window.setTimeout(() => onClose(), EXIT_MS);
-    }, collapseDelay);
+    setShow(false);
+    if (prefersReducedMotion) {
+      onClose();
+      return () => {};
+    }
+    const t = window.setTimeout(() => onClose(), TRANSITION_MS);
     return () => {
       window.clearTimeout(t);
-      if (t2) window.clearTimeout(t2);
     };
-  }, [onClose]);
+  }, [onClose, prefersReducedMotion, TRANSITION_MS]);
 
   // Global key handlers
   useEffect(() => {
@@ -397,6 +407,45 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     if (el) el.scrollIntoView({ block: "nearest" });
   }, [highlight]);
 
+  // Trap focus within the search panel while open.
+  useEffect(() => {
+    if (!show) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      const focusable = panel.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+
+      if (event.shiftKey) {
+        if (!active || active === first || !panel.contains(active)) {
+          event.preventDefault();
+          last.focus({ preventScroll: true });
+        }
+        return;
+      }
+
+      if (!active || active === last || !panel.contains(active)) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [show]);
+
   const onBackdrop = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) requestClose();
   };
@@ -422,8 +471,8 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
       )}
       style={{
         transitionProperty: "background-color, opacity, filter",
-        transitionDuration: `${EXIT_MS}ms`,
-        transitionTimingFunction: "cubic-bezier(.16,1,.3,1)", // silkier ease
+        transitionDuration: `${TRANSITION_MS}ms`,
+        transitionTimingFunction: "ease-in-out",
       }}
     >
       <div
@@ -441,8 +490,8 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         ref={panelRef}
         style={{
           transitionProperty: "opacity, transform",
-          transitionDuration: `${EXIT_MS}ms`,
-          transitionTimingFunction: "cubic-bezier(.16,1,.3,1)",
+          transitionDuration: `${TRANSITION_MS}ms`,
+          transitionTimingFunction: "ease-in-out",
         }}
       >
         {/* Input row */}

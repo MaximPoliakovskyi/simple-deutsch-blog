@@ -14,7 +14,12 @@ import { isUnmodifiedLeftClick, useTransitionNav } from "@/components/transition
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
-import { applyTheme, subscribeRootTheme, type Theme } from "@/core/theme/client";
+import {
+  applyTheme,
+  runThemeTransition,
+  subscribeRootTheme,
+  type Theme,
+} from "@/core/theme/client";
 import { DEFAULT_LOCALE, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
@@ -376,7 +381,7 @@ export default function Header() {
         onCloseMenu={() => setOpen(false)}
         onLogoClick={handleLogoClick}
         onToggleTheme={() => {
-          applyTheme(mobileTheme === "dark" ? "light" : "dark");
+          runThemeTransition(() => applyTheme(mobileTheme === "dark" ? "light" : "dark"));
           // keep menu open so user sees the change, or close if preferred
         }}
       />

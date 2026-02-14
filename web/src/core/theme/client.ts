@@ -3,7 +3,9 @@
 export type Theme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "sd-theme";
-const THEME_TRANSITION_MS = 350;
+const THEME_CROSSFADE_MS = 220;
+const THEME_CROSSFADE_EASE = "ease-in-out";
+const THEME_OVERLAY_CLASS = "sd-theme-crossfade-overlay";
 const THEME_STEP_DEBUG_WINDOW_MS = 1000;
 const DEBUG_THEME_STEP =
   process.env.NODE_ENV !== "production" && process.env.NEXT_PUBLIC_DEBUG_THEME_STEP === "1";
@@ -22,16 +24,10 @@ export function getRootTheme(): Theme {
 }
 
 export function applyTheme(theme: Theme): void {
-  const root = getRoot() as HTMLElement & { __sdThemeTimer?: number };
-  const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const root = getRoot();
 
   if (DEBUG_THEME_STEP) {
     debugThemeStep(root, theme);
-  }
-
-  if (!prefersReduce) {
-    if (root.__sdThemeTimer) window.clearTimeout(root.__sdThemeTimer);
-    root.classList.add("theme-transition");
   }
 
   root.classList.toggle("dark", theme === "dark");
@@ -39,12 +35,70 @@ export function applyTheme(theme: Theme): void {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   } catch {}
+}
 
-  if (!prefersReduce) {
-    root.__sdThemeTimer = window.setTimeout(() => {
-      root.classList.remove("theme-transition");
-    }, THEME_TRANSITION_MS);
+let activeOverlay: HTMLDivElement | null = null;
+let activeTimers: number[] = [];
+
+function clearThemeTransitionArtifacts() {
+  for (const id of activeTimers) {
+    window.clearTimeout(id);
   }
+  activeTimers = [];
+  if (activeOverlay?.parentNode) {
+    activeOverlay.parentNode.removeChild(activeOverlay);
+  }
+  activeOverlay = null;
+}
+
+export function runThemeTransition(toggleTheme: () => void) {
+  if (typeof window === "undefined" || typeof document === "undefined") {
+    toggleTheme();
+    return;
+  }
+
+  const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (prefersReduce) {
+    clearThemeTransitionArtifacts();
+    toggleTheme();
+    return;
+  }
+
+  clearThemeTransitionArtifacts();
+
+  const overlay = document.createElement("div");
+  overlay.className = THEME_OVERLAY_CLASS;
+  overlay.style.transitionDuration = `${Math.round(THEME_CROSSFADE_MS / 2)}ms`;
+  overlay.style.transitionTimingFunction = THEME_CROSSFADE_EASE;
+  overlay.style.opacity = "0";
+  overlay.style.backgroundColor =
+    window.getComputedStyle(document.body).backgroundColor ||
+    window.getComputedStyle(document.documentElement).backgroundColor ||
+    "#ffffff";
+  document.body.appendChild(overlay);
+  activeOverlay = overlay;
+
+  const fadeInId = window.setTimeout(() => {
+    overlay.style.opacity = "1";
+  }, 0);
+
+  const switchId = window.setTimeout(
+    () => {
+      toggleTheme();
+      requestAnimationFrame(() => {
+        if (!activeOverlay || overlay !== activeOverlay) return;
+        overlay.style.opacity = "0";
+      });
+    },
+    Math.round(THEME_CROSSFADE_MS / 2),
+  );
+
+  const cleanupId = window.setTimeout(() => {
+    if (activeOverlay !== overlay) return;
+    clearThemeTransitionArtifacts();
+  }, THEME_CROSSFADE_MS + 40);
+
+  activeTimers = [fadeInId, switchId, cleanupId];
 }
 
 export function subscribeRootTheme(onThemeChange: (theme: Theme) => void): () => void {

@@ -99,6 +99,11 @@ html {
   scrollbar-gutter: stable;
 }
 
+/* Preserve intrinsic image ratios when width/height attributes are present. */
+img[width][height] {
+  height: auto;
+}
+
 html.scroll-locked {
   overflow: hidden;
   padding-right: var(--scrollbar-comp);
@@ -171,26 +176,15 @@ html.theme-infect.theme-infect-active::before {
   opacity: 1;
 }
 
-/* The theme-transition class briefly animates token color changes */
-/* When toggling theme we want most visual tokens to interpolate smoothly.
-   Apply transitions broadly while respecting prefers-reduced-motion. */
-html.theme-transition,
-html.theme-transition *,
-html.theme-transition *::before,
-html.theme-transition *::after {
-  transition-property: background-color, color, border-color, box-shadow, fill, stroke, filter;
-  transition-duration: 350ms;
-  transition-timing-function: cubic-bezier(0.2, 0.9, 0.2, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.theme-transition,
-  html.theme-transition *,
-  html.theme-transition *::before,
-  html.theme-transition *::after {
-    /* Avoid forcing transitions for users who prefer reduced motion. */
-    transition: none !important;
-  }
+/* GPU-friendly theme switch crossfade overlay */
+.sd-theme-crossfade-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  pointer-events: none;
+  opacity: 0;
+  will-change: opacity;
+  transition-property: opacity;
 }
 
 /* Reveal overlay: controlled by theme-reveal + theme-reveal-active classes */
@@ -394,7 +388,6 @@ html.dark .prose a.sd-pill {
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  /* biome-ignore lint/style/noDescendingSpecificity: global reduced-motion reset intentionally applies to all elements */
   * {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     animation-duration: 0.01ms !important;

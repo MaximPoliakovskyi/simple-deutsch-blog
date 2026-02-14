@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer";
 import { DEFAULT_LOCALE, parseLocaleFromPath } from "@/i18n/locale";
 
 const FADE_DURATION_S = 0.2;
-const FADE_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const FADE_EASE = "easeInOut";
 
 export default function Providers({ children }: { children: ReactNode }) {
   const pathname = usePathname() || "/";

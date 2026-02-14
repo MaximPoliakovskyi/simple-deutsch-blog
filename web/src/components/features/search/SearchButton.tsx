@@ -123,6 +123,15 @@ export default function SearchButton({
           onClose={() => {
             setOpen(false);
             setOpenMethod(undefined);
+            requestAnimationFrame(() => {
+              const btn = buttonRef.current;
+              if (!btn) return;
+              try {
+                btn.focus({ preventScroll: true });
+              } catch {
+                btn.focus();
+              }
+            });
           }}
           openMethod={openMethod}
         />

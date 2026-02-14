@@ -1,6 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import { applyTheme, subscribeRootTheme, type Theme } from "@/core/theme/client";
+import {
+  applyTheme,
+  runThemeTransition,
+  subscribeRootTheme,
+  type Theme,
+} from "@/core/theme/client";
 
 export default function ThemeToggle() {
   const [mounted, setMounted] = useState(false);
@@ -17,7 +22,7 @@ export default function ThemeToggle() {
 
   function setTheme(next: Theme): void {
     if (!mounted) return;
-    applyTheme(next);
+    runThemeTransition(() => applyTheme(next));
   }
 
   if (!mounted) return null;
