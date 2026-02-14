@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import { SearchPageContent, type SearchParams } from "../../../search/page";
+import { SearchPageContent, type SearchParams } from "../../../(site)/search/page";
 
 type Props = {
   params: Promise<{ locale: string }>;

@@ -104,9 +104,8 @@ export default function CategoryPills({
   const [selected, setSelected] = React.useState<string | null>(defaultSelected ?? null);
 
   React.useEffect(() => {
-    // keep parent in sync
-    onSelect(selected);
-  }, [selected, onSelect]);
+    setSelected(defaultSelected ?? null);
+  }, [defaultSelected]);
 
   const containerClass = `mx-0 my-8 flex flex-wrap gap-3 ${alignment === "center" ? "justify-center" : "justify-start"}`;
 
@@ -127,15 +126,13 @@ export default function CategoryPills({
             <button
               key={cat.id}
               type="button"
-              onClick={() =>
+              onClick={() => {
                 setSelected((s) => {
-                  if (required) {
-                    // If required, never clear selection; clicking the active stays active
-                    return cat.slug;
-                  }
-                  return s === cat.slug ? null : cat.slug;
-                })
-              }
+                  const next = required ? cat.slug : s === cat.slug ? null : cat.slug;
+                  onSelect(next);
+                  return next;
+                });
+              }}
               className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors cursor-pointer ${
                 active
                   ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"

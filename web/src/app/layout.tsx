@@ -2,14 +2,11 @@
 
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
-import HydratedNavigation from "@/components/layout/HydratedNavigation";
-import Providers from "@/components/Providers";
-import { RouteReady } from "@/components/transition/RouteReady";
+import ChunkErrorRecovery from "@/components/layout/ChunkErrorRecovery";
 import { RouteTransitionProvider } from "@/components/transition/RouteTransitionProvider";
-import BackButton from "@/components/ui/BackButton";
-import PreloaderClient from "@/components/ui/PreloaderClient";
+import AppFadeWrapper from "@/components/ui/AppFadeWrapper";
+import PreloaderGate from "@/components/ui/PreloaderGate";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import "@/styles/globals.css";
@@ -41,17 +38,48 @@ const THEME_INIT_SCRIPT = `
 })();
 `;
 
+const PRELOADER_INIT_SCRIPT = `
+(() => {
+  try {
+    const key = "preloader_seen";
+    const nav = performance.getEntriesByType("navigation")[0];
+    if (nav && nav.type === "reload") {
+      sessionStorage.removeItem(key);
+    }
+    const seen = sessionStorage.getItem(key) === "1";
+    if (seen) {
+      document.documentElement.setAttribute("data-preloader", "0");
+      document.documentElement.setAttribute("data-app-visible", "1");
+    } else {
+      document.documentElement.setAttribute("data-preloader", "1");
+      document.documentElement.setAttribute("data-app-visible", "0");
+    }
+  } catch (_) {
+    document.documentElement.setAttribute("data-preloader", "1");
+    document.documentElement.setAttribute("data-app-visible", "0");
+  }
+})();
+`;
+
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   const isProd = process.env.NODE_ENV === "production";
+  const isVercel = process.env.VERCEL === "1";
+  const enableAnalytics = isProd && isVercel;
 
   return (
-    <html lang={DEFAULT_LOCALE} suppressHydrationWarning data-scroll-behavior="smooth">
+    <html
+      lang={DEFAULT_LOCALE}
+      suppressHydrationWarning
+      data-scroll-behavior="smooth"
+      data-preloader="1"
+      data-app-visible="0"
+    >
       <head>
         <meta charSet="UTF-8" />
         {/* Document title and favicon */}
         <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
-        <link rel="icon" href="/logo.ico" />
+        <link rel="icon" href="/favicon.ico" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Preconnect to critical origins */}
@@ -73,6 +101,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           crossOrigin="anonymous"
         />
 
+        {/* Decide preloader visibility before first paint to prevent content flash */}
+        <script dangerouslySetInnerHTML={{ __html: PRELOADER_INIT_SCRIPT }} />
+
         {/* Apply theme before paint to avoid flash and hydration drift. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
@@ -83,25 +114,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        <LocaleProviderFromPath>
-          {/* Preloader with 1.5s minimum display time */}
-          <PreloaderClient />
-          <RouteTransitionProvider>
-            {/* Global navigation with SSR skeleton for fast FCP */}
-            <HydratedNavigation />
-            <RouteReady />
-
-            {/* Main page content - add top spacing so content sits further below the nav */}
-            <div className="mt-8 md:mt-12" aria-hidden />
-            <Providers>{children}</Providers>
-
-            {/* Global back button that appears after scrolling */}
-            <BackButton />
-          </RouteTransitionProvider>
-
-          {/* Load analytics only in production and defer to avoid blocking */}
-          <AnalyticsClient isProd={isProd} />
-        </LocaleProviderFromPath>
+        <ChunkErrorRecovery />
+        <RouteTransitionProvider>
+          <PreloaderGate>
+            <AppFadeWrapper>
+              <div id="app-shell">{children}</div>
+            </AppFadeWrapper>
+          </PreloaderGate>
+        </RouteTransitionProvider>
+        {/* Load analytics only in production and defer to avoid blocking */}
+        <AnalyticsClient enabled={enableAnalytics} />
       </body>
     </html>
   );

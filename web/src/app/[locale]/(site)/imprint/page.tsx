@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import ImprintPage from "../../../imprint/page";
+import ImprintPage from "../../../(site)/imprint/page";
 
 type Props = {
   params: Promise<{ locale: string }>;

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import { LevelsIndexContent } from "../../../levels/LevelsIndexContent";
+import { LevelsIndexContent } from "../../../(site)/levels/LevelsIndexContent";
 
 type Props = {
   params: Promise<{ locale: string }>;

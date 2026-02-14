@@ -20,6 +20,16 @@ function isAsset(pathname: string) {
   );
 }
 
+function nextWithPathname(req: NextRequest) {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set("x-pathname", req.nextUrl.pathname);
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+}
+
 export function middleware(req: NextRequest) {
   try {
     const { nextUrl } = req;
@@ -28,13 +38,13 @@ export function middleware(req: NextRequest) {
     // Early bypass for Next.js internals and API routes so middleware
     // does not interfere with these technical endpoints.
     if (pathname.startsWith("/_next/") || pathname.startsWith("/api/")) {
-      const res = NextResponse.next();
+      const res = nextWithPathname(req);
       res.headers.set("x-mw", "pass");
       return res;
     }
 
     if (isAsset(pathname)) {
-      const res = NextResponse.next();
+      const res = nextWithPathname(req);
       // Cache static assets aggressively
       res.headers.set("Cache-Control", "public, max-age=31536000, immutable");
       // Debug header to show middleware passed for assets
@@ -99,12 +109,13 @@ export function middleware(req: NextRequest) {
     // Determine locale prefix in pathname (server-side only)
     const parsed = parseLocaleFromPath(pathname);
 
-    // If path already contains a valid locale prefix, allow with cache headers
+    // If path already contains a valid locale prefix, pass through.
+    // Do not force Cache-Control here: stale HTML can reference old chunk hashes
+    // after a new build/deploy and trigger ChunkLoadError.
     if (parsed) {
-      const res = NextResponse.next();
-      if (!pathname.includes("/api/")) {
-        res.headers.set("Cache-Control", "public, max-age=300, stale-while-revalidate=3600");
-      }
+      const res = nextWithPathname(req);
+      // Prevent stale HTML from referencing removed chunk hashes after deploys.
+      res.headers.set("Cache-Control", "no-store, no-cache, must-revalidate");
       res.headers.set("x-mw", "pass");
       return res;
     }
@@ -135,7 +146,7 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(redirectUrl, 308);
     }
   } catch (_e) {
-    const res = NextResponse.next();
+    const res = nextWithPathname(req);
     res.headers.set("x-mw", "pass");
     return res;
   }

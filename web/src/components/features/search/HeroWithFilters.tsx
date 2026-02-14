@@ -28,10 +28,11 @@ export default function HeroWithFilters({
   locale,
 }: Props) {
   const { t, locale: uiLocale } = useI18n();
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
+  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(new Map([["all", initialPosts]]));
+  const requestIdRef = React.useRef(0);
 
   // Locale-aware animated words for hero headline (line 3)
   // Each locale provides its own word list
@@ -48,48 +49,65 @@ export default function HeroWithFilters({
   const longestAnimatedWordLength = Math.max(...animatedWords.map((w) => w.length));
   const stableWidthCh = longestAnimatedWordLength + 0.3; // +0.3ch for cursor space
 
-  // Fetch posts when category filter changes
   React.useEffect(() => {
-    let cancelled = false;
+    cacheRef.current = new Map([["all", initialPosts]]);
+    requestIdRef.current += 1;
+    setAllPosts(initialPosts);
+    setDisplayedCount(pageSize);
+    setIsLoading(false);
+  }, [initialPosts, pageSize]);
 
-    async function fetchPosts() {
-      if (!selectedCategory) {
-        setAllPosts(initialPosts);
+  const handleCategorySelect = React.useCallback(
+    async (slug: string | null) => {
+      const key = slug ?? "all";
+      const cached = cacheRef.current.get(key);
+      if (cached) {
+        setAllPosts(cached);
         setDisplayedCount(pageSize);
+        setIsLoading(false);
         return;
       }
 
+      if (!slug) {
+        setAllPosts(initialPosts);
+        setDisplayedCount(pageSize);
+        setIsLoading(false);
+        return;
+      }
+
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
       setIsLoading(true);
+
       try {
         const url = new URL("/api/posts", window.location.origin);
         url.searchParams.set("first", "100");
-        url.searchParams.set("category", selectedCategory);
+        url.searchParams.set("category", slug);
         url.searchParams.set("lang", locale ?? "en");
 
         const res = await fetch(url.toString());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        const data = await res.json();
+        const data = (await res.json()) as { posts?: WPPostCard[] };
+        if (requestIdRef.current !== requestId) return;
 
-        if (cancelled) return;
-
-        setAllPosts(data.posts ?? []);
+        const posts = data.posts ?? [];
+        cacheRef.current.set(key, posts);
+        setAllPosts(posts);
         setDisplayedCount(pageSize);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
-        if (!cancelled) {
+        if (requestIdRef.current === requestId) {
           setAllPosts([]);
         }
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (requestIdRef.current === requestId) {
+          setIsLoading(false);
+        }
       }
-    }
-
-    fetchPosts();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCategory, locale, pageSize, initialPosts]);
+    },
+    [initialPosts, locale, pageSize],
+  );
 
   const loadMore = React.useCallback(() => {
     setDisplayedCount((prev) => prev + pageSize);
@@ -102,12 +120,12 @@ export default function HeroWithFilters({
     <>
       <section className="text-center max-w-7xl mx-auto px-4 pt-12 sm:pt-14 md:pt-16 pb-0">
         {/* Hero heading: single h1 with manual line breaks and minimal line height */}
-        <h1 className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))]">
+        <h1 className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))] select-text">
           {t("heroLine1")}
           <br />
           {t("heroLine2")}
           <br />
-          <span className="inline-block whitespace-nowrap align-baseline">
+          <span className="inline-block whitespace-nowrap align-baseline select-text">
             <TypewriterWords
               words={animatedWords}
               className="text-blue-600"
@@ -132,7 +150,7 @@ export default function HeroWithFilters({
         <CategoryPills
           categories={categories}
           initialSelected={null}
-          onSelect={(slug) => setSelectedCategory(slug)}
+          onSelect={handleCategorySelect}
         />
       </section>
 

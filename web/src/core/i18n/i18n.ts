@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/locale";
 type Translations = Record<string, string>;
 
 const en: Translations = {
+  __locale: "en",
   siteTitle: "Simple Deutsch",
   posts: "Posts",
   categories: "Categories",
@@ -53,6 +54,10 @@ const en: Translations = {
   "notFound.title": "Page Not Found",
   "notFound.description": "The page you are looking for does not exist or may have been moved.",
   "notFound.backToHome": "Back to Home",
+  /* Namespaced NotFound keys */
+  "NotFound.title": "Page Not Found",
+  "NotFound.description": "The page you are looking for does not exist or may have been moved.",
+  "NotFound.backHome": "Back to Home",
   postNotFound: "Post not found",
   categoryNotFound: "Category not found",
   tagNotFound: "Tag not found",
@@ -262,6 +267,7 @@ const en: Translations = {
 };
 
 const uk: Translations = {
+  __locale: "uk",
   siteTitle: "Simple Deutsch",
   posts: "Пости",
   categories: "Категорії",
@@ -311,6 +317,10 @@ const uk: Translations = {
   "notFound.title": "Сторінку не знайдено",
   "notFound.description": "Сторінку, яку ви шукаєте, не знайдено або її було переміщено.",
   "notFound.backToHome": "Повернутися на головну",
+  /* Namespaced NotFound keys */
+  "NotFound.title": "Сторінку не знайдено",
+  "NotFound.description": "Сторінку, яку ви шукаєте, не знайдено або її було переміщено.",
+  "NotFound.backHome": "Повернутися на головну",
   postNotFound: "Публікацію не знайдено",
   categoryNotFound: "Категорію не знайдено",
   tagNotFound: "Тег не знайдено",
@@ -519,6 +529,7 @@ const uk: Translations = {
 };
 
 const ru: Translations = {
+  __locale: "ru",
   siteTitle: "Simple Deutsch",
   posts: "Посты",
   categories: "Категории",
@@ -568,6 +579,10 @@ const ru: Translations = {
   "notFound.title": "Страница не найдена",
   "notFound.description": "Страница, которую вы ищете, не существует или была перемещена.",
   "notFound.backToHome": "Вернуться на главную",
+  /* Namespaced NotFound keys */
+  "NotFound.title": "Страница не найдена",
+  "NotFound.description": "Страница, которую вы ищете, не существует или была перемещена.",
+  "NotFound.backHome": "Вернуться на главную",
   postNotFound: "Публиция не найдена",
   categoryNotFound: "Категория не найдена",
   tagNotFound: "Тег не найден",
@@ -779,6 +794,22 @@ export const TRANSLATIONS: Record<Locale, Translations> = {
   uk,
   ru,
 };
+
+function assertDictionaryLocale(expectedLocale: Locale, dictionary: Translations) {
+  if (process.env.NODE_ENV === "production") return;
+  const actualLocale = dictionary.__locale;
+  if (actualLocale !== expectedLocale) {
+    // Safety guard: catches accidental swapped imports/mappings (e.g. uk -> ru file).
+    // eslint-disable-next-line no-console
+    console.error(
+      `[i18n] Locale dictionary mismatch: expected "${expectedLocale}" but got "${actualLocale ?? "missing"}".`,
+    );
+  }
+}
+
+assertDictionaryLocale("en", en);
+assertDictionaryLocale("uk", uk);
+assertDictionaryLocale("ru", ru);
 
 // Merge in content translations from JSON files (about page)
 import aboutEn from "@/content/i18n/about.en.json";

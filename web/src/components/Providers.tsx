@@ -3,7 +3,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import Footer from "@/components/layout/Footer";
 import { DEFAULT_LOCALE, parseLocaleFromPath } from "@/i18n/locale";
 
 const FADE_DURATION_S = 0.2;
@@ -16,12 +15,7 @@ export default function Providers({ children }: { children: ReactNode }) {
   const prefersReducedMotion = useReducedMotion();
 
   if (prefersReducedMotion) {
-    return (
-      <>
-        {children}
-        <Footer />
-      </>
-    );
+    return <>{children}</>;
   }
 
   return (
@@ -33,7 +27,6 @@ export default function Providers({ children }: { children: ReactNode }) {
       style={{ willChange: "opacity" }}
     >
       {children}
-      <Footer />
     </motion.div>
   );
 }

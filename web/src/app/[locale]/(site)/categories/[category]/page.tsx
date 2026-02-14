@@ -5,7 +5,7 @@ import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, type Locale } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
 import { getCategoryBySlug } from "@/server/wp/api";
-import { CategoryPageContent } from "../../../../categories/[category]/CategoryPageContent";
+import { CategoryPageContent } from "../../../../(site)/categories/[category]/CategoryPageContent";
 
 type Props = {
   params: Promise<{ locale: string; category: string }>;

@@ -5,7 +5,7 @@ import { assertLocale, type Locale } from "@/i18n/locale";
 import {
   generatePostMetadata as baseGenerateMetadata,
   renderPostPage,
-} from "../../../../posts/[slug]/postPage.server";
+} from "../../../../(site)/posts/[slug]/postPage.server";
 
 export const revalidate = 120;
 

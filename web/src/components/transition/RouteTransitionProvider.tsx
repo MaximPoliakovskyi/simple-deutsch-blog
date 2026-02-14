@@ -86,6 +86,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<TransitionDirection>("forward");
   const [token, setToken] = useState(0);
   const [targetPathname, setTargetPathname] = useState<string | null>(null);
+  const [logoAngle, setLogoAngle] = useState(0);
+  const [logoRotateMs, setLogoRotateMs] = useState(0);
 
   const phaseRef = useRef<TransitionPhase>("idle");
   const pathnameRef = useRef(pathname);
@@ -183,9 +185,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
   const beginTransition = useCallback(
     ({
+      nextDirection = "forward",
       nextTargetPathname,
       nextTargetHref,
     }: {
+      nextDirection?: TransitionDirection;
       nextTargetPathname: string;
       nextTargetHref: string;
     }) => {
@@ -206,7 +210,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       pushedTokenRef.current = null;
       readySignalsRef.current.set(nextToken, new Set());
 
-      setDirection("forward");
+      setDirection(nextDirection);
       setToken(nextToken);
       setTargetPathname(nextTargetPathname);
       setPhaseSafe("entering");
@@ -229,7 +233,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      return beginTransition({ nextTargetPathname: nextPathname, nextTargetHref: href });
+      return beginTransition({
+        nextDirection: "forward",
+        nextTargetPathname: nextPathname,
+        nextTargetHref: href,
+      });
     },
     [beginTransition, prefersReducedMotion, router],
   );
@@ -245,7 +253,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
-      return beginTransition({ nextTargetPathname: nextPathname, nextTargetHref: href });
+      return beginTransition({
+        nextDirection: "forward",
+        nextTargetPathname: nextPathname,
+        nextTargetHref: href,
+      });
     },
     [beginTransition, prefersReducedMotion, router],
   );
@@ -528,6 +540,36 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    if (prefersReducedMotion) {
+      setLogoRotateMs(0);
+      setLogoAngle(0);
+      return;
+    }
+
+    if (phase === "idle") {
+      setLogoRotateMs(0);
+      setLogoAngle(0);
+      return;
+    }
+
+    if (phase === "entering") {
+      setLogoRotateMs(ENTER_MS);
+      setLogoAngle(360);
+      return;
+    }
+
+    if (phase === "covered" || phase === "waiting_ready") {
+      setLogoRotateMs(0);
+      return;
+    }
+
+    if (phase === "exiting") {
+      setLogoRotateMs(EXIT_MS);
+      setLogoAngle(720);
+    }
+  }, [phase, prefersReducedMotion]);
+
+  useEffect(() => {
     return () => {
       clearPhaseWatchdog();
       clearRouteReadyState();
@@ -582,6 +624,10 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
           width={220}
           height={220}
           className="rt-overlay__logo"
+          style={{
+            transform: `rotate(${logoAngle}deg)`,
+            transitionDuration: `${logoRotateMs}ms`,
+          }}
           priority
         />
       </div>

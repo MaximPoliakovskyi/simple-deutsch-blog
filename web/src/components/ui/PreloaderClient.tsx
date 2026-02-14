@@ -1,7 +1,11 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { type TransitionEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
+
+const PRELOADER_SEEN_KEY = "preloader_seen";
+const FADE_OUT_MS = 320;
+const FADE_OUT_WATCHDOG_MS = FADE_OUT_MS + 150;
 
 const WORDS = [
   "Weiter so",
@@ -52,7 +56,6 @@ function pick(exclude?: string) {
     tries += 1;
   }
   if (WORDS[idx] === exclude) {
-    // fallback: pick the first different word
     for (let i = 0; i < WORDS.length; i++) {
       if (WORDS[i] !== exclude) {
         idx = i;
@@ -63,16 +66,51 @@ function pick(exclude?: string) {
   return WORDS[idx];
 }
 
-export default function PreloaderClient() {
-  const [mounted, setMounted] = useState(true);
-  const [hiding, setHiding] = useState(false);
+function shouldShowPreloaderFromSession() {
+  if (typeof window === "undefined") return true;
+
+  try {
+    // SSR defaults to data-preloader="1"; an inline head script flips this
+    // to "0" before paint when the preloader was already seen in this tab.
+    if (document.documentElement.getAttribute("data-preloader") === "0") {
+      return false;
+    }
+
+    const nav = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+
+    if (nav?.type === "reload") {
+      window.sessionStorage.removeItem(PRELOADER_SEEN_KEY);
+    }
+
+    return window.sessionStorage.getItem(PRELOADER_SEEN_KEY) !== "1";
+  } catch {
+    return true;
+  }
+}
+
+function prefersReducedMotionNow() {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+  try {
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch {
+    return false;
+  }
+}
+
+export default function PreloaderClient({ onFinished }: { onFinished?: () => void } = {}) {
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [phase, setPhase] = useState<"visible" | "fadingOut">("visible");
+  const startedRef = useRef(false);
+  const fadeStartedRef = useRef(false);
+  const finalizedRef = useRef(false);
+  const fadeWatchdogRef = useRef<number | null>(null);
 
   // Render no static word on the server; use the CSS rotator for SSR-visible
-  // words and let the JS flipper initialize on the client. This avoids a
-  // visible static first word.
+  // words and let the JS flipper initialize on the client.
   const initialArr: string[] = [];
 
-  // characters currently displayed (start empty; client will populate)
   const [chars, setChars] = useState<string[]>(() => initialArr.slice());
   const [flips, setFlips] = useState<boolean[]>(() => new Array(initialArr.length).fill(false));
   const charsRef = useRef<string[]>([]);
@@ -83,33 +121,83 @@ export default function PreloaderClient() {
   const [jsReady, setJsReady] = useState(false);
   const lastWordRef = useRef<string | null>(null);
 
-  // keep refs in sync
+  const clearFadeWatchdog = useCallback(() => {
+    if (fadeWatchdogRef.current !== null) {
+      window.clearTimeout(fadeWatchdogRef.current);
+      fadeWatchdogRef.current = null;
+    }
+  }, []);
+
+  const finishPreloader = useCallback(() => {
+    if (finalizedRef.current) return;
+    finalizedRef.current = true;
+    clearFadeWatchdog();
+    try {
+      unlockScroll();
+    } catch {}
+    document.documentElement.setAttribute("data-preloader", "0");
+    document.documentElement.setAttribute("data-app-visible", "1");
+    onFinished?.();
+    setShowPreloader(false);
+  }, [clearFadeWatchdog, onFinished]);
+
+  const startFadeOut = useCallback(() => {
+    if (fadeStartedRef.current) return;
+    fadeStartedRef.current = true;
+
+    if (prefersReducedMotionNow()) {
+      finishPreloader();
+      return;
+    }
+
+    setPhase("fadingOut");
+    clearFadeWatchdog();
+    fadeWatchdogRef.current = window.setTimeout(() => {
+      finishPreloader();
+    }, FADE_OUT_WATCHDOG_MS);
+  }, [clearFadeWatchdog, finishPreloader]);
+
   useEffect(() => {
     charsRef.current = chars;
   }, [chars]);
+
   useEffect(() => {
     flipsRef.current = flips;
   }, [flips]);
 
   useEffect(() => {
+    if (startedRef.current) return;
+    startedRef.current = true;
+
+    const shouldShow = shouldShowPreloaderFromSession();
+    if (!shouldShow) {
+      document.documentElement.setAttribute("data-preloader", "0");
+      document.documentElement.setAttribute("data-app-visible", "1");
+      onFinished?.();
+      setShowPreloader(false);
+      return;
+    }
+
+    try {
+      window.sessionStorage.setItem(PRELOADER_SEEN_KEY, "1");
+    } catch {}
+
     let intervalId: number | null = null;
     let hideTimer: number | null = null;
-    const FLIP_INTERVAL = 5000; // ms between full flip cycles (slower)
-    const QUICK_DELAY = 2500; // ms for the quick follow-up flip
-    const HIDE_AFTER = 1500; // ms after load before hiding (reduced to 1.5s)
+    const FLIP_INTERVAL = 5000;
+    const QUICK_DELAY = 2500;
+    const HIDE_AFTER = 1500;
 
     function clearAll() {
-      // use for-of to avoid returning from forEach callback
       for (const t of timeouts.current) {
         window.clearTimeout(t);
       }
       timeouts.current = [];
     }
 
-    // Disable scroll while the preloader is active using centralized lock
     try {
       lockScroll();
-    } catch (_) {}
+    } catch {}
 
     function start() {
       const initial = pick();
@@ -127,10 +215,9 @@ export default function PreloaderClient() {
         const prevLen = prev.length;
         const nextLen = next.length;
         const max = Math.max(prevLen, nextLen);
-        const stagger = 70; // ms between letters
-        const mid = 200; // ms to swap at mid-flip
+        const stagger = 70;
+        const mid = 200;
 
-        // ensure chars/flips arrays are sized to max to avoid sticking
         setChars((prevState) => {
           const a = prevState.slice();
           while (a.length < max) a.push("");
@@ -141,7 +228,7 @@ export default function PreloaderClient() {
           while (f.length < max) f.push(false);
           return f;
         });
-        // sync refs
+
         charsRef.current = charsRef.current
           .slice()
           .concat(new Array(Math.max(0, max - charsRef.current.length)).fill(""));
@@ -149,11 +236,9 @@ export default function PreloaderClient() {
           .slice()
           .concat(new Array(Math.max(0, max - flipsRef.current.length)).fill(false));
 
-        // schedule flips per letter sequentially
         for (let i = 0; i < max; i++) {
           const startAt = i * stagger;
           const t1 = window.setTimeout(() => {
-            // set flipping true for this letter (use ref update pattern)
             setFlips((prevF) => {
               const cp = prevF.slice();
               cp[i] = true;
@@ -169,7 +254,7 @@ export default function PreloaderClient() {
                 charsRef.current = arr2.slice();
                 return arr2;
               });
-              // turn flipping off to animate back
+
               setFlips((prevF) => {
                 const cp2 = prevF.slice();
                 cp2[i] = false;
@@ -183,38 +268,21 @@ export default function PreloaderClient() {
         }
       };
 
-      // run one cycle immediately so words visibly change right away
       flipCycle();
-      // run another quick cycle shortly after so users see motion during
-      // resource-heavy loads before the regular interval kicks in
       const quick = window.setTimeout(() => flipCycle(), QUICK_DELAY);
       timeouts.current.push(quick);
-      // then repeat (slower)
       intervalId = window.setInterval(flipCycle, FLIP_INTERVAL);
-
-      // hide timer is managed separately once the page load completes
       hideTimer = null;
     }
 
-    // Start animating immediately so words update while the page loads.
     start();
 
-    // Start the hide timer only after the 'load' event to ensure words keep
-    // updating while resources are still loading. If the page is already
-    // loaded, set the timer immediately.
     const ensureHideTimer = () => {
-      // clear any existing timer first
       if (hideTimer) window.clearTimeout(hideTimer as number);
-      // reveal the JS flipper (hide CSS rotator) when the page has loaded
       setJsReady(true);
       hideTimer = window.setTimeout(() => {
         clearAll();
-        // restore page scroll before we hide DOM
-        try {
-          unlockScroll();
-        } catch (_) {}
-        setHiding(true);
-        window.setTimeout(() => setMounted(false), 600);
+        startFadeOut();
       }, HIDE_AFTER);
     };
 
@@ -230,25 +298,47 @@ export default function PreloaderClient() {
       if (onLoad) window.removeEventListener("load", onLoad);
       if (intervalId) window.clearInterval(intervalId);
       if (hideTimer) window.clearTimeout(hideTimer as number);
+      clearFadeWatchdog();
       clearAll();
-      // restore overflow on cleanup in case hide path didn't run
-      try {
-        unlockScroll();
-      } catch (_) {}
+      if (!finalizedRef.current) {
+        try {
+          unlockScroll();
+        } catch {}
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearFadeWatchdog, onFinished, startFadeOut]);
 
-  if (!mounted) return null;
+  const onPreloaderTransitionEnd = useCallback(
+    (event: TransitionEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
+      if (phase !== "fadingOut") return;
+      finishPreloader();
+    },
+    [finishPreloader, phase],
+  );
+
+  const onPreloaderTransitionCancel = useCallback(
+    (event: TransitionEvent<HTMLDivElement>) => {
+      if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
+      if (phase !== "fadingOut") return;
+      finishPreloader();
+    },
+    [finishPreloader, phase],
+  );
+
+  if (!showPreloader) return null;
 
   return (
-    // biome-ignore lint/correctness/useUniqueElementIds: Singleton element targeted by global CSS.
+    // biome-ignore lint/correctness/useUniqueElementIds: Singleton overlay element.
     <div
       id="sd-preloader"
+      data-phase={phase}
+      style={{ ["--sd-preloader-fade-ms" as string]: `${FADE_OUT_MS}ms` }}
+      onTransitionEnd={onPreloaderTransitionEnd}
+      onTransitionCancel={onPreloaderTransitionCancel}
       aria-hidden={false}
-      className={`${hiding ? "sd-preloader-hidden" : ""} select-none`}
+      className="select-none"
     >
-      {/* CSS-only rotator shown before JS runs; hidden when jsReady === true */}
       <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
         {WORDS.slice(0, 8).map((w) => (
           <span key={`rot-${w}`} className="sd-rotator-word">
@@ -257,16 +347,12 @@ export default function PreloaderClient() {
         ))}
       </div>
 
-      {/* JS flipper — hidden initially until jsReady is true to avoid duplicate animation */}
       <div
         suppressHydrationWarning
         className={`sd-preloader-word sd-js-flipper ${jsReady ? "sd-js-active" : "sd-js-hidden"}`}
         aria-live="polite"
       >
         {chars.map((c, i) => {
-          // Use deterministic keys based on `useId()` and index so keys are
-          // stable across server and client renders. Avoid Math.random here
-          // because it causes hydration mismatches.
           let key = charKeysRef.current[i];
           if (!key) {
             key = `${id}-${i}`;

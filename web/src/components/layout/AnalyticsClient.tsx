@@ -3,8 +3,8 @@
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 
-export default function AnalyticsClient({ isProd }: { isProd: boolean }) {
-  if (!isProd) return null;
+export default function AnalyticsClient({ enabled }: { enabled: boolean }) {
+  if (!enabled) return null;
 
   return (
     <>

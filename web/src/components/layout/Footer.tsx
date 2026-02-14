@@ -1,7 +1,5 @@
-"use client";
-
 import Link from "next/link";
-import { useI18n } from "@/core/i18n/LocaleProvider";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { buildLocalizedHref } from "@/core/i18n/localeLinks";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
@@ -170,24 +168,28 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
   },
 };
 
-export default function Footer() {
-  const { locale, t } = useI18n();
+function prefixHrefForLocale(href: string, locale: Locale) {
+  if (!href || !href.startsWith("/")) return href;
+  return buildLocalizedHref(locale, href);
+}
 
-  function prefixHrefForLocale(href: string, locale: Locale) {
-    if (!href || !href.startsWith("/")) return href;
-    // buildLocalizedHref returns a canonical prefixed URL
-    return buildLocalizedHref(locale, href);
-  }
+export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const dictionary = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
+  const sections = (FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [];
+  const copyrightTemplate =
+    dictionary["footer.copyright"] ||
+    "(c) {year} Simple Deutsch. All rights reserved. German-language learning platform.";
+  const currentYear = String(new Date().getFullYear());
 
   // Footer: light theme uses pure white (#FFFFFF); dark theme uses deep navy (#0B101E).
   // Footer root is the single source of truth for background color.
   return (
-    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E]">
+    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E] min-h-[28rem] md:min-h-[24rem]">
       {/* main footer background area (no inner background so it inherits from footer root) */}
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-            {((FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? []).map(
+            {sections.map(
               (section) => (
                 <div key={section.title}>
                   <h3
@@ -200,7 +202,9 @@ export default function Footer() {
                     <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
                       {section.items.map((item) => {
                         const resolvedLabel =
-                          item.href === "/impressum" ? t("imprint") || item.label : item.label;
+                          item.href === "/impressum"
+                            ? dictionary.imprint || item.label
+                            : item.label;
 
                         if (item.external) {
                           return (
@@ -246,15 +250,11 @@ export default function Footer() {
 
           {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
           <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">
-            {(() => {
-              const template =
-                t("footer.copyright") ||
-                "© {year} Simple Deutsch. All rights reserved. German-language learning platform.";
-              return template.replace("{year}", String(new Date().getFullYear()));
-            })()}
+            {copyrightTemplate.replace("{year}", currentYear)}
           </div>
         </div>
       </div>
     </footer>
   );
 }
+

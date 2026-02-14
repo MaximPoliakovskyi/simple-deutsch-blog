@@ -49,6 +49,13 @@
 .rt-overlay__logo {
   width: clamp(138px, 17vw, 220px);
   height: auto;
+  transition-property: transform;
+  transition-timing-function: var(--rt-ease);
+  transition-duration: 0ms;
+  will-change: transform;
+  transform: rotate(0deg);
+  backface-visibility: hidden;
+  transform-origin: center center;
 }
 
 .rt-debug-hud {
@@ -71,5 +78,10 @@
 @media (prefers-reduced-motion: reduce) {
   .rt-overlay {
     transition: none;
+  }
+
+  .rt-overlay__logo {
+    transition: none;
+    transform: none !important;
   }
 }

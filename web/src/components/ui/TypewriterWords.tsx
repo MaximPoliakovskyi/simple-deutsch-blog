@@ -247,11 +247,13 @@ export default function TypewriterWords({
 
       {/* Stage with fixed width; keeps line centered and stable */}
       <span
-        className={`relative inline-block whitespace-nowrap align-baseline ${containerClassName} ${className}`}
+        className={`relative inline-block whitespace-nowrap align-baseline select-text ${containerClassName} ${className}`}
         style={{
           width: stableWidth,
           minWidth: stableWidth,
           verticalAlign: "baseline",
+          userSelect: "text",
+          WebkitUserSelect: "text",
         }}
         aria-hidden="true"
       >
@@ -261,12 +263,12 @@ export default function TypewriterWords({
         </span>
 
         {/* Center only the word; keep cursor absolutely positioned so it cannot offset centering. */}
-        <span className="pointer-events-none absolute inset-0">
+        <span className="pointer-events-auto absolute inset-0 select-text">
           <span className="absolute top-0 left-1/2 inline-flex -translate-x-1/2 items-baseline whitespace-nowrap transform-gpu">
-            <span className="inline-block">{displayText || "\u00A0"}</span>
+            <span className="inline-block select-text">{displayText || "\u00A0"}</span>
             {showCursor && !prefersReducedMotion ? (
               <span
-                className="caret-realistic absolute left-full ml-px leading-none pointer-events-none"
+                className="caret-realistic absolute left-full ml-px leading-none pointer-events-none select-none"
                 aria-hidden="true"
               >
                 |

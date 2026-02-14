@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation";
 import { assertLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { buildI18nAlternates } from "@/i18n/seo";
-import TermsPage from "../../../terms/page";
+import TermsPage from "../../../(site)/terms/page";
 
 type Props = {
   params: Promise<{ locale: string }>;

@@ -60,34 +60,8 @@ function normalizePathname(pathname: string | null): string {
   return normalized || "/";
 }
 
-// Routes where the global top progress bar should never be shown.
-const PROGRESS_BAR_DISABLED_ROUTES = new Set([
-  "/categories",
-  "/categories/exercises-practice",
-  "/categories/grammar",
-  "/levels/a2",
-]);
-
-const PROGRESS_BAR_DISABLED_PREFIXES = ["/categories/"];
-
-function isProgressBarDisabledPath(pathname: string): boolean {
-  if (PROGRESS_BAR_DISABLED_ROUTES.has(pathname)) return true;
-  return PROGRESS_BAR_DISABLED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
-}
-
-function getCanonicalPathname(pathname: string): string {
-  const normalized = normalizePathname(pathname);
-  const segments = normalized.split("/").filter(Boolean);
-  if (segments.length === 0) return "/";
-
-  // Normalize `/en/foo` -> `/foo` so route checks work for localized and non-localized URLs.
-  const maybeLocale = parseLocaleFromPath(`/${segments[0].toLowerCase()}`);
-  if (maybeLocale) {
-    const withoutLocale = segments.slice(1).join("/");
-    return withoutLocale ? `/${withoutLocale}` : "/";
-  }
-
-  return normalized;
+function isLocalizedPostDetailRoute(pathname: string): boolean {
+  return /^\/(?:(ru|en|uk)\/)?posts\/[^/]+$/i.test(pathname);
 }
 
 export default function Header() {
@@ -114,9 +88,8 @@ export default function Header() {
     segments.length > 0 ? parseLocaleFromPath(`/${segments[0].toLowerCase()}`) : null;
   const isLocaleRoot =
     segments.length === 1 && localeFromPath !== null && SUPPORTED_LOCALES.includes(localeFromPath);
-  const canonicalPathname = getCanonicalPathname(normalizedPathname);
-  const isProgressBarDisabledRoute = isProgressBarDisabledPath(canonicalPathname);
-  const shouldEnableProgressBar = hasMounted && !isLocaleRoot && !isProgressBarDisabledRoute;
+  const isArticleDetailRoute = isLocalizedPostDetailRoute(normalizedPathname);
+  const shouldEnableProgressBar = hasMounted && isArticleDetailRoute;
   const routeLocale = parseLocaleFromPath(normalizedPathname) ?? uiLocale ?? DEFAULT_LOCALE;
   const currentLocale: Lang = routeLocale;
 
@@ -137,8 +110,7 @@ export default function Header() {
       segmentsKey,
       locale: routeLocale,
       isLocaleRoot,
-      canonicalPathname,
-      isProgressBarDisabledRoute,
+      isArticleDetailRoute,
       hasMounted,
       shouldEnableProgressBar,
     });

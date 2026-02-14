@@ -30,10 +30,18 @@ function usePostLanguageSwitch() {
   const query = searchParams?.toString();
   const pathWithQuery = query ? `${pathname}?${query}` : pathname;
 
+  const persistLocaleCookie = (targetLang: Locale) => {
+    const maxAge = 60 * 60 * 24 * 365;
+    // Keep both cookie names so server-side fallbacks (including 404) stay localized.
+    document.cookie = `NEXT_LOCALE=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+    document.cookie = `locale=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+  };
+
   const changeLang = async (targetLang: Locale) => {
     if (targetLang === siteLang && targetLang === routeLocale) return;
 
     try {
+      persistLocaleCookie(targetLang);
       const href = mapPathToLocale(pathWithQuery, targetLang, {
         translationMap: postLangLinks?.links,
       });

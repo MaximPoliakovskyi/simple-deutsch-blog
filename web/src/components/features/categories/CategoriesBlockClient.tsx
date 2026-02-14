@@ -42,36 +42,37 @@ export default function CategoriesBlockClient({
   }, [categories]);
   const selectedOnMount = initialSelectedCategory ?? preferredInitial;
 
-  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(new Map());
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(selectedOnMount);
+  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(
+    selectedOnMount ? new Map([[selectedOnMount, initialPosts]]) : new Map(),
+  );
+  const requestIdRef = React.useRef(0);
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(false);
 
   React.useEffect(() => {
-    if (!selectedOnMount) return;
-    cacheRef.current.set(selectedOnMount, initialPosts);
+    cacheRef.current = selectedOnMount ? new Map([[selectedOnMount, initialPosts]]) : new Map();
+    requestIdRef.current += 1;
     setAllPosts(initialPosts);
     setDisplayedCount(pageSize);
+    setIsLoading(false);
+    setIsFetching(false);
   }, [initialPosts, pageSize, selectedOnMount]);
 
-  // Fetch all posts for the selected tag
-  React.useEffect(() => {
-    let cancelled = false;
-
-    async function fetchAllPosts() {
-      if (!selectedCategory) return;
-      const selectedTag = categories.find((category) => category.slug === selectedCategory);
+  const handleCategorySelect = React.useCallback(
+    async (slug: string | null) => {
+      if (!slug) return;
+      const selectedTag = categories.find((category) => category.slug === slug);
       if (!selectedTag) {
         if (process.env.NODE_ENV !== "production") {
-          console.error(`[levels] Unknown selected level "${selectedCategory}".`);
+          console.error(`[levels] Unknown selected level "${slug}".`);
         }
         setAllPosts([]);
         return;
       }
 
-      const cached = cacheRef.current.get(selectedCategory);
+      const cached = cacheRef.current.get(slug);
       if (cached) {
         setAllPosts(cached);
         setDisplayedCount(pageSize);
@@ -80,6 +81,8 @@ export default function CategoriesBlockClient({
         return;
       }
 
+      const requestId = requestIdRef.current + 1;
+      requestIdRef.current = requestId;
       setIsFetching(true);
       setIsLoading(true);
       try {
@@ -95,29 +98,25 @@ export default function CategoriesBlockClient({
         const data = (await res.json()) as { posts?: unknown };
         const posts: WPPostCard[] = Array.isArray(data.posts) ? (data.posts as WPPostCard[]) : [];
 
-        if (cancelled) return;
+        if (requestIdRef.current !== requestId) return;
 
-        cacheRef.current.set(selectedCategory, posts);
+        cacheRef.current.set(slug, posts);
         setAllPosts(posts);
         setDisplayedCount(pageSize);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
-        if (!cancelled) {
+        if (requestIdRef.current === requestId) {
           setAllPosts([]);
         }
       } finally {
-        if (!cancelled) {
+        if (requestIdRef.current === requestId) {
           setIsFetching(false);
           setIsLoading(false);
         }
       }
-    }
-
-    fetchAllPosts();
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCategory, categories, locale, pageSize]);
+    },
+    [categories, locale, pageSize],
+  );
 
   const loadMore = React.useCallback(() => {
     setDisplayedCount((prev) => prev + pageSize);
@@ -132,7 +131,7 @@ export default function CategoriesBlockClient({
         <CategoryPills
           categories={categories}
           initialSelected={selectedOnMount}
-          onSelect={(slug) => setSelectedCategory(slug)}
+          onSelect={handleCategorySelect}
           alignment="left"
           required={true}
         />
