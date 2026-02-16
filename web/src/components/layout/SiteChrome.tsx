@@ -1,16 +1,23 @@
 import type { ReactNode } from "react";
-import LocaleProviderFromPath from "@/components/LocaleProviderFromPath";
+import { LocaleProvider } from "@/core/i18n/LocaleProvider";
+import type { Locale } from "@/i18n/locale";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import { RouteReady } from "@/components/transition/RouteReady";
 import BackButton from "@/components/ui/BackButton";
 
-export default function SiteChrome({ children }: { children: ReactNode }) {
+export default function SiteChrome({
+  children,
+  locale,
+}: {
+  children: ReactNode;
+  locale: Locale;
+}) {
   return (
-    <LocaleProviderFromPath>
+    <LocaleProvider locale={locale}>
       <HydratedNavigation />
       <RouteReady />
       {children}
       <BackButton />
-    </LocaleProviderFromPath>
+    </LocaleProvider>
   );
 }

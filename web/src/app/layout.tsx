@@ -118,6 +118,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <RouteTransitionProvider>
           <PreloaderGate>
             <AppFadeWrapper>
+              {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton app shell wrapper. */}
               <div id="app-shell">{children}</div>
             </AppFadeWrapper>
           </PreloaderGate>

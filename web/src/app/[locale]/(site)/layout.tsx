@@ -15,10 +15,13 @@ export default async function LocaleLayout({
   const { locale } = await params;
   try {
     const validated = assertLocale(locale);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[hydration][server][LocaleLayout]", { localeParam: locale, validated });
+    }
     return (
-      <SiteChrome>
+      <SiteChrome locale={validated}>
         <div data-layout="site" hidden />
-        <Providers>
+        <Providers locale={validated}>
           <main className="mt-8 md:mt-12 min-h-[60vh]">{children}</main>
           <Footer locale={validated} />
         </Providers>

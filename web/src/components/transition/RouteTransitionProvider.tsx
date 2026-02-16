@@ -86,6 +86,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [direction, setDirection] = useState<TransitionDirection>("forward");
   const [token, setToken] = useState(0);
   const [targetPathname, setTargetPathname] = useState<string | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [logoAngle, setLogoAngle] = useState(0);
   const [logoRotateMs, setLogoRotateMs] = useState(0);
 
@@ -108,6 +109,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   >([]);
 
   const isActive = phase !== "idle";
+  const shouldRenderOverlay = !isInitialLoad;
 
   const logDev = useCallback((event: string, extra: Record<string, unknown> = {}) => {
     if (!DEBUG) return;
@@ -284,6 +286,10 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     },
     [logDev],
   );
+
+  useEffect(() => {
+    setIsInitialLoad(false);
+  }, []);
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -610,27 +616,29 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   return (
     <TransitionNavContext.Provider value={contextValue}>
       {children}
-      <div
-        aria-hidden="true"
-        onTransitionEnd={onOverlayTransitionEnd}
-        onTransitionCancel={onOverlayTransitionCancel}
-        data-phase={phase}
-        data-direction={direction}
-        className="rt-overlay"
-      >
-        <Image
-          src="/main-logo.svg"
-          alt=""
-          width={220}
-          height={220}
-          className="rt-overlay__logo"
-          style={{
-            transform: `rotate(${logoAngle}deg)`,
-            transitionDuration: `${logoRotateMs}ms`,
-          }}
-          priority
-        />
-      </div>
+      {shouldRenderOverlay ? (
+        <div
+          aria-hidden="true"
+          onTransitionEnd={onOverlayTransitionEnd}
+          onTransitionCancel={onOverlayTransitionCancel}
+          data-phase={phase}
+          data-direction={direction}
+          className="rt-overlay"
+        >
+          <Image
+            src="/main-logo.svg"
+            alt=""
+            width={220}
+            height={220}
+            className="rt-overlay__logo"
+            style={{
+              transform: `rotate(${logoAngle}deg)`,
+              transitionDuration: `${logoRotateMs}ms`,
+            }}
+            priority
+          />
+        </div>
+      ) : null}
     </TransitionNavContext.Provider>
   );
 }

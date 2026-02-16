@@ -53,6 +53,13 @@ export function LocaleProvider({
       const html = document.documentElement;
       if (!html) return;
       html.lang = locale === "uk" ? "uk" : locale === "ru" ? "ru" : "en";
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[hydration][client][LocaleProvider]", {
+          locale,
+          pathname: window.location.pathname,
+          htmlLang: html.lang,
+        });
+      }
     } catch (_e) {
       // noop
     }
