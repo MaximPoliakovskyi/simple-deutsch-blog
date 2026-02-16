@@ -16,7 +16,7 @@ export default function AboutPage({ locale = DEFAULT_LOCALE }: AboutPageProps) {
   const t = (key: string) => dict[key] ?? key;
 
   return (
-    <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
+    <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)] [&_p]:text-[20px] [&_p]:leading-[1.8]">
       <section className="mx-auto max-w-7xl px-4 pt-24 text-center">
         <div className="logo-wrapper flex justify-center mb-8">
           <ScrollRotateLogo degPerPx={0.15} clamp={360}>

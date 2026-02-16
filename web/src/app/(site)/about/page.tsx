@@ -1,12 +1,8 @@
 // src/app/about/page.tsx
 
 import AboutPage from "@/components/pages/about/AboutPage";
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
-
-export function AboutPageContent({ locale }: { locale?: Locale }) {
-  return <AboutPage locale={locale ?? DEFAULT_LOCALE} />;
-}
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 
 export default function AboutPageRoute() {
-  return <AboutPageContent locale={DEFAULT_LOCALE} />;
+  return <AboutPage locale={DEFAULT_LOCALE} />;
 }
