@@ -25,6 +25,7 @@ const READY_MAX_MS = 1800;
 const WATCHDOG_BUFFER_MS = 150;
 const GLOBAL_STUCK_TIMEOUT_MS = 3200;
 const DEBUG = process.env.NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION === "1";
+type TransitionKind = "default" | "language_switch";
 
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
@@ -94,9 +95,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const pathnameRef = useRef(pathname);
   const targetPathnameRef = useRef<string | null>(null);
   const targetHrefRef = useRef<string | null>(null);
+  const transitionKindRef = useRef<TransitionKind>("default");
   const activeTokenRef = useRef(0);
   const tokenCounterRef = useRef(0);
   const pushedTokenRef = useRef<number | null>(null);
+  const scrollBehaviorRestoreRef = useRef<(() => void) | null>(null);
+  const scrollBehaviorRestoreTimerRef = useRef<number | null>(null);
 
   const phaseWatchdogRef = useRef<number | null>(null);
   const globalStuckWatchdogRef = useRef<number | null>(null);
@@ -130,6 +134,39 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const clearScrollBehaviorRestoreTimer = useCallback(() => {
+    if (scrollBehaviorRestoreTimerRef.current !== null) {
+      window.clearTimeout(scrollBehaviorRestoreTimerRef.current);
+      scrollBehaviorRestoreTimerRef.current = null;
+    }
+  }, []);
+
+  const restoreDocumentScrollBehavior = useCallback(() => {
+    const restore = scrollBehaviorRestoreRef.current;
+    if (!restore) return;
+    scrollBehaviorRestoreRef.current = null;
+    restore();
+  }, []);
+
+  const scheduleDocumentScrollBehaviorRestore = useCallback(() => {
+    clearScrollBehaviorRestoreTimer();
+    scrollBehaviorRestoreTimerRef.current = window.setTimeout(() => {
+      scrollBehaviorRestoreTimerRef.current = null;
+      restoreDocumentScrollBehavior();
+    }, 0);
+  }, [clearScrollBehaviorRestoreTimer, restoreDocumentScrollBehavior]);
+
+  const forceInstantScrollBehavior = useCallback(() => {
+    if (typeof document === "undefined") return;
+    if (scrollBehaviorRestoreRef.current) return;
+    const html = document.documentElement;
+    const previousInlineBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = "auto";
+    scrollBehaviorRestoreRef.current = () => {
+      html.style.scrollBehavior = previousInlineBehavior;
+    };
+  }, []);
+
   const clearRouteReadyState = useCallback(() => {
     readySignalsRef.current.clear();
     routeReadyWaitersRef.current = [];
@@ -146,16 +183,26 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       clearRouteReadyState();
       pathnameWaitersRef.current = [];
       unlockScroll();
+      clearScrollBehaviorRestoreTimer();
+      restoreDocumentScrollBehavior();
       activeTokenRef.current = 0;
       targetPathnameRef.current = null;
       targetHrefRef.current = null;
+      transitionKindRef.current = "default";
       pushedTokenRef.current = null;
       setTargetPathname(null);
       setToken(0);
       setPhaseSafe("idle");
       logDev("reset-idle", { reason });
     },
-    [clearPhaseWatchdog, clearRouteReadyState, logDev, setPhaseSafe],
+    [
+      clearPhaseWatchdog,
+      clearRouteReadyState,
+      clearScrollBehaviorRestoreTimer,
+      logDev,
+      restoreDocumentScrollBehavior,
+      setPhaseSafe,
+    ],
   );
 
   const goCovered = useCallback(
@@ -190,10 +237,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       nextDirection = "forward",
       nextTargetPathname,
       nextTargetHref,
+      kind = "default",
     }: {
       nextDirection?: TransitionDirection;
       nextTargetPathname: string;
       nextTargetHref: string;
+      kind?: TransitionKind;
     }) => {
       if (phaseRef.current !== "idle") {
         logDev("begin-blocked", { phase: phaseRef.current });
@@ -209,8 +258,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       activeTokenRef.current = nextToken;
       targetPathnameRef.current = nextTargetPathname;
       targetHrefRef.current = nextTargetHref;
+      transitionKindRef.current = kind;
       pushedTokenRef.current = null;
       readySignalsRef.current.set(nextToken, new Set());
+
+      if (kind === "language_switch") {
+        forceInstantScrollBehavior();
+      }
 
       setDirection(nextDirection);
       setToken(nextToken);
@@ -221,7 +275,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       logDev("begin", { nextTargetPathname, nextTargetHref, token: nextToken });
       return true;
     },
-    [clearPhaseWatchdog, clearRouteReadyState, logDev, setPhaseSafe],
+    [clearPhaseWatchdog, clearRouteReadyState, forceInstantScrollBehavior, logDev, setPhaseSafe],
   );
 
   const navigateFromLogo = useCallback(
@@ -251,7 +305,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       if (nextPathname === pathnameRef.current) return false;
 
       if (prefersReducedMotion) {
-        router.push(href);
+        forceInstantScrollBehavior();
+        reactStartTransition(() => {
+          router.push(href, { scroll: false });
+        });
+        scheduleDocumentScrollBehaviorRestore();
         return true;
       }
 
@@ -259,9 +317,16 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         nextDirection: "forward",
         nextTargetPathname: nextPathname,
         nextTargetHref: href,
+        kind: "language_switch",
       });
     },
-    [beginTransition, prefersReducedMotion, router],
+    [
+      beginTransition,
+      forceInstantScrollBehavior,
+      prefersReducedMotion,
+      router,
+      scheduleDocumentScrollBehaviorRestore,
+    ],
   );
 
   const signalRouteReady = useCallback(
@@ -289,6 +354,15 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     setIsInitialLoad(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("scrollRestoration" in window.history)) return;
+    const previous = window.history.scrollRestoration;
+    window.history.scrollRestoration = "manual";
+    return () => {
+      window.history.scrollRestoration = previous;
+    };
   }, []);
 
   useEffect(() => {
@@ -353,7 +427,11 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     if (href && pushedTokenRef.current !== expectedToken) {
       pushedTokenRef.current = expectedToken;
       reactStartTransition(() => {
-        router.push(href);
+        if (transitionKindRef.current === "language_switch") {
+          router.push(href, { scroll: false });
+        } else {
+          router.push(href);
+        }
       });
     }
 
@@ -501,9 +579,12 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       activeTokenRef.current = 0;
       targetPathnameRef.current = null;
       targetHrefRef.current = null;
+      transitionKindRef.current = "default";
       pushedTokenRef.current = null;
       setTargetPathname(null);
       setToken(0);
+      clearScrollBehaviorRestoreTimer();
+      restoreDocumentScrollBehavior();
       forceUnlockScroll();
     }, GLOBAL_STUCK_TIMEOUT_MS);
 
@@ -513,7 +594,14 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         globalStuckWatchdogRef.current = null;
       }
     };
-  }, [clearRouteReadyState, logDev, phase, setPhaseSafe]);
+  }, [
+    clearRouteReadyState,
+    clearScrollBehaviorRestoreTimer,
+    logDev,
+    phase,
+    restoreDocumentScrollBehavior,
+    setPhaseSafe,
+  ]);
 
   const settleOverlayPhase = useCallback(
     (source: "transitionend" | "transitioncancel") => {
@@ -584,9 +672,16 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         window.clearTimeout(globalStuckWatchdogRef.current);
         globalStuckWatchdogRef.current = null;
       }
+      clearScrollBehaviorRestoreTimer();
+      restoreDocumentScrollBehavior();
       forceUnlockScroll();
     };
-  }, [clearPhaseWatchdog, clearRouteReadyState]);
+  }, [
+    clearPhaseWatchdog,
+    clearRouteReadyState,
+    clearScrollBehaviorRestoreTimer,
+    restoreDocumentScrollBehavior,
+  ]);
 
   const contextValue = useMemo(
     () => ({

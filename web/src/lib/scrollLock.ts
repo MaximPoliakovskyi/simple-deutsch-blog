@@ -1,90 +1,41 @@
 type StyleSnapshot = {
-  htmlTouchAction: string;
+  htmlOverflow: string;
   htmlOverscrollBehavior: string;
-  bodyPosition: string;
-  bodyTop: string;
-  bodyLeft: string;
-  bodyRight: string;
-  bodyWidth: string;
-  bodyOverflow: string;
-  bodyTouchAction: string;
-  bodyOverscrollBehavior: string;
 };
 
 let lockCount = 0;
 let snapshot: StyleSnapshot | null = null;
-let lockedScrollX = 0;
-let lockedScrollY = 0;
 
 function captureSnapshot() {
   const docEl = document.documentElement;
-  const body = document.body;
   snapshot = {
-    htmlTouchAction: docEl.style.touchAction,
+    htmlOverflow: docEl.style.overflow,
     htmlOverscrollBehavior: docEl.style.overscrollBehavior,
-    bodyPosition: body.style.position,
-    bodyTop: body.style.top,
-    bodyLeft: body.style.left,
-    bodyRight: body.style.right,
-    bodyWidth: body.style.width,
-    bodyOverflow: body.style.overflow,
-    bodyTouchAction: body.style.touchAction,
-    bodyOverscrollBehavior: body.style.overscrollBehavior,
   };
 }
 
-function applyLockStyles(scrollbarWidth: number) {
+function applyLockStyles() {
   const docEl = document.documentElement;
-  const body = document.body;
 
-  docEl.style.setProperty("--scrollbar-comp", `${Math.max(0, scrollbarWidth)}px`);
   docEl.classList.add("scroll-locked");
-  docEl.style.touchAction = "none";
+  docEl.style.overflow = "hidden";
   docEl.style.overscrollBehavior = "none";
-
-  body.style.position = "fixed";
-  body.style.top = `-${lockedScrollY}px`;
-  body.style.left = `-${lockedScrollX}px`;
-  body.style.right = "0";
-  body.style.width = "100%";
-  body.style.overflow = "hidden";
-  body.style.touchAction = "none";
-  body.style.overscrollBehavior = "none";
 }
 
-function restoreStylesAndScroll() {
+function restoreStyles() {
   const docEl = document.documentElement;
-  const body = document.body;
 
   docEl.classList.remove("scroll-locked");
-  docEl.style.setProperty("--scrollbar-comp", "0px");
 
   if (snapshot) {
-    docEl.style.touchAction = snapshot.htmlTouchAction;
+    docEl.style.overflow = snapshot.htmlOverflow;
     docEl.style.overscrollBehavior = snapshot.htmlOverscrollBehavior;
-    body.style.position = snapshot.bodyPosition;
-    body.style.top = snapshot.bodyTop;
-    body.style.left = snapshot.bodyLeft;
-    body.style.right = snapshot.bodyRight;
-    body.style.width = snapshot.bodyWidth;
-    body.style.overflow = snapshot.bodyOverflow;
-    body.style.touchAction = snapshot.bodyTouchAction;
-    body.style.overscrollBehavior = snapshot.bodyOverscrollBehavior;
   } else {
-    docEl.style.touchAction = "";
+    docEl.style.overflow = "";
     docEl.style.overscrollBehavior = "";
-    body.style.position = "";
-    body.style.top = "";
-    body.style.left = "";
-    body.style.right = "";
-    body.style.width = "";
-    body.style.overflow = "";
-    body.style.touchAction = "";
-    body.style.overscrollBehavior = "";
   }
 
   snapshot = null;
-  window.scrollTo({ left: lockedScrollX, top: lockedScrollY, behavior: "auto" });
 }
 
 export function lockScroll() {
@@ -93,12 +44,9 @@ export function lockScroll() {
     lockCount += 1;
     if (lockCount > 1) return;
 
-    lockedScrollX = window.scrollX;
-    lockedScrollY = window.scrollY;
     captureSnapshot();
 
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    applyLockStyles(scrollbarWidth);
+    applyLockStyles();
   } catch (_) {}
 }
 
@@ -107,11 +55,11 @@ export function unlockScroll() {
   try {
     lockCount = Math.max(0, lockCount - 1);
     if (lockCount > 0) return;
-    restoreStylesAndScroll();
+    restoreStyles();
   } catch (_) {
     lockCount = 0;
     try {
-      restoreStylesAndScroll();
+      restoreStyles();
     } catch {}
   }
 }
@@ -120,6 +68,6 @@ export function forceUnlockScroll() {
   if (typeof window === "undefined") return;
   try {
     lockCount = 0;
-    restoreStylesAndScroll();
+    restoreStyles();
   } catch {}
 }

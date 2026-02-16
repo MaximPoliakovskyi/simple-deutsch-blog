@@ -3,7 +3,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import NavigationDesktop from "@/components/layout/NavigationDesktop";
 import {
   NavigationMobileControls,
@@ -20,6 +25,7 @@ import {
   subscribeRootTheme,
   type Theme,
 } from "@/core/theme/client";
+import { useMainNavHeightVar } from "@/hooks/useMainNavHeightVar";
 import { DEFAULT_LOCALE, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
@@ -161,6 +167,9 @@ export default function Header() {
     });
   }, []);
 
+  // Keep nav always visible; search overlay reads this variable to start below the header.
+  useMainNavHeightVar(navRef);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     if (!open) return;
@@ -283,7 +292,8 @@ export default function Header() {
       {/* Semantic navigation landmark */}
       <nav
         ref={navRef}
-        className="sticky top-0 z-40 bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
+        data-main-nav="true"
+        className="sticky top-0 z-[1000] bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
         aria-label="Main navigation"
       >
         <div>

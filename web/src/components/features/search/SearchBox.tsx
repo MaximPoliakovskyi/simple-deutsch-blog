@@ -69,7 +69,7 @@ export default function SearchBox({
           const currentQ = (searchParams.get("q") ?? "").trim();
           if (currentQ === q) return;
           startTransition(() => {
-            router.replace(nextUrl);
+            router.replace(nextUrl, { scroll: false });
           });
         }}
         onKeyDown={(e) => {

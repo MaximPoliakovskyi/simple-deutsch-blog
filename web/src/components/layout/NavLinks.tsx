@@ -33,6 +33,7 @@ export default function NavLinks({ mode, buildLocalePath, label, onNavigate }: P
         <li key={item.path}>
           <Link
             href={buildLocalePath(item.path)}
+            scroll={item.path === "/search" ? false : undefined}
             onClick={onNavigate}
             className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
           >

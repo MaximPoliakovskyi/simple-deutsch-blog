@@ -41,7 +41,7 @@ function cn(...a: Array<string | false | null | undefined>): string {
 const DROPDOWN_RADIUS = "rounded-2xl";
 const LAST_ITEM_RADIUS = "rounded-b-2xl";
 
-/** The overlay itself — rendered in a portal to <body> so it covers the entire page */
+/** Fixed overlay sits under the nav to avoid layout shift while keeping nav visible. */
 type SearchOverlayProps = {
   onClose: () => void;
   openMethod?: OpenMethod;
@@ -67,6 +67,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const tLoadMore = label("loadMore", "Load more");
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const overlayRootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const prefersReducedMotion = useReducedMotion();
@@ -76,7 +77,9 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     try {
       input.focus({ preventScroll: true });
     } catch {
-      input.focus();
+      requestAnimationFrame(() => {
+        input.focus();
+      });
     }
   }, []);
 
@@ -284,6 +287,40 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     }
   }, [focusSearchInput, show]);
 
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") return;
+    if (!show) return;
+
+    const logGeometry = () => {
+      const overlay = overlayRootRef.current;
+      const input = inputRef.current;
+      const nav = document.querySelector<HTMLElement>('nav[data-main-nav="true"]');
+      if (!overlay || !input || !nav) return;
+
+      const overlayTop = overlay.getBoundingClientRect().top;
+      const inputTop = input.getBoundingClientRect().top;
+      const navBottom = nav.getBoundingClientRect().bottom;
+      const diff = inputTop - navBottom;
+
+      console.log("[search-overlay-debug]", {
+        overlayTop: Math.round(overlayTop),
+        navBottom: Math.round(navBottom),
+        inputTop: Math.round(inputTop),
+        diff: Math.round(diff),
+        expectedMinGap: 12,
+        isValid: diff >= 12,
+      });
+    };
+
+    logGeometry();
+    const id = window.setTimeout(logGeometry, 120);
+    window.addEventListener("resize", logGeometry);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener("resize", logGeometry);
+    };
+  }, [show]);
+
   // Debounced search with cancellation
   useEffect(() => {
     const term = deferredQ.trim();
@@ -456,6 +493,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
 
   return createPortal(
     <div
+      ref={overlayRootRef}
       role="dialog"
       aria-modal="true"
       aria-label="Search articles"
@@ -464,7 +502,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-        "fixed inset-0 z-100",
+        "fixed inset-0 z-[900]",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",
@@ -476,24 +514,26 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
       }}
     >
       <div
-        className={cn(
-          "mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]",
-          DROPDOWN_RADIUS,
-          "bg-[hsl(var(--bg))] p-0 shadow-2xl",
-          "text-neutral-900 dark:text-neutral-100",
-          "mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]",
-          "sm:mt-[calc(env(safe-area-inset-top)+5rem)]",
-          // panel enter/exit states
-          show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.98] translate-y-1",
-          "motion-reduce:transition-none",
-        )}
-        ref={panelRef}
-        style={{
-          transitionProperty: "opacity, transform",
-          transitionDuration: `${TRANSITION_MS}ms`,
-          transitionTimingFunction: "ease-in-out",
-        }}
+        className="mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))] pointer-events-none"
+        style={{ paddingTop: "calc(var(--main-nav-h, 72px) + 16px)" }}
       >
+        <div
+          className={cn(
+            "w-full pointer-events-auto",
+            DROPDOWN_RADIUS,
+            "bg-[hsl(var(--bg))] p-0 shadow-2xl",
+            "text-neutral-900 dark:text-neutral-100",
+            // panel enter/exit states
+            show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.98] translate-y-1",
+            "motion-reduce:transition-none",
+          )}
+          ref={panelRef}
+          style={{
+            transitionProperty: "opacity, transform",
+            transitionDuration: `${TRANSITION_MS}ms`,
+            transitionTimingFunction: "ease-in-out",
+          }}
+        >
         {/* Input row */}
         <div
           className="
@@ -631,6 +671,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
               </li>
             )}
           </ul>
+        </div>
         </div>
       </div>
     </div>,

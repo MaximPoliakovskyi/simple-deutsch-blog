@@ -27,6 +27,7 @@
 /* ── Design tokens ────────────────────────────────────────────────────────── */
 :root {
   --scrollbar-comp: 0px;
+  --main-nav-h: 72px;
   /* Hue/Sat/Light tokens for easy theming with hsl() */
   --brand: 222 47% 11%;
   --fg: 222 22% 12%;
@@ -106,7 +107,12 @@ img[width][height] {
 
 html.scroll-locked {
   overflow: hidden;
-  padding-right: var(--scrollbar-comp);
+}
+
+@media (max-width: 767px) {
+  :root {
+    --main-nav-h: 64px;
+  }
 }
 
 /* Optional fallback to force a vertical scrollbar on all pages to avoid layout shift
