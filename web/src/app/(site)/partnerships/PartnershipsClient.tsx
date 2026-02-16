@@ -1,30 +1,35 @@
 import Image from "next/image";
 import SectionText from "@/components/about/SectionText";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 
 type PartnershipsClientProps = {
   contactEmail: string;
+  locale?: Locale;
 };
 
 const TELEGRAM_LINK = "https://t.me/simpledeutsch";
 
 export default function PartnershipsClient({
   contactEmail,
+  locale = DEFAULT_LOCALE,
 }: PartnershipsClientProps) {
+  const dict = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
+  const t = (key: string) => dict[key] ?? key;
+
   return (
     <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
       <section className="mx-auto max-w-7xl px-4 pt-24 text-center">
         <SectionText
           title={
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-[var(--sd-text)] text-center">
-              Partnerships
+              {t("partnerships.hero.title")}
             </h1>
           }
         >
           <div className="text-center">
             <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-              Simple Deutsch partners with companies, universities, and non-profits to support
-              migrant integration in Germany through language learning, digital skills, and
-              AI-assisted education.
+              {t("partnerships.hero.intro")}
             </p>
           </div>
         </SectionText>
@@ -33,18 +38,9 @@ export default function PartnershipsClient({
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:pt-10 mb-28">
         <SectionText>
           <div className="mx-auto w-full max-w-[72ch] space-y-4 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
-            </p>
-            <p>
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
-              ex ea commodo consequat. Duis aute irure dolor in reprehenderit.
-            </p>
-            <p>
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-              mollit anim id est laborum.
-            </p>
+            <p>{t("partnerships.sections.preLogos.p1")}</p>
+            <p>{t("partnerships.sections.preLogos.p2")}</p>
+            <p>{t("partnerships.sections.preLogos.p3")}</p>
           </div>
         </SectionText>
       </section>
@@ -53,7 +49,7 @@ export default function PartnershipsClient({
         <div className="absolute inset-x-0 top-0">
           <div className="mx-auto max-w-7xl px-4 pt-[40px] text-white">
             <h2 className="text-center text-3xl font-semibold tracking-tight">
-              Partners of the Simple Deutsch
+              {t("partnerships.partners.heading")}
             </h2>
           </div>
         </div>
@@ -138,26 +134,11 @@ export default function PartnershipsClient({
       <section className="mx-auto w-full max-w-7xl px-4 mt-28 pb-20 md:pb-24">
         <SectionText>
           <div className="mx-auto w-full max-w-[72ch] space-y-5 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-            <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-              incididunt ut labore et dolore magna aliqua.
-            </p>
-            <p>
-              Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
-              ea commodo consequat. Duis aute irure dolor in reprehenderit.
-            </p>
-            <p>
-              Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt
-              mollit anim id est laborum.
-            </p>
-            <p>
-              Curabitur pretium tincidunt lacus. Nulla gravida orci a odio, vitae tincidunt erat
-              pharetra non. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices.
-            </p>
-            <p>
-              Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum.
-              Integer posuere erat a ante venenatis dapibus posuere velit aliquet.
-            </p>
+            <p>{t("partnerships.sections.postLogos.p1")}</p>
+            <p>{t("partnerships.sections.postLogos.p2")}</p>
+            <p>{t("partnerships.sections.postLogos.p3")}</p>
+            <p>{t("partnerships.sections.postLogos.p4")}</p>
+            <p>{t("partnerships.sections.postLogos.p5")}</p>
           </div>
         </SectionText>
       </section>
@@ -167,14 +148,13 @@ export default function PartnershipsClient({
           className="[&>div>div]:space-y-3 md:[&>div>div]:space-y-3"
           title={
             <h2 className="text-3xl sm:text-4xl font-semibold text-[var(--sd-text)] text-center">
-              Let&apos;s collaborate
+              {t("partnerships.cta.title")}
             </h2>
           }
         >
           <div className="text-center">
             <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-              Tell us what kind of partnership you have in mind - we&apos;ll suggest a simple pilot
-              and next steps.
+              {t("partnerships.cta.lead")}
             </p>
           </div>
 
@@ -184,17 +164,17 @@ export default function PartnershipsClient({
               target="_blank"
               rel="noopener noreferrer"
               className="rounded-full px-5 py-2 text-sm font-medium transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label="Contact us via Telegram"
+              aria-label={t("partnerships.cta.telegramAria")}
             >
-              Contact us via Telegram
+              {t("partnerships.cta.telegram")}
             </a>
 
             <a
               href={`mailto:${contactEmail}`}
               className="rounded-full px-5 py-2 text-sm font-medium transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label="Contact us via Email"
+              aria-label={t("partnerships.cta.emailAria")}
             >
-              Contact us via Email
+              {t("partnerships.cta.email")}
             </a>
           </div>
         </SectionText>

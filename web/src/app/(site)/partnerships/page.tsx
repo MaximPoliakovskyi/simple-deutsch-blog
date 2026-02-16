@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import PartnershipsClient from "./PartnershipsClient";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { DEFAULT_LOCALE } from "@/i18n/locale";
 
 const CONTACT_EMAIL = "partnerships@simple-deutsch.de";
+const en = TRANSLATIONS[DEFAULT_LOCALE];
 
 export const metadata: Metadata = {
-  title: "Partnerships | Simple Deutsch",
-  description:
-    "Partner with Simple Deutsch to support migrant integration in Germany through AI-driven language education and digital skills training.",
+  title: `${en["partnerships.meta.title"]} | ${en.siteTitle}`,
+  description: en["partnerships.meta.description"],
 };
 
 export default async function PartnershipsPageRoute() {
-  return <PartnershipsClient contactEmail={CONTACT_EMAIL} />;
+  return <PartnershipsClient contactEmail={CONTACT_EMAIL} locale={DEFAULT_LOCALE} />;
 }
