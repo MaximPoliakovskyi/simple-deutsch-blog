@@ -41,23 +41,13 @@ const THEME_INIT_SCRIPT = `
 const PRELOADER_INIT_SCRIPT = `
 (() => {
   try {
-    const key = "preloader_seen";
-    const nav = performance.getEntriesByType("navigation")[0];
-    if (nav && nav.type === "reload") {
-      sessionStorage.removeItem(key);
-    }
-    const seen = sessionStorage.getItem(key) === "1";
-    if (seen) {
-      document.documentElement.setAttribute("data-preloader", "0");
-      document.documentElement.setAttribute("data-app-visible", "1");
-    } else {
-      document.documentElement.setAttribute("data-preloader", "1");
-      document.documentElement.setAttribute("data-app-visible", "0");
-    }
-  } catch (_) {
-    document.documentElement.setAttribute("data-preloader", "1");
-    document.documentElement.setAttribute("data-app-visible", "0");
-  }
+    // Always show the existing preloader on full document loads
+    // (reload + direct URL entry in the address bar).
+    sessionStorage.removeItem("preloader_seen");
+  } catch (_) {}
+
+  document.documentElement.setAttribute("data-preloader", "1");
+  document.documentElement.setAttribute("data-app-visible", "0");
 })();
 `;
 
