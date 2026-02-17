@@ -27,7 +27,7 @@ const en: Translations = {
   company: "Company",
   legalContact: "Legal & contact",
   heroLine1: "Master German",
-  heroLine2: "with real skills for",
+  heroLine2: "with truly skills for",
   heroDescription:
     "Interactive lessons, real-world exercises, and clear progress tracking — learn German at your pace.",
   promoHeading: "Start speaking German today",
