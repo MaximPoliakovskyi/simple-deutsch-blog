@@ -1,29 +1,60 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useTransitionNav } from "@/components/transition/useTransitionNav";
 import PreloaderClient from "@/components/ui/PreloaderClient";
 
-function isVisibleFromDocument() {
-  if (typeof document === "undefined") return false;
-  return document.documentElement.getAttribute("data-app-visible") === "1";
+const PRELOADER_SEEN_KEY = "preloader_seen";
+
+function setLoadingState(isLoading: boolean) {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-preloader", isLoading ? "1" : "0");
+  document.documentElement.setAttribute("data-app-visible", isLoading ? "0" : "1");
 }
 
 export default function PreloaderGate({ children }: { children: ReactNode }) {
-  const [isAppVisible, setIsAppVisible] = useState<boolean>(() => isVisibleFromDocument());
+  const { phase, token } = useTransitionNav();
+  const [initialFinished, setInitialFinished] = useState(false);
+  const [transitionRunId, setTransitionRunId] = useState(0);
+  const [showTransitionPreloader, setShowTransitionPreloader] = useState(false);
+  const lastTransitionTokenRef = useRef<number>(0);
+
+  const handleInitialFinished = useCallback(() => {
+    setInitialFinished(true);
+    setLoadingState(false);
+  }, []);
+
+  const handleTransitionFinished = useCallback(() => {
+    setShowTransitionPreloader(false);
+    setLoadingState(false);
+  }, []);
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-app-visible", isAppVisible ? "1" : "0");
-  }, [isAppVisible]);
+    if (!initialFinished) return;
+    if (phase !== "entering") return;
+    if (!token || token === lastTransitionTokenRef.current) return;
 
-  const handlePreloaderFinished = useCallback(() => {
-    setIsAppVisible(true);
-  }, []);
+    lastTransitionTokenRef.current = token;
+
+    try {
+      sessionStorage.removeItem(PRELOADER_SEEN_KEY);
+    } catch (_) {}
+
+    setLoadingState(true);
+    setTransitionRunId((prev) => prev + 1);
+    setShowTransitionPreloader(true);
+  }, [initialFinished, phase, token]);
 
   return (
     <>
-      <PreloaderClient onFinished={handlePreloaderFinished} />
+      {!initialFinished ? <PreloaderClient onFinished={handleInitialFinished} /> : null}
+      {showTransitionPreloader ? (
+        <PreloaderClient
+          key={`transition-preloader-${transitionRunId}`}
+          onFinished={handleTransitionFinished}
+        />
+      ) : null}
       {children}
     </>
   );
 }
-

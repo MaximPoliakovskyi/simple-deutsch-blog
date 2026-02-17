@@ -6,8 +6,9 @@ import AnalyticsClient from "@/components/layout/AnalyticsClient";
 import ChunkErrorRecovery from "@/components/layout/ChunkErrorRecovery";
 import { RouteTransitionProvider } from "@/components/transition/RouteTransitionProvider";
 import AppFadeWrapper from "@/components/ui/AppFadeWrapper";
-import PreloaderGate from "@/components/ui/PreloaderGate";
+import InitialPreloader from "@/components/ui/InitialPreloader";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/hooks/initialLoadGate";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
 import "@/styles/globals.css";
 import "@/styles/route-transition.css";
@@ -35,29 +36,6 @@ const THEME_INIT_SCRIPT = `
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
   } catch (_) {}
-})();
-`;
-
-const PRELOADER_INIT_SCRIPT = `
-(() => {
-  try {
-    const key = "preloader_seen";
-    const nav = performance.getEntriesByType("navigation")[0];
-    if (nav && nav.type === "reload") {
-      sessionStorage.removeItem(key);
-    }
-    const seen = sessionStorage.getItem(key) === "1";
-    if (seen) {
-      document.documentElement.setAttribute("data-preloader", "0");
-      document.documentElement.setAttribute("data-app-visible", "1");
-    } else {
-      document.documentElement.setAttribute("data-preloader", "1");
-      document.documentElement.setAttribute("data-app-visible", "0");
-    }
-  } catch (_) {
-    document.documentElement.setAttribute("data-preloader", "1");
-    document.documentElement.setAttribute("data-app-visible", "0");
-  }
 })();
 `;
 
@@ -102,7 +80,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Decide preloader visibility before first paint to prevent content flash */}
-        <script dangerouslySetInnerHTML={{ __html: PRELOADER_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
 
         {/* Apply theme before paint to avoid flash and hydration drift. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
@@ -115,13 +93,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         ].join(" ")}
       >
         <ChunkErrorRecovery />
+        <InitialPreloader />
         <RouteTransitionProvider>
-          <PreloaderGate>
-            <AppFadeWrapper>
-              {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton app shell wrapper. */}
-              <div id="app-shell">{children}</div>
-            </AppFadeWrapper>
-          </PreloaderGate>
+          <AppFadeWrapper>
+            {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton app shell wrapper. */}
+            <div id="app-shell">{children}</div>
+          </AppFadeWrapper>
         </RouteTransitionProvider>
         {/* Load analytics only in production and defer to avoid blocking */}
         <AnalyticsClient enabled={enableAnalytics} />
