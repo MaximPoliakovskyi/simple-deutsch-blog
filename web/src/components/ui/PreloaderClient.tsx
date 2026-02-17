@@ -106,6 +106,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
   const fadeStartedRef = useRef(false);
   const finalizedRef = useRef(false);
   const fadeWatchdogRef = useRef<number | null>(null);
+  const isMountedRef = useRef(true);
 
   // Render no static word on the server; use the CSS rotator for SSR-visible
   // words and let the JS flipper initialize on the client.
@@ -138,7 +139,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
     document.documentElement.setAttribute("data-preloader", "0");
     document.documentElement.setAttribute("data-app-visible", "1");
     onFinished?.();
-    setShowPreloader(false);
+    if (isMountedRef.current) setShowPreloader(false);
   }, [clearFadeWatchdog, onFinished]);
 
   const startFadeOut = useCallback(() => {
@@ -150,7 +151,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
       return;
     }
 
-    setPhase("fadingOut");
+    if (isMountedRef.current) setPhase("fadingOut");
     clearFadeWatchdog();
     fadeWatchdogRef.current = window.setTimeout(() => {
       finishPreloader();
@@ -165,6 +166,13 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
     flipsRef.current = flips;
   }, [flips]);
 
+  // Track component mount lifecycle
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
@@ -174,7 +182,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
       document.documentElement.setAttribute("data-preloader", "0");
       document.documentElement.setAttribute("data-app-visible", "1");
       onFinished?.();
-      setShowPreloader(false);
+      if (isMountedRef.current) setShowPreloader(false);
       return;
     }
 
@@ -203,8 +211,8 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
       const initial = pick();
       lastWordRef.current = initial;
       const arr = Array.from(initial).map((ch) => (ch === " " ? "\u00A0" : ch));
-      setChars(arr);
-      setFlips(new Array(arr.length).fill(false));
+      if (isMountedRef.current) setChars(arr);
+      if (isMountedRef.current) setFlips(new Array(arr.length).fill(false));
       charsRef.current = arr.slice();
       flipsRef.current = new Array(arr.length).fill(false);
 
@@ -218,16 +226,20 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
         const stagger = 70;
         const mid = 200;
 
-        setChars((prevState) => {
-          const a = prevState.slice();
-          while (a.length < max) a.push("");
-          return a;
-        });
-        setFlips((prevState) => {
-          const f = prevState.slice();
-          while (f.length < max) f.push(false);
-          return f;
-        });
+        if (isMountedRef.current) {
+          setChars((prevState) => {
+            const a = prevState.slice();
+            while (a.length < max) a.push("");
+            return a;
+          });
+        }
+        if (isMountedRef.current) {
+          setFlips((prevState) => {
+            const f = prevState.slice();
+            while (f.length < max) f.push(false);
+            return f;
+          });
+        }
 
         charsRef.current = charsRef.current
           .slice()
@@ -239,6 +251,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
         for (let i = 0; i < max; i++) {
           const startAt = i * stagger;
           const t1 = window.setTimeout(() => {
+            if (!isMountedRef.current) return;
             setFlips((prevF) => {
               const cp = prevF.slice();
               cp[i] = true;
@@ -247,6 +260,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
             });
 
             const swap = window.setTimeout(() => {
+              if (!isMountedRef.current) return;
               setChars((prevC) => {
                 const arr2 = prevC.slice();
                 const ch = next[i] ?? "";
@@ -255,12 +269,14 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
                 return arr2;
               });
 
-              setFlips((prevF) => {
-                const cp2 = prevF.slice();
-                cp2[i] = false;
-                flipsRef.current = cp2.slice();
-                return cp2;
-              });
+              if (isMountedRef.current) {
+                setFlips((prevF) => {
+                  const cp2 = prevF.slice();
+                  cp2[i] = false;
+                  flipsRef.current = cp2.slice();
+                  return cp2;
+                });
+              }
             }, mid);
             timeouts.current.push(swap);
           }, startAt);
@@ -279,7 +295,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
 
     const ensureHideTimer = () => {
       if (hideTimer) window.clearTimeout(hideTimer as number);
-      setJsReady(true);
+      if (isMountedRef.current) setJsReady(true);
       hideTimer = window.setTimeout(() => {
         clearAll();
         startFadeOut();
