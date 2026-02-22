@@ -6,7 +6,7 @@ import { runInNewContext } from "node:vm";
 const cwd = process.cwd();
 const nextCli = join(cwd, "node_modules", "next", "dist", "bin", "next");
 
-const build = spawnSync(process.execPath, [nextCli, "build"], {
+const build = spawnSync(process.execPath, [nextCli, "build", "--turbopack"], {
   stdio: "inherit",
 });
 
