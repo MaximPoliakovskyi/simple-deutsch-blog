@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode, TransitionEvent } from "react";
 import {
@@ -113,7 +112,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   >([]);
 
   const isActive = phase !== "idle";
-  const shouldRenderOverlay = !isInitialLoad;
+  const shouldRenderOverlay = !isInitialLoad && phase !== "idle";
 
   const logDev = useCallback((event: string, extra: Record<string, unknown> = {}) => {
     if (!DEBUG) return;
@@ -720,17 +719,19 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
           data-direction={direction}
           className="rt-overlay"
         >
-          <Image
+          <img
             src="/main-logo.svg"
             alt=""
             width={220}
             height={220}
             className="rt-overlay__logo"
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
             style={{
               transform: `rotate(${logoAngle}deg)`,
               transitionDuration: `${logoRotateMs}ms`,
             }}
-            priority
           />
         </div>
       ) : null}
