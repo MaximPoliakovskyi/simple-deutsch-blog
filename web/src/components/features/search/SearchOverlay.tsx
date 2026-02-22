@@ -3,7 +3,6 @@
 
 /* biome-disable */
 
-import { useReducedMotion } from "framer-motion";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -35,6 +34,27 @@ type SearchResponse = { posts: SlimPost[]; pageInfo: PageInfo };
 
 function cn(...a: Array<string | false | null | undefined>): string {
   return a.filter(Boolean).join(" ");
+}
+
+function usePrefersReducedMotion() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const onChange = () => setPrefersReducedMotion(media.matches);
+    onChange();
+
+    if (media.addEventListener) {
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    }
+
+    media.addListener(onChange);
+    return () => media.removeListener(onChange);
+  }, []);
+
+  return prefersReducedMotion;
 }
 
 // Shared radius token for dropdown and last item to ensure pixel-perfect match
@@ -70,7 +90,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const overlayRootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
-  const prefersReducedMotion = useReducedMotion();
+  const prefersReducedMotion = usePrefersReducedMotion();
   const focusSearchInput = useCallback(() => {
     const input = inputRef.current;
     if (!input) return;

@@ -1,12 +1,17 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import SearchOverlay from "./SearchOverlay";
+
+const SearchOverlay = dynamic(() => import("./SearchOverlay"), {
+  ssr: false,
+});
 
 type OpenMethod = "click" | "keyboard" | undefined;
 
 let isListenerAttached = false;
 const openCallbacks = new Set<() => boolean>();
+let searchOverlayModulePromise: Promise<unknown> | null = null;
 
 function onGlobalSearchShortcut(e: KeyboardEvent) {
   if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) return;
@@ -31,7 +36,10 @@ function maybeDetachShortcutListener() {
   isListenerAttached = false;
 }
 
-function preloadSearchOverlay() {}
+function preloadSearchOverlay() {
+  if (searchOverlayModulePromise) return;
+  searchOverlayModulePromise = import("./SearchOverlay");
+}
 
 /** Public button to open the overlay */
 export default function SearchButton({
