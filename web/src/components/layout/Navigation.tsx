@@ -3,12 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  type MouseEvent as ReactMouseEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 import NavigationDesktop from "@/components/layout/NavigationDesktop";
 import {
   NavigationMobileControls,

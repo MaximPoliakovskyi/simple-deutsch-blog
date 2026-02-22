@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type { ReactNode, TransitionEvent } from "react";
 import {
@@ -719,12 +720,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
           data-direction={direction}
           className="rt-overlay"
         >
-          <img
+          <Image
             src="/main-logo.svg"
             alt=""
             width={220}
             height={220}
             className="rt-overlay__logo"
+            unoptimized
             loading="lazy"
             decoding="async"
             fetchPriority="low"

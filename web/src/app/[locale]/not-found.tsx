@@ -1,6 +1,6 @@
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, parseLocaleFromPath } from "@/i18n/locale";
 import NotFound from "../not-found";
 

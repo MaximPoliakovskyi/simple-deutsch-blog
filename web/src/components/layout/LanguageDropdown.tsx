@@ -30,10 +30,47 @@ function usePostLanguageSwitch() {
   const query = searchParams?.toString();
   const pathWithQuery = query ? `${pathname}?${query}` : pathname;
 
-  const persistLocaleCookie = (targetLang: Locale) => {
+  const persistLocaleCookie = async (targetLang: Locale) => {
     const maxAge = 60 * 60 * 24 * 365;
+    const expires = Date.now() + maxAge * 1000;
+    const cookieStore = (
+      window as Window & {
+        cookieStore?: {
+          set?: (options: {
+            name: string;
+            value: string;
+            path: string;
+            sameSite: "lax";
+            expires: number;
+          }) => Promise<void>;
+        };
+      }
+    ).cookieStore;
+
+    if (cookieStore?.set) {
+      await Promise.all([
+        cookieStore.set({
+          name: "NEXT_LOCALE",
+          value: targetLang,
+          path: "/",
+          sameSite: "lax",
+          expires,
+        }),
+        cookieStore.set({
+          name: "locale",
+          value: targetLang,
+          path: "/",
+          sameSite: "lax",
+          expires,
+        }),
+      ]);
+      return;
+    }
+
     // Keep both cookie names so server-side fallbacks (including 404) stay localized.
+    // biome-ignore lint/suspicious/noDocumentCookie: Fallback when Cookie Store API is unavailable.
     document.cookie = `NEXT_LOCALE=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+    // biome-ignore lint/suspicious/noDocumentCookie: Fallback when Cookie Store API is unavailable.
     document.cookie = `locale=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
   };
 
@@ -41,7 +78,7 @@ function usePostLanguageSwitch() {
     if (targetLang === siteLang && targetLang === routeLocale) return;
 
     try {
-      persistLocaleCookie(targetLang);
+      await persistLocaleCookie(targetLang);
       const href = mapPathToLocale(pathWithQuery, targetLang, {
         translationMap: postLangLinks?.links,
       });

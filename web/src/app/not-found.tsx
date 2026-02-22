@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { cookies, headers } from "next/headers";
+import Link from "next/link";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { assertLocale, DEFAULT_LOCALE } from "@/i18n/locale";
 
@@ -35,7 +35,9 @@ export default async function NotFound(_: { locale?: string } = {}) {
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
   if (process.env.NODE_ENV !== "production" && t.__locale !== lang) {
     // eslint-disable-next-line no-console
-    console.error(`[404] Locale/message mismatch: requested "${lang}" but dictionary is "${t.__locale}".`);
+    console.error(
+      `[404] Locale/message mismatch: requested "${lang}" but dictionary is "${t.__locale}".`,
+    );
   }
   const homeHref = `/${lang}`;
 
