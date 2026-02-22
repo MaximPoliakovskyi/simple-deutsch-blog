@@ -12,7 +12,7 @@ export async function CategoryPageContent({
   category: string;
   locale: Locale;
 }) {
-  const term = await getCategoryBySlug(category);
+  const term = await getCategoryBySlug(category, locale);
   if (!term) return notFound();
   const lang: Locale = locale;
 

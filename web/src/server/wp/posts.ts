@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/locale";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/wp/client";
 import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
 import {
@@ -9,6 +10,7 @@ import {
   GET_POSTS,
   GET_POSTS_BY_CATEGORY,
   GET_POSTS_BY_CATEGORY_SLUG,
+  GET_POSTS_LIGHTWEIGHT,
   GET_POSTS_BY_TAG,
   GET_POSTS_INDEX,
   GET_RELATED_LATEST_POSTS,
@@ -49,7 +51,11 @@ export async function getPostsByCategorySlug(
     },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:by-category-slug"] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:by-category-slug", `category:${slug}`],
+      },
     },
   );
   return {
@@ -79,7 +85,11 @@ export async function getRelatedPostsByCategorySlug(params: {
     },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:related", "posts:category"] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:related", "posts:category", `category:${slug}`],
+      },
     },
   );
 
@@ -111,7 +121,11 @@ export async function getRelatedPostsByTagSlug(params: {
     },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:related", "posts:tag"] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:related", "posts:tag", `tag:${slug}`],
+      },
     },
   );
 
@@ -203,6 +217,35 @@ export async function getPosts(
   };
 }
 
+export async function getPostsLightweight(opts: {
+  first: number;
+  after?: string;
+  locale?: Locale;
+}): Promise<{ posts: Connection<PostListItem> }> {
+  const { first, after, locale } = opts;
+  const language = locale ? mapUiToGraphQLEnum(locale) : undefined;
+
+  const data = await fetchGraphQL<{ posts: Connection<PostListItem> }>(
+    GET_POSTS_LIGHTWEIGHT,
+    {
+      first,
+      after: after ?? null,
+      language: language ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 300, tags: [CACHE_TAGS.posts, "posts:lightweight"] },
+    },
+  );
+
+  return {
+    posts: {
+      ...data.posts,
+      nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    },
+  };
+}
+
 export async function getPostBySlug(slug: string, init?: NextInit) {
   const data = await fetchGraphQL<{ post: PostDetail | null }>(
     GET_POST_BY_SLUG,
@@ -210,7 +253,11 @@ export async function getPostBySlug(slug: string, init?: NextInit) {
     {
       ...init,
       locale: init?.locale ?? DEFAULT_LOCALE,
-      policy: init?.policy ?? { type: "ISR", revalidate: 120, tags: ["posts", "post:detail"] },
+      policy: init?.policy ?? {
+        type: "ISR",
+        revalidate: 120,
+        tags: [CACHE_TAGS.posts, "post:detail", CACHE_TAGS.post(slug)],
+      },
     },
   );
   const post = data.post ?? null;
@@ -316,7 +363,11 @@ export async function getPostsByCategory(params: {
 
   const requestInit: NextInit = {
     locale: locale ?? DEFAULT_LOCALE,
-    policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:category"] },
+    policy: {
+      type: "ISR",
+      revalidate: 300,
+      tags: [CACHE_TAGS.posts, "posts:category", `category:${categorySlug}`],
+    },
   };
 
   let data: {
@@ -392,7 +443,11 @@ export async function getPostsByTag(params: {
     { first, after, tagSlug },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:tag"] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:tag", `tag:${tagSlug}`],
+      },
     },
   );
 
@@ -530,7 +585,11 @@ export async function getPostsPageByCategory(params: {
     { slug: categorySlug, first, after: after ?? null, language: language ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:by-category-slug"] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:by-category-slug", `category:${categorySlug}`],
+      },
     },
   );
 

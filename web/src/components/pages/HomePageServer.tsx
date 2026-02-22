@@ -4,14 +4,14 @@ import SuccessStoriesSliderServer from "@/components/features/stories/SuccessSto
 import DeferredHeroFilters from "@/components/layout/DeferredHeroFilters";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
-import { getPosts as getWpPosts } from "@/server/wp/api";
+import { getPostsLightweight as getWpPostsLightweight } from "@/server/wp/api";
 
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 type PostsResponse = { posts: WPPostCard[]; pageInfo: PageInfo };
 
 async function fetchPosts(first: number, locale?: Locale): Promise<PostsResponse> {
   try {
-    const res = await getWpPosts({ first, locale });
+    const res = await getWpPostsLightweight({ first, locale });
     const posts = (res.posts?.nodes ?? []) as WPPostCard[];
     const pageInfo = (res.posts?.pageInfo ?? { endCursor: null, hasNextPage: false }) as PageInfo;
     return { posts, pageInfo };

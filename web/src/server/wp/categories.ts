@@ -1,5 +1,6 @@
 import type { Locale } from "@/i18n/locale";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/wp/client";
 import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
 import {
@@ -19,7 +20,7 @@ export async function getCategoryBySlug(slug: string, locale?: Locale) {
     { slug },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 600, tags: ["categories"] },
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.categories, `category:${slug}`] },
     },
   );
   return data.category ?? null;
@@ -42,7 +43,7 @@ export async function getAllCategories({
     },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 600, tags: ["categories"] },
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.categories] },
     },
   );
 }
@@ -63,7 +64,7 @@ export async function getAllTags({
     { first, after: after ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 600, tags: ["tags"] },
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags] },
     },
   );
   return { tags: data.tags };
@@ -75,7 +76,7 @@ export async function getTagBySlug(slug: string, locale?: Locale) {
     { slug },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 600, tags: ["tags"] },
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags, `tag:${slug}`] },
     },
   );
   return data.tag ?? null;
@@ -97,7 +98,7 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
     { slug, first, after: after ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:tag-slug"] },
+      policy: { type: "ISR", revalidate: 300, tags: [CACHE_TAGS.posts, "posts:tag-slug", `tag:${slug}`] },
     },
   );
 
@@ -143,7 +144,7 @@ export async function getPostsByTagDatabaseId(
     { tagId: String(tagDatabaseId), first, after: after ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: ["posts", "posts:tag-id"] },
+      policy: { type: "ISR", revalidate: 300, tags: [CACHE_TAGS.posts, "posts:tag-id", `tag:${tagDatabaseId}`] },
     },
   );
 

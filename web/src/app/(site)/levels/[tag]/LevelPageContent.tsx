@@ -12,7 +12,7 @@ type TagNode = {
 };
 
 export async function LevelPageContent({ tag, locale }: { tag: string; locale: Locale }) {
-  const term = (await getTagBySlug(tag)) as TagNode | null;
+  const term = (await getTagBySlug(tag, locale)) as TagNode | null;
   if (!term) return notFound();
   const PAGE_SIZE = 3;
   const lang: Locale = locale;

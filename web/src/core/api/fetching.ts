@@ -69,6 +69,7 @@ function policyToInit(policy: CachePolicy): Pick<NextFetchInit, "cache" | "next"
   }
 
   return {
+    cache: "force-cache",
     next: {
       revalidate: policy.revalidate,
       ...(policy.tags?.length ? { tags: policy.tags } : {}),

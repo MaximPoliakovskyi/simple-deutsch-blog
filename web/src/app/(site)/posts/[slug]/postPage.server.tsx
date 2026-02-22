@@ -13,7 +13,7 @@ import { DEFAULT_LOCALE, isLocale, type Locale } from "@/i18n/locale";
 import type { LocaleTranslationMap } from "@/i18n/pathMapping";
 import { buildI18nAlternates } from "@/i18n/seo";
 import type { PostDetail } from "@/server/wp/api";
-import { getPostBySlug, getPostsPageFiltered } from "@/server/wp/api"; // adjust path if yours differs
+import { getLatestPostsForRelated, getPostBySlug } from "@/server/wp/api"; // adjust path if yours differs
 import { mapGraphQLEnumToUi } from "@/server/wp/polylang";
 
 type LanguageSlug = Locale;
@@ -81,7 +81,7 @@ const fetchPost = cache(async (slug: string, locale: Locale) =>
 
 async function fetchMoreArticles(currentLang: LanguageSlug, currentSlug: string) {
   try {
-    const res = await getPostsPageFiltered({ first: 12, locale: currentLang });
+    const res = await getLatestPostsForRelated({ first: 12, locale: currentLang });
     const nodes = res.posts ?? [];
     return nodes
       .filter((p) => p.slug !== currentSlug)

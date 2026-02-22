@@ -1,7 +1,7 @@
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
 import type { WPPostCard } from "@/server/wp/api";
-import { getPosts } from "@/server/wp/api";
+import { getPostsLightweight } from "@/server/wp/api";
 import LatestPostsSlider from "./LatestPostsSlider";
 
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 };
 
 async function getSliderPosts(locale?: Locale): Promise<WPPostCard[]> {
-  const response = await getPosts({ first: 8, locale });
+  const response = await getPostsLightweight({ first: 8, locale });
   return (response.posts?.nodes ?? []) as WPPostCard[];
 }
 

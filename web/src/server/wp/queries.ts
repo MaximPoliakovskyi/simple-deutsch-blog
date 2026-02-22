@@ -92,45 +92,19 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
         title
         date
         excerpt
-        content
         featuredImage {
           node {
             sourceUrl
             altText
-            mediaDetails {
-              width
-              height
-            }
           }
         }
         featuredImageUrl
-        author {
-          node {
-            name
-          }
-        }
         language {
           code
           slug
           locale
         }
-        translations {
-          databaseId
-          slug
-          uri
-          language {
-            code
-            slug
-            locale
-          }
-        }
         categories {
-          nodes {
-            name
-            slug
-          }
-        }
-        tags {
           nodes {
             name
             slug
@@ -290,37 +264,17 @@ export const GET_POSTS = /* GraphQL */ `
         title
         date
         excerpt
-        content
         featuredImage {
           node {
             sourceUrl
             altText
-            mediaDetails {
-              width
-              height
-            }
           }
         }
         featuredImageUrl
-        author {
-          node {
-            name
-          }
-        }
         language {
           code
           slug
           locale
-        }
-        translations {
-          databaseId
-          slug
-          uri
-          language {
-            code
-            slug
-            locale
-          }
         }
         categories {
           nodes {
@@ -354,40 +308,19 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
-          author {
-            node {
-              name
-              slug
-            }
-          }
           categories {
             nodes {
               id
@@ -424,49 +357,20 @@ export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
-          author {
-            node {
-              name
-              slug
-            }
-          }
           categories {
-            nodes {
-              id
-              databaseId
-              name
-              slug
-            }
-          }
-          tags {
             nodes {
               id
               databaseId
@@ -494,49 +398,20 @@ export const GET_POSTS_BY_TAG = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
-          author {
-            node {
-              name
-              slug
-            }
-          }
           categories {
-            nodes {
-              id
-              databaseId
-              name
-              slug
-            }
-          }
-          tags {
             nodes {
               id
               databaseId
@@ -572,49 +447,20 @@ export const GET_POSTS_INDEX = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
-          author {
-            node {
-              name
-              slug
-            }
-          }
           categories {
-            nodes {
-              id
-              databaseId
-              name
-              slug
-            }
-          }
-          tags {
             nodes {
               id
               databaseId
@@ -642,32 +488,14 @@ export const SEARCH_POSTS = /* GraphQL */ `
         slug
         title
         excerpt
-        content
         date
         featuredImage {
           node {
             sourceUrl
             altText
-            mediaDetails {
-              width
-              height
-            }
           }
         }
         featuredImageUrl
-        categories {
-          nodes {
-            id
-            name
-            slug
-          }
-        }
-        translations {
-          slug
-          language {
-            code
-          }
-        }
       }
     }
   }
@@ -723,30 +551,15 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
           title
           date
           excerpt
-          content
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
@@ -778,30 +591,15 @@ export const GET_POSTS_BY_TAG_DATABASE_ID = /* GraphQL */ `
           title
           date
           excerpt
-          content
           language {
             code
             slug
             locale
           }
-          translations {
-            databaseId
-            slug
-            uri
-            language {
-              code
-              slug
-              locale
-            }
-          }
           featuredImage {
             node {
               sourceUrl
               altText
-              mediaDetails {
-                width
-                height
-              }
             }
           }
           featuredImageUrl
@@ -960,6 +758,7 @@ export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
         slug
         title
         date
+        excerpt
         featuredImage {
           node {
             sourceUrl
@@ -970,11 +769,6 @@ export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
         categories {
           nodes {
             name
-            slug
-          }
-        }
-        tags {
-          nodes {
             slug
           }
         }

@@ -69,31 +69,49 @@ export default async function RelatedArticles({
   const uniqueCategorySlugs = uniqueSlugs(categorySlugs);
   const uniqueTagSlugs = uniqueSlugs(tagSlugs);
 
-  for (const categorySlug of uniqueCategorySlugs) {
-    if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByCategorySlug({
-        slug: categorySlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
+  if (uniqueCategorySlugs.length) {
+    const categoryResults = await Promise.all(
+      uniqueCategorySlugs.map(async (categorySlug) => {
+        try {
+          const { posts } = await getRelatedPostsByCategorySlug({
+            slug: categorySlug,
+            first: QUERY_PAGE_SIZE,
+            locale,
+          });
+          return posts;
+        } catch (error) {
+          console.error(`[related] failed category fetch for "${categorySlug}"`, error);
+          return [] as PostListItem[];
+        }
+      }),
+    );
+
+    for (const posts of categoryResults) {
+      if (picked.length >= MAX_RELATED_POSTS) break;
       tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed category fetch for "${categorySlug}"`, error);
     }
   }
 
-  for (const tagSlug of uniqueTagSlugs) {
-    if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByTagSlug({
-        slug: tagSlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
+  if (uniqueTagSlugs.length) {
+    const tagResults = await Promise.all(
+      uniqueTagSlugs.map(async (tagSlug) => {
+        try {
+          const { posts } = await getRelatedPostsByTagSlug({
+            slug: tagSlug,
+            first: QUERY_PAGE_SIZE,
+            locale,
+          });
+          return posts;
+        } catch (error) {
+          console.error(`[related] failed tag fetch for "${tagSlug}"`, error);
+          return [] as PostListItem[];
+        }
+      }),
+    );
+
+    for (const posts of tagResults) {
+      if (picked.length >= MAX_RELATED_POSTS) break;
       tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed tag fetch for "${tagSlug}"`, error);
     }
   }
 
