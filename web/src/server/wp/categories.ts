@@ -98,7 +98,11 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
     { slug, first, after: after ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: [CACHE_TAGS.posts, "posts:tag-slug", `tag:${slug}`] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:tag-slug", `tag:${slug}`],
+      },
     },
   );
 
@@ -144,7 +148,11 @@ export async function getPostsByTagDatabaseId(
     { tagId: String(tagDatabaseId), first, after: after ?? null },
     {
       locale: locale ?? DEFAULT_LOCALE,
-      policy: { type: "ISR", revalidate: 300, tags: [CACHE_TAGS.posts, "posts:tag-id", `tag:${tagDatabaseId}`] },
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:tag-id", `tag:${tagDatabaseId}`],
+      },
     },
   );
 

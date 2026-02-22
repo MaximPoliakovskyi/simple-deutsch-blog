@@ -554,144 +554,144 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
             transitionTimingFunction: "ease-in-out",
           }}
         >
-        {/* Input row */}
-        <div
-          className="
+          {/* Input row */}
+          <div
+            className="
             flex items-center gap-2 rounded-xl px-3 py-2
             bg-transparent text-neutral-900
             dark:text-neutral-100
           "
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="opacity-60 text-neutral-500 dark:text-neutral-400"
           >
-            <path
-              d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </svg>
-          <input
-            type="search"
-            ref={inputRef}
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={tPlaceholder}
-            aria-label={tSearchLabel}
-            className="
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              className="opacity-60 text-neutral-500 dark:text-neutral-400"
+            >
+              <path
+                d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+            </svg>
+            <input
+              type="search"
+              ref={inputRef}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={tPlaceholder}
+              aria-label={tSearchLabel}
+              className="
                 w-full bg-transparent py-2 text-inherit
                 placeholder-neutral-500 dark:placeholder-neutral-400
                 appearance-none border-0 focus:border-0 focus-visible:border-0
                 outline-none focus:outline-none focus-visible:outline-none
                 ring-0 focus:ring-0 focus-visible:ring-0
               "
-          />
-          {q ? (
-            <button
-              type="button"
-              onClick={() => {
-                setQ("");
-                focusSearchInput();
-              }}
-              className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
-              aria-label={CLEAR_LABEL}
-            >
-              {CLEAR_LABEL}
-            </button>
-          ) : null}
-        </div>
+            />
+            {q ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setQ("");
+                  focusSearchInput();
+                }}
+                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+                aria-label={CLEAR_LABEL}
+              >
+                {CLEAR_LABEL}
+              </button>
+            ) : null}
+          </div>
 
-        {/* Results (single animated container) */}
-        <div
-          ref={resultsWrapRef}
-          className="min-h-0 overflow-y-auto"
-          style={{
-            height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
-            padding: 0,
-            opacity: showResults ? 1 : 0,
-            transform: showResults ? "translateY(0)" : "translateY(-6px)",
-            transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
-            willChange: "height, opacity, transform",
-          }}
-        >
-          <ul
-            ref={listRef}
-            className="divide-y divide-neutral-200 dark:divide-white/10"
-            style={{ margin: 0, padding: 0, listStyle: "none" }}
+          {/* Results (single animated container) */}
+          <div
+            ref={resultsWrapRef}
+            className="min-h-0 overflow-y-auto"
+            style={{
+              height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
+              padding: 0,
+              opacity: showResults ? 1 : 0,
+              transform: showResults ? "translateY(0)" : "translateY(-6px)",
+              transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
+              willChange: "height, opacity, transform",
+            }}
           >
-            {empty && (
-              <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
-                {tNoResults}
-              </li>
-            )}
+            <ul
+              ref={listRef}
+              className="divide-y divide-neutral-200 dark:divide-white/10"
+              style={{ margin: 0, padding: 0, listStyle: "none" }}
+            >
+              {empty && (
+                <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
+                  {tNoResults}
+                </li>
+              )}
 
-            {!loading &&
-              items.length > 0 &&
-              items.slice(0, visibleCount).map((it, i) => (
-                <li key={it.id}>
+              {!loading &&
+                items.length > 0 &&
+                items.slice(0, visibleCount).map((it, i) => (
+                  <li key={it.id}>
+                    <button
+                      type="button"
+                      onMouseEnter={() => setHighlight(i)}
+                      onClick={() => {
+                        requestClose();
+                        router.push(`/posts/${it.slug}`);
+                      }}
+                      className={cn(
+                        "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
+                        "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
+                        i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
+                        // only the last rendered item should have bottom rounding
+                        i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
+                      )}
+                      aria-current={i === highlight ? "true" : undefined}
+                    >
+                      {it.image ? (
+                        <Image
+                          src={it.image ?? ""}
+                          alt=""
+                          width={48}
+                          height={48}
+                          className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
+                          sizes="48px"
+                        />
+                      ) : (
+                        <div
+                          className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                          {it.title}
+                        </div>
+                        <div
+                          className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
+                          /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
+                          dangerouslySetInnerHTML={{ __html: it.excerpt }}
+                        />
+                      </div>
+                    </button>
+                  </li>
+                ))}
+
+              {!loading && visibleCount < items.length && (
+                <li className="px-5 py-3 text-center">
                   <button
                     type="button"
-                    onMouseEnter={() => setHighlight(i)}
-                    onClick={() => {
-                      requestClose();
-                      router.push(`/posts/${it.slug}`);
-                    }}
-                    className={cn(
-                      "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
-                      "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
-                      i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
-                      // only the last rendered item should have bottom rounding
-                      i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
-                    )}
-                    aria-current={i === highlight ? "true" : undefined}
+                    onClick={() => setVisibleCount((v) => Math.min(v + 5, items.length))}
+                    className="cursor-pointer text-sm text-neutral-800 dark:text-neutral-300 hover:underline"
                   >
-                    {it.image ? (
-                      <Image
-                        src={it.image ?? ""}
-                        alt=""
-                        width={48}
-                        height={48}
-                        className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
-                        sizes="48px"
-                      />
-                    ) : (
-                      <div
-                        className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
-                        aria-hidden="true"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                        {it.title}
-                      </div>
-                      <div
-                        className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
-                        /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
-                        dangerouslySetInnerHTML={{ __html: it.excerpt }}
-                      />
-                    </div>
+                    {tLoadMore}
                   </button>
                 </li>
-              ))}
-
-            {!loading && visibleCount < items.length && (
-              <li className="px-5 py-3 text-center">
-                <button
-                  type="button"
-                  onClick={() => setVisibleCount((v) => Math.min(v + 5, items.length))}
-                  className="cursor-pointer text-sm text-neutral-800 dark:text-neutral-300 hover:underline"
-                >
-                  {tLoadMore}
-                </button>
-              </li>
-            )}
-          </ul>
-        </div>
+              )}
+            </ul>
+          </div>
         </div>
       </div>
     </div>,

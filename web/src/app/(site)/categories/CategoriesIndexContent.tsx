@@ -25,7 +25,8 @@ function formatPostCount(count: number, localeForCount: Locale) {
     const mod100 = count % 100;
     let word = "\u043f\u043e\u0441\u0442\u043e\u0432";
     if (mod10 === 1 && mod100 !== 11) word = "\u043f\u043e\u0441\u0442";
-    else if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) word = "\u043f\u043e\u0441\u0442\u0430";
+    else if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14))
+      word = "\u043f\u043e\u0441\u0442\u0430";
     return `${count} ${word.charAt(0).toUpperCase() + word.slice(1)}`;
   }
 
@@ -33,7 +34,8 @@ function formatPostCount(count: number, localeForCount: Locale) {
   const mod100 = count % 100;
   let word = "\u043f\u043e\u0441\u0442\u0456\u0432";
   if (mod10 === 1 && mod100 !== 11) word = "\u043f\u043e\u0441\u0442";
-  else if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14)) word = "\u043f\u043e\u0441\u0442\u0438";
+  else if (mod10 >= 2 && mod10 <= 4 && !(mod100 >= 12 && mod100 <= 14))
+    word = "\u043f\u043e\u0441\u0442\u0438";
   return `${count} ${word.charAt(0).toUpperCase() + word.slice(1)}`;
 }
 

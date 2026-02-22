@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import PartnershipsClient from "./PartnershipsClient";
 import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { DEFAULT_LOCALE } from "@/i18n/locale";
+import PartnershipsClient from "./PartnershipsClient";
 
 const CONTACT_EMAIL = "partnerships@simple-deutsch.de";
 const en = TRANSLATIONS[DEFAULT_LOCALE];

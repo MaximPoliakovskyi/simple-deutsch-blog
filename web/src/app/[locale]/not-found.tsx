@@ -1,7 +1,6 @@
-import { TRANSLATIONS } from "@/core/i18n/i18n";
 import { headers } from "next/headers";
-import { notFound } from "next/navigation";
-import { assertLocale, parseLocaleFromPath } from "@/i18n/locale";
+import { TRANSLATIONS } from "@/core/i18n/i18n";
+import { assertLocale, DEFAULT_LOCALE, parseLocaleFromPath } from "@/i18n/locale";
 import NotFound from "../not-found";
 
 type Props = {
@@ -64,15 +63,13 @@ async function resolveLocale(params?: Props["params"]) {
 }
 
 export async function generateMetadata({ params }: Props = {}) {
-  const locale = await resolveLocale(params);
-  if (!locale) return {};
+  const locale = (await resolveLocale(params)) ?? DEFAULT_LOCALE;
 
   return { title: TRANSLATIONS[locale].pageNotFoundTitle };
 }
 
-export default async function LocalizedNotFound({ params }: Props = {}) {
-  const locale = await resolveLocale(params);
-  if (!locale) notFound();
+export default async function LocalizedNotFoundPage({ params }: Props = {}) {
+  const locale = (await resolveLocale(params)) ?? DEFAULT_LOCALE;
 
   return <NotFound locale={locale} />;
 }

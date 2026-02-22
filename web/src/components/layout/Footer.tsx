@@ -189,55 +189,51 @@ export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale })
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
-            {sections.map(
-              (section) => (
-                <div key={section.title}>
-                  <h3
-                    className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
-                    style={TYPO_STYLE}
-                  >
-                    {section.title}
-                  </h3>
-                  <div className="mt-3">
-                    <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
-                      {section.items.map((item) => {
-                        const resolvedLabel =
-                          item.href === "/impressum"
-                            ? dictionary.imprint || item.label
-                            : item.label;
+            {sections.map((section) => (
+              <div key={section.title}>
+                <h3
+                  className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
+                  style={TYPO_STYLE}
+                >
+                  {section.title}
+                </h3>
+                <div className="mt-3">
+                  <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
+                    {section.items.map((item) => {
+                      const resolvedLabel =
+                        item.href === "/impressum" ? dictionary.imprint || item.label : item.label;
 
-                        if (item.external) {
-                          return (
-                            <li key={item.label}>
-                              <a
-                                href={item.href}
-                                className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
-                                rel="noopener noreferrer"
-                                style={TYPO_STYLE}
-                              >
-                                {resolvedLabel}
-                              </a>
-                            </li>
-                          );
-                        }
-
+                      if (item.external) {
                         return (
                           <li key={item.label}>
-                            <Link
-                              href={prefixHrefForLocale(item.href, locale)}
+                            <a
+                              href={item.href}
                               className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
+                              rel="noopener noreferrer"
                               style={TYPO_STYLE}
                             >
                               {resolvedLabel}
-                            </Link>
+                            </a>
                           </li>
                         );
-                      })}
-                    </ul>
-                  </div>
+                      }
+
+                      return (
+                        <li key={item.label}>
+                          <Link
+                            href={prefixHrefForLocale(item.href, locale)}
+                            className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
+                            style={TYPO_STYLE}
+                          >
+                            {resolvedLabel}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -257,4 +253,3 @@ export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale })
     </footer>
   );
 }
-

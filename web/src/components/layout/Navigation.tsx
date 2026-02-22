@@ -3,12 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  type MouseEvent as ReactMouseEvent,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 import NavigationDesktop from "@/components/layout/NavigationDesktop";
 import {
   NavigationMobileControls,
@@ -157,7 +152,7 @@ export default function Header() {
     }
 
     event.preventDefault();
-    transition.navigateFromLogo(logoHref);
+    transition.startNavigation(logoHref);
   };
 
   // Keep mobile label in sync with the single root theme source.
