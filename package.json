@@ -6,6 +6,9 @@
     "dev": "npm --prefix web run dev",
     "build": "npm --prefix web run build",
     "start": "npm --prefix web run start",
+    "perf:build": "npm --prefix web run perf:build",
+    "perf:prod": "npm --prefix web run perf:prod",
+    "perf:lighthouse": "npm --prefix web run perf:lighthouse",
     "install:web": "npm --prefix web install",
     "postinstall": "npm --prefix web install"
   }

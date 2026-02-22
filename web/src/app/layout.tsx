@@ -64,21 +64,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
-        {/* Preload critical fonts for faster first paint */}
-        <link
-          rel="preload"
-          href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap"
-          as="style"
-        />
-
-        {/* Prefetch common navigation pages (scope to default locale) */}
-        <link
-          rel="prefetch"
-          href={`/api/posts?first=12&lang=${DEFAULT_LOCALE}`}
-          as="fetch"
-          crossOrigin="anonymous"
-        />
-
         {/* Decide preloader visibility before first paint to prevent content flash */}
         <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
 

@@ -16,14 +16,15 @@
     "smoke": "playwright test",
     "test:i18n-routing": "tsc --module commonjs --moduleResolution node --target es2022 --outDir .tmp/i18n-tests --rootDir src/i18n --esModuleInterop --skipLibCheck src/i18n/locale.ts src/i18n/pathMapping.ts src/i18n/seo.ts src/i18n/pathMapping.test.ts src/i18n/seo.test.ts && node --test .tmp/i18n-tests/pathMapping.test.js .tmp/i18n-tests/seo.test.js && node -e \"require('node:fs').rmSync('.tmp/i18n-tests',{ recursive: true, force: true })\"",
     "analyze": "node ./scripts/analyze-build.mjs",
-    "perf:build": "node ./scripts/perf-build.mjs"
+    "perf:build": "node ./scripts/perf-build.mjs",
+    "perf:prod": "npm run build && npm run start",
+    "perf:lighthouse": "npx lighthouse http://localhost:3000 --preset=desktop --output=html --output-path=.next/lighthouse-desktop.html --chrome-flags=\"--headless\""
   },
   "dependencies": {
     "@vercel/analytics": "^1.6.1",
     "@vercel/speed-insights": "^1.3.1",
     "autoprefixer": "^10.4.21",
     "clsx": "^2.1.1",
-    "framer-motion": "^12.34.0",
     "isomorphic-dompurify": "^2.28.0",
     "lucide-react": "^0.544.0",
     "next": "^16.1.4",
