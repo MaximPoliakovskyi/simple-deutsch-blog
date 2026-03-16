@@ -609,7 +609,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
           {/* Results (single animated container) */}
           <div
             ref={resultsWrapRef}
-            className="min-h-0 overflow-y-auto"
+            className="sd-hide-scrollbar min-h-0 overflow-y-auto"
             style={{
               height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
               padding: 0,

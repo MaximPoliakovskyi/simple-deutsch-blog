@@ -92,6 +92,7 @@ export const GET_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
         title
         date
         excerpt
+        content
         featuredImage {
           node {
             sourceUrl
@@ -264,6 +265,7 @@ export const GET_POSTS = /* GraphQL */ `
         title
         date
         excerpt
+        content
         featuredImage {
           node {
             sourceUrl
@@ -308,6 +310,7 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           slug
           title
           excerpt
+          content
           date
           language {
             code
@@ -357,6 +360,7 @@ export const GET_POSTS_BY_CATEGORY = /* GraphQL */ `
           slug
           title
           excerpt
+          content
           date
           language {
             code
@@ -398,6 +402,7 @@ export const GET_POSTS_BY_TAG = /* GraphQL */ `
           slug
           title
           excerpt
+          content
           date
           language {
             code
@@ -551,6 +556,7 @@ export const GET_POSTS_BY_TAG_SLUG = /* GraphQL */ `
           title
           date
           excerpt
+          content
           language {
             code
             slug
@@ -591,6 +597,7 @@ export const GET_POSTS_BY_TAG_DATABASE_ID = /* GraphQL */ `
           title
           date
           excerpt
+          content
           language {
             code
             slug
@@ -648,6 +655,7 @@ export const GET_RELATED_POSTS_BY_CATEGORY_SLUG = /* GraphQL */ `
         title
         date
         excerpt
+        content
         categories {
           nodes {
             name
@@ -680,12 +688,13 @@ export const GET_RELATED_POSTS_BY_TAG_SLUG = /* GraphQL */ `
         }
         nodes {
           id
-          databaseId
-          slug
-          title
-          date
-          excerpt
-          language {
+        databaseId
+        slug
+        title
+        date
+        excerpt
+        content
+        language {
             code
             slug
             locale
@@ -727,6 +736,7 @@ export const GET_RELATED_LATEST_POSTS = /* GraphQL */ `
         title
         date
         excerpt
+        content
         categories {
           nodes {
             name
@@ -759,6 +769,7 @@ export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
         title
         date
         excerpt
+        content
         featuredImage {
           node {
             sourceUrl

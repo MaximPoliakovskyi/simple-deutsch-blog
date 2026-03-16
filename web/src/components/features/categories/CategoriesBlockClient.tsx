@@ -50,6 +50,7 @@ export default function CategoriesBlockClient({
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isFetching, setIsFetching] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(selectedOnMount);
 
   React.useEffect(() => {
     cacheRef.current = selectedOnMount ? new Map([[selectedOnMount, initialPosts]]) : new Map();
@@ -58,11 +59,13 @@ export default function CategoriesBlockClient({
     setDisplayedCount(pageSize);
     setIsLoading(false);
     setIsFetching(false);
+    setSelectedCategory(selectedOnMount);
   }, [initialPosts, pageSize, selectedOnMount]);
 
   const handleCategorySelect = React.useCallback(
     async (slug: string | null) => {
       if (!slug) return;
+      setSelectedCategory(slug);
       const selectedTag = categories.find((category) => category.slug === slug);
       if (!selectedTag) {
         if (process.env.NODE_ENV !== "production") {
@@ -131,6 +134,7 @@ export default function CategoriesBlockClient({
         <CategoryPills
           categories={categories}
           initialSelected={selectedOnMount}
+          selected={selectedCategory}
           onSelect={handleCategorySelect}
           alignment="left"
           required={true}

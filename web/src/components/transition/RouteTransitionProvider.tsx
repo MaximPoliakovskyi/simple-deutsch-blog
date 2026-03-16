@@ -18,8 +18,12 @@ import {
 } from "@/components/transition/useTransitionNav";
 import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scrollLock";
 
-const ENTER_DURATION_MS = 760;
-const EXIT_DURATION_MS = 760;
+const DESKTOP_ENTER_DURATION_MS = 1600;
+const DESKTOP_EXIT_DURATION_MS = 1200;
+const MOBILE_ENTER_DURATION_MS = 950;
+const MOBILE_EXIT_DURATION_MS = 760;
+const DESKTOP_LOGO_ROTATION_DEG = 220;
+const MOBILE_LOGO_ROTATION_DEG = 120;
 
 type ResolvedTransitionNavigationOptions = {
   scroll: boolean;
@@ -36,6 +40,8 @@ type ActiveTransition = {
 type MotionState = {
   overlayX: number;
   logoAngle: number;
+  logoScale: number;
+  logoOpacity: number;
 };
 
 function normalizeRoutePathname(pathname: string) {
@@ -99,6 +105,28 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
+function useIsMobileViewport() {
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const media = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setIsMobileViewport(media.matches);
+    onChange();
+
+    if (media.addEventListener) {
+      media.addEventListener("change", onChange);
+      return () => media.removeEventListener("change", onChange);
+    }
+
+    media.addListener(onChange);
+    return () => media.removeListener(onChange);
+  }, []);
+
+  return isMobileViewport;
+}
+
 function resolveNavigationOptions(
   options: TransitionNavigationOptions | undefined,
 ): ResolvedTransitionNavigationOptions {
@@ -112,6 +140,10 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = normalizeRoutePathname(usePathname() || "/");
   const prefersReducedMotion = usePrefersReducedMotion();
+  const isMobileViewport = useIsMobileViewport();
+  const enterDurationMs = isMobileViewport ? MOBILE_ENTER_DURATION_MS : DESKTOP_ENTER_DURATION_MS;
+  const exitDurationMs = isMobileViewport ? MOBILE_EXIT_DURATION_MS : DESKTOP_EXIT_DURATION_MS;
+  const logoRotationDeg = isMobileViewport ? MOBILE_LOGO_ROTATION_DEG : DESKTOP_LOGO_ROTATION_DEG;
 
   const [phase, setPhase] = useState<TransitionPhase>("idle");
   const [token, setToken] = useState(0);
@@ -119,6 +151,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const [motion, setMotion] = useState<MotionState>({
     overlayX: -100,
     logoAngle: 0,
+    logoScale: 1,
+    logoOpacity: 1,
   });
 
   const phaseRef = useRef<TransitionPhase>("idle");
@@ -177,6 +211,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     setMotion({
       overlayX: -100,
       logoAngle: 0,
+      logoScale: 1,
+      logoOpacity: 1,
     });
     setPhaseSafe("idle");
   }, [cancelMotionAnimation, restoreDocumentScrollBehavior, setPhaseSafe]);
@@ -214,10 +250,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
 
         const rawProgress = Math.min(1, (now - startAt) / durationMs);
         const easedProgress = easeInOutCubic(rawProgress);
+        const easedLogoProgress = easeInOutCubic(rawProgress);
 
         setMotion({
           overlayX: from.overlayX + (to.overlayX - from.overlayX) * easedProgress,
-          logoAngle: from.logoAngle + (to.logoAngle - from.logoAngle) * easedProgress,
+          logoAngle: from.logoAngle + (to.logoAngle - from.logoAngle) * easedLogoProgress,
+          logoScale: from.logoScale + (to.logoScale - from.logoScale) * easedLogoProgress,
+          logoOpacity: from.logoOpacity + (to.logoOpacity - from.logoOpacity) * easedLogoProgress,
         });
 
         if (rawProgress < 1) {
@@ -268,18 +307,22 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         setMotion({
           overlayX: 0,
           logoAngle: 0,
+          logoScale: 1,
+          logoOpacity: 1,
         });
         setPhaseSafe("covered");
       } else {
         setMotion({
           overlayX: -100,
-          logoAngle: -360,
+          logoAngle: -logoRotationDeg,
+          logoScale: 0.86,
+          logoOpacity: 0.72,
         });
         setPhaseSafe("entering");
       }
       return true;
     },
-    [forceInstantScrollBehavior, prefersReducedMotion, setPhaseSafe],
+    [forceInstantScrollBehavior, logoRotationDeg, prefersReducedMotion, setPhaseSafe],
   );
 
   const signalRouteReady = useCallback(
@@ -316,6 +359,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     setMotion({
       overlayX: 0,
       logoAngle: 0,
+      logoScale: 1,
+      logoOpacity: 1,
     });
 
     navigationStartedRef.current = true;
@@ -341,13 +386,17 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     animateMotion({
       from: {
         overlayX: -100,
-        logoAngle: -360,
+        logoAngle: -logoRotationDeg,
+        logoScale: 0.86,
+        logoOpacity: 0.72,
       },
       to: {
         overlayX: 0,
         logoAngle: 0,
+        logoScale: 1,
+        logoOpacity: 1,
       },
-      durationMs: ENTER_DURATION_MS,
+      durationMs: enterDurationMs,
       onComplete: () => {
         if (activeTransitionRef.current?.token !== activeTransition.token) return;
         if (phaseRef.current !== "entering") return;
@@ -356,7 +405,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     });
 
     return cancelMotionAnimation;
-  }, [animateMotion, cancelMotionAnimation, phase, setPhaseSafe]);
+  }, [animateMotion, cancelMotionAnimation, enterDurationMs, logoRotationDeg, phase, setPhaseSafe]);
 
   useEffect(() => {
     if (!prefersReducedMotion || phase !== "exiting") return;
@@ -387,12 +436,16 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       from: {
         overlayX: 0,
         logoAngle: 0,
+        logoScale: 1,
+        logoOpacity: 1,
       },
       to: {
         overlayX: 100,
-        logoAngle: 360,
+        logoAngle: logoRotationDeg,
+        logoScale: 1.08,
+        logoOpacity: 0.7,
       },
-      durationMs: EXIT_DURATION_MS,
+      durationMs: exitDurationMs,
       onComplete: () => {
         if (activeTransitionRef.current?.token !== activeTransition.token) return;
         if (phaseRef.current !== "exiting") return;
@@ -401,7 +454,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     });
 
     return cancelMotionAnimation;
-  }, [animateMotion, cancelMotionAnimation, phase, prefersReducedMotion, resetTransition]);
+  }, [animateMotion, cancelMotionAnimation, exitDurationMs, logoRotationDeg, phase, prefersReducedMotion, resetTransition]);
 
   useEffect(() => {
     return () => {
@@ -438,12 +491,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         <Image
           src="/main-logo.svg"
           alt=""
-          width={220}
-          height={220}
+          width={420}
+          height={420}
           className="rt-overlay__logo"
           unoptimized
           style={{
-            transform: `rotate(${motion.logoAngle}deg)`,
+            transform: `rotate(${motion.logoAngle}deg) scale(${motion.logoScale})`,
+            opacity: motion.logoOpacity,
           }}
         />
       </div>

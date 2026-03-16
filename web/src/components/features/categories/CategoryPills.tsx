@@ -1,26 +1,33 @@
 "use client";
 
 import * as React from "react";
+import CategoryPillsSkeleton from "@/components/features/categories/CategoryPillsSkeleton";
 import { getLevelDescription, getLevelLabel } from "@/core/cefr/levels";
 import { translateCategory } from "@/core/i18n/categoryTranslations";
 import { useI18n } from "@/core/i18n/LocaleProvider";
 
 type Category = { id: string; name: string; slug: string };
 
-export default function CategoryPills({
+const CategoryPills = React.memo(function CategoryPills({
   categories,
   onSelect,
   initialSelected,
+  selected,
   alignment = "center",
   required = false,
+  loading = false,
+  loadingCount = 6,
 }: {
   categories: Category[];
   onSelect: (slug: string | null) => void;
   initialSelected?: string | null;
+  selected?: string | null;
   /** Layout alignment for the pills: 'left' or 'center' (default: center) */
   alignment?: "left" | "center";
   /** When true, a category must always be selected and cannot be deselected */
   required?: boolean;
+  loading?: boolean;
+  loadingCount?: number;
 }) {
   const { t, locale } = useI18n();
 
@@ -101,13 +108,25 @@ export default function CategoryPills({
     return null;
   }, [initialSelected, required, sortedCategories, isCefrLevel]);
 
-  const [selected, setSelected] = React.useState<string | null>(defaultSelected ?? null);
+  const [internalSelected, setInternalSelected] = React.useState<string | null>(
+    defaultSelected ?? null,
+  );
+  const previousDefaultSelectedRef = React.useRef<string | null>(defaultSelected ?? null);
+  const isControlled = selected !== undefined;
+  const currentSelected = isControlled ? selected : internalSelected;
 
   React.useEffect(() => {
-    setSelected(defaultSelected ?? null);
-  }, [defaultSelected]);
+    if (isControlled) return;
+    if (previousDefaultSelectedRef.current === (defaultSelected ?? null)) return;
+    previousDefaultSelectedRef.current = defaultSelected ?? null;
+    setInternalSelected(defaultSelected ?? null);
+  }, [defaultSelected, isControlled]);
 
   const containerClass = `mx-0 my-8 flex flex-wrap gap-3 ${alignment === "center" ? "justify-center" : "justify-start"}`;
+
+  if (loading) {
+    return <CategoryPillsSkeleton count={loadingCount} alignment={alignment} />;
+  }
 
   return (
     <div className={containerClass}>
@@ -116,7 +135,7 @@ export default function CategoryPills({
       ) : (
         sortedCategories.map((cat) => {
           // active only when the category slug matches the selected value
-          const active = selected === cat.slug;
+          const active = currentSelected === cat.slug;
           const description = getTagDescription(cat.slug);
           const displayName =
             getLevelLabel(cat.slug, locale ?? "en") ??
@@ -127,13 +146,13 @@ export default function CategoryPills({
               key={cat.id}
               type="button"
               onClick={() => {
-                setSelected((s) => {
-                  const next = required ? cat.slug : s === cat.slug ? null : cat.slug;
-                  onSelect(next);
-                  return next;
-                });
+                const next = required ? cat.slug : currentSelected === cat.slug ? null : cat.slug;
+                if (!isControlled) {
+                  setInternalSelected(next);
+                }
+                onSelect(next);
               }}
-              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none transition-colors cursor-pointer ${
+              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none focus-visible:outline-none transition-colors cursor-pointer ${
                 active
                   ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
                   : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
@@ -156,4 +175,6 @@ export default function CategoryPills({
       )}
     </div>
   );
-}
+});
+
+export default CategoryPills;

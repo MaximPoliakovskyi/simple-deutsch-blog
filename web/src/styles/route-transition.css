@@ -33,6 +33,13 @@
 .rt-overlay__logo {
   width: clamp(138px, 17vw, 220px);
   height: auto;
-  will-change: transform;
+  filter: drop-shadow(0 10px 28px rgb(37 99 235 / 0.16));
+  will-change: transform, opacity;
   backface-visibility: hidden;
+}
+
+@media (max-width: 767px) {
+  .rt-overlay__logo {
+    width: clamp(92px, 26vw, 132px);
+  }
 }

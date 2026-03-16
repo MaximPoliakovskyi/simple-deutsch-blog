@@ -559,6 +559,61 @@ html[data-app-visible="1"] .app-fade {
   opacity: 1;
 }
 
+.app-route-fade {
+  opacity: 1;
+  will-change: opacity;
+}
+
+.app-route-fade--fading-out {
+  opacity: 0;
+  transition: opacity 180ms ease-out;
+}
+
+.app-route-fade--hidden {
+  opacity: 0;
+}
+
+.app-route-fade--fading-in {
+  opacity: 1;
+  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sd-shimmer {
+  position: relative;
+  isolation: isolate;
+}
+
+.sd-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(255 255 255 / 0.08) 45%,
+    rgb(255 255 255 / 0.18) 50%,
+    rgb(255 255 255 / 0.08) 55%,
+    transparent 100%
+  );
+  animation: sd-shimmer 1.8s linear infinite;
+}
+
+@keyframes sd-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.sd-hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.sd-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* Center content precisely in viewport */
 #sd-preloader {
   --sd-preloader-fade-ms: 320ms;
@@ -746,6 +801,15 @@ html.dark #sd-preloader .sd-preloader-word {
   .app-fade {
     transition: none;
     opacity: 1;
+  }
+
+  .app-route-fade {
+    transition: none;
+    opacity: 1;
+  }
+
+  .sd-shimmer::after {
+    animation: none;
   }
 
   #sd-preloader {

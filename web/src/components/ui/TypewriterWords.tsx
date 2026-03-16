@@ -268,7 +268,7 @@ export default function TypewriterWords({
             <span className="inline-block select-text">{displayText || "\u00A0"}</span>
             {showCursor && !prefersReducedMotion ? (
               <span
-                className="caret-realistic absolute left-full ml-px leading-none pointer-events-none select-none"
+                className="caret-realistic ml-px inline-block leading-none pointer-events-none select-none"
                 aria-hidden="true"
               >
                 |
