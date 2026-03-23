@@ -28,7 +28,6 @@ export default function HeroWithFilters({
   locale,
 }: Props) {
   const { t, locale: uiLocale } = useI18n();
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(null);
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -56,12 +55,10 @@ export default function HeroWithFilters({
     setAllPosts(initialPosts);
     setDisplayedCount(pageSize);
     setIsLoading(false);
-    setSelectedCategory(null);
   }, [initialPosts, pageSize]);
 
   const handleCategorySelect = React.useCallback(
     async (slug: string | null) => {
-      setSelectedCategory(slug);
       const key = slug ?? "all";
       const cached = cacheRef.current.get(key);
       if (cached) {
@@ -153,7 +150,6 @@ export default function HeroWithFilters({
         <CategoryPills
           categories={categories}
           initialSelected={null}
-          selected={selectedCategory}
           onSelect={handleCategorySelect}
         />
       </section>

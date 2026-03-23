@@ -12,41 +12,41 @@ import {
   useState,
 } from "react";
 import {
+  type TransitionDirection,
   TransitionNavContext,
-  type TransitionNavigationOptions,
   type TransitionPhase,
 } from "@/components/transition/useTransitionNav";
 import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scrollLock";
 
-const DESKTOP_ENTER_DURATION_MS = 1600;
-const DESKTOP_EXIT_DURATION_MS = 1200;
-const MOBILE_ENTER_DURATION_MS = 950;
-const MOBILE_EXIT_DURATION_MS = 760;
-const DESKTOP_LOGO_ROTATION_DEG = 220;
-const MOBILE_LOGO_ROTATION_DEG = 120;
-
-type ResolvedTransitionNavigationOptions = {
-  scroll: boolean;
-  forceInstantScrollBehavior: boolean;
-};
+const ENTER_MS = 1500;
+const EXIT_MS = 1500;
+const COVERED_MS = 90;
+const READY_MAX_MS = 2200;
+const OPACITY_MS = 140;
+const DEBUG = process.env.NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION === "1";
 
 type ActiveTransition = {
-  token: number;
+  direction: TransitionDirection;
   href: string;
   targetPathname: string;
-  options: ResolvedTransitionNavigationOptions;
+  token: number;
 };
 
-type MotionState = {
-  overlayX: number;
-  logoAngle: number;
-  logoScale: number;
-  logoOpacity: number;
+type ActiveRun = {
+  controller: AbortController;
+  token: number;
+};
+
+type Waiter = {
+  pathname: string;
+  settle: (matched: boolean) => void;
+  token: number;
 };
 
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
   const basePathRaw = process.env.NEXT_PUBLIC_BASE_PATH?.trim();
+
   if (basePathRaw) {
     const basePath = basePathRaw.startsWith("/") ? basePathRaw : `/${basePathRaw}`;
     if (value === basePath) {
@@ -55,6 +55,7 @@ function normalizeRoutePathname(pathname: string) {
       value = value.slice(basePath.length);
     }
   }
+
   if (!value.startsWith("/")) value = `/${value}`;
   if (value.length > 1) value = value.replace(/\/+$/, "");
   return value || "/";
@@ -62,6 +63,7 @@ function normalizeRoutePathname(pathname: string) {
 
 function toPathname(href: string, currentPathname: string) {
   if (typeof window === "undefined") return normalizeRoutePathname(currentPathname);
+
   try {
     return normalizeRoutePathname(new URL(href, window.location.origin).pathname);
   } catch {
@@ -69,18 +71,74 @@ function toPathname(href: string, currentPathname: string) {
   }
 }
 
-function waitNextFrame() {
-  return new Promise<void>((resolve) => {
-    requestAnimationFrame(() => resolve());
+function createAbortError() {
+  return new Error("Route transition aborted");
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.message === "Route transition aborted";
+}
+
+function waitDoubleRaf(signal: AbortSignal) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
+
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    const cleanup = () => {
+      if (firstFrame) cancelAnimationFrame(firstFrame);
+      if (secondFrame) cancelAnimationFrame(secondFrame);
+      signal.removeEventListener("abort", onAbort);
+    };
+
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+
+    firstFrame = requestAnimationFrame(() => {
+      secondFrame = requestAnimationFrame(() => {
+        cleanup();
+        resolve();
+      });
+    });
   });
 }
 
-function easeInOutCubic(value: number) {
-  if (value < 0.5) {
-    return 4 * value * value * value;
-  }
+function waitForMs(signal: AbortSignal, durationMs: number) {
+  return new Promise<void>((resolve, reject) => {
+    if (signal.aborted) {
+      reject(createAbortError());
+      return;
+    }
 
-  return 1 - Math.pow(-2 * value + 2, 3) / 2;
+    const timeoutId = window.setTimeout(() => {
+      cleanup();
+      resolve();
+    }, durationMs);
+
+    const cleanup = () => {
+      window.clearTimeout(timeoutId);
+      signal.removeEventListener("abort", onAbort);
+    };
+
+    const onAbort = () => {
+      cleanup();
+      reject(createAbortError());
+    };
+
+    signal.addEventListener("abort", onAbort, { once: true });
+  });
+}
+
+function now() {
+  return typeof performance !== "undefined" ? performance.now() : Date.now();
 }
 
 function usePrefersReducedMotion() {
@@ -105,402 +163,491 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
-function useIsMobileViewport() {
-  const [isMobileViewport, setIsMobileViewport] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-
-    const media = window.matchMedia("(max-width: 767px)");
-    const onChange = () => setIsMobileViewport(media.matches);
-    onChange();
-
-    if (media.addEventListener) {
-      media.addEventListener("change", onChange);
-      return () => media.removeEventListener("change", onChange);
-    }
-
-    media.addListener(onChange);
-    return () => media.removeListener(onChange);
-  }, []);
-
-  return isMobileViewport;
-}
-
-function resolveNavigationOptions(
-  options: TransitionNavigationOptions | undefined,
-): ResolvedTransitionNavigationOptions {
-  return {
-    scroll: options?.scroll ?? true,
-    forceInstantScrollBehavior: options?.forceInstantScrollBehavior ?? false,
-  };
-}
-
 export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const pathname = normalizeRoutePathname(usePathname() || "/");
+  const rawPathname = usePathname() || "/";
+  const pathname = normalizeRoutePathname(rawPathname);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const isMobileViewport = useIsMobileViewport();
-  const enterDurationMs = isMobileViewport ? MOBILE_ENTER_DURATION_MS : DESKTOP_ENTER_DURATION_MS;
-  const exitDurationMs = isMobileViewport ? MOBILE_EXIT_DURATION_MS : DESKTOP_EXIT_DURATION_MS;
-  const logoRotationDeg = isMobileViewport ? MOBILE_LOGO_ROTATION_DEG : DESKTOP_LOGO_ROTATION_DEG;
 
   const [phase, setPhase] = useState<TransitionPhase>("idle");
+  const [direction, setDirection] = useState<TransitionDirection>("forward");
   const [token, setToken] = useState(0);
   const [targetPathname, setTargetPathname] = useState<string | null>(null);
-  const [motion, setMotion] = useState<MotionState>({
-    overlayX: -100,
-    logoAngle: 0,
-    logoScale: 1,
-    logoOpacity: 1,
-  });
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const phaseRef = useRef<TransitionPhase>("idle");
   const pathnameRef = useRef(pathname);
   const tokenCounterRef = useRef(0);
+  const activeRunRef = useRef<ActiveRun | null>(null);
   const activeTransitionRef = useRef<ActiveTransition | null>(null);
-  const navigationStartedRef = useRef(false);
-  const pathnameMatchedRef = useRef(false);
-  const contentReadyRef = useRef(false);
-  const scrollBehaviorRestoreRef = useRef<(() => void) | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const animationRunIdRef = useRef(0);
+  const pathnameWaitersRef = useRef<Waiter[]>([]);
+  const routeReadyWaitersRef = useRef<Waiter[]>([]);
+  const readySignalsRef = useRef<Map<number, Set<string>>>(new Map());
+  const pushedTokenRef = useRef<number | null>(null);
+
+  const shouldRenderOverlay = !isInitialLoad;
+  const isActive = phase !== "idle";
+
+  const logDev = useCallback((event: string, extra: Record<string, unknown> = {}) => {
+    if (!DEBUG) return;
+
+    console.log("[route-transition]", {
+      event,
+      phase: phaseRef.current,
+      token: activeTransitionRef.current?.token ?? 0,
+      pathname: pathnameRef.current,
+      targetPathname: activeTransitionRef.current?.targetPathname ?? null,
+      ...extra,
+    });
+  }, []);
 
   const setPhaseSafe = useCallback((nextPhase: TransitionPhase) => {
     phaseRef.current = nextPhase;
     setPhase(nextPhase);
   }, []);
 
-  const cancelMotionAnimation = useCallback(() => {
-    animationRunIdRef.current += 1;
-    if (animationFrameRef.current !== null) {
-      window.cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
+  const clearWaiters = useCallback(() => {
+    const pathnameWaiters = pathnameWaitersRef.current;
+    const routeReadyWaiters = routeReadyWaitersRef.current;
+
+    pathnameWaitersRef.current = [];
+    routeReadyWaitersRef.current = [];
+
+    for (const waiter of pathnameWaiters) {
+      waiter.settle(false);
+    }
+    for (const waiter of routeReadyWaiters) {
+      waiter.settle(false);
     }
   }, []);
 
-  const restoreDocumentScrollBehavior = useCallback(() => {
-    const restore = scrollBehaviorRestoreRef.current;
-    if (!restore) return;
-    scrollBehaviorRestoreRef.current = null;
-    restore();
+  const clearReadySignals = useCallback(() => {
+    readySignalsRef.current.clear();
   }, []);
 
-  const forceInstantScrollBehavior = useCallback(() => {
-    if (typeof document === "undefined") return;
-    if (scrollBehaviorRestoreRef.current) return;
-
-    const html = document.documentElement;
-    const previousInlineBehavior = html.style.scrollBehavior;
-    html.style.scrollBehavior = "auto";
-    scrollBehaviorRestoreRef.current = () => {
-      html.style.scrollBehavior = previousInlineBehavior;
-    };
+  const isCurrentTransition = useCallback((expectedToken: number) => {
+    return (
+      activeTransitionRef.current?.token === expectedToken &&
+      activeRunRef.current?.token === expectedToken &&
+      !activeRunRef.current.controller.signal.aborted
+    );
   }, []);
 
-  const resetTransition = useCallback(() => {
-    cancelMotionAnimation();
-    unlockScroll();
-    restoreDocumentScrollBehavior();
-    activeTransitionRef.current = null;
-    navigationStartedRef.current = false;
-    pathnameMatchedRef.current = false;
-    contentReadyRef.current = false;
-    setTargetPathname(null);
-    setToken(0);
-    setMotion({
-      overlayX: -100,
-      logoAngle: 0,
-      logoScale: 1,
-      logoOpacity: 1,
-    });
-    setPhaseSafe("idle");
-  }, [cancelMotionAnimation, restoreDocumentScrollBehavior, setPhaseSafe]);
+  const cancelActiveRun = useCallback(
+    (reason: string) => {
+      const activeRun = activeRunRef.current;
+      if (!activeRun) return;
 
-  const maybeStartExit = useCallback(() => {
-    const activeTransition = activeTransitionRef.current;
-    if (!activeTransition) return;
-    if (phaseRef.current !== "loading") return;
-    if (!pathnameMatchedRef.current || !contentReadyRef.current) return;
+      activeRunRef.current = null;
+      if (!activeRun.controller.signal.aborted) {
+        activeRun.controller.abort();
+      }
+      clearWaiters();
+      logDev("cancel-run", { reason, token: activeRun.token });
+    },
+    [clearWaiters, logDev],
+  );
 
-    setPhaseSafe("exiting");
-  }, [setPhaseSafe]);
+  const resetToIdle = useCallback(
+    (reason: string) => {
+      cancelActiveRun(reason);
+      clearReadySignals();
+      unlockScroll();
+      activeTransitionRef.current = null;
+      pushedTokenRef.current = null;
+      setTargetPathname(null);
+      setToken(0);
+      setPhaseSafe("idle");
+      logDev("reset-idle", { reason });
+    },
+    [cancelActiveRun, clearReadySignals, logDev, setPhaseSafe],
+  );
 
-  const animateMotion = useCallback(
-    ({
-      from,
-      to,
-      durationMs,
-      onComplete,
-    }: {
-      from: MotionState;
-      to: MotionState;
-      durationMs: number;
-      onComplete: () => void;
-    }) => {
-      cancelMotionAnimation();
-      setMotion(from);
+  const waitForPathnameMatch = useCallback(
+    (signal: AbortSignal, expectedToken: number, expectedPathname: string, timeoutMs: number) => {
+      if (signal.aborted) {
+        return Promise.resolve(false);
+      }
 
-      const runId = animationRunIdRef.current + 1;
-      animationRunIdRef.current = runId;
-      const startAt = performance.now();
+      if (pathnameRef.current === expectedPathname && isCurrentTransition(expectedToken)) {
+        return Promise.resolve(true);
+      }
 
-      const frame = (now: number) => {
-        if (animationRunIdRef.current !== runId) return;
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+        let timeoutId = 0;
 
-        const rawProgress = Math.min(1, (now - startAt) / durationMs);
-        const easedProgress = easeInOutCubic(rawProgress);
-        const easedLogoProgress = easeInOutCubic(rawProgress);
+        const finish = (matched: boolean) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          signal.removeEventListener("abort", onAbort);
+          pathnameWaitersRef.current = pathnameWaitersRef.current.filter(
+            (waiter) => waiter !== waiterEntry,
+          );
+          resolve(matched);
+        };
 
-        setMotion({
-          overlayX: from.overlayX + (to.overlayX - from.overlayX) * easedProgress,
-          logoAngle: from.logoAngle + (to.logoAngle - from.logoAngle) * easedLogoProgress,
-          logoScale: from.logoScale + (to.logoScale - from.logoScale) * easedLogoProgress,
-          logoOpacity: from.logoOpacity + (to.logoOpacity - from.logoOpacity) * easedLogoProgress,
-        });
+        const onAbort = () => finish(false);
+        const waiterEntry: Waiter = {
+          token: expectedToken,
+          pathname: expectedPathname,
+          settle: finish,
+        };
 
-        if (rawProgress < 1) {
-          animationFrameRef.current = window.requestAnimationFrame(frame);
+        timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+        signal.addEventListener("abort", onAbort, { once: true });
+        pathnameWaitersRef.current.push(waiterEntry);
+      });
+    },
+    [isCurrentTransition],
+  );
+
+  const waitForRouteReadySignal = useCallback(
+    (signal: AbortSignal, expectedToken: number, expectedPathname: string, timeoutMs: number) => {
+      if (signal.aborted) {
+        return Promise.resolve(false);
+      }
+
+      const readySet = readySignalsRef.current.get(expectedToken);
+      if (readySet?.has(expectedPathname) && isCurrentTransition(expectedToken)) {
+        return Promise.resolve(true);
+      }
+
+      return new Promise<boolean>((resolve) => {
+        let settled = false;
+        let timeoutId = 0;
+
+        const finish = (matched: boolean) => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeoutId);
+          signal.removeEventListener("abort", onAbort);
+          routeReadyWaitersRef.current = routeReadyWaitersRef.current.filter(
+            (waiter) => waiter !== waiterEntry,
+          );
+          resolve(matched);
+        };
+
+        const onAbort = () => finish(false);
+        const waiterEntry: Waiter = {
+          token: expectedToken,
+          pathname: expectedPathname,
+          settle: finish,
+        };
+
+        timeoutId = window.setTimeout(() => finish(false), timeoutMs);
+        signal.addEventListener("abort", onAbort, { once: true });
+        routeReadyWaitersRef.current.push(waiterEntry);
+      });
+    },
+    [isCurrentTransition],
+  );
+
+  const runTransition = useCallback(
+    async (activeTransition: ActiveTransition, signal: AbortSignal) => {
+      const readyStartAt = () => now();
+
+      try {
+        await waitForMs(signal, ENTER_MS);
+        if (!isCurrentTransition(activeTransition.token)) return;
+
+        setPhaseSafe("covered");
+        logDev("covered", { token: activeTransition.token });
+
+        await waitForMs(signal, COVERED_MS);
+        if (!isCurrentTransition(activeTransition.token)) return;
+
+        if (pushedTokenRef.current !== activeTransition.token) {
+          pushedTokenRef.current = activeTransition.token;
+          reactStartTransition(() => {
+            router.push(activeTransition.href);
+          });
+        }
+
+        setPhaseSafe("waiting_ready");
+        logDev("waiting-ready", { token: activeTransition.token });
+
+        const loadingStartedAt = readyStartAt();
+        const pathnameMatched = await waitForPathnameMatch(
+          signal,
+          activeTransition.token,
+          activeTransition.targetPathname,
+          READY_MAX_MS,
+        );
+
+        if (!isCurrentTransition(activeTransition.token)) return;
+
+        if (!pathnameMatched) {
+          logDev("path-timeout", {
+            token: activeTransition.token,
+            targetPathname: activeTransition.targetPathname,
+          });
+        } else {
+          await waitDoubleRaf(signal);
+          if (!isCurrentTransition(activeTransition.token)) return;
+
+          const elapsedMs = readyStartAt() - loadingStartedAt;
+          const remainingMs = Math.max(0, READY_MAX_MS - elapsedMs);
+          const readyMatched = await waitForRouteReadySignal(
+            signal,
+            activeTransition.token,
+            activeTransition.targetPathname,
+            remainingMs,
+          );
+
+          if (!isCurrentTransition(activeTransition.token)) return;
+
+          if (!readyMatched && process.env.NODE_ENV !== "production") {
+            console.warn(
+              `[route-transition] route-ready timeout for ${activeTransition.targetPathname} (token ${activeTransition.token})`,
+            );
+          }
+        }
+
+        setPhaseSafe("exiting");
+        logDev("exiting", { token: activeTransition.token });
+
+        await waitForMs(signal, EXIT_MS);
+        if (!isCurrentTransition(activeTransition.token)) return;
+
+        resetToIdle("completed");
+      } catch (error) {
+        if (isAbortError(error)) {
           return;
         }
 
-        animationFrameRef.current = null;
-        setMotion(to);
-        onComplete();
-      };
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[route-transition] transition failed", error);
+        }
 
-      animationFrameRef.current = window.requestAnimationFrame(frame);
+        if (!isCurrentTransition(activeTransition.token)) return;
+        resetToIdle("error");
+      }
     },
-    [cancelMotionAnimation],
+    [
+      isCurrentTransition,
+      logDev,
+      resetToIdle,
+      router,
+      setPhaseSafe,
+      waitForPathnameMatch,
+      waitForRouteReadySignal,
+    ],
   );
 
-  const startNavigation = useCallback(
-    (href: string, options?: TransitionNavigationOptions) => {
-      if (!href) return false;
-      if (phaseRef.current !== "idle") return false;
+  const beginTransition = useCallback(
+    ({
+      nextDirection = "forward",
+      nextTargetHref,
+      nextTargetPathname,
+    }: {
+      nextDirection?: TransitionDirection;
+      nextTargetHref: string;
+      nextTargetPathname: string;
+    }) => {
+      if (activeRunRef.current && !activeRunRef.current.controller.signal.aborted) {
+        logDev("begin-blocked", { phase: phaseRef.current, reason: "run-active" });
+        return false;
+      }
 
-      const nextTargetPathname = toPathname(href, pathnameRef.current);
-      if (nextTargetPathname === pathnameRef.current) return false;
+      if (phaseRef.current !== "idle") {
+        logDev("begin-blocked", { phase: phaseRef.current });
+        return false;
+      }
 
       const nextToken = tokenCounterRef.current + 1;
       tokenCounterRef.current = nextToken;
 
-      activeTransitionRef.current = {
+      cancelActiveRun("pre-begin-safety");
+      clearWaiters();
+      clearReadySignals();
+
+      const nextTransition: ActiveTransition = {
         token: nextToken,
-        href,
+        href: nextTargetHref,
         targetPathname: nextTargetPathname,
-        options: resolveNavigationOptions(options),
+        direction: nextDirection,
       };
 
-      navigationStartedRef.current = false;
-      pathnameMatchedRef.current = false;
-      contentReadyRef.current = false;
+      const controller = new AbortController();
 
-      if (activeTransitionRef.current.options.forceInstantScrollBehavior) {
-        forceInstantScrollBehavior();
-      }
+      activeRunRef.current = {
+        token: nextToken,
+        controller,
+      };
+      activeTransitionRef.current = nextTransition;
+      pushedTokenRef.current = null;
+      readySignalsRef.current.set(nextToken, new Set());
 
-      lockScroll();
+      setDirection(nextDirection);
       setToken(nextToken);
       setTargetPathname(nextTargetPathname);
-      if (prefersReducedMotion) {
-        setMotion({
-          overlayX: 0,
-          logoAngle: 0,
-          logoScale: 1,
-          logoOpacity: 1,
-        });
-        setPhaseSafe("covered");
-      } else {
-        setMotion({
-          overlayX: -100,
-          logoAngle: -logoRotationDeg,
-          logoScale: 0.86,
-          logoOpacity: 0.72,
-        });
-        setPhaseSafe("entering");
-      }
+      setPhaseSafe("entering");
+      lockScroll();
+
+      logDev("begin", {
+        token: nextToken,
+        nextTargetHref,
+        nextTargetPathname,
+        direction: nextDirection,
+      });
+
+      void runTransition(nextTransition, controller.signal);
       return true;
     },
-    [forceInstantScrollBehavior, logoRotationDeg, prefersReducedMotion, setPhaseSafe],
+    [cancelActiveRun, clearReadySignals, clearWaiters, logDev, runTransition, setPhaseSafe],
+  );
+
+  const navigateFromLogo = useCallback(
+    (href: string) => {
+      if (!href) return false;
+
+      const nextPathname = toPathname(href, pathnameRef.current);
+      if (nextPathname === pathnameRef.current) return false;
+
+      if (prefersReducedMotion) {
+        router.push(href);
+        return true;
+      }
+
+      return beginTransition({
+        nextDirection: "forward",
+        nextTargetHref: href,
+        nextTargetPathname: nextPathname,
+      });
+    },
+    [beginTransition, prefersReducedMotion, router],
+  );
+
+  const navigateFromLanguageSwitch = useCallback(
+    (href: string) => {
+      if (!href) return false;
+
+      const nextPathname = toPathname(href, pathnameRef.current);
+      if (nextPathname === pathnameRef.current) return false;
+
+      if (prefersReducedMotion) {
+        router.push(href);
+        return true;
+      }
+
+      return beginTransition({
+        nextDirection: "forward",
+        nextTargetHref: href,
+        nextTargetPathname: nextPathname,
+      });
+    },
+    [beginTransition, prefersReducedMotion, router],
   );
 
   const signalRouteReady = useCallback(
     (readyPathname: string, readyToken: number) => {
-      const activeTransition = activeTransitionRef.current;
-      if (!activeTransition) return;
-      if (!readyToken || readyToken !== activeTransition.token) return;
+      if (!readyToken || activeTransitionRef.current?.token !== readyToken) return;
 
-      const normalizedReadyPathname = normalizeRoutePathname(readyPathname);
-      if (normalizedReadyPathname !== activeTransition.targetPathname) return;
+      const normalizedPathname = normalizeRoutePathname(readyPathname);
+      const readySet = readySignalsRef.current.get(readyToken) ?? new Set<string>();
+      readySet.add(normalizedPathname);
+      readySignalsRef.current.set(readyToken, readySet);
 
-      contentReadyRef.current = true;
-      maybeStartExit();
+      const remainingWaiters: typeof routeReadyWaitersRef.current = [];
+      for (const waiter of routeReadyWaitersRef.current) {
+        if (waiter.token === readyToken && waiter.pathname === normalizedPathname) {
+          waiter.settle(true);
+        } else {
+          remainingWaiters.push(waiter);
+        }
+      }
+      routeReadyWaitersRef.current = remainingWaiters;
+
+      logDev("route-ready", { readyPathname: normalizedPathname, readyToken });
     },
-    [maybeStartExit],
+    [logDev],
   );
+
+  useEffect(() => {
+    setIsInitialLoad(false);
+  }, []);
 
   useEffect(() => {
     pathnameRef.current = pathname;
 
-    const activeTransition = activeTransitionRef.current;
-    if (!activeTransition) return;
+    const activeToken = activeTransitionRef.current?.token;
+    if (!activeToken) return;
 
-    pathnameMatchedRef.current = pathname === activeTransition.targetPathname;
-    maybeStartExit();
-  }, [maybeStartExit, pathname]);
-
-  useEffect(() => {
-    if (phase !== "covered") return;
-
-    const activeTransition = activeTransitionRef.current;
-    if (!activeTransition || navigationStartedRef.current) return;
-
-    setMotion({
-      overlayX: 0,
-      logoAngle: 0,
-      logoScale: 1,
-      logoOpacity: 1,
-    });
-
-    navigationStartedRef.current = true;
-
-    reactStartTransition(() => {
-      if (activeTransition.options.scroll) {
-        router.push(activeTransition.href);
-        return;
+    const remainingWaiters: typeof pathnameWaitersRef.current = [];
+    for (const waiter of pathnameWaitersRef.current) {
+      if (waiter.token === activeToken && waiter.pathname === pathname) {
+        waiter.settle(true);
+      } else {
+        remainingWaiters.push(waiter);
       }
-
-      router.push(activeTransition.href, { scroll: false });
-    });
-
-    setPhaseSafe("loading");
-  }, [phase, router, setPhaseSafe]);
-
-  useEffect(() => {
-    if (phase !== "entering") return;
-
-    const activeTransition = activeTransitionRef.current;
-    if (!activeTransition) return;
-
-    animateMotion({
-      from: {
-        overlayX: -100,
-        logoAngle: -logoRotationDeg,
-        logoScale: 0.86,
-        logoOpacity: 0.72,
-      },
-      to: {
-        overlayX: 0,
-        logoAngle: 0,
-        logoScale: 1,
-        logoOpacity: 1,
-      },
-      durationMs: enterDurationMs,
-      onComplete: () => {
-        if (activeTransitionRef.current?.token !== activeTransition.token) return;
-        if (phaseRef.current !== "entering") return;
-        setPhaseSafe("covered");
-      },
-    });
-
-    return cancelMotionAnimation;
-  }, [animateMotion, cancelMotionAnimation, enterDurationMs, logoRotationDeg, phase, setPhaseSafe]);
-
-  useEffect(() => {
-    if (!prefersReducedMotion || phase !== "exiting") return;
-
-    let cancelled = false;
-
-    const run = async () => {
-      await waitNextFrame();
-      if (cancelled) return;
-      if (phaseRef.current !== "exiting") return;
-      resetTransition();
-    };
-
-    void run();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [phase, prefersReducedMotion, resetTransition]);
-
-  useEffect(() => {
-    if (phase !== "exiting" || prefersReducedMotion) return;
-
-    const activeTransition = activeTransitionRef.current;
-    if (!activeTransition) return;
-
-    animateMotion({
-      from: {
-        overlayX: 0,
-        logoAngle: 0,
-        logoScale: 1,
-        logoOpacity: 1,
-      },
-      to: {
-        overlayX: 100,
-        logoAngle: logoRotationDeg,
-        logoScale: 1.08,
-        logoOpacity: 0.7,
-      },
-      durationMs: exitDurationMs,
-      onComplete: () => {
-        if (activeTransitionRef.current?.token !== activeTransition.token) return;
-        if (phaseRef.current !== "exiting") return;
-        resetTransition();
-      },
-    });
-
-    return cancelMotionAnimation;
-  }, [animateMotion, cancelMotionAnimation, exitDurationMs, logoRotationDeg, phase, prefersReducedMotion, resetTransition]);
+    }
+    pathnameWaitersRef.current = remainingWaiters;
+  }, [pathname]);
 
   useEffect(() => {
     return () => {
-      cancelMotionAnimation();
-      restoreDocumentScrollBehavior();
+      resetToIdle("unmount");
       forceUnlockScroll();
     };
-  }, [cancelMotionAnimation, restoreDocumentScrollBehavior]);
+  }, [resetToIdle]);
 
   const contextValue = useMemo(
     () => ({
       phase,
-      isActive: phase !== "idle",
+      direction,
+      isActive,
       token,
       pathname,
       targetPathname,
-      startNavigation,
+      navigateFromLogo,
+      navigateFromLanguageSwitch,
       signalRouteReady,
     }),
-    [pathname, phase, signalRouteReady, startNavigation, targetPathname, token],
+    [
+      direction,
+      isActive,
+      navigateFromLanguageSwitch,
+      navigateFromLogo,
+      pathname,
+      phase,
+      signalRouteReady,
+      targetPathname,
+      token,
+    ],
+  );
+
+  const overlayStyle = useMemo(
+    () => ({
+      ["--rt-enter-ms" as string]: `${ENTER_MS}ms`,
+      ["--rt-exit-ms" as string]: `${EXIT_MS}ms`,
+      ["--rt-opacity-ms" as string]: `${OPACITY_MS}ms`,
+    }),
+    [],
   );
 
   return (
     <TransitionNavContext.Provider value={contextValue}>
       {children}
-      <div
-        aria-hidden="true"
-        data-phase={phase}
-        className="rt-overlay"
-        style={{
-          transform: `translate3d(${motion.overlayX}%, 0, 0)`,
-        }}
-      >
-        <Image
-          src="/main-logo.svg"
-          alt=""
-          width={420}
-          height={420}
-          className="rt-overlay__logo"
-          unoptimized
-          style={{
-            transform: `rotate(${motion.logoAngle}deg) scale(${motion.logoScale})`,
-            opacity: motion.logoOpacity,
-          }}
-        />
-      </div>
+      {shouldRenderOverlay ? (
+        <div
+          aria-hidden="true"
+          data-phase={phase}
+          data-direction={direction}
+          className="rt-overlay"
+          style={overlayStyle}
+        >
+          <Image
+            src="/main-logo.svg"
+            alt=""
+            width={220}
+            height={220}
+            className="rt-overlay__logo"
+            priority
+          />
+        </div>
+      ) : null}
     </TransitionNavContext.Provider>
   );
 }

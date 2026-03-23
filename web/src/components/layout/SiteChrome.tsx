@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import FirstVisitDisclaimer from "@/components/layout/FirstVisitDisclaimer";
 import HydratedNavigation from "@/components/layout/HydratedNavigation";
 import { RouteReady } from "@/components/transition/RouteReady";
 import BackButton from "@/components/ui/BackButton";
@@ -9,8 +10,9 @@ export default function SiteChrome({ children, locale }: { children: ReactNode; 
   return (
     <LocaleProvider locale={locale}>
       <HydratedNavigation />
-      {children}
+      <FirstVisitDisclaimer />
       <RouteReady />
+      {children}
       <BackButton />
     </LocaleProvider>
   );

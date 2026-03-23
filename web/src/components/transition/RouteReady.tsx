@@ -31,7 +31,7 @@ export function RouteReady({ when = true }: { when?: boolean }) {
   const { token, signalRouteReady } = useTransitionNav();
 
   useEffect(() => {
-    if (!when || !token) return;
+    if (!when) return;
 
     let cancelled = false;
 

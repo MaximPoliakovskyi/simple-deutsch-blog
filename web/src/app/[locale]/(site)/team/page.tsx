@@ -28,7 +28,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
       "Meet the people behind Simple Deutsch, building thoughtful tools and learning support to make German more approachable every day.",
     members: [
       {
-        name: "Maksym Poluakovskyi",
+        name: "Maksym Poliakovskyi",
         role: "Founder & Developer",
         image: "/team/maksym.jpg",
       },

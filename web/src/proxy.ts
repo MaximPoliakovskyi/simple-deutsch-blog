@@ -118,7 +118,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Skip static assets and API routes at the matcher level to avoid
-  // invoking locale middleware work on requests that cannot be localized.
-  matcher: ["/((?!api|_next/static|_next/image|static|favicon.ico|.*\\..*).*)"],
+  matcher: ["/:path*"],
 };

@@ -20,7 +20,6 @@ import {
   subscribeRootTheme,
   type Theme,
 } from "@/core/theme/client";
-import { useMainNavHeightVar } from "@/hooks/useMainNavHeightVar";
 import { DEFAULT_LOCALE, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/i18n/locale";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
@@ -152,7 +151,11 @@ export default function Header() {
     }
 
     event.preventDefault();
-    transition.startNavigation(logoHref);
+    const didStartTransition = transition.navigateFromLogo(logoHref);
+    if (!didStartTransition && typeof window !== "undefined") {
+      // Fallback so home navigation still works if transition state is temporarily busy.
+      window.location.assign(logoHref);
+    }
   };
 
   // Keep mobile label in sync with the single root theme source.
@@ -161,9 +164,6 @@ export default function Header() {
       setMobileTheme(theme);
     });
   }, []);
-
-  // Keep nav always visible; search overlay reads this variable to start below the header.
-  useMainNavHeightVar(navRef);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {

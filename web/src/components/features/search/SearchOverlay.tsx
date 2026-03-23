@@ -32,15 +32,12 @@ type OpenMethod = "click" | "keyboard" | undefined;
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
 type SearchResponse = { posts: SlimPost[]; pageInfo: PageInfo };
 
-function cn(...a: Array<string | false | null | undefined>): string {
-  return a.filter(Boolean).join(" ");
-}
-
 function usePrefersReducedMotion() {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const onChange = () => setPrefersReducedMotion(media.matches);
     onChange();
@@ -57,11 +54,15 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
+function cn(...a: Array<string | false | null | undefined>): string {
+  return a.filter(Boolean).join(" ");
+}
+
 // Shared radius token for dropdown and last item to ensure pixel-perfect match
 const DROPDOWN_RADIUS = "rounded-2xl";
 const LAST_ITEM_RADIUS = "rounded-b-2xl";
 
-/** Fixed overlay sits under the nav to avoid layout shift while keeping nav visible. */
+/** The overlay itself — rendered in a portal to <body> so it covers the entire page */
 type SearchOverlayProps = {
   onClose: () => void;
   openMethod?: OpenMethod;
@@ -87,7 +88,6 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const tLoadMore = label("loadMore", "Load more");
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
-  const overlayRootRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -97,9 +97,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     try {
       input.focus({ preventScroll: true });
     } catch {
-      requestAnimationFrame(() => {
-        input.focus();
-      });
+      input.focus();
     }
   }, []);
 
@@ -307,40 +305,6 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     }
   }, [focusSearchInput, show]);
 
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-    if (!show) return;
-
-    const logGeometry = () => {
-      const overlay = overlayRootRef.current;
-      const input = inputRef.current;
-      const nav = document.querySelector<HTMLElement>('nav[data-main-nav="true"]');
-      if (!overlay || !input || !nav) return;
-
-      const overlayTop = overlay.getBoundingClientRect().top;
-      const inputTop = input.getBoundingClientRect().top;
-      const navBottom = nav.getBoundingClientRect().bottom;
-      const diff = inputTop - navBottom;
-
-      console.log("[search-overlay-debug]", {
-        overlayTop: Math.round(overlayTop),
-        navBottom: Math.round(navBottom),
-        inputTop: Math.round(inputTop),
-        diff: Math.round(diff),
-        expectedMinGap: 12,
-        isValid: diff >= 12,
-      });
-    };
-
-    logGeometry();
-    const id = window.setTimeout(logGeometry, 120);
-    window.addEventListener("resize", logGeometry);
-    return () => {
-      window.clearTimeout(id);
-      window.removeEventListener("resize", logGeometry);
-    };
-  }, [show]);
-
   // Debounced search with cancellation
   useEffect(() => {
     const term = deferredQ.trim();
@@ -513,7 +477,6 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
 
   return createPortal(
     <div
-      ref={overlayRootRef}
       role="dialog"
       aria-modal="true"
       aria-label="Search articles"
@@ -522,7 +485,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-        "fixed inset-0 z-[900]",
+        "fixed inset-0 z-100",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",
@@ -534,164 +497,161 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
       }}
     >
       <div
-        className="mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))] pointer-events-none"
-        style={{ paddingTop: "calc(var(--main-nav-h, 72px) + 16px)" }}
+        className={cn(
+          "mx-auto w-full max-w-[min(40rem,calc(100vw-2rem))]",
+          DROPDOWN_RADIUS,
+          "bg-[hsl(var(--bg))] p-0 shadow-2xl",
+          "text-neutral-900 dark:text-neutral-100",
+          "mt-[max(5.5rem,calc(env(safe-area-inset-top)+4rem))]",
+          "sm:mt-[calc(env(safe-area-inset-top)+5rem)]",
+          // panel enter/exit states
+          show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.98] translate-y-1",
+          "motion-reduce:transition-none",
+        )}
+        ref={panelRef}
+        style={{
+          transitionProperty: "opacity, transform",
+          transitionDuration: `${TRANSITION_MS}ms`,
+          transitionTimingFunction: "ease-in-out",
+        }}
       >
+        {/* Input row */}
         <div
-          className={cn(
-            "w-full pointer-events-auto",
-            DROPDOWN_RADIUS,
-            "bg-[hsl(var(--bg))] p-0 shadow-2xl",
-            "text-neutral-900 dark:text-neutral-100",
-            // panel enter/exit states
-            show ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-[0.98] translate-y-1",
-            "motion-reduce:transition-none",
-          )}
-          ref={panelRef}
-          style={{
-            transitionProperty: "opacity, transform",
-            transitionDuration: `${TRANSITION_MS}ms`,
-            transitionTimingFunction: "ease-in-out",
-          }}
-        >
-          {/* Input row */}
-          <div
-            className="
+          className="
             flex items-center gap-2 rounded-xl px-3 py-2
             bg-transparent text-neutral-900
             dark:text-neutral-100
           "
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            className="opacity-60 text-neutral-500 dark:text-neutral-400"
           >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              className="opacity-60 text-neutral-500 dark:text-neutral-400"
-            >
-              <path
-                d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            </svg>
-            <input
-              type="search"
-              ref={inputRef}
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={tPlaceholder}
-              aria-label={tSearchLabel}
-              className="
+            <path
+              d="M21 21l-4.3-4.3m1.3-5.2a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+          <input
+            type="search"
+            ref={inputRef}
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={tPlaceholder}
+            aria-label={tSearchLabel}
+            className="
                 w-full bg-transparent py-2 text-inherit
                 placeholder-neutral-500 dark:placeholder-neutral-400
                 appearance-none border-0 focus:border-0 focus-visible:border-0
                 outline-none focus:outline-none focus-visible:outline-none
                 ring-0 focus:ring-0 focus-visible:ring-0
               "
-            />
-            {q ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setQ("");
-                  focusSearchInput();
-                }}
-                className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
-                aria-label={CLEAR_LABEL}
-              >
-                {CLEAR_LABEL}
-              </button>
-            ) : null}
-          </div>
-
-          {/* Results (single animated container) */}
-          <div
-            ref={resultsWrapRef}
-            className="sd-hide-scrollbar min-h-0 overflow-y-auto"
-            style={{
-              height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
-              padding: 0,
-              opacity: showResults ? 1 : 0,
-              transform: showResults ? "translateY(0)" : "translateY(-6px)",
-              transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
-              willChange: "height, opacity, transform",
-            }}
-          >
-            <ul
-              ref={listRef}
-              className="divide-y divide-neutral-200 dark:divide-white/10"
-              style={{ margin: 0, padding: 0, listStyle: "none" }}
+          />
+          {q ? (
+            <button
+              type="button"
+              onClick={() => {
+                setQ("");
+                focusSearchInput();
+              }}
+              className="text-xs text-neutral-500 dark:text-neutral-400 hover:text-neutral-800 dark:hover:text-neutral-200"
+              aria-label={CLEAR_LABEL}
             >
-              {empty && (
-                <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
-                  {tNoResults}
-                </li>
-              )}
+              {CLEAR_LABEL}
+            </button>
+          ) : null}
+        </div>
 
-              {!loading &&
-                items.length > 0 &&
-                items.slice(0, visibleCount).map((it, i) => (
-                  <li key={it.id}>
-                    <button
-                      type="button"
-                      onMouseEnter={() => setHighlight(i)}
-                      onClick={() => {
-                        requestClose();
-                        router.push(`/posts/${it.slug}`);
-                      }}
-                      className={cn(
-                        "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
-                        "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
-                        i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
-                        // only the last rendered item should have bottom rounding
-                        i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
-                      )}
-                      aria-current={i === highlight ? "true" : undefined}
-                    >
-                      {it.image ? (
-                        <Image
-                          src={it.image ?? ""}
-                          alt=""
-                          width={48}
-                          height={48}
-                          className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
-                          sizes="48px"
-                        />
-                      ) : (
-                        <div
-                          className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
-                          aria-hidden="true"
-                        />
-                      )}
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
-                          {it.title}
-                        </div>
-                        <div
-                          className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
-                          /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
-                          dangerouslySetInnerHTML={{ __html: it.excerpt }}
-                        />
-                      </div>
-                    </button>
-                  </li>
-                ))}
+        {/* Results (single animated container) */}
+        <div
+          ref={resultsWrapRef}
+          className="min-h-0 overflow-y-auto"
+          style={{
+            height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
+            padding: 0,
+            opacity: showResults ? 1 : 0,
+            transform: showResults ? "translateY(0)" : "translateY(-6px)",
+            transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
+            willChange: "height, opacity, transform",
+          }}
+        >
+          <ul
+            ref={listRef}
+            className="divide-y divide-neutral-200 dark:divide-white/10"
+            style={{ margin: 0, padding: 0, listStyle: "none" }}
+          >
+            {empty && (
+              <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">
+                {tNoResults}
+              </li>
+            )}
 
-              {!loading && visibleCount < items.length && (
-                <li className="px-5 py-3 text-center">
+            {!loading &&
+              items.length > 0 &&
+              items.slice(0, visibleCount).map((it, i) => (
+                <li key={it.id}>
                   <button
                     type="button"
-                    onClick={() => setVisibleCount((v) => Math.min(v + 5, items.length))}
-                    className="cursor-pointer text-sm text-neutral-800 dark:text-neutral-300 hover:underline"
+                    onMouseEnter={() => setHighlight(i)}
+                    onClick={() => {
+                      requestClose();
+                      router.push(`/posts/${it.slug}`);
+                    }}
+                    className={cn(
+                      "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
+                      "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
+                      i === highlight && "bg-neutral-50 dark:bg-neutral-800/60",
+                      // only the last rendered item should have bottom rounding
+                      i === Math.min(visibleCount, items.length) - 1 && LAST_ITEM_RADIUS,
+                    )}
+                    aria-current={i === highlight ? "true" : undefined}
                   >
-                    {tLoadMore}
+                    {it.image ? (
+                      <Image
+                        src={it.image ?? ""}
+                        alt=""
+                        width={48}
+                        height={48}
+                        className="mt-0.5 h-12 w-12 flex-none rounded-md object-cover"
+                        sizes="48px"
+                      />
+                    ) : (
+                      <div
+                        className="mt-0.5 h-12 w-12 flex-none rounded-md bg-neutral-200 dark:bg-neutral-700"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                        {it.title}
+                      </div>
+                      <div
+                        className="line-clamp-1 text-sm text-neutral-600 dark:text-neutral-400"
+                        /* biome-disable-next-line lint/security/noDangerouslySetInnerHtml */
+                        dangerouslySetInnerHTML={{ __html: it.excerpt }}
+                      />
+                    </div>
                   </button>
                 </li>
-              )}
-            </ul>
-          </div>
+              ))}
+
+            {!loading && visibleCount < items.length && (
+              <li className="px-5 py-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((v) => Math.min(v + 5, items.length))}
+                  className="cursor-pointer text-sm text-neutral-800 dark:text-neutral-300 hover:underline"
+                >
+                  {tLoadMore}
+                </button>
+              </li>
+            )}
+          </ul>
         </div>
       </div>
     </div>,
