@@ -203,6 +203,22 @@ export async function getPosts(
   };
 }
 
+export async function getPostsLightweight(params: {
+  first: number;
+  after?: string | null;
+  locale?: Locale;
+}): Promise<{ posts: Connection<WPPostCard> }> {
+  const { first, after, locale } = params;
+  const data = await getPosts({ first, after: after ?? undefined, locale });
+
+  return {
+    posts: {
+      ...data.posts,
+      nodes: (data.posts?.nodes ?? []) as WPPostCard[],
+    },
+  };
+}
+
 export async function getPostBySlug(slug: string, init?: NextInit) {
   const data = await fetchGraphQL<{ post: PostDetail | null }>(
     GET_POST_BY_SLUG,
