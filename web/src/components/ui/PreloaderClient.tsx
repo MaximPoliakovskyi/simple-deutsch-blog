@@ -1,97 +1,38 @@
 "use client";
 
-import { type TransitionEvent, useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  type MutableRefObject,
+  type TransitionEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { lockScroll, unlockScroll } from "@/lib/scrollLock";
 
-const PRELOADER_SEEN_KEY = "preloader_seen";
 const FADE_OUT_MS = 320;
 const FADE_OUT_WATCHDOG_MS = FADE_OUT_MS + 150;
+const HIDE_AFTER_MS = 1500;
+const FLIP_INTERVAL_MS = 820;
+const LETTER_STAGGER_MS = 52;
+const LETTER_SWAP_MS = 150;
+const ROTATION_STEP_MS = 900;
 
 const WORDS = [
   "Weiter so",
   "Gut gemacht",
   "Du schaffst das",
-  "Nicht aufgeben",
-  "Konzentriert",
-  "Fokussiert",
-  "Übung macht den Meister",
   "Kleiner Schritt",
-  "Stark",
-  "Motiviert",
-  "Neugierig",
-  "Toll",
-  "Großartig",
   "Dranbleiben",
-  "Mut",
-  "Bravo",
-  "Bereit",
-  "Weiterlernen",
-  "Schritt für Schritt",
-  // Additional short/impactful phrases
-  "Genial",
-  "Perfekt",
-  "Klasse",
-  "Super",
-  "Top",
   "Los geht's",
-  "Auf geht's",
   "Sehr gut",
-  "Du rockst",
-  "Fantastisch",
-  "Sauber",
-  "Weiter!",
-  "Komm schon",
-  "Ziel im Blick",
-  "Kurz & knapp",
+  "Mutig weiter",
 ];
-
-function pick(exclude?: string) {
-  if (WORDS.length === 0) return "";
-  if (!exclude) return WORDS[Math.floor(Math.random() * WORDS.length)];
-  if (WORDS.length === 1) return WORDS[0];
-  let idx = Math.floor(Math.random() * WORDS.length);
-  let tries = 0;
-  while (WORDS[idx] === exclude && tries < 10) {
-    idx = Math.floor(Math.random() * WORDS.length);
-    tries += 1;
-  }
-  if (WORDS[idx] === exclude) {
-    for (let i = 0; i < WORDS.length; i++) {
-      if (WORDS[i] !== exclude) {
-        idx = i;
-        break;
-      }
-    }
-  }
-  return WORDS[idx];
-}
-
-function shouldShowPreloaderFromSession() {
-  if (typeof window === "undefined") return true;
-
-  try {
-    // SSR defaults to data-preloader="1"; an inline head script flips this
-    // to "0" before paint when the preloader was already seen in this tab.
-    if (document.documentElement.getAttribute("data-preloader") === "0") {
-      return false;
-    }
-
-    const nav = performance.getEntriesByType("navigation")[0] as
-      | PerformanceNavigationTiming
-      | undefined;
-
-    if (nav?.type === "reload") {
-      window.sessionStorage.removeItem(PRELOADER_SEEN_KEY);
-    }
-
-    return window.sessionStorage.getItem(PRELOADER_SEEN_KEY) !== "1";
-  } catch {
-    return true;
-  }
-}
 
 function prefersReducedMotionNow() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
@@ -99,51 +40,61 @@ function prefersReducedMotionNow() {
   }
 }
 
+function clearTimer(timerRef: MutableRefObject<number | null>) {
+  if (timerRef.current !== null) {
+    window.clearTimeout(timerRef.current);
+    timerRef.current = null;
+  }
+}
+
 export default function PreloaderClient({ onFinished }: { onFinished?: () => void } = {}) {
-  const [showPreloader, setShowPreloader] = useState(true);
   const [phase, setPhase] = useState<"visible" | "fadingOut">("visible");
-  const startedRef = useRef(false);
+  const [showPreloader, setShowPreloader] = useState(true);
+  const [chars, setChars] = useState<string[]>([]);
+  const [flips, setFlips] = useState<boolean[]>([]);
+  const [jsReady, setJsReady] = useState(false);
   const fadeStartedRef = useRef(false);
-  const finalizedRef = useRef(false);
+  const finishedRef = useRef(false);
+  const hideTimerRef = useRef<number | null>(null);
   const fadeWatchdogRef = useRef<number | null>(null);
-
-  // Render no static word on the server; use the CSS rotator for SSR-visible
-  // words and let the JS flipper initialize on the client.
-  const initialArr: string[] = [];
-
-  const [chars, setChars] = useState<string[]>(() => initialArr.slice());
-  const [flips, setFlips] = useState<boolean[]>(() => new Array(initialArr.length).fill(false));
+  const cycleTimerRef = useRef<number | null>(null);
+  const animationTimersRef = useRef<number[]>([]);
   const charsRef = useRef<string[]>([]);
-  const flipsRef = useRef<boolean[]>([]);
-  const timeouts = useRef<number[]>([]);
+  const lastWordRef = useRef<string | null>(null);
   const id = useId();
   const charKeysRef = useRef<Record<number, string>>({});
-  const [jsReady, setJsReady] = useState(false);
-  const lastWordRef = useRef<string | null>(null);
 
-  const clearFadeWatchdog = useCallback(() => {
-    if (fadeWatchdogRef.current !== null) {
-      window.clearTimeout(fadeWatchdogRef.current);
-      fadeWatchdogRef.current = null;
+  const clearAnimationTimers = useCallback(() => {
+    for (const timer of animationTimersRef.current) {
+      window.clearTimeout(timer);
     }
+    animationTimersRef.current = [];
+    clearTimer(cycleTimerRef);
   }, []);
 
   const finishPreloader = useCallback(() => {
-    if (finalizedRef.current) return;
-    finalizedRef.current = true;
-    clearFadeWatchdog();
+    if (finishedRef.current) return;
+
+    finishedRef.current = true;
+    clearTimer(hideTimerRef);
+    clearTimer(fadeWatchdogRef);
+    clearAnimationTimers();
+
     try {
       unlockScroll();
     } catch {}
+
     document.documentElement.setAttribute("data-preloader", "0");
     document.documentElement.setAttribute("data-app-visible", "1");
     onFinished?.();
     setShowPreloader(false);
-  }, [clearFadeWatchdog, onFinished]);
+  }, [clearAnimationTimers, onFinished]);
 
   const startFadeOut = useCallback(() => {
     if (fadeStartedRef.current) return;
+
     fadeStartedRef.current = true;
+    clearAnimationTimers();
 
     if (prefersReducedMotionNow()) {
       finishPreloader();
@@ -151,164 +102,123 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
     }
 
     setPhase("fadingOut");
-    clearFadeWatchdog();
-    fadeWatchdogRef.current = window.setTimeout(() => {
-      finishPreloader();
-    }, FADE_OUT_WATCHDOG_MS);
-  }, [clearFadeWatchdog, finishPreloader]);
+    fadeWatchdogRef.current = window.setTimeout(finishPreloader, FADE_OUT_WATCHDOG_MS);
+  }, [clearAnimationTimers, finishPreloader]);
 
   useEffect(() => {
     charsRef.current = chars;
   }, [chars]);
 
   useEffect(() => {
-    flipsRef.current = flips;
-  }, [flips]);
-
-  useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
-
-    const shouldShow = shouldShowPreloaderFromSession();
-    if (!shouldShow) {
-      document.documentElement.setAttribute("data-preloader", "0");
-      document.documentElement.setAttribute("data-app-visible", "1");
-      onFinished?.();
-      setShowPreloader(false);
-      return;
-    }
-
-    try {
-      window.sessionStorage.setItem(PRELOADER_SEEN_KEY, "1");
-    } catch {}
-
-    let intervalId: number | null = null;
-    let hideTimer: number | null = null;
-    const FLIP_INTERVAL = 5000;
-    const QUICK_DELAY = 2500;
-    const HIDE_AFTER = 1500;
-
-    function clearAll() {
-      for (const t of timeouts.current) {
-        window.clearTimeout(t);
-      }
-      timeouts.current = [];
-    }
-
     try {
       lockScroll();
     } catch {}
 
-    function start() {
-      const initial = pick();
-      lastWordRef.current = initial;
-      const arr = Array.from(initial).map((ch) => (ch === " " ? "\u00A0" : ch));
-      setChars(arr);
-      setFlips(new Array(arr.length).fill(false));
-      charsRef.current = arr.slice();
-      flipsRef.current = new Array(arr.length).fill(false);
+    const pickNextWord = (exclude?: string) => {
+      if (WORDS.length === 0) return "";
+      if (!exclude) return WORDS[0];
 
-      const flipCycle = () => {
-        const next = pick(lastWordRef.current ?? undefined);
-        lastWordRef.current = next;
-        const prev = charsRef.current.slice();
-        const prevLen = prev.length;
-        const nextLen = next.length;
-        const max = Math.max(prevLen, nextLen);
-        const stagger = 70;
-        const mid = 200;
-
-        setChars((prevState) => {
-          const a = prevState.slice();
-          while (a.length < max) a.push("");
-          return a;
-        });
-        setFlips((prevState) => {
-          const f = prevState.slice();
-          while (f.length < max) f.push(false);
-          return f;
-        });
-
-        charsRef.current = charsRef.current
-          .slice()
-          .concat(new Array(Math.max(0, max - charsRef.current.length)).fill(""));
-        flipsRef.current = flipsRef.current
-          .slice()
-          .concat(new Array(Math.max(0, max - flipsRef.current.length)).fill(false));
-
-        for (let i = 0; i < max; i++) {
-          const startAt = i * stagger;
-          const t1 = window.setTimeout(() => {
-            setFlips((prevF) => {
-              const cp = prevF.slice();
-              cp[i] = true;
-              flipsRef.current = cp.slice();
-              return cp;
-            });
-
-            const swap = window.setTimeout(() => {
-              setChars((prevC) => {
-                const arr2 = prevC.slice();
-                const ch = next[i] ?? "";
-                arr2[i] = ch === " " ? "\u00A0" : ch;
-                charsRef.current = arr2.slice();
-                return arr2;
-              });
-
-              setFlips((prevF) => {
-                const cp2 = prevF.slice();
-                cp2[i] = false;
-                flipsRef.current = cp2.slice();
-                return cp2;
-              });
-            }, mid);
-            timeouts.current.push(swap);
-          }, startAt);
-          timeouts.current.push(t1);
-        }
-      };
-
-      flipCycle();
-      const quick = window.setTimeout(() => flipCycle(), QUICK_DELAY);
-      timeouts.current.push(quick);
-      intervalId = window.setInterval(flipCycle, FLIP_INTERVAL);
-      hideTimer = null;
-    }
-
-    start();
-
-    const ensureHideTimer = () => {
-      if (hideTimer) window.clearTimeout(hideTimer as number);
-      setJsReady(true);
-      hideTimer = window.setTimeout(() => {
-        clearAll();
-        startFadeOut();
-      }, HIDE_AFTER);
+      const currentIndex = WORDS.indexOf(exclude);
+      if (currentIndex === -1) return WORDS[0];
+      return WORDS[(currentIndex + 1) % WORDS.length];
     };
 
-    let onLoad: (() => void) | null = null;
+    const setWordImmediately = (word: string) => {
+      const nextChars = Array.from(word).map((char) => (char === " " ? "\u00A0" : char));
+      charsRef.current = nextChars;
+      setChars(nextChars);
+      setFlips(new Array(nextChars.length).fill(false));
+    };
+
+    const scheduleNextCycle = () => {
+      clearTimer(cycleTimerRef);
+      cycleTimerRef.current = window.setTimeout(runFlipCycle, FLIP_INTERVAL_MS);
+    };
+
+    const runFlipCycle = () => {
+      if (fadeStartedRef.current || finishedRef.current) return;
+
+      const nextWord = pickNextWord(lastWordRef.current ?? undefined);
+      lastWordRef.current = nextWord;
+
+      const nextChars = Array.from(nextWord).map((char) => (char === " " ? "\u00A0" : char));
+      const maxLength = Math.max(charsRef.current.length, nextChars.length);
+
+      setChars((previousChars) => {
+        const padded = previousChars.slice();
+        while (padded.length < maxLength) padded.push("");
+        charsRef.current = padded.slice();
+        return padded;
+      });
+      setFlips((previousFlips) => {
+        const padded = previousFlips.slice();
+        while (padded.length < maxLength) padded.push(false);
+        return padded;
+      });
+
+      for (let index = 0; index < maxLength; index += 1) {
+        const startDelay = index * LETTER_STAGGER_MS;
+
+        const flipTimer = window.setTimeout(() => {
+          setFlips((previousFlips) => {
+            const nextFlips = previousFlips.slice();
+            nextFlips[index] = true;
+            return nextFlips;
+          });
+        }, startDelay);
+
+        const swapTimer = window.setTimeout(() => {
+          setChars((previousChars) => {
+            const updatedChars = previousChars.slice();
+            updatedChars[index] = nextChars[index] ?? "";
+            charsRef.current = updatedChars.slice();
+            return updatedChars;
+          });
+          setFlips((previousFlips) => {
+            const nextFlips = previousFlips.slice();
+            nextFlips[index] = false;
+            return nextFlips;
+          });
+        }, startDelay + LETTER_SWAP_MS);
+
+        animationTimersRef.current.push(flipTimer, swapTimer);
+      }
+
+      scheduleNextCycle();
+    };
+
+    const initialWord = pickNextWord();
+    lastWordRef.current = initialWord;
+    setWordImmediately(initialWord);
+    setJsReady(true);
+    scheduleNextCycle();
+
+    const scheduleHide = () => {
+      clearTimer(hideTimerRef);
+      hideTimerRef.current = window.setTimeout(startFadeOut, HIDE_AFTER_MS);
+    };
+
     if (document.readyState === "complete") {
-      ensureHideTimer();
+      scheduleHide();
     } else {
-      onLoad = () => ensureHideTimer();
-      window.addEventListener("load", onLoad);
+      window.addEventListener("load", scheduleHide, { once: true });
     }
 
     return () => {
-      if (onLoad) window.removeEventListener("load", onLoad);
-      if (intervalId) window.clearInterval(intervalId);
-      if (hideTimer) window.clearTimeout(hideTimer as number);
-      clearFadeWatchdog();
-      clearAll();
-      if (!finalizedRef.current) {
+      window.removeEventListener("load", scheduleHide);
+      clearTimer(hideTimerRef);
+      clearTimer(fadeWatchdogRef);
+      clearAnimationTimers();
+
+      if (!finishedRef.current) {
         try {
           unlockScroll();
         } catch {}
       }
     };
-  }, [clearFadeWatchdog, onFinished, startFadeOut]);
+  }, [clearAnimationTimers, startFadeOut]);
 
-  const onPreloaderTransitionEnd = useCallback(
+  const handleTransitionEnd = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
       if (phase !== "fadingOut") return;
@@ -317,7 +227,7 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
     [finishPreloader, phase],
   );
 
-  const onPreloaderTransitionCancel = useCallback(
+  const handleTransitionCancel = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
       if (phase !== "fadingOut") return;
@@ -334,33 +244,39 @@ export default function PreloaderClient({ onFinished }: { onFinished?: () => voi
       id="sd-preloader"
       data-phase={phase}
       style={{ ["--sd-preloader-fade-ms" as string]: `${FADE_OUT_MS}ms` }}
-      onTransitionEnd={onPreloaderTransitionEnd}
-      onTransitionCancel={onPreloaderTransitionCancel}
-      aria-hidden={false}
+      onTransitionEnd={handleTransitionEnd}
+      onTransitionCancel={handleTransitionCancel}
       className="select-none"
     >
       <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
-        {WORDS.slice(0, 8).map((w) => (
-          <span key={`rot-${w}`} className="sd-rotator-word">
-            {w}
+        {WORDS.slice(0, 6).map((word, index) => (
+          <span
+            key={word}
+            className="sd-rotator-word"
+            style={{
+              ["--sd-preloader-word-delay" as string]: `${index * ROTATION_STEP_MS}ms`,
+            }}
+          >
+            {word}
           </span>
         ))}
       </div>
 
       <div
         suppressHydrationWarning
-        className={`sd-preloader-word sd-js-flipper ${jsReady ? "sd-js-active" : "sd-js-hidden"}`}
+        className={`sd-preloader-word ${jsReady ? "sd-js-active" : "sd-js-hidden"}`}
         aria-live="polite"
       >
-        {chars.map((c, i) => {
-          let key = charKeysRef.current[i];
+        {chars.map((char, index) => {
+          let key = charKeysRef.current[index];
           if (!key) {
-            key = `${id}-${i}`;
-            charKeysRef.current[i] = key;
+            key = `${id}-${index}`;
+            charKeysRef.current[index] = key;
           }
+
           return (
-            <span key={key} className={`sd-letter ${flips[i] ? "flipping" : ""}`} data-index={i}>
-              {c}
+            <span key={key} className={`sd-letter ${flips[index] ? "flipping" : ""}`}>
+              {char}
             </span>
           );
         })}

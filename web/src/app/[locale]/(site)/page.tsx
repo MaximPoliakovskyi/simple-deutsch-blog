@@ -18,6 +18,7 @@ export async function generateMetadata({ params }: Props) {
     const validated = assertLocale(locale);
     return {
       title: TRANSLATIONS[validated].siteTitle,
+      description: TRANSLATIONS[validated].heroDescription,
       alternates: buildI18nAlternates("/", validated),
     };
   } catch {
@@ -35,8 +36,8 @@ export default async function LocalizedHome({ params }: Props) {
   }
 
   return (
-    <main data-testid="home-marker">
+    <div data-testid="home-marker">
       <HomePage locale={validated} />
-    </main>
+    </div>
   );
 }

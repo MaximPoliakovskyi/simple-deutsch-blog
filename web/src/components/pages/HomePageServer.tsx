@@ -60,7 +60,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
 
   return (
     <>
-      <main className="mx-auto max-w-7xl px-4 py-12">
+      <section className="mx-auto max-w-7xl px-4 py-12">
         <DeferredHeroFilters
           initialPosts={mappedPosts}
           initialEndCursor={pageInfo.endCursor}
@@ -68,7 +68,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
           pageSize={PAGE_SIZE}
           locale={effectiveLocale}
         />
-      </main>
+      </section>
 
       <SuccessStoriesSliderServer locale={effectiveLocale} />
       <LatestPostsSliderServer locale={effectiveLocale} />

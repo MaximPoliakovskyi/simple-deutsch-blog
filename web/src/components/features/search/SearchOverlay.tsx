@@ -570,7 +570,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         {/* Results (single animated container) */}
         <div
           ref={resultsWrapRef}
-          className="min-h-0 overflow-y-auto"
+          className="sd-hide-scrollbar min-h-0 overflow-y-auto"
           style={{
             height: typeof wrapHeight === "number" ? `${wrapHeight}px` : wrapHeight,
             padding: 0,
@@ -578,12 +578,20 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
             transform: showResults ? "translateY(0)" : "translateY(-6px)",
             transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
             willChange: "height, opacity, transform",
+            msOverflowStyle: "none",
+            scrollbarWidth: "none",
           }}
         >
           <ul
             ref={listRef}
-            className="divide-y divide-neutral-200 dark:divide-white/10"
-            style={{ margin: 0, padding: 0, listStyle: "none" }}
+            className="sd-hide-scrollbar divide-y divide-neutral-200 dark:divide-white/10"
+            style={{
+              margin: 0,
+              padding: 0,
+              listStyle: "none",
+              msOverflowStyle: "none",
+              scrollbarWidth: "none",
+            }}
           >
             {empty && (
               <li className="px-3 py-3 text-sm text-neutral-600 dark:text-neutral-400">

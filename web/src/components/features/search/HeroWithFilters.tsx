@@ -19,6 +19,12 @@ type Props = {
   locale?: Locale;
 };
 
+const HERO_KEYWORDS: Record<string, string[]> = {
+  en: ["work", "travel", "life", "business"],
+  uk: ["роботи", "подорожей", "життя", "бізнесу"],
+  ru: ["работы", "путешествия", "жизни", "бизнеса"],
+};
+
 export default function HeroWithFilters({
   categories,
   initialPosts,
@@ -28,26 +34,21 @@ export default function HeroWithFilters({
   locale,
 }: Props) {
   const { t, locale: uiLocale } = useI18n();
+  const heroHeadingId = React.useId();
+  const featuredPostsHeadingId = React.useId();
   const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
   const [displayedCount, setDisplayedCount] = React.useState(pageSize);
   const [isLoading, setIsLoading] = React.useState(false);
   const cacheRef = React.useRef<Map<string, WPPostCard[]>>(new Map([["all", initialPosts]]));
   const requestIdRef = React.useRef(0);
-
-  // Locale-aware animated words for hero headline (line 3)
-  // Each locale provides its own word list
-  const HERO_ANIMATED_WORDS: Record<string, string[]> = {
-    en: ["work", "travel", "life", "business"],
-    uk: ["роботи", "подорожей", "життя", "бізнесу"],
-    ru: ["работы", "путешествия", "жизни", "бизнеса"],
-  };
-
-  const animatedWords = HERO_ANIMATED_WORDS[uiLocale as string] || HERO_ANIMATED_WORDS.en;
-
-  // Calculate the longest animated word length for stable width (prevents horizontal drift)
-  // Each ch unit ≈ one character width; add ~0.2 for cursor space
-  const longestAnimatedWordLength = Math.max(...animatedWords.map((w) => w.length));
-  const stableWidthCh = longestAnimatedWordLength + 0.3; // +0.3ch for cursor space
+  const animatedWords = React.useMemo(
+    () => HERO_KEYWORDS[uiLocale as string] || HERO_KEYWORDS.en,
+    [uiLocale],
+  );
+  const stableWidthCh = React.useMemo(
+    () => Math.max(...animatedWords.map((word) => word.length)) + 0.3,
+    [animatedWords],
+  );
 
   React.useEffect(() => {
     cacheRef.current = new Map([["all", initialPosts]]);
@@ -119,8 +120,10 @@ export default function HeroWithFilters({
   return (
     <>
       <section className="text-center max-w-7xl mx-auto px-4 pt-12 sm:pt-14 md:pt-16 pb-0">
-        {/* Hero heading: single h1 with manual line breaks and minimal line height */}
-        <h1 className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))] select-text">
+        <h1
+          id={heroHeadingId}
+          className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))] select-text"
+        >
           {t("heroLine1")}
           <br />
           {t("heroLine2")}
@@ -135,7 +138,7 @@ export default function HeroWithFilters({
               deleteMsPerChar={60}
               pauseAfterTypeMs={2200}
               pauseAfterDeleteMs={600}
-              showCursor={true}
+              showCursor
             />
           </span>
         </h1>
@@ -154,7 +157,11 @@ export default function HeroWithFilters({
         />
       </section>
 
-      <div className="flex flex-col gap-8">
+      <section aria-labelledby={featuredPostsHeadingId} className="flex flex-col gap-8">
+        <h2 id={featuredPostsHeadingId} className="sr-only">
+          {t("latestPosts") || "Latest posts"}
+        </h2>
+
         {displayedPosts.length === 0 && !isLoading && <div>{t("noPosts")}</div>}
 
         {displayedPosts.length > 0 && (
@@ -183,10 +190,10 @@ export default function HeroWithFilters({
             ].join(" ")}
             style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
           >
-            {isLoading ? t("loading") || "Loading…" : t("loadMore") || "Load more"}
+            {isLoading ? t("loading") || "Loading..." : t("loadMore") || "Load more"}
           </button>
         )}
-      </div>
+      </section>
     </>
   );
 }

@@ -1,5 +1,4 @@
-// app/layout.tsx
-
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import AnalyticsClient from "@/components/layout/AnalyticsClient";
@@ -39,6 +38,22 @@ const THEME_INIT_SCRIPT = `
 })();
 `;
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
+
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: TRANSLATIONS[DEFAULT_LOCALE].siteTitle,
+  description: TRANSLATIONS[DEFAULT_LOCALE].heroDescription,
+  icons: {
+    icon: "/favicon.ico",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   const isProd = process.env.NODE_ENV === "production";
@@ -55,16 +70,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     >
       <head>
         <meta charSet="UTF-8" />
-        {/* Document title and favicon */}
-        <title>{TRANSLATIONS[DEFAULT_LOCALE].siteTitle}</title>
-        <link rel="icon" href="/favicon.ico" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
 
         {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
-        {/* Decide preloader visibility before first paint to prevent content flash */}
+        {/* Set loading flags before paint so the app shell does not flash before the preloader. */}
         <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
 
         {/* Apply theme before paint to avoid flash and hydration drift. */}

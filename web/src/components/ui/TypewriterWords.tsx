@@ -14,13 +14,16 @@ interface TypewriterWordsProps {
   showCursor?: boolean;
 }
 
+type AnimationPhase = "typing" | "pauseAfterType" | "deleting" | "pauseAfterDelete";
+
 /**
  * Custom hook to measure the pixel width of words using a hidden measurement span.
- * Handles responsive font size changes via resize events.
+ * Handles responsive font size changes without measuring on every resize tick.
  * Returns the maximum width in pixels and provides a ref for the measurement element.
  */
 function useMeasureWordWidths(words: string[]) {
   const measureRef = React.useRef<HTMLSpanElement>(null);
+  const frameRef = React.useRef<number | null>(null);
   const [maxWidthPx, setMaxWidthPx] = React.useState(0);
 
   const measureWidths = React.useCallback(() => {
@@ -29,33 +32,57 @@ function useMeasureWordWidths(words: string[]) {
 
     let maxWidth = 0;
 
-    // Measure each word
-    words.forEach((word) => {
+    for (const word of words) {
       measureEl.textContent = word;
-      const width = measureEl.offsetWidth;
+      const width = Math.ceil(measureEl.getBoundingClientRect().width);
       if (width > maxWidth) {
         maxWidth = width;
       }
-    });
+    }
 
-    // Add small padding for cursor space
     const finalWidth = maxWidth + 8;
-    setMaxWidthPx(finalWidth);
+    setMaxWidthPx((previous) => (previous === finalWidth ? previous : finalWidth));
   }, [words]);
 
-  React.useEffect(() => {
-    measureWidths();
+  const scheduleMeasure = React.useCallback(() => {
+    if (frameRef.current !== null) {
+      cancelAnimationFrame(frameRef.current);
+    }
 
-    // Re-measure on window resize (for responsive font size changes)
-    const resizeHandler = () => {
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = null;
       measureWidths();
+    });
+  }, [measureWidths]);
+
+  React.useEffect(() => {
+    scheduleMeasure();
+
+    if (typeof window === "undefined") return;
+    const resizeHandler = () => {
+      scheduleMeasure();
     };
 
     window.addEventListener("resize", resizeHandler);
+
+    const fonts = document.fonts;
+    let cancelled = false;
+    if (fonts?.ready) {
+      void fonts.ready.then(() => {
+        if (!cancelled) {
+          scheduleMeasure();
+        }
+      });
+    }
+
     return () => {
+      cancelled = true;
       window.removeEventListener("resize", resizeHandler);
+      if (frameRef.current !== null) {
+        cancelAnimationFrame(frameRef.current);
+      }
     };
-  }, [measureWidths]);
+  }, [scheduleMeasure]);
 
   return { measureRef, maxWidthPx };
 }
@@ -86,74 +113,82 @@ function useTypewriter({
   pauseAfterTypeMs: number;
   pauseAfterDeleteMs: number;
 }) {
-  const [currentWordIndex, setCurrentWordIndex] = React.useState(0);
   const [currentText, setCurrentText] = React.useState("");
-  const [isDeleting, setIsDeleting] = React.useState(false);
-  const [isPausedAfterType, setIsPausedAfterType] = React.useState(false);
-  const [isPausedAfterDelete, setIsPausedAfterDelete] = React.useState(false);
+  const currentTextRef = React.useRef("");
+  const currentWordIndexRef = React.useRef(0);
+  const phaseRef = React.useRef<AnimationPhase>("typing");
+  const timeoutRef = React.useRef<number | null>(null);
+
+  const clearTimer = React.useCallback(() => {
+    if (timeoutRef.current !== null) {
+      window.clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+  }, []);
 
   React.useEffect(() => {
-    if (words.length === 0) return;
+    clearTimer();
+    currentTextRef.current = "";
+    currentWordIndexRef.current = 0;
+    phaseRef.current = "typing";
+    setCurrentText("");
 
-    const currentWord = words[currentWordIndex];
-
-    // Paused after typing - wait before starting to delete
-    if (isPausedAfterType) {
-      const timeout = setTimeout(() => {
-        setIsPausedAfterType(false);
-        setIsDeleting(true);
-      }, pauseAfterTypeMs);
-      return () => clearTimeout(timeout);
+    if (words.length === 0) {
+      return clearTimer;
     }
 
-    // Paused after deleting - wait before moving to next word
-    if (isPausedAfterDelete) {
-      const timeout = setTimeout(() => {
-        setIsPausedAfterDelete(false);
-        setCurrentWordIndex((prev) => (prev + 1) % words.length);
-      }, pauseAfterDeleteMs);
-      return () => clearTimeout(timeout);
-    }
+    const schedule = (delayMs: number) => {
+      timeoutRef.current = window.setTimeout(step, delayMs);
+    };
 
-    // Currently deleting
-    if (isDeleting) {
-      if (currentText.length === 0) {
-        // Finished deleting, pause before next word
-        setIsDeleting(false);
-        setIsPausedAfterDelete(true);
+    const updateText = (nextText: string) => {
+      currentTextRef.current = nextText;
+      setCurrentText(nextText);
+    };
+
+    const step = () => {
+      const currentWord = words[currentWordIndexRef.current] ?? "";
+      const displayedText = currentTextRef.current;
+
+      if (phaseRef.current === "typing") {
+        if (displayedText.length < currentWord.length) {
+          updateText(currentWord.slice(0, displayedText.length + 1));
+          schedule(typeMsPerChar);
+          return;
+        }
+
+        phaseRef.current = "pauseAfterType";
+        schedule(pauseAfterTypeMs);
         return;
       }
 
-      const timeout = setTimeout(() => {
-        setCurrentText((prev) => prev.slice(0, -1));
-      }, deleteMsPerChar);
-      return () => clearTimeout(timeout);
-    }
+      if (phaseRef.current === "pauseAfterType") {
+        phaseRef.current = "deleting";
+        schedule(deleteMsPerChar);
+        return;
+      }
 
-    // Currently typing
-    if (currentText.length < currentWord.length) {
-      const timeout = setTimeout(() => {
-        setCurrentText((prev) => currentWord.slice(0, prev.length + 1));
-      }, typeMsPerChar);
-      return () => clearTimeout(timeout);
-    }
+      if (phaseRef.current === "deleting") {
+        if (displayedText.length > 0) {
+          updateText(displayedText.slice(0, -1));
+          schedule(deleteMsPerChar);
+          return;
+        }
 
-    // Word fully typed, pause before deleting
-    if (currentText.length === currentWord.length) {
-      setIsPausedAfterType(true);
-    }
-  }, [
-    words,
-    currentWordIndex,
-    currentText,
-    isDeleting,
-    isPausedAfterType,
-    isPausedAfterDelete,
-    typeMsPerChar,
-    deleteMsPerChar,
-    pauseAfterTypeMs,
-    pauseAfterDeleteMs,
-  ]);
+        phaseRef.current = "pauseAfterDelete";
+        schedule(pauseAfterDeleteMs);
+        return;
+      }
+
+      currentWordIndexRef.current = (currentWordIndexRef.current + 1) % words.length;
+      phaseRef.current = "typing";
+      schedule(typeMsPerChar);
+    };
+
+    schedule(typeMsPerChar);
+
+    return clearTimer;
+  }, [clearTimer, deleteMsPerChar, pauseAfterDeleteMs, pauseAfterTypeMs, typeMsPerChar, words]);
 
   return currentText;
 }
@@ -176,7 +211,7 @@ function useTypewriter({
  *   fallbackWidthCh={8}
  * />
  */
-export default function TypewriterWords({
+const TypewriterWords = React.memo(function TypewriterWords({
   words,
   className = "",
   containerClassName = "",
@@ -312,4 +347,8 @@ export default function TypewriterWords({
       `}</style>
     </>
   );
-}
+});
+
+TypewriterWords.displayName = "TypewriterWords";
+
+export default TypewriterWords;

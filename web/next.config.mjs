@@ -1,10 +1,3 @@
-// next.config.mjs
-import bundleAnalyzer from "@next/bundle-analyzer";
-
-const withBundleAnalyzer = bundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
-});
-
 const DEV_WATCH_IGNORED = [
   "**/.next/**",
   "**/.tmp/**",
@@ -58,6 +51,31 @@ const nextConfig = {
   headers: async () => {
     return [
       {
+        source: "/:path*",
+        headers: [
+          {
+            key: "Cross-Origin-Opener-Policy",
+            value: "same-origin-allow-popups",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=31536000; includeSubDomains",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+        ],
+      },
+      {
         source: "/_next/static/:path*",
         headers: [
           {
@@ -78,4 +96,5 @@ const nextConfig = {
     ];
   },
 };
-export default withBundleAnalyzer(nextConfig);
+
+export default nextConfig;
