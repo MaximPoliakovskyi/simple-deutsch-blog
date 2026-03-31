@@ -6,7 +6,7 @@ import {
   TRANSLATIONS,
 } from "@/lib/i18n";
 import { getPostsIndex, type PostListItem, type WPPostCard } from "@/lib/posts";
-import PostsGridWithPagination from "../_components/posts-grid-with-pagination";
+import PostsGridWithPagination from "@/components/posts-grid-with-pagination";
 
 const PAGE_SIZE = 3;
 

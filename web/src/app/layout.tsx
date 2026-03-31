@@ -3,13 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
 import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/lib/initial-load-gate";
-import AnalyticsClient from "./[locale]/_components/analytics-client";
-import AppFadeWrapper from "./[locale]/_components/app-fade-wrapper";
-import ChunkErrorRecovery from "./[locale]/_components/chunk-error-recovery";
-import InitialPreloader from "./[locale]/_components/initial-preloader";
-import { RouteTransitionProvider } from "./[locale]/_components/route-transition-provider";
+import { AnalyticsClient, ChunkErrorRecovery } from "@/components/chrome-extras";
+import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
+import InitialPreloader from "@/components/preloader";
 import "@/styles/globals.css";
-import "@/styles/route-transition.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

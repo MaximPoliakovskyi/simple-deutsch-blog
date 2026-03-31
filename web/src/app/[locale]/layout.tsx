@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
 import { LocaleProvider } from "@/lib/i18n-provider";
-import DeferredChromeExtras from "./_components/deferred-chrome-extras";
-import Footer from "./_components/footer";
-import Header from "./_components/header";
-import Providers from "./_components/providers";
-import { RouteReady } from "./_components/route-ready";
+import DeferredChromeExtras from "@/components/chrome-extras";
+import Footer from "@/components/footer";
+import Header from "@/components/header";
+import Providers from "@/components/providers";
+import { RouteReady } from "@/components/route-wrapper";
 import { getRequiredRouteLocale } from "./locale-route";
 
 type Props = {

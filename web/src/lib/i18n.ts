@@ -873,21 +873,14 @@ assertDictionaryLocale("en", en);
 assertDictionaryLocale("uk", uk);
 assertDictionaryLocale("ru", ru);
 
-// Merge in content translations from JSON files (about page)
-import aboutEn from "@/lib/content/i18n/about.en.json";
-import aboutRu from "@/lib/content/i18n/about.ru.json";
-import aboutUk from "@/lib/content/i18n/about.uk.json";
-import partnershipsEn from "@/lib/content/i18n/partnerships.en.json";
-import partnershipsRu from "@/lib/content/i18n/partnerships.ru.json";
-import partnershipsUk from "@/lib/content/i18n/partnerships.uk.json";
+// Merge in content translations from locale JSON files
+import contentEn from "@/lib/content/i18n/en.json";
+import contentRu from "@/lib/content/i18n/ru.json";
+import contentUk from "@/lib/content/i18n/uk.json";
 
-// Note: extend base translation objects with about.* keys
-Object.assign(en, aboutEn as Translations);
-Object.assign(uk, aboutUk as Translations);
-Object.assign(ru, aboutRu as Translations);
-Object.assign(en, partnershipsEn as Translations);
-Object.assign(uk, partnershipsUk as Translations);
-Object.assign(ru, partnershipsRu as Translations);
+Object.assign(en, contentEn as Translations);
+Object.assign(ru, contentRu as Translations);
+Object.assign(uk, contentUk as Translations);
 
 export function getTranslations(locale: Locale = DEFAULT_LOCALE): TranslationDictionary {
   return TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];

@@ -11,7 +11,7 @@
  * has already loaded with styles. We use inline styles for basic layout instead.
  */
 import { DEFAULT_LOCALE } from "@/lib/i18n";
-import StatusPage from "./[locale]/_components/status-page";
+import StatusPage from "@/components/status-page";
 
 export default function GlobalError({
   error,

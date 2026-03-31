@@ -1,6 +1,6 @@
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { fetchGraphQL } from "@/server/wp/client";
-import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
+import { mapUiToGraphQLEnum } from "@/server/wp/types";
 import {
   GET_POST_BY_DATABASE_ID,
   GET_POST_BY_SLUG,
@@ -14,6 +14,7 @@ import {
   GET_RELATED_POSTS_BY_CATEGORY_SLUG,
   GET_RELATED_POSTS_BY_TAG_SLUG,
   POSTS_CONNECTION,
+  SEARCH_POSTS,
 } from "@/server/wp/queries";
 import { withReadingTime, withReadingTimeForList } from "@/server/wp/readingTime";
 import type {
@@ -22,6 +23,7 @@ import type {
   PostDetail,
   PostListItem,
   PostsConnectionResponse,
+  SearchPostsArgs,
   WPPostCard,
 } from "@/server/wp/types";
 
@@ -552,4 +554,43 @@ export async function getPostsPageByCategory(params: {
   const nodes = withReadingTimeForList(res.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE);
   const pageInfo = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
   return { posts: nodes, pageInfo };
+}
+
+// --- Search ---
+
+function localeFromLanguage(language: "EN" | "RU" | "UK" | null | undefined): Locale {
+  if (language === "RU") return "ru";
+  if (language === "UK") return "uk";
+  return DEFAULT_LOCALE;
+}
+
+export async function searchPosts({
+  query,
+  first = 10,
+  after = null,
+  language = "EN",
+  locale,
+}: SearchPostsArgs) {
+  if (!query?.trim()) {
+    return {
+      posts: [] as WPPostCard[],
+      pageInfo: { endCursor: null as string | null, hasNextPage: false },
+    };
+  }
+
+  const data = await fetchGraphQL<{
+    posts: {
+      pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      nodes: WPPostCard[];
+    };
+  }>(
+    SEARCH_POSTS,
+    { search: query, first, after, language },
+    {
+      locale: locale ?? localeFromLanguage(language),
+      policy: { type: "DYNAMIC" },
+    },
+  );
+
+  return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
 }

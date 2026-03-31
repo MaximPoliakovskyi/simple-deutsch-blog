@@ -1,5 +1,5 @@
-import type { Locale } from "@/lib/i18n";
-import type { CachePolicy } from "./fetching";
+import { isLocale, type Locale, SUPPORTED_LOCALES } from "@/lib/i18n";
+import type { CachePolicy } from "./client";
 
 export type NextInit = RequestInit & {
   next?: { revalidate?: number; tags?: string[] };
@@ -45,6 +45,60 @@ export type PostTranslation = {
   uri: string;
   language: PostLanguage;
 };
+
+// --- Polylang helpers ---
+
+export type PolylangTranslation = {
+  id: number;
+  slug: string;
+  uri?: string;
+};
+
+export const mapUiToGraphQLEnum = (locale: Locale | null | undefined): "EN" | "RU" | "UK" => {
+  if (!locale) return "EN";
+  if (locale === "ru") return "RU";
+  if (locale === "uk") return "UK";
+  return "EN";
+};
+
+export const mapGraphQLEnumToUi = (code: string | null | undefined): Locale => {
+  if (!code) return "en";
+  if (code === "RU") return "ru";
+  if (code === "UK") return "uk";
+  return "en";
+};
+
+export function parseTranslations(
+  raw: string | null | undefined,
+): Partial<Record<Locale, PolylangTranslation>> {
+  if (!raw || typeof raw !== "string") return {};
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown> | null;
+    if (!parsed || typeof parsed !== "object") return {};
+
+    const result: Partial<Record<Locale, PolylangTranslation>> = {};
+    const validLangSet = new Set<Locale>(SUPPORTED_LOCALES);
+
+    for (const [lang, value] of Object.entries(parsed)) {
+      if (!isLocale(lang) || !validLangSet.has(lang)) continue;
+      if (!value || typeof value !== "object") continue;
+      const obj = value as Record<string, unknown>;
+      const maybeId = obj.id;
+      const maybeSlug = obj.slug;
+      const maybeUri = obj.uri;
+      if (typeof maybeId !== "number") continue;
+      if (typeof maybeSlug !== "string") continue;
+      result[lang] = {
+        id: maybeId,
+        slug: maybeSlug,
+        uri: typeof maybeUri === "string" ? maybeUri : undefined,
+      };
+    }
+    return result;
+  } catch {
+    return {};
+  }
+}
 
 export type PostListItem = {
   id: string;

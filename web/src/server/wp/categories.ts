@@ -1,7 +1,7 @@
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/wp/client";
-import { mapUiToGraphQLEnum } from "@/server/wp/polylang";
+import { mapUiToGraphQLEnum } from "@/server/wp/types";
 import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,

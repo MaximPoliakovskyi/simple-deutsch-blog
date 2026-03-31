@@ -3,7 +3,7 @@
 
 import { useEffect } from "react";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
-import StatusPage from "./[locale]/_components/status-page";
+import StatusPage from "@/components/status-page";
 
 export default function AppError({
   error,
