@@ -437,7 +437,7 @@ export default function HeroWithFilters({
 
   return (
     <>
-      <section className="text-center max-w-7xl mx-auto px-4 pt-12 sm:pt-14 md:pt-16 pb-0">
+      <section className="sd-fade-in-slow text-center max-w-7xl mx-auto px-4 pt-12 sm:pt-14 md:pt-16 pb-0">
         <h1
           id={heroHeadingId}
           className="m-0 p-0 text-center font-extrabold text-5xl sm:text-6xl md:text-7xl leading-[1.06] sm:leading-[1.06] md:leading-[1.1] tracking-tight text-[hsl(var(--fg))] dark:text-[hsl(var(--fg))] select-text"
@@ -486,7 +486,7 @@ export default function HeroWithFilters({
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
             {displayedPosts.map((post, idx) => (
               <div key={post.id ?? post.slug}>
-                <PostCard post={post} priority={idx < 3} />
+                <PostCard post={post} priority={idx < 3} index={idx} />
               </div>
             ))}
           </div>

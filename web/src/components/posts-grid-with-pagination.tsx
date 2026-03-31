@@ -95,9 +95,9 @@ export default function PostsGridWithPagination({
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
-        {posts.map((post) => (
+        {posts.map((post, idx) => (
           <div key={stableKey(post) || (post.slug as string)}>
-            <PostCard post={post} />
+            <PostCard post={post} index={idx} />
           </div>
         ))}
       </div>

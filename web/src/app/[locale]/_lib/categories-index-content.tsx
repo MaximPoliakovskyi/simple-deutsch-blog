@@ -39,10 +39,11 @@ export async function CategoriesIndexContent({ locale }: { locale: Locale }) {
         <p className="text-neutral-600">{t.noCategories}</p>
       ) : (
         <ul className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((category) => (
+          {visible.map((category, idx) => (
             <li
               key={category.id}
-              className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+              className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
               <Link
                 href={buildLocalizedHref(locale, `/categories/${category.slug}`)}

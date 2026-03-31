@@ -228,7 +228,7 @@ export async function renderPostPage({
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostingSchema) }}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8">
+      <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <article className="md:col-span-3" data-reading-target="post">
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">

@@ -738,3 +738,53 @@ html.dark #sd-preloader .sd-preloader-word {
     transform: none !important;
   }
 }
+
+/* ── Content fade-in animations ──────────────────────────────────────────── */
+/* Content starts VISIBLE; animations are a subtle polish, never hide content. */
+
+@keyframes sd-fade-in {
+  from {
+    opacity: 0.6;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sd-fade-in-slow {
+  from {
+    opacity: 0.5;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Fast fade (300ms) — UI elements, small sections */
+.sd-fade-in {
+  animation: sd-fade-in 300ms ease-out both;
+}
+
+/* Slow fade (500ms) — hero, page wrappers, article content */
+.sd-fade-in-slow {
+  animation: sd-fade-in-slow 500ms cubic-bezier(0.33, 0.66, 0.66, 1) both;
+}
+
+/* Per-item fade (400ms) — pair with inline animationDelay for stagger */
+.sd-fade-in-item {
+  animation: sd-fade-in 400ms ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sd-fade-in,
+  .sd-fade-in-slow,
+  .sd-fade-in-item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

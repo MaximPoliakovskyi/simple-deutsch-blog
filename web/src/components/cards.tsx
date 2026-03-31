@@ -76,6 +76,8 @@ export type PostCardProps = {
   className?: string;
   priority?: boolean;
   safeExcerpt?: boolean;
+  /** Zero-based index used to stagger the fade-in animation delay */
+  index?: number;
 };
 
 function hasNode(fi: unknown): fi is FeaturedImageNode {
@@ -103,6 +105,7 @@ const PostCard = memo(function PostCard({
   post,
   className,
   priority = false,
+  index = 0,
 }: PostCardProps) {
   const img = extractImage(post);
   const { t, locale } = useI18n();
@@ -114,7 +117,10 @@ const PostCard = memo(function PostCard({
   const href = post.href ?? buildLocalizedHref(locale, `/posts/${post.slug}`);
 
   return (
-    <article className={["group", className].filter(Boolean).join(" ")}>
+    <article
+      className={["group", "sd-fade-in-item", className].filter(Boolean).join(" ")}
+      style={{ animationDelay: `${index * 75}ms` }}
+    >
       <Link href={href} className="block" aria-label={post.title}>
         <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div

@@ -81,7 +81,7 @@ export async function LevelsIndexContent({ locale }: { locale: Locale }) {
         {t.levelsDescription}
       </p>
       <ul className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-        {CEFR_ORDER.map((code) => {
+        {CEFR_ORDER.map((code, idx) => {
           const slug = code.toLowerCase();
           const ui = CEFR_UI_CONFIG[code];
           const count = countsMap.get(slug) ?? 0;
@@ -92,7 +92,8 @@ export async function LevelsIndexContent({ locale }: { locale: Locale }) {
           return (
             <li
               key={slug}
-              className="rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+              className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+              style={{ animationDelay: `${idx * 60}ms` }}
             >
               <Link href={buildLocalizedHref(locale, `/levels/${slug}`)} className="group block">
                 <div className="mb-1 flex items-baseline justify-between">
