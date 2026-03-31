@@ -1,5 +1,4 @@
-import type { Locale } from "@/i18n/locale";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/wp/client";
 import { mapUiToGraphQLEnum } from "@/server/wp/polylang";

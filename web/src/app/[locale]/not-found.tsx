@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { assertLocale, DEFAULT_LOCALE, parseLocaleFromPath } from "@/i18n/locale";
+import { assertLocale, DEFAULT_LOCALE, parseLocaleFromPath, TRANSLATIONS } from "@/lib/i18n";
 import NotFound from "../not-found";
 
 type Props = {

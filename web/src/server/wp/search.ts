@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "@/i18n/locale";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { fetchGraphQL } from "@/server/wp/client";
 import { SEARCH_POSTS } from "@/server/wp/queries";
 import type { SearchPostsArgs, WPPostCard } from "@/server/wp/types";

@@ -1,14 +1,13 @@
 import type { Metadata } from "next";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
-import PartnershipsClient from "./PartnershipsClient";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
+import PartnershipsClient from "../../[locale]/partnerships/partnerships-page";
 
 const CONTACT_EMAIL = "partnerships@simple-deutsch.de";
 const en = TRANSLATIONS[DEFAULT_LOCALE];
 
 export const metadata: Metadata = {
-  title: `${en["partnerships.meta.title"]} | ${en.siteTitle}`,
   description: en["partnerships.meta.description"],
+  title: `${en["partnerships.meta.title"]} | ${en.siteTitle}`,
 };
 
 export default async function PartnershipsPageRoute() {

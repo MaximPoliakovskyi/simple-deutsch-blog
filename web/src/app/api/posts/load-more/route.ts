@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
-import type { Locale } from "@/i18n/locale";
-import { assertLocale } from "@/i18n/locale";
-import type { WPPostCard } from "@/server/wp/api";
-import { getPostsByCategory, getPostsByTag, getPostsIndex } from "@/server/wp/api";
+import { assertLocale, type Locale } from "@/lib/i18n";
+import type { WPPostCard } from "@/lib/posts";
+import { getPostsByCategory, getPostsByTag, getPostsIndex } from "@/lib/posts";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 type LoadMoreBody = {

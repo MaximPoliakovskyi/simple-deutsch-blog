@@ -1,4 +1,4 @@
-import { isLocale, type Locale, SUPPORTED_LOCALES } from "@/i18n/locale";
+import { isLocale, type Locale, SUPPORTED_LOCALES } from "@/lib/i18n";
 
 export type PolylangTranslation = {
   id: number;

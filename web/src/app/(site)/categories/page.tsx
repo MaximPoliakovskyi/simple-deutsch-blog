@@ -1,14 +1,12 @@
-﻿// app/categories/page.tsx
 import type { Metadata } from "next";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
-import { CategoriesIndexContent } from "./CategoriesIndexContent";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
+import { CategoriesIndexContent } from "../../[locale]/categories/categories-index-content";
 
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: `${TRANSLATIONS[DEFAULT_LOCALE].categories} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
   description: "Explore posts by category.",
+  title: `${TRANSLATIONS[DEFAULT_LOCALE].categories} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
 };
 
 export default async function CategoriesIndexPage() {

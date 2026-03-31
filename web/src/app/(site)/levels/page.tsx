@@ -1,14 +1,12 @@
-﻿// app/levels/page.tsx
 import type { Metadata } from "next";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
-import { LevelsIndexContent } from "./LevelsIndexContent";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
+import { LevelsIndexContent } from "../../[locale]/levels/levels-index-content";
 
 export const revalidate = 600;
 
 export const metadata: Metadata = {
-  title: `${TRANSLATIONS[DEFAULT_LOCALE].levels} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
   description: "Explore posts by level.",
+  title: `${TRANSLATIONS[DEFAULT_LOCALE].levels} — ${TRANSLATIONS[DEFAULT_LOCALE].siteTitle}`,
 };
 
 export default async function LevelsIndexPage() {

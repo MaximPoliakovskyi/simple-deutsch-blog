@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
-import type { Locale } from "@/i18n/locale";
-import { assertLocale } from "@/i18n/locale";
+import { assertLocale, type Locale } from "@/lib/i18n";
 import {
   getPostBySlug,
   getPosts,
   getPostsByTagDatabaseId,
   getPostsByTagSlug,
   getPostsPageByCategory,
-} from "@/server/wp/api";
+} from "@/lib/posts";
 
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 

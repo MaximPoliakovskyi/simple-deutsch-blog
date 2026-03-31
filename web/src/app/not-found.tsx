@@ -1,7 +1,6 @@
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { assertLocale, DEFAULT_LOCALE } from "@/i18n/locale";
+import { assertLocale, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 
 function cookieValueFromHeader(rawCookieHeader: string | null, key: string) {
   if (!rawCookieHeader) return undefined;
@@ -30,8 +29,17 @@ async function resolveLocaleFromCookies() {
   }
 }
 
-export default async function NotFound(_: { locale?: string } = {}) {
-  const lang = await resolveLocaleFromCookies();
+export default async function NotFound({ locale }: { locale?: string } = {}) {
+  let maybeLang = locale;
+  if (maybeLang) {
+    try {
+      maybeLang = assertLocale(maybeLang);
+    } catch {
+      maybeLang = undefined;
+    }
+  }
+
+  const lang: Locale = (maybeLang as Locale | undefined) ?? (await resolveLocaleFromCookies());
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
   if (process.env.NODE_ENV !== "production" && t.__locale !== lang) {
     // eslint-disable-next-line no-console

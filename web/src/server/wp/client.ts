@@ -1,6 +1,6 @@
-import { type CachePolicy, fetchGraphQL as fetchGraphQLWithPolicy } from "@/core/api/fetching";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 import type { NextInit } from "@/server/wp/types";
+import { type CachePolicy, fetchGraphQL as fetchGraphQLWithPolicy } from "./fetching";
 
 type GraphQLOptions = NextInit;
 

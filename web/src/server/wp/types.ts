@@ -1,5 +1,5 @@
-import type { CachePolicy } from "@/core/api/fetching";
-import type { Locale } from "@/i18n/locale";
+import type { Locale } from "@/lib/i18n";
+import type { CachePolicy } from "./fetching";
 
 export type NextInit = RequestInit & {
   next?: { revalidate?: number; tags?: string[] };

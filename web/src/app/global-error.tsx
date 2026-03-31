@@ -10,8 +10,8 @@
  * Since global-error.tsx replaces the root layout when an error occurs, the page
  * has already loaded with styles. We use inline styles for basic layout instead.
  */
-import StatusPage from "@/components/ui/StatusPage";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
+import StatusPage from "./[locale]/_components/status-page";
 
 export default function GlobalError({
   error,

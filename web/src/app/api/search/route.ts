@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEFAULT_LOCALE, isLocale } from "@/i18n/locale";
-import { searchPosts } from "@/server/wp/api";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n";
+import { getSearchPageResults } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -35,15 +35,8 @@ export async function GET(req: Request) {
 
   try {
     // Map UI locale to WordPress language code and search in that language only
-    const wpLang = lang === "uk" ? "UK" : lang === "ru" ? "RU" : "EN";
     const locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
-    const { posts, pageInfo } = await searchPosts({
-      query: q,
-      first: 8,
-      after,
-      language: wpLang,
-      locale,
-    });
+    const { posts, pageInfo } = await getSearchPageResults({ after, first: 8, locale, query: q });
 
     // WordPress already filtered by language, so just format the response
     const slim = posts.map((p: SearchPost) => ({

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { assertLocale } from "@/i18n/locale";
+import { assertLocale } from "@/lib/i18n";
 
 type Props = {
   params: Promise<{ locale: string; slug: string[] }>;

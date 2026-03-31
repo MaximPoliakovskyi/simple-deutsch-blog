@@ -1,14 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import AnalyticsClient from "@/components/layout/AnalyticsClient";
-import ChunkErrorRecovery from "@/components/layout/ChunkErrorRecovery";
-import { RouteTransitionProvider } from "@/components/transition/RouteTransitionProvider";
-import AppFadeWrapper from "@/components/ui/AppFadeWrapper";
-import InitialPreloader from "@/components/ui/InitialPreloader";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/hooks/initialLoadGate";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
+import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/lib/initial-load-gate";
+import AnalyticsClient from "./[locale]/_components/analytics-client";
+import AppFadeWrapper from "./[locale]/_components/app-fade-wrapper";
+import ChunkErrorRecovery from "./[locale]/_components/chunk-error-recovery";
+import InitialPreloader from "./[locale]/_components/initial-preloader";
+import { RouteTransitionProvider } from "./[locale]/_components/route-transition-provider";
 import "@/styles/globals.css";
 import "@/styles/route-transition.css";
 
