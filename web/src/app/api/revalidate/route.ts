@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
 
   if (!token || token !== process.env.REVALIDATION_TOKEN) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    return Response.json(
+      { data: null, error: { code: "UNAUTHORIZED", message: "Unauthorized" } },
+      { status: 401 },
+    );
   }
 
   try {
@@ -37,6 +40,9 @@ export async function POST(req: NextRequest) {
 
     return Response.json({ revalidated: true, now: Date.now() });
   } catch (_error) {
-    return Response.json({ error: "Revalidation failed" }, { status: 500 });
+    return Response.json(
+      { data: null, error: { code: "REVALIDATION_ERROR", message: "Revalidation failed" } },
+      { status: 500 },
+    );
   }
 }

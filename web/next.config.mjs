@@ -7,6 +7,9 @@ const DEV_WATCH_IGNORED = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Harden HTTP fingerprint
+  poweredByHeader: false,
+  reactStrictMode: true,
   // Enable streaming and concurrent features for better performance
   experimental: {
     optimizePackageImports: ["@vercel/analytics", "@vercel/speed-insights"],
@@ -73,14 +76,14 @@ const nextConfig = {
             key: "X-Frame-Options",
             value: "SAMEORIGIN",
           },
-        ],
-      },
-      {
-        source: "/_next/static/:path*",
-        headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://va.vercel-scripts.com https://vercel.live https://cms.simple-deutsch.de; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
           },
         ],
       },

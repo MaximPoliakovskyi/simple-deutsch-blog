@@ -26,7 +26,6 @@
 
 /* ── Design tokens ────────────────────────────────────────────────────────── */
 :root {
-  --scrollbar-comp: 0px;
   --main-nav-h: 72px;
   /* Hue/Sat/Light tokens for easy theming with hsl() */
   --brand: 222 47% 11%;
@@ -37,12 +36,6 @@
 
   /* Accent used for focus rings, etc. */
   --sd-accent: hsl(222 80% 56%);
-
-  /* Spacing scale (optional helpers) */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
 
   /* Back-compat aliases (mapped to new tokens) */
   --sd-bg: hsl(var(--bg));
@@ -58,9 +51,6 @@
   --sd-pill-bg: #ffffff;
   --sd-pill-fg: #000000;
   --sd-pill-bg-hover: #f3f4f6; /* light hover */
-  --sd-pill-bg-dark: #1f1f1f;
-  --sd-pill-fg-dark: #ffffff;
-  --sd-pill-bg-dark-hover: #2b2b2b;
 
   /* Card / surface token used for small UI surfaces like the TOC and promo card */
   --sd-card-bg: hsl(0 0% 98%); /* very light surface */
@@ -138,49 +128,6 @@ html.scroll-locked {
 .sd-pill:hover {
   background-color: var(--sd-pill-bg-hover);
 }
-.dark .sd-pill {
-  background-color: var(--sd-pill-bg-dark);
-  color: var(--sd-pill-fg-dark);
-}
-.dark .sd-pill:hover {
-  background-color: var(--sd-pill-bg-dark-hover);
-}
-
-/* Infection overlay: controlled by theme-infect + theme-infect-active classes */
-html.theme-infect {
-  --infect-x: 50%;
-  --infect-y: 50%;
-  --infect-color-start: rgba(6, 12, 24, 0.95);
-  --infect-color-end: rgba(20, 30, 50, 0.7);
-}
-
-/* The ::before pseudo element expands from a small circle to cover the viewport.
-   We use transform scale to animate performance-friendly and coordinate origin
-   with CSS variables set by JS. */
-html.theme-infect::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: radial-gradient(
-    circle at var(--infect-x) var(--infect-y),
-    var(--infect-color-start) 0%,
-    var(--infect-color-end) 55%,
-    transparent 60%
-  );
-  opacity: 0;
-  transform-origin: var(--infect-x) var(--infect-y);
-  transform: scale(0.001);
-  transition:
-    transform 500ms cubic-bezier(0.2, 0.9, 0.2, 1),
-    opacity 300ms linear;
-}
-
-html.theme-infect.theme-infect-active::before {
-  transform: scale(1);
-  opacity: 1;
-}
 
 /* GPU-friendly theme switch crossfade overlay */
 .sd-theme-crossfade-overlay {
@@ -191,107 +138,6 @@ html.theme-infect.theme-infect-active::before {
   opacity: 0;
   will-change: opacity;
   transition-property: opacity;
-}
-
-/* Reveal overlay: controlled by theme-reveal + theme-reveal-active classes */
-html.theme-reveal {
-  --reveal-x: 50%;
-  --reveal-y: 50%;
-  --reveal-color-start: rgba(6, 12, 24, 0.95);
-  --reveal-color-end: rgba(20, 30, 50, 0.7);
-}
-
-html.theme-reveal::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9999;
-  background: radial-gradient(
-    circle at var(--reveal-x) var(--reveal-y),
-    var(--reveal-color-start) 0%,
-    var(--reveal-color-end) 55%,
-    transparent 65%
-  );
-  opacity: 0;
-  transform-origin: var(--reveal-x) var(--reveal-y);
-  transform: scale(0.001);
-  transition:
-    transform 420ms cubic-bezier(0.2, 0.9, 0.2, 1),
-    opacity 300ms linear;
-}
-
-html.theme-reveal.theme-reveal-active::before {
-  transform: scale(1);
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.theme-reveal::before,
-  html.theme-reveal.theme-reveal-active::before {
-    transition: none;
-    transform: none;
-    opacity: 1;
-  }
-}
-
-/* Route transition overlay */
-.sd-route-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
-  opacity: 0;
-  transform: translate3d(-100%, 0, 0);
-  pointer-events: none;
-  visibility: hidden;
-  transition:
-    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 120ms ease;
-  will-change: transform;
-  backface-visibility: hidden;
-  contain: layout style paint;
-}
-
-.sd-route-overlay--dir-forward {
-  transform: translate3d(-100%, 0, 0);
-}
-
-.sd-route-overlay--dir-back {
-  transform: translate3d(100%, 0, 0);
-}
-
-.sd-route-overlay--active {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: all;
-}
-
-.sd-route-overlay--entering,
-.sd-route-overlay--covered {
-  transform: translate3d(0%, 0, 0);
-}
-
-.sd-route-overlay--exiting {
-  transform: translate3d(100%, 0, 0);
-}
-
-.sd-route-overlay--dir-back.sd-route-overlay--exiting {
-  transform: translate3d(-100%, 0, 0);
-}
-
-.sd-route-overlay__logo {
-  width: clamp(96px, 12vw, 144px);
-  height: auto;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .sd-route-overlay {
-    transition: none;
-  }
 }
 
 /* Accessible focus baseline */
@@ -646,8 +492,6 @@ html[data-app-visible="1"] .app-fade {
   }
 }
 
-/* (Old infection overlay removed in favor of the simpler reveal overlay above.) */
-
 /* No spinner — only flipping text */
 
 .sd-preloader-word {
@@ -790,5 +634,107 @@ html.dark #sd-preloader .sd-preloader-word {
   .sd-preloader-word {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition: none !important;
+  }
+}
+
+/* -- Route transition overlay ----------------------------------------------- */
+.rt-overlay {
+  --rt-enter-ms: 1500ms;
+  --rt-exit-ms: 1500ms;
+  --rt-opacity-ms: 140ms;
+  --rt-ease: cubic-bezier(0.42, 0, 0.58, 1);
+  --rt-start-x: -110%;
+  --rt-end-x: 110%;
+
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sd-page-bg, #fff);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(var(--rt-start-x), 0, 0);
+  transition-property: transform, opacity;
+  transition-duration: var(--rt-enter-ms), var(--rt-opacity-ms);
+  transition-timing-function: var(--rt-ease), linear;
+  will-change: transform, opacity;
+  contain: paint;
+  backface-visibility: hidden;
+}
+
+.rt-overlay[data-direction="back"] {
+  --rt-start-x: 110%;
+  --rt-end-x: -110%;
+}
+
+.rt-overlay[data-phase="idle"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translate3d(var(--rt-start-x), 0, 0);
+  transition-duration: 0ms, 0ms;
+}
+
+.rt-overlay[data-phase="entering"],
+.rt-overlay[data-phase="covered"],
+.rt-overlay[data-phase="waiting_ready"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(0%, 0, 0);
+}
+
+.rt-overlay[data-phase="exiting"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translate3d(var(--rt-end-x), 0, 0);
+  transition-duration: var(--rt-exit-ms), var(--rt-opacity-ms);
+}
+
+.rt-overlay__logo {
+  width: clamp(138px, 17vw, 220px);
+  height: auto;
+  transform: rotate(0deg);
+  transform-origin: center center;
+  transition-property: transform;
+  transition-duration: 0ms;
+  transition-timing-function: var(--rt-ease);
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.rt-overlay[data-phase="idle"] .rt-overlay__logo {
+  transform: rotate(0deg);
+  transition-duration: 0ms;
+}
+
+.rt-overlay[data-phase="entering"] .rt-overlay__logo {
+  transform: rotate(360deg);
+  transition-duration: var(--rt-enter-ms);
+}
+
+.rt-overlay[data-phase="covered"] .rt-overlay__logo,
+.rt-overlay[data-phase="waiting_ready"] .rt-overlay__logo {
+  transform: rotate(360deg);
+  transition-duration: 0ms;
+}
+
+.rt-overlay[data-phase="exiting"] .rt-overlay__logo {
+  transform: rotate(720deg);
+  transition-duration: var(--rt-exit-ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-overlay {
+    transition: none;
+  }
+
+  .rt-overlay__logo {
+    transition: none;
+    transform: none !important;
   }
 }

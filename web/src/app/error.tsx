@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect } from "react";
-import StatusPage from "@/components/ui/StatusPage";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import StatusPage from "@/components/status-page";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 export default function AppError({
   error,

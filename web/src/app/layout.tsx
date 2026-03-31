@@ -1,16 +1,12 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import AnalyticsClient from "@/components/layout/AnalyticsClient";
-import ChunkErrorRecovery from "@/components/layout/ChunkErrorRecovery";
-import { RouteTransitionProvider } from "@/components/transition/RouteTransitionProvider";
-import AppFadeWrapper from "@/components/ui/AppFadeWrapper";
-import InitialPreloader from "@/components/ui/InitialPreloader";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/hooks/initialLoadGate";
-import { DEFAULT_LOCALE } from "@/i18n/locale";
+import { ChunkErrorRecovery } from "@/components/chrome-extras";
+import { LazyAnalyticsClient } from "@/components/lazy-analytics";
+import InitialPreloader from "@/components/preloader";
+import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
+import { DEFAULT_LOCALE, INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
-import "@/styles/route-transition.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -71,6 +67,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="UTF-8" />
 
+        {/* Organization structured data (JSON-LD) */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: "Simple Deutsch",
+              url: SITE_URL,
+              description: TRANSLATIONS[DEFAULT_LOCALE].heroDescription,
+            }),
+          }}
+        />
+
         {/* Preconnect to critical origins */}
         <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
@@ -97,7 +107,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           </AppFadeWrapper>
         </RouteTransitionProvider>
         {/* Load analytics only in production and defer to avoid blocking */}
-        <AnalyticsClient enabled={enableAnalytics} />
+        <LazyAnalyticsClient enabled={enableAnalytics} />
       </body>
     </html>
   );

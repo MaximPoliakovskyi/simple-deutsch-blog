@@ -1,122 +1,44 @@
-import type { NextRequest } from "next/server";
+﻿import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
-type Locale = (typeof SUPPORTED_LOCALES)[number];
-const DEFAULT_LOCALE: Locale = "en";
-const DEBUG_PROXY = process.env.NODE_ENV !== "production";
-const LOCALE_COOKIE = "SD_LOCALE";
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365; // 1 year
+const DEFAULT_LOCALE = "en";
 
-function hasLocalePrefix(pathname: string): boolean {
-  const firstSegment = pathname.split("/")[1]?.toLowerCase();
-  return SUPPORTED_LOCALES.includes(firstSegment as Locale);
-}
+// Matches paths that already have a 2-letter locale prefix (e.g. /en, /ru, /uk)
+const LOCALE_PREFIX_RE = /^\/[a-z]{2}(\/|$)/i;
 
-function getLocaleFromPrefixedPath(pathname: string): Locale | null {
-  const firstSegment = pathname.split("/")[1]?.toLowerCase();
-  if (SUPPORTED_LOCALES.includes(firstSegment as Locale)) {
-    return firstSegment as Locale;
-  }
-  return null;
-}
+export function proxy(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
 
-function isIgnoredPath(pathname: string): boolean {
-  return (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/static") ||
-    /\.[a-zA-Z0-9]+$/.test(pathname)
-  );
-}
-
-function parseAcceptLanguageTags(headerValue: string | null): string[] {
-  if (!headerValue) return [];
-
-  return headerValue
-    .split(",")
-    .map((part) => part.trim().split(";")[0]?.toLowerCase() ?? "")
-    .filter((tag) => tag.length > 0);
-}
-
-function detectLocaleFromAcceptLanguage(headerValue: string | null): Locale {
-  const tags = parseAcceptLanguageTags(headerValue);
-
-  // Hard priority rule (independent from q/order):
-  // uk present anywhere > ru present anywhere > en fallback
-  if (tags.some((tag) => tag === "uk" || tag.startsWith("uk-"))) return "uk";
-  if (tags.some((tag) => tag === "ru" || tag.startsWith("ru-"))) return "ru";
-  return DEFAULT_LOCALE;
-}
-
-function isValidLocale(value: string | undefined): value is Locale {
-  return Boolean(value && SUPPORTED_LOCALES.includes(value as Locale));
-}
-
-function setLocaleCookie(response: NextResponse, locale: Locale) {
-  response.cookies.set({
-    name: LOCALE_COOKIE,
-    value: locale,
-    path: "/",
-    sameSite: "lax",
-    maxAge: COOKIE_MAX_AGE_SECONDS,
-  });
-}
-
-export function proxy(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
-  const acceptLanguage = request.headers.get("accept-language");
-  const localeCookie = request.cookies.get(LOCALE_COOKIE)?.value;
-
-  if (DEBUG_PROXY) {
-    console.log("[proxy] hit", { pathname, acceptLanguage, localeCookie });
-  }
-
-  if (isIgnoredPath(pathname)) {
-    if (DEBUG_PROXY) {
-      console.log("[proxy] skip ignored", { pathname });
-    }
+  // Skip Next.js internals, API routes, static files, RSS
+  if (
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/") ||
+    pathname === "/rss.xml" ||
+    /\.[a-z0-9]{1,5}$/i.test(pathname)
+  ) {
     return NextResponse.next();
   }
 
-  if (hasLocalePrefix(pathname)) {
-    const prefixedLocale = getLocaleFromPrefixedPath(pathname);
-    const response = NextResponse.next();
-    if (prefixedLocale) setLocaleCookie(response, prefixedLocale);
-
-    if (DEBUG_PROXY) {
-      console.log("[proxy] skip locale-prefixed", {
-        pathname,
-        acceptLanguage,
-        localeCookie,
-        chosenLocale: prefixedLocale,
-      });
-    }
-    return response;
+  // Already has a locale-like prefix? Let Next.js route it.
+  // Valid locales render normally; invalid ones trigger notFound() in locale-route.ts.
+  if (LOCALE_PREFIX_RE.test(pathname)) {
+    return NextResponse.next();
   }
 
-  const chosenLocale = isValidLocale(localeCookie)
-    ? localeCookie
-    : detectLocaleFromAcceptLanguage(acceptLanguage);
-  const redirectUrl = request.nextUrl.clone();
-  redirectUrl.pathname = pathname === "/" ? `/${chosenLocale}` : `/${chosenLocale}${pathname}`;
-  const response = NextResponse.redirect(redirectUrl);
-  setLocaleCookie(response, chosenLocale);
+  // No locale prefix - redirect to the user's preferred or default locale
+  const cookieLocale = request.cookies.get("locale")?.value;
+  const locale =
+    cookieLocale && (SUPPORTED_LOCALES as readonly string[]).includes(cookieLocale)
+      ? cookieLocale
+      : DEFAULT_LOCALE;
 
-  if (DEBUG_PROXY) {
-    console.log("[proxy] redirect", {
-      pathname,
-      acceptLanguage,
-      localeCookie,
-      chosenLocale,
-      from: `${pathname}${search}`,
-      to: `${redirectUrl.pathname}${redirectUrl.search}`,
-    });
-  }
+  const url = request.nextUrl.clone();
+  url.pathname = pathname === "/" ? "/" + locale : "/" + locale + pathname;
 
-  return response;
+  return NextResponse.redirect(url, { status: 307 });
 }
 
 export const config = {
-  matcher: ["/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };

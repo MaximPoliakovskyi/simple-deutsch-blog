@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { DEFAULT_LOCALE, isLocale } from "@/i18n/locale";
-import { searchPosts } from "@/server/wp/api";
+import { DEFAULT_LOCALE, isLocale } from "@/lib/i18n";
+import { getSearchPageResults, shouldSkipSearch } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -26,24 +26,13 @@ export async function GET(req: Request) {
   }
 
   // For Russian/Ukrainian sites, don't search if query contains only Latin characters
-  if (lang === "uk" || lang === "ru") {
-    const hasOnlyLatinChars = /^[a-zA-Z0-9\s\-_.,!?]+$/.test(q);
-    if (hasOnlyLatinChars) {
-      return NextResponse.json({ posts: [], pageInfo: { endCursor: null, hasNextPage: false } });
-    }
+  const locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
+  if (shouldSkipSearch(q, locale)) {
+    return NextResponse.json({ posts: [], pageInfo: { endCursor: null, hasNextPage: false } });
   }
 
   try {
-    // Map UI locale to WordPress language code and search in that language only
-    const wpLang = lang === "uk" ? "UK" : lang === "ru" ? "RU" : "EN";
-    const locale = isLocale(lang) ? lang : DEFAULT_LOCALE;
-    const { posts, pageInfo } = await searchPosts({
-      query: q,
-      first: 8,
-      after,
-      language: wpLang,
-      locale,
-    });
+    const { posts, pageInfo } = await getSearchPageResults({ after, first: 8, locale, query: q });
 
     // WordPress already filtered by language, so just format the response
     const slim = posts.map((p: SearchPost) => ({
@@ -57,6 +46,9 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ posts: slim, pageInfo });
   } catch (_error) {
-    return NextResponse.json({ error: "Search failed" }, { status: 500 });
+    return NextResponse.json(
+      { data: null, error: { code: "SEARCH_ERROR", message: "Search failed" } },
+      { status: 500 },
+    );
   }
 }

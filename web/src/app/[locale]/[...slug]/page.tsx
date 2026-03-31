@@ -1,18 +1,26 @@
-import { notFound } from "next/navigation";
-import { assertLocale } from "@/i18n/locale";
+﻿import type { Metadata } from "next";
+import { generateMappedMetadata, renderMappedPage } from "../_lib/page-map";
+import { getOptionalRouteLocale, getRequiredRouteLocale } from "../locale-route";
+
+export const revalidate = 60;
 
 type Props = {
   params: Promise<{ locale: string; slug: string[] }>;
+  searchParams?: Promise<{ q?: string; after?: string }>;
 };
 
-export default async function LocalizedUnknownRoute({ params }: Props) {
-  const { locale } = await params;
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const validated = getOptionalRouteLocale(locale);
 
-  try {
-    assertLocale(locale);
-  } catch {
-    notFound();
-  }
+  if (!validated) return {};
 
-  notFound();
+  return generateMappedMetadata({ locale: validated, slug, searchParams });
+}
+
+export default async function CatchAllRoute({ params, searchParams }: Props) {
+  const { locale, slug } = await params;
+  const validated = getRequiredRouteLocale(locale);
+
+  return renderMappedPage({ locale: validated, slug, searchParams });
 }

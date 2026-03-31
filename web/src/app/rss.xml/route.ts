@@ -1,4 +1,4 @@
-import { getPosts } from "@/server/wp/api";
+import { getPosts } from "@/lib/posts";
 
 // RSS must not be prerendered at build time (it depends on live WPGraphQL).
 // This avoids build failures when the CMS is temporarily unreachable.

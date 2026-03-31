@@ -1,7 +1,6 @@
 import { cookies, headers } from "next/headers";
 import Link from "next/link";
-import { TRANSLATIONS } from "@/core/i18n/i18n";
-import { assertLocale, DEFAULT_LOCALE } from "@/i18n/locale";
+import { assertLocale, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 
 function cookieValueFromHeader(rawCookieHeader: string | null, key: string) {
   if (!rawCookieHeader) return undefined;
@@ -30,8 +29,17 @@ async function resolveLocaleFromCookies() {
   }
 }
 
-export default async function NotFound(_: { locale?: string } = {}) {
-  const lang = await resolveLocaleFromCookies();
+export default async function NotFound({ locale }: { locale?: string } = {}) {
+  let maybeLang = locale;
+  if (maybeLang) {
+    try {
+      maybeLang = assertLocale(maybeLang);
+    } catch {
+      maybeLang = undefined;
+    }
+  }
+
+  const lang: Locale = (maybeLang as Locale | undefined) ?? (await resolveLocaleFromCookies());
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
   if (process.env.NODE_ENV !== "production" && t.__locale !== lang) {
     // eslint-disable-next-line no-console
@@ -66,19 +74,15 @@ export default async function NotFound(_: { locale?: string } = {}) {
           </svg>
         </div>
 
-        <h1 className="text-2xl font-semibold">
-          {t["NotFound.title"] ?? t["notFound.title"] ?? t.pageNotFoundHeading}
-        </h1>
-        <p className="mx-auto mt-3 max-w-md text-sm opacity-75">
-          {t["NotFound.description"] ?? t["notFound.description"] ?? t.pageNotFoundMessage}
-        </p>
+        <h1 className="text-2xl font-semibold">{t["notFound.title"]}</h1>
+        <p className="mx-auto mt-3 max-w-md text-sm opacity-75">{t["notFound.description"]}</p>
 
         <div className="mt-6">
           <Link
             href={homeHref}
             className="inline-flex items-center rounded-md bg-[var(--sd-accent)] px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]/60"
           >
-            {t["NotFound.backHome"] ?? t["notFound.backToHome"] ?? t.backToHome}
+            {t["notFound.backToHome"]}
           </Link>
         </div>
       </div>
