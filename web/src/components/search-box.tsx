@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
-import { useI18n } from "@/lib/i18n-provider";
+import { useI18n } from "@/components/providers";
 
 type Props = {
   placeholder?: string;

@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
-import { type PostLangLinks, type SiteLang, useI18n } from "@/lib/i18n-provider";
+import { type PostLangLinks, type SiteLang, useI18n } from "@/components/providers";
 
 type Props = {
   currentLang: SiteLang;

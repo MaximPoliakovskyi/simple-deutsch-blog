@@ -873,14 +873,26 @@ assertDictionaryLocale("en", en);
 assertDictionaryLocale("uk", uk);
 assertDictionaryLocale("ru", ru);
 
-// Merge in content translations from locale JSON files
+// Merge in content translations from locale JSON files (grouped by feature)
 import contentEn from "@/lib/content/i18n/en.json";
 import contentRu from "@/lib/content/i18n/ru.json";
 import contentUk from "@/lib/content/i18n/uk.json";
 
-Object.assign(en, contentEn as Translations);
-Object.assign(ru, contentRu as Translations);
-Object.assign(uk, contentUk as Translations);
+type GroupedTranslations = Record<string, Record<string, string>>;
+
+function flattenGroupedTranslations(grouped: GroupedTranslations): Translations {
+  const flat: Translations = {};
+  for (const [group, entries] of Object.entries(grouped)) {
+    for (const [key, value] of Object.entries(entries)) {
+      flat[`${group}.${key}`] = value;
+    }
+  }
+  return flat;
+}
+
+Object.assign(en, flattenGroupedTranslations(contentEn as GroupedTranslations));
+Object.assign(ru, flattenGroupedTranslations(contentRu as GroupedTranslations));
+Object.assign(uk, flattenGroupedTranslations(contentUk as GroupedTranslations));
 
 export function getTranslations(locale: Locale = DEFAULT_LOCALE): TranslationDictionary {
   return TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
@@ -1227,3 +1239,35 @@ export function buildLocalizedHref(target: Locale, pathname: string | null | und
   const rest = stripped === "/" ? "" : stripped;
   return `/${target}${rest}`;
 }
+
+// -- i18n Provider (client-only) ---------------------------------------------
+export type SiteLang = Locale;
+
+export type PostLangLinks = {
+  currentLang: SiteLang;
+  links: Record<SiteLang, string | null>;
+};
+
+// -- Initial Load Gate --------------------------------------------------------
+function setDocumentLoadingState(isLoading: boolean) {
+  if (typeof document === "undefined") return;
+  const root = document.documentElement;
+  root.setAttribute("data-preloader", isLoading ? "1" : "0");
+  root.setAttribute("data-app-visible", isLoading ? "0" : "1");
+}
+
+const INITIAL_PRELOADER_BOOTSTRAP_SCRIPT = `
+(() => {
+  try {
+    const root = document.documentElement;
+    root.setAttribute("data-preloader", "1");
+    root.setAttribute("data-app-visible", "0");
+  } catch (_) {
+    document.documentElement.setAttribute("data-preloader", "1");
+    document.documentElement.setAttribute("data-app-visible", "0");
+  }
+})();
+`;
+
+export { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, setDocumentLoadingState };
+

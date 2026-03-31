@@ -24,8 +24,8 @@ import {
   type Tag,
   type Term,
   type WPPostCard,
-} from "@/server/wp/index";
-import { mapGraphQLEnumToUi } from "@/server/wp/types";
+  mapGraphQLEnumToUi,
+} from "@/server/wp";
 
 export {
   getAllCategories,

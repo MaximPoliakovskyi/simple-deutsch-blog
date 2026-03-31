@@ -1,6 +1,8 @@
 ﻿import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { SUPPORTED_LOCALES, DEFAULT_LOCALE } from '@/lib/i18n';
+
+const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
+const DEFAULT_LOCALE = "en";
 
 // Matches paths that already have a 2-letter locale prefix (e.g. /en, /ru, /uk)
 const LOCALE_PREFIX_RE = /^\/[a-z]{2}(\/|$)/i;

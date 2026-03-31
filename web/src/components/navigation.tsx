@@ -1,12 +1,397 @@
-"use client";
+﻿"use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import type { MouseEvent, RefObject } from "react";
-import type { Locale } from "@/lib/i18n";
-import LanguageDropdown from "./language-dropdown";
-import SearchButton from "./search-button";
-import ThemeToggle from "./theme-toggle";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
+import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
+import { useI18n } from "@/components/providers";
+import { mapPathToLocale } from "@/lib/seo";
+import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
+import { useTransitionNav } from "./route-wrapper";
+
+// ---------------------------------------------------------------------------
+// ThemeToggle (formerly theme-toggle.tsx)
+// ---------------------------------------------------------------------------
+
+function ThemeToggle() {
+  const [mounted, setMounted] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = subscribeRootTheme((theme) => {
+      setIsDark(theme === "dark");
+      setMounted(true);
+    });
+    return unsubscribe;
+  }, []);
+
+  function setTheme(next: Theme): void {
+    if (!mounted) return;
+    runThemeTransition(() => applyTheme(next));
+  }
+
+  if (!mounted) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => setTheme(isDark ? "light" : "dark")}
+      aria-pressed={isDark}
+      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      title={isDark ? "Light mode" : "Dark mode"}
+      className={
+        "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
+        "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+        "cursor-pointer sd-pill"
+      }
+      style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
+    >
+      {isDark ? (
+        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="currentColor" />
+        </svg>
+      ) : (
+        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+          <path
+            d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M12 2v2M12 20v2M2 12h2M20 12h2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// LanguageDropdown (formerly language-dropdown.tsx)
+// ---------------------------------------------------------------------------
+
+const HOVER_DELAY_MS = 150;
+
+type LanguageDropdownProps = {
+  currentLocale: NavLocale;
+  buildHref: (target: NavLocale) => string;
+  t: (k: string) => string;
+  routeLocale?: NavLocale;
+};
+
+function usePostLanguageSwitch() {
+  const transition = useTransitionNav();
+  const pathname = usePathname() || "/";
+  const searchParams = useSearchParams();
+  const { locale: currentLocale, postLangLinks } = useI18n();
+
+  const routeLocale = parseLocaleFromPath(pathname) ?? currentLocale;
+  const siteLang: Locale = postLangLinks?.currentLang ?? routeLocale;
+  const query = searchParams?.toString();
+  const pathWithQuery = query ? `${pathname}?${query}` : pathname;
+
+  const persistLocaleCookie = (targetLang: Locale) => {
+    const maxAge = 60 * 60 * 24 * 365;
+    // biome-ignore lint/suspicious/noDocumentCookie: intentional locale persistence via document.cookie
+    document.cookie = `NEXT_LOCALE=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+    // biome-ignore lint/suspicious/noDocumentCookie: intentional locale persistence via document.cookie
+    document.cookie = `locale=${targetLang}; Path=/; Max-Age=${maxAge}; SameSite=Lax`;
+  };
+
+  const changeLang = async (targetLang: Locale) => {
+    if (targetLang === siteLang && targetLang === routeLocale) return;
+    try {
+      persistLocaleCookie(targetLang);
+      const href = mapPathToLocale(pathWithQuery, targetLang, {
+        translationMap: postLangLinks?.links,
+      });
+      if (href !== pathWithQuery) {
+        transition.navigateFromLanguageSwitch(href);
+      }
+    } catch {}
+  };
+
+  return { currentSiteLang: siteLang, changeLang };
+}
+
+function NavLanguageDropdown({
+  closeMenu,
+  currentSiteLangOverride,
+}: {
+  closeMenu?: () => void;
+  currentSiteLangOverride?: NavLocale;
+}) {
+  const { currentSiteLang, changeLang } = usePostLanguageSwitch();
+
+  const LANGS = [
+    { code: "en", label: "En" },
+    { code: "uk", label: "Ук" },
+    { code: "ru", label: "Ру" },
+  ] as const;
+
+  const effectiveCurrent = currentSiteLangOverride ?? currentSiteLang;
+  const visibleLangs = LANGS.filter((l) => l.code !== effectiveCurrent);
+
+  return (
+    <>
+      {visibleLangs.map((item, idx) => (
+        <li
+          key={item.code}
+          role="none"
+          className={
+            idx < visibleLangs.length - 1 ? "border-b border-neutral-100 dark:border-white/6" : ""
+          }
+        >
+          <button
+            role="menuitem"
+            type="button"
+            onClick={async () => {
+              await changeLang(item.code);
+              closeMenu?.();
+            }}
+            className={
+              "w-full text-center py-3 text-sm leading-none transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] " +
+              "hover:bg-neutral-100 dark:hover:bg-[rgba(255,255,255,0.03)] cursor-pointer"
+            }
+          >
+            {item.label}
+          </button>
+        </li>
+      ))}
+    </>
+  );
+}
+
+function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: LanguageDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLUListElement | null>(null);
+  const closeTimerRef = useRef<number | null>(null);
+  void buildHref;
+
+  const labelsShort: Record<NavLocale, string> = { en: "EN", uk: "УК", ru: "РУ" };
+  const labelsFull: Record<NavLocale, string> = {
+    en: "English",
+    uk: "Українська",
+    ru: "Русский",
+  };
+
+  useEffect(() => {
+    function onDoc(e: Event) {
+      const target = e.target as Node | null;
+      if (!open) return;
+      if (btnRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    window.addEventListener("pointerdown", onDoc);
+    return () => window.removeEventListener("pointerdown", onDoc);
+  }, [open]);
+
+  const handleMouseEnter = () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    setOpen(true);
+  };
+  const handleMouseLeave = () => {
+    if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = window.setTimeout(() => {
+      setOpen(false);
+      closeTimerRef.current = null;
+    }, HOVER_DELAY_MS);
+  };
+
+  useEffect(() => () => { if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current); }, []);
+
+  const [useHover, setUseHover] = useState(() => {
+    if (typeof window === "undefined") return true;
+    try { return window.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch { return true; }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const onChange = (e: MediaQueryListEvent) => setUseHover(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const onButtonKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setOpen(true);
+      setTimeout(() => menuRef.current?.querySelector<HTMLButtonElement>("button")?.focus(), 0);
+    } else if (e.key === "Escape") {
+      setOpen(false);
+      btnRef.current?.focus();
+    }
+  };
+
+  return (
+    <div
+      className="relative inline-block text-left"
+      {...(useHover ? { onMouseEnter: handleMouseEnter, onMouseLeave: handleMouseLeave } : {})}
+    >
+      <button
+        ref={btnRef}
+        type="button"
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+        onKeyDown={onButtonKeyDown}
+        className={
+          "flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm " +
+          "transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none " +
+          "cursor-pointer sd-pill"
+        }
+        style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
+        aria-label={t("language") || `Language (${labelsFull[currentLocale]})`}
+        title={labelsFull[currentLocale]}
+      >
+        <span className="sr-only">{t("language")}</span>
+        <span className="leading-none text-neutral-900 dark:text-neutral-100">
+          {labelsShort[routeLocale ?? currentLocale]}
+        </span>
+      </button>
+      {open && (
+        <ul
+          ref={menuRef}
+          aria-label={t("language")}
+          className={
+            "absolute left-1/2 -translate-x-1/2 mt-2 w-9.5 origin-top rounded-[9999px] px-0 " +
+            "bg-[#FFFFFF] dark:bg-[#1f1f1f] border border-[#E6E7EB] dark:border-[#2b2b2b] " +
+            "overflow-hidden z-50 shadow-sm transition-colors duration-200 ease-out"
+          }
+        >
+          <NavLanguageDropdown
+            closeMenu={() => setOpen(false)}
+            currentSiteLangOverride={routeLocale ?? currentLocale}
+          />
+        </ul>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SearchButton (formerly search-button.tsx)
+// ---------------------------------------------------------------------------
+
+const SearchOverlay = dynamic(() => import("./search-overlay"), { ssr: false });
+
+type OpenMethod = "click" | "keyboard" | undefined;
+
+let _searchListenerAttached = false;
+const _openCallbacks = new Set<() => boolean>();
+let _searchModulePromise: Promise<unknown> | null = null;
+
+function _onGlobalSearchShortcut(e: KeyboardEvent) {
+  if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) return;
+  for (const tryOpen of _openCallbacks) {
+    if (tryOpen()) { e.preventDefault(); return; }
+  }
+}
+
+function _ensureShortcutListener() {
+  if (_searchListenerAttached || typeof window === "undefined") return;
+  window.addEventListener("keydown", _onGlobalSearchShortcut);
+  _searchListenerAttached = true;
+}
+
+function _maybeDetachShortcutListener() {
+  if (!_searchListenerAttached || _openCallbacks.size > 0 || typeof window === "undefined") return;
+  window.removeEventListener("keydown", _onGlobalSearchShortcut);
+  _searchListenerAttached = false;
+}
+
+function _preloadSearchOverlay() {
+  if (_searchModulePromise) return;
+  _searchModulePromise = import("./search-overlay");
+}
+
+function SearchButton({
+  className = "",
+  variant = "default",
+  ariaLabel = "Find an article",
+}: {
+  className?: string;
+  variant?: "default" | "icon";
+  ariaLabel?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [openMethod, setOpenMethod] = useState<OpenMethod>(undefined);
+
+  useEffect(() => {
+    const openFromKeyboard = () => {
+      const btn = buttonRef.current;
+      if (!btn) return false;
+      if (btn.offsetParent === null) return false;
+      _preloadSearchOverlay();
+      setOpenMethod("keyboard");
+      setOpen(true);
+      return true;
+    };
+    _openCallbacks.add(openFromKeyboard);
+    _ensureShortcutListener();
+    return () => {
+      _openCallbacks.delete(openFromKeyboard);
+      _maybeDetachShortcutListener();
+    };
+  }, []);
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        onClick={() => { _preloadSearchOverlay(); setOpenMethod("click"); setOpen(true); }}
+        onFocus={_preloadSearchOverlay}
+        onMouseEnter={_preloadSearchOverlay}
+        className={[
+          "flex text-sm focus:outline-none",
+          variant === "icon"
+            ? "items-center justify-center w-9.5 h-9.5 rounded-full p-0"
+            : "items-center gap-2 rounded-full px-5 py-2",
+          variant === "icon"
+            ? "transition transform-gpu duration-200 ease-out hover:scale-[1.03]"
+            : "transition transform-gpu duration-200 ease-out hover:scale-[1.02]",
+          "shadow-sm hover:shadow-md disabled:opacity-60 cursor-pointer sd-pill",
+          "focus-visible:outline-2 focus-visible:outline-offset-2",
+          className,
+        ].join(" ")}
+        style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
+        aria-label={ariaLabel}
+        title={`${ariaLabel} (Ctrl+K)`}
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M11 4a7 7 0 015.29 11.71l3.5 3.5-1.41 1.41-3.5-3.5A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z"
+            fill="currentColor"
+          />
+        </svg>
+        {variant === "default" && <span>{ariaLabel}</span>}
+      </button>
+      {open && (
+        <SearchOverlay
+          onClose={() => {
+            setOpen(false);
+            setOpenMethod(undefined);
+            requestAnimationFrame(() => {
+              try { buttonRef.current?.focus({ preventScroll: true }); }
+              catch { buttonRef.current?.focus(); }
+            });
+          }}
+          openMethod={openMethod}
+        />
+      )}
+    </>
+  );
+}
 
 // ---------------------------------------------------------------------------
 // nav-config types and constants (formerly nav-config.ts)

@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { WPPostCard } from "@/lib/posts";
-import PostCard from "./post-card";
+import PostCard from "./cards";
 
 type Props = {
   posts: WPPostCard[];

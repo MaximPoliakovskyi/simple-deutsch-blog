@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
-import SectionText from "../about/section-text";
+import SectionText from "./about-section-text";
 
 type PartnershipsClientProps = {
   contactEmail: string;

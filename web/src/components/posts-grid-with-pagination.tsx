@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { useI18n } from "@/lib/i18n-provider";
+import { useI18n } from "@/components/providers";
 import type { PostListItem, WPPostCard } from "@/lib/posts";
-import PostCard, { type PostCardPost } from "./post-card";
+import PostCard, { type PostCardPost } from "./cards";
 
 type Post = WPPostCard | PostListItem | PostCardPost;
 

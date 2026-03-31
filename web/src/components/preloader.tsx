@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import {
   type MutableRefObject,
@@ -9,7 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { setDocumentLoadingState } from "@/lib/initial-load-gate";
+import { setDocumentLoadingState } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 // ---------------------------------------------------------------------------

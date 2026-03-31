@@ -1,7 +1,7 @@
 import "server-only";
 
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
-import type { NextInit } from "@/server/wp/types";
+import type { NextInit } from "@/server/types";
 
 // --- Cache policy types & helpers ---
 

@@ -19,8 +19,18 @@ import {
   type PostDetail,
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
-import PostContent from "./post-content";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
+
+function PostContent({ html, className = "" }: { html: string; className?: string }) {
+  const classes = [
+    "prose prose-slate md:prose-lg lg:prose-xl max-w-none",
+    "prose-a:underline hover:prose-a:no-underline",
+    "prose-img:rounded-xl prose-pre:rounded-xl prose-pre:overflow-x-auto",
+    "dark:prose-invert dark:prose-a:text-gray-200",
+    className,
+  ];
+  return <article className={classes.join(" ")} dangerouslySetInnerHTML={{ __html: html }} />;
+}
 import RelatedArticles from "./related-articles";
 
 type LanguageSlug = Locale;

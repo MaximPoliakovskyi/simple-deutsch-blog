@@ -6,7 +6,7 @@ import {
   getRelatedPostsByTagSlug,
   type PostListItem,
 } from "@/lib/posts";
-import PostCard from "@/components/post-card";
+import PostCard from "@/components/cards";
 
 const MAX_RELATED_POSTS = 3;
 const QUERY_PAGE_SIZE = 9;

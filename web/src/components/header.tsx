@@ -1,4 +1,4 @@
-// src/components/Navigation.tsx
+﻿// src/components/Navigation.tsx
 "use client";
 
 import Link from "next/link";
@@ -11,7 +11,7 @@ import {
   SUPPORTED_LOCALES,
   TRANSLATIONS,
 } from "@/lib/i18n";
-import { useI18n } from "@/lib/i18n-provider";
+import { useI18n } from "@/components/providers";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
 import type { NavLocale } from "./navigation";

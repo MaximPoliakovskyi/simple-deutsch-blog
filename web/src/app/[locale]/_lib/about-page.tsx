@@ -1,10 +1,56 @@
 import Image from "next/image";
 import Link from "next/link";
+import type React from "react";
 import { buildLocalizedHref, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
-import AboutMedia from "./about-media";
-import ScrollRotateLogo from "./scroll-rotate-logo";
-import SectionText from "./section-text";
-import TestimonialCard from "./testimonial-card";
+import ScrollRotateLogo from "./about-scroll-rotate-logo";
+import SectionText from "./about-section-text";
+
+function AboutMedia({ src, alt = "", className = "" }: { src?: string; alt?: string; className?: string }) {
+  return (
+    <div className="w-full max-w-232 mx-auto">
+      {src ? (
+        <div className={`aspect-video rounded-2xl overflow-hidden w-full ${className}`}>
+          <Image
+            src={src}
+            alt={alt}
+            width={928}
+            height={Math.round((928 * 9) / 16)}
+            className="w-full h-full object-cover"
+          />
+        </div>
+      ) : (
+        <div
+          className={`aspect-video bg-neutral-200 dark:bg-white/10 rounded-2xl w-full ${className}`}
+        />
+      )}
+    </div>
+  );
+}
+
+function TestimonialCard({ name, role, children }: { name: string; role?: string; children: React.ReactNode }) {
+  return (
+    <article className="bg-white dark:bg-neutral-900 rounded-2xl border border-black/5 dark:border-white/10 p-6 shadow-sm dark:shadow-none hover:bg-neutral-50 dark:hover:bg-neutral-800 transition">
+      <div className="flex items-center gap-4 mb-4">
+        <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 bg-neutral-200 dark:bg-neutral-700 border border-neutral-200 dark:border-white/10">
+          <Image
+            src="/placeholder.webp"
+            alt={name}
+            width={48}
+            height={48}
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <div>
+          <div className="font-semibold text-neutral-900 dark:text-neutral-100">{name}</div>
+          {role ? (
+            <div className="text-sm text-neutral-500 dark:text-neutral-400">{role}</div>
+          ) : null}
+        </div>
+      </div>
+      <p className="text-lg leading-relaxed text-neutral-800 dark:text-neutral-200">{children}</p>
+    </article>
+  );
+}
 
 type AboutPageProps = {
   locale?: Locale;

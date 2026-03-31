@@ -1,11 +1,10 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import type { Locale } from "@/lib/i18n";
-import { useI18n } from "@/lib/i18n-provider";
+import { useI18n } from "@/components/providers";
 import type { WPPostCard } from "@/lib/posts";
-import CategoryPills from "./category-pills";
-import PostCard from "./post-card";
+import PostCard, { CategoryPills } from "./cards";
 
 type Category = {
   id: string;

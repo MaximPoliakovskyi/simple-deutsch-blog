@@ -1,22 +1,28 @@
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
-import { fetchGraphQL } from "@/server/wp/client";
-import { mapUiToGraphQLEnum } from "@/server/wp/types";
+import { CACHE_TAGS } from "@/server/cache";
+import { fetchGraphQL } from "@/server/client";
+import { mapUiToGraphQLEnum } from "@/server/types";
 import {
+  GET_ALL_CATEGORIES,
+  GET_ALL_TAGS,
+  GET_CATEGORY_BY_SLUG,
   GET_POST_BY_DATABASE_ID,
   GET_POST_BY_SLUG,
   GET_POST_BY_URI,
   GET_POSTS,
   GET_POSTS_BY_CATEGORY,
   GET_POSTS_BY_CATEGORY_SLUG,
+  GET_POSTS_BY_TAG_DATABASE_ID,
+  GET_POSTS_BY_TAG_SLUG,
   GET_POSTS_BY_TAG,
   GET_POSTS_INDEX,
   GET_RELATED_LATEST_POSTS,
   GET_RELATED_POSTS_BY_CATEGORY_SLUG,
   GET_RELATED_POSTS_BY_TAG_SLUG,
+  GET_TAG_BY_SLUG,
   POSTS_CONNECTION,
   SEARCH_POSTS,
-} from "@/server/wp/queries";
-import { withReadingTime, withReadingTimeForList } from "@/server/wp/readingTime";
+} from "@/server/queries";
 import type {
   Connection,
   NextInit,
@@ -24,13 +30,320 @@ import type {
   PostListItem,
   PostsConnectionResponse,
   SearchPostsArgs,
+  Tag,
+  Term,
   WPPostCard,
-} from "@/server/wp/types";
+} from "@/server/types";
 
 function isSchemaMismatchError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   if (!message.includes("GraphQL errors:")) return false;
   return /not defined by type|Unknown argument|Cannot query field|Unknown type/.test(message);
+}
+
+type ReadingLocale = Locale | "de" | string;
+
+type ReadingTimeResult = {
+  minutes: number;
+  words: number;
+  wordsPerMinute: number;
+  text: string;
+};
+
+type ReadablePost = {
+  content?: string | null;
+  excerpt?: string | null;
+};
+
+const WORD_RE = /[\p{L}\p{N}]+(?:[-'][\p{L}\p{N}]+)*/gu;
+
+function normalizeReadingLocale(locale?: ReadingLocale | null): "en" | "de" | "ru" | "uk" {
+  const normalized = String(locale ?? "en").toLowerCase();
+  if (normalized === "ua") return "uk";
+  if (normalized.startsWith("ru")) return "ru";
+  if (normalized.startsWith("uk")) return "uk";
+  if (normalized.startsWith("de")) return "de";
+  return "en";
+}
+
+function wordsPerMinuteForLocale(locale: "en" | "de" | "ru" | "uk"): number {
+  if (locale === "en") return 220;
+  return 200;
+}
+
+function decodeHtmlEntities(input: string): string {
+  const named: Record<string, string> = {
+    amp: "&",
+    lt: "<",
+    gt: ">",
+    quot: '"',
+    apos: "'",
+    nbsp: " ",
+  };
+
+  return input.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (full, entity: string) => {
+    const lower = entity.toLowerCase();
+    if (lower.startsWith("#x")) {
+      const value = Number.parseInt(lower.slice(2), 16);
+      return Number.isFinite(value) ? String.fromCodePoint(value) : full;
+    }
+    if (lower.startsWith("#")) {
+      const value = Number.parseInt(lower.slice(1), 10);
+      return Number.isFinite(value) ? String.fromCodePoint(value) : full;
+    }
+    return named[lower] ?? full;
+  });
+}
+
+function htmlToVisibleText(html: string): string {
+  const withoutCode = html
+    .replace(/<pre\b[^>]*>[\s\S]*?<\/pre>/gi, " ")
+    .replace(/<code\b[^>]*>[\s\S]*?<\/code>/gi, " ");
+
+  const withoutNonContent = withoutCode
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, " ")
+    .replace(/<noscript\b[^>]*>[\s\S]*?<\/noscript>/gi, " ");
+
+  const textOnly = withoutNonContent.replace(/<[^>]+>/g, " ");
+  const decoded = decodeHtmlEntities(textOnly);
+  return decoded.replace(/\s+/g, " ").trim();
+}
+
+function countWords(text: string): number {
+  const matches = text.match(WORD_RE);
+  return matches?.length ?? 0;
+}
+
+function pluralRuUk(value: number): "one" | "few" | "many" {
+  const n10 = value % 10;
+  const n100 = value % 100;
+  if (n10 === 1 && n100 !== 11) return "one";
+  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return "few";
+  return "many";
+}
+
+function formatReadingTime(minutes: number, locale: "en" | "de" | "ru" | "uk"): string {
+  if (locale === "de") return `${minutes} Min. Lesezeit`;
+  if (locale === "ru") {
+    const form = pluralRuUk(minutes);
+    const unit =
+      form === "one"
+        ? "минута"
+        : form === "few"
+          ? "минуты"
+          : "минут";
+    return `${minutes} ${unit} чтения`;
+  }
+  if (locale === "uk") {
+    const form = pluralRuUk(minutes);
+    const unit =
+      form === "one"
+        ? "хвилина"
+        : form === "few"
+          ? "хвилини"
+          : "хвилин";
+    return `${minutes} ${unit} читання`;
+  }
+  return `${minutes} min read`;
+}
+
+export function calculateReadingTimeFromHtml(
+  html: string,
+  locale?: ReadingLocale | null,
+): ReadingTimeResult {
+  const normalizedLocale = normalizeReadingLocale(locale);
+  const wordsPerMinute = wordsPerMinuteForLocale(normalizedLocale);
+  const words = countWords(htmlToVisibleText(html));
+  const minutes = Math.max(1, Math.ceil(words / wordsPerMinute));
+
+  return {
+    minutes,
+    words,
+    wordsPerMinute,
+    text: formatReadingTime(minutes, normalizedLocale),
+  };
+}
+
+export function withReadingTime<T extends ReadablePost>(post: T, locale?: ReadingLocale | null) {
+  const sourceHtml = post.content ?? post.excerpt ?? "";
+  const reading = calculateReadingTimeFromHtml(String(sourceHtml), locale);
+  return {
+    ...post,
+    readingMinutes: reading.minutes,
+    readingWords: reading.words,
+    readingWordsPerMinute: reading.wordsPerMinute,
+    readingText: reading.text,
+  };
+}
+
+export function withReadingTimeForList<T extends ReadablePost>(
+  posts: T[],
+  locale?: ReadingLocale | null,
+) {
+  return posts.map((post) => withReadingTime(post, locale));
+}
+
+export async function getCategoryBySlug(slug: string, locale?: Locale) {
+  const data = await fetchGraphQL<{ category: Term | null }>(
+    GET_CATEGORY_BY_SLUG,
+    { slug },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.categories, `category:${slug}`] },
+    },
+  );
+  return data.category ?? null;
+}
+
+export async function getAllCategories({
+  first,
+  after,
+  locale,
+}: {
+  first: number;
+  after?: string;
+  locale?: Locale;
+}) {
+  return fetchGraphQL<{ categories: Connection<Term> }>(
+    GET_ALL_CATEGORIES,
+    {
+      first,
+      after: after ?? null,
+    },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.categories] },
+    },
+  );
+}
+
+export async function getAllTags({
+  first,
+  after,
+  locale,
+}: {
+  first: number;
+  after?: string;
+  locale?: Locale;
+}) {
+  const data = await fetchGraphQL<{
+    tags: { nodes: Tag[]; pageInfo: { endCursor: string | null; hasNextPage: boolean } };
+  }>(
+    GET_ALL_TAGS,
+    { first, after: after ?? null },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags] },
+    },
+  );
+  return { tags: data.tags };
+}
+
+export async function getTagBySlug(slug: string, locale?: Locale) {
+  const data = await fetchGraphQL<{ tag: Tag | null }>(
+    GET_TAG_BY_SLUG,
+    { slug },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags, `tag:${slug}`] },
+    },
+  );
+  return data.tag ?? null;
+}
+
+export async function getPostsByTagSlug(slug: string, first = 12, after?: string, locale?: Locale) {
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
+  const data = await fetchGraphQL<{
+    tag: {
+      name: string;
+      slug: string;
+      posts: {
+        nodes: PostListItem[];
+        pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      };
+    } | null;
+  }>(
+    GET_POSTS_BY_TAG_SLUG,
+    { slug, first, after: after ?? null },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:tag-slug", `tag:${slug}`],
+      },
+    },
+  );
+
+  const tag = data.tag ?? null;
+
+  let posts = tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } };
+  if (targetLang && posts.nodes) {
+    posts = {
+      ...posts,
+      nodes: posts.nodes.filter((post) => post.language?.code === targetLang),
+    };
+  }
+
+  posts = {
+    ...posts,
+    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+  };
+
+  return {
+    tag,
+    posts,
+  };
+}
+
+export async function getPostsByTagDatabaseId(
+  tagDatabaseId: number,
+  first = 12,
+  after?: string,
+  locale?: Locale,
+) {
+  const targetLang = locale ? mapUiToGraphQLEnum(locale) : null;
+  const data = await fetchGraphQL<{
+    tag: {
+      name: string;
+      slug: string;
+      posts: {
+        nodes: PostListItem[];
+        pageInfo: { endCursor: string | null; hasNextPage: boolean };
+      };
+    } | null;
+  }>(
+    GET_POSTS_BY_TAG_DATABASE_ID,
+    { tagId: String(tagDatabaseId), first, after: after ?? null },
+    {
+      locale: locale ?? DEFAULT_LOCALE,
+      policy: {
+        type: "ISR",
+        revalidate: 300,
+        tags: [CACHE_TAGS.posts, "posts:tag-id", `tag:${tagDatabaseId}`],
+      },
+    },
+  );
+
+  const tag = data.tag ?? null;
+  let posts = tag?.posts ?? { nodes: [], pageInfo: { endCursor: null, hasNextPage: false } };
+  if (targetLang && posts.nodes) {
+    posts = {
+      ...posts,
+      nodes: posts.nodes.filter((post) => post.language?.code === targetLang),
+    };
+  }
+
+  posts = {
+    ...posts,
+    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+  };
+
+  return {
+    tag,
+    posts,
+  };
 }
 
 export async function getPostsByCategorySlug(

@@ -1,4 +1,4 @@
-// src/components/SearchOverlay.tsx
+﻿// src/components/SearchOverlay.tsx
 "use client";
 
 /* biome-disable */
@@ -16,7 +16,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
-import { useI18n } from "@/lib/i18n-provider";
+import { useI18n } from "@/components/providers";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 type SlimPost = {
