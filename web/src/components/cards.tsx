@@ -4,6 +4,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import * as React from "react";
+import { useI18n } from "@/components/providers";
 import {
   buildLocalizedHref,
   formatPostCardDate,
@@ -11,7 +12,6 @@ import {
   getLevelLabel,
   translateCategory,
 } from "@/lib/i18n";
-import { useI18n } from "@/components/providers";
 
 // ---------------------------------------------------------------------------
 // PostCard
@@ -99,7 +99,11 @@ function extractImage(p: PostCardPost) {
   return { url: "", alt: "" };
 }
 
-export default function PostCard({ post, className, priority = false }: PostCardProps) {
+const PostCard = React.memo(function PostCard({
+  post,
+  className,
+  priority = false,
+}: PostCardProps) {
   const img = extractImage(post);
   const { t, locale } = useI18n();
   const computedDateText = formatPostCardDate(post.date, locale) ?? "";
@@ -169,7 +173,9 @@ export default function PostCard({ post, className, priority = false }: PostCard
       ) : null}
     </article>
   );
-}
+});
+
+export default PostCard;
 
 // ---------------------------------------------------------------------------
 // CategoryPills + CategoryPillsSkeleton
@@ -233,7 +239,9 @@ const CategoryPills = React.memo(function CategoryPills({
   const CEFR_ORDER = React.useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
   const CEFR_ORDER_MAP = React.useMemo(() => {
     const m = new Map<string, number>();
-    CEFR_ORDER.forEach((s, i) => m.set(s, i));
+    CEFR_ORDER.forEach((s, i) => {
+      m.set(s, i);
+    });
     return m;
   }, [CEFR_ORDER]);
 

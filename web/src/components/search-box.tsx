@@ -2,8 +2,8 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useEffect, useRef, useState } from "react";
-import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { useI18n } from "@/components/providers";
+import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 
 type Props = {
   placeholder?: string;

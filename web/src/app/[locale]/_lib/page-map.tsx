@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLevelLabel, TRANSLATIONS, type Locale } from "@/lib/i18n";
+import { getLevelLabel, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import { getCategoryBySlug, getTagBySlug } from "@/lib/posts";
 import { buildI18nAlternates } from "@/lib/seo";
+import HomePage from "../home-page";
 import AboutPage from "./about-page";
 import { CategoriesIndexContent } from "./categories-index-content";
 import { CategoryPageContent } from "./category-page-content";
@@ -16,7 +17,6 @@ import PrivacyPage from "./privacy-page";
 import { SearchPageContent, type SearchParams } from "./search-page-content";
 import TeamPageContent, { generateTeamMetadata } from "./team-page";
 import TermsPage from "./terms-page";
-import HomePage from "../home-page";
 
 type MapInput = {
   locale: Locale;
@@ -34,10 +34,16 @@ export async function generateMappedMetadata({
 
   switch (section) {
     case "about":
-      return { title: `${t.about} — ${t.siteTitle}`, alternates: buildI18nAlternates("/about", locale) };
+      return {
+        title: `${t.about} — ${t.siteTitle}`,
+        alternates: buildI18nAlternates("/about", locale),
+      };
     case "posts":
       if (rest.length === 0)
-        return { title: `${t.posts} — ${t.siteTitle}`, alternates: buildI18nAlternates("/posts", locale) };
+        return {
+          title: `${t.posts} — ${t.siteTitle}`,
+          alternates: buildI18nAlternates("/posts", locale),
+        };
       if (rest.length === 1) {
         return generatePostMetadata({ params: Promise.resolve({ slug: rest[0] }), locale });
       }
@@ -59,7 +65,10 @@ export async function generateMappedMetadata({
     case "levels":
     case "tags":
       if (rest.length === 0)
-        return { title: `${t.levels} — ${t.siteTitle}`, alternates: buildI18nAlternates("/levels", locale) };
+        return {
+          title: `${t.levels} — ${t.siteTitle}`,
+          alternates: buildI18nAlternates("/levels", locale),
+        };
       if (rest.length === 1) {
         const tag = rest[0];
         const term = await getTagBySlug(tag, locale);
@@ -157,8 +166,9 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
         </main>
       );
     case "search":
-      return <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />;
-    case "blog":
+      return (
+        <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />
+      );
     default:
       break;
   }

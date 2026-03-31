@@ -1,6 +1,7 @@
 // app/global-error.tsx
 "use client";
 
+import StatusPage from "@/components/status-page";
 /**
  * TURBOPACK CSS CHUNK FIX:
  * Do NOT import globals.css here. Importing the same CSS in both layout.tsx and
@@ -11,7 +12,6 @@
  * has already loaded with styles. We use inline styles for basic layout instead.
  */
 import { DEFAULT_LOCALE } from "@/lib/i18n";
-import StatusPage from "@/components/status-page";
 
 export default function GlobalError({
   error,

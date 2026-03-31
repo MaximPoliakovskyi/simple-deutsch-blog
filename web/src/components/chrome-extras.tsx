@@ -1,9 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import dynamic from "next/dynamic";
+import { useEffect, useRef, useState } from "react";
 
 // ---------------------------------------------------------------------------
 // AnalyticsClient (formerly analytics-client.tsx)
@@ -70,7 +70,10 @@ export function ChunkErrorRecovery() {
       if (isChunkLoadError(event.error ?? event.message)) hardReloadOnce();
     };
     const onUnhandledRejection = (event: PromiseRejectionEvent) => {
-      if (isChunkLoadError(event.reason)) { event.preventDefault(); hardReloadOnce(); }
+      if (isChunkLoadError(event.reason)) {
+        event.preventDefault();
+        hardReloadOnce();
+      }
     };
     window.addEventListener("error", onError);
     window.addEventListener("unhandledrejection", onUnhandledRejection);
@@ -98,7 +101,10 @@ function BackButton() {
       desiredVisible.current = window.scrollY > SCROLL_THRESHOLD;
       if (!ticking.current) {
         ticking.current = true;
-        requestAnimationFrame(() => { setVisible(desiredVisible.current); ticking.current = false; });
+        requestAnimationFrame(() => {
+          setVisible(desiredVisible.current);
+          ticking.current = false;
+        });
       }
     }
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -121,8 +127,20 @@ function BackButton() {
       }}
       title="Zurück"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
-        <path d="M6 15 L12 9 L18 15" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        className="h-5 w-5"
+        aria-hidden="true"
+      >
+        <path
+          d="M6 15 L12 9 L18 15"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
       </svg>
     </button>
   );
@@ -141,7 +159,11 @@ function FirstVisitDisclaimer() {
         aria-atomic="true"
         aria-live="polite"
         className="pointer-events-auto w-full max-w-xl rounded-2xl border px-4 py-3 backdrop-blur-sm"
-        style={{ backgroundColor: "var(--sd-surface-elevated)", borderColor: "var(--sd-border-strong)", boxShadow: "var(--shadow-xl)" }}
+        style={{
+          backgroundColor: "var(--sd-surface-elevated)",
+          borderColor: "var(--sd-border-strong)",
+          boxShadow: "var(--shadow-xl)",
+        }}
       >
         <div className="flex items-start gap-3">
           <div className="min-w-0 flex-1">
@@ -170,7 +192,9 @@ function FirstVisitDisclaimer() {
 // DeferredChromeExtras — lazy-loaded via dynamic() (formerly deferred-chrome-extras.tsx)
 // ---------------------------------------------------------------------------
 
-const LazyFirstVisitDisclaimer = dynamic(() => Promise.resolve({ default: FirstVisitDisclaimer }), { ssr: false });
+const LazyFirstVisitDisclaimer = dynamic(() => Promise.resolve({ default: FirstVisitDisclaimer }), {
+  ssr: false,
+});
 const LazyBackButton = dynamic(() => Promise.resolve({ default: BackButton }), { ssr: false });
 
 export default function DeferredChromeExtras() {
@@ -181,5 +205,3 @@ export default function DeferredChromeExtras() {
     </>
   );
 }
-
-

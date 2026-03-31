@@ -1,4 +1,5 @@
-﻿import { type Locale, TRANSLATIONS } from "@/lib/i18n";
+﻿import PostCard from "@/components/cards";
+import { type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
   buildLocalePostHref,
   getLatestPostsForRelated,
@@ -6,7 +7,6 @@ import {
   getRelatedPostsByTagSlug,
   type PostListItem,
 } from "@/lib/posts";
-import PostCard from "@/components/cards";
 
 const MAX_RELATED_POSTS = 3;
 const QUERY_PAGE_SIZE = 9;

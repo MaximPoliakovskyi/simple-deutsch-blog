@@ -1,7 +1,6 @@
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/client";
-import { mapUiToGraphQLEnum } from "@/server/types";
 import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,
@@ -12,9 +11,9 @@ import {
   GET_POSTS,
   GET_POSTS_BY_CATEGORY,
   GET_POSTS_BY_CATEGORY_SLUG,
+  GET_POSTS_BY_TAG,
   GET_POSTS_BY_TAG_DATABASE_ID,
   GET_POSTS_BY_TAG_SLUG,
-  GET_POSTS_BY_TAG,
   GET_POSTS_INDEX,
   GET_RELATED_LATEST_POSTS,
   GET_RELATED_POSTS_BY_CATEGORY_SLUG,
@@ -34,6 +33,7 @@ import type {
   Term,
   WPPostCard,
 } from "@/server/types";
+import { mapUiToGraphQLEnum } from "@/server/types";
 
 function isSchemaMismatchError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
@@ -127,22 +127,12 @@ function formatReadingTime(minutes: number, locale: "en" | "de" | "ru" | "uk"): 
   if (locale === "de") return `${minutes} Min. Lesezeit`;
   if (locale === "ru") {
     const form = pluralRuUk(minutes);
-    const unit =
-      form === "one"
-        ? "минута"
-        : form === "few"
-          ? "минуты"
-          : "минут";
+    const unit = form === "one" ? "минута" : form === "few" ? "минуты" : "минут";
     return `${minutes} ${unit} чтения`;
   }
   if (locale === "uk") {
     const form = pluralRuUk(minutes);
-    const unit =
-      form === "one"
-        ? "хвилина"
-        : form === "few"
-          ? "хвилини"
-          : "хвилин";
+    const unit = form === "one" ? "хвилина" : form === "few" ? "хвилини" : "хвилин";
     return `${minutes} ${unit} читання`;
   }
   return `${minutes} min read`;

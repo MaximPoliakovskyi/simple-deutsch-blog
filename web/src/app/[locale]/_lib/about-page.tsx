@@ -5,7 +5,15 @@ import { buildLocalizedHref, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@
 import ScrollRotateLogo from "./about-scroll-rotate-logo";
 import SectionText from "./about-section-text";
 
-function AboutMedia({ src, alt = "", className = "" }: { src?: string; alt?: string; className?: string }) {
+function AboutMedia({
+  src,
+  alt = "",
+  className = "",
+}: {
+  src?: string;
+  alt?: string;
+  className?: string;
+}) {
   return (
     <div className="w-full max-w-232 mx-auto">
       {src ? (
@@ -27,7 +35,15 @@ function AboutMedia({ src, alt = "", className = "" }: { src?: string; alt?: str
   );
 }
 
-function TestimonialCard({ name, role, children }: { name: string; role?: string; children: React.ReactNode }) {
+function TestimonialCard({
+  name,
+  role,
+  children,
+}: {
+  name: string;
+  role?: string;
+  children: React.ReactNode;
+}) {
   return (
     <article className="bg-white dark:bg-neutral-900 rounded-2xl border border-black/5 dark:border-white/10 p-6 shadow-sm dark:shadow-none hover:bg-neutral-50 dark:hover:bg-neutral-800 transition">
       <div className="flex items-center gap-4 mb-4">
