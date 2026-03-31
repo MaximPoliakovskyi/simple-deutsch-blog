@@ -16,6 +16,8 @@ import {
 } from "react";
 import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scroll";
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 // ---------------------------------------------------------------------------
 // Types & Context (formerly transition-nav.ts)
 // ---------------------------------------------------------------------------
@@ -628,7 +630,7 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
   const wasTransitionActiveRef = useRef(false);
   const previousPathnameRef = useRef(pathname);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (phase !== "idle") {
       wasTransitionActiveRef.current = true;
       setFadeState((current) =>
@@ -661,7 +663,7 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
     };
   }, [fadeState]);
 
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (previousPathnameRef.current === pathname) return;
     previousPathnameRef.current = pathname;
     if (wasTransitionActiveRef.current || phase !== "idle") return;

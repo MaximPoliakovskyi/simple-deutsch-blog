@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import * as React from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
@@ -35,23 +35,23 @@ export default function CategoriesBlockClient({
 }: Props) {
   const { t } = useI18n();
   // Prefer A1 level when available to ensure A1 is selected initially
-  const preferredInitial = React.useMemo(() => {
+  const preferredInitial = useMemo(() => {
     const a1 = categories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
     return a1 ? a1.slug : categories.length > 0 ? categories[0].slug : null;
   }, [categories]);
   const selectedOnMount = initialSelectedCategory ?? preferredInitial;
 
-  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(
+  const cacheRef = useRef<Map<string, WPPostCard[]>>(
     selectedOnMount ? new Map([[selectedOnMount, initialPosts]]) : new Map(),
   );
-  const requestIdRef = React.useRef(0);
-  const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
-  const [displayedCount, setDisplayedCount] = React.useState(pageSize);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isFetching, setIsFetching] = React.useState(false);
-  const [selectedCategory, setSelectedCategory] = React.useState<string | null>(selectedOnMount);
+  const requestIdRef = useRef(0);
+  const [allPosts, setAllPosts] = useState<WPPostCard[]>(initialPosts);
+  const [displayedCount, setDisplayedCount] = useState(pageSize);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(selectedOnMount);
 
-  React.useEffect(() => {
+  useEffect(() => {
     cacheRef.current = selectedOnMount ? new Map([[selectedOnMount, initialPosts]]) : new Map();
     requestIdRef.current += 1;
     setAllPosts(initialPosts);
@@ -61,7 +61,7 @@ export default function CategoriesBlockClient({
     setSelectedCategory(selectedOnMount);
   }, [initialPosts, pageSize, selectedOnMount]);
 
-  const handleCategorySelect = React.useCallback(
+  const handleCategorySelect = useCallback(
     async (slug: string | null) => {
       if (!slug) return;
       setSelectedCategory(slug);
@@ -120,7 +120,7 @@ export default function CategoriesBlockClient({
     [categories, locale, pageSize],
   );
 
-  const loadMore = React.useCallback(() => {
+  const loadMore = useCallback(() => {
     setDisplayedCount((prev) => prev + pageSize);
   }, [pageSize]);
 

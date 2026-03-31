@@ -81,8 +81,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
 
-        {/* Preconnect to critical origins */}
-        <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
+        {/* DNS prefetch for CMS image origin */}
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
         {/* Set loading flags before paint so the app shell does not flash before the preloader. */}

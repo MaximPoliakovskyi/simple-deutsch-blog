@@ -1,6 +1,6 @@
-﻿"use client";
+"use client";
 
-import * as React from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
@@ -25,11 +25,11 @@ interface TypewriterWordsProps {
 type AnimationPhase = "typing" | "pauseAfterType" | "deleting" | "pauseAfterDelete";
 
 function useMeasureWordWidths(words: string[]) {
-  const measureRef = React.useRef<HTMLSpanElement>(null);
-  const frameRef = React.useRef<number | null>(null);
-  const [maxWidthPx, setMaxWidthPx] = React.useState(0);
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const frameRef = useRef<number | null>(null);
+  const [maxWidthPx, setMaxWidthPx] = useState(0);
 
-  const measureWidths = React.useCallback(() => {
+  const measureWidths = useCallback(() => {
     const measureEl = measureRef.current;
     if (!measureEl) return;
 
@@ -47,7 +47,7 @@ function useMeasureWordWidths(words: string[]) {
     setMaxWidthPx((previous) => (previous === finalWidth ? previous : finalWidth));
   }, [words]);
 
-  const scheduleMeasure = React.useCallback(() => {
+  const scheduleMeasure = useCallback(() => {
     if (frameRef.current !== null) {
       cancelAnimationFrame(frameRef.current);
     }
@@ -58,7 +58,7 @@ function useMeasureWordWidths(words: string[]) {
     });
   }, [measureWidths]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     scheduleMeasure();
 
     if (typeof window === "undefined") return;
@@ -103,20 +103,20 @@ function useTypewriter({
   pauseAfterTypeMs: number;
   pauseAfterDeleteMs: number;
 }) {
-  const [currentText, setCurrentText] = React.useState("");
-  const currentTextRef = React.useRef("");
-  const currentWordIndexRef = React.useRef(0);
-  const phaseRef = React.useRef<AnimationPhase>("typing");
-  const timeoutRef = React.useRef<number | null>(null);
+  const [currentText, setCurrentText] = useState("");
+  const currentTextRef = useRef("");
+  const currentWordIndexRef = useRef(0);
+  const phaseRef = useRef<AnimationPhase>("typing");
+  const timeoutRef = useRef<number | null>(null);
 
-  const clearTimer = React.useCallback(() => {
+  const clearTimer = useCallback(() => {
     if (timeoutRef.current !== null) {
       window.clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
     }
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     clearTimer();
     currentTextRef.current = "";
     currentWordIndexRef.current = 0;
@@ -183,7 +183,7 @@ function useTypewriter({
   return currentText;
 }
 
-const TypewriterWords = React.memo(function TypewriterWords({
+const TypewriterWords = memo(function TypewriterWords({
   words,
   className = "",
   containerClassName = "",
@@ -194,7 +194,7 @@ const TypewriterWords = React.memo(function TypewriterWords({
   pauseAfterDeleteMs = 600,
   showCursor = true,
 }: TypewriterWordsProps) {
-  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const currentText = useTypewriter({
     words,
     typeMsPerChar,
@@ -208,7 +208,7 @@ const TypewriterWords = React.memo(function TypewriterWords({
 
   const { measureRef, maxWidthPx } = useMeasureWordWidths(words);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setPrefersReducedMotion(mediaQuery.matches);
 
@@ -225,7 +225,7 @@ const TypewriterWords = React.memo(function TypewriterWords({
     return () => mediaQuery.removeListener(handleChange);
   }, []);
 
-  const longestWord = React.useMemo(
+  const longestWord = useMemo(
     () =>
       words.reduce((longest, word) => {
         return word.length > longest.length ? word : longest;
@@ -349,23 +349,23 @@ export default function HeroWithFilters({
   locale,
 }: Props) {
   const { t, locale: uiLocale } = useI18n();
-  const heroHeadingId = React.useId();
-  const featuredPostsHeadingId = React.useId();
-  const [allPosts, setAllPosts] = React.useState<WPPostCard[]>(initialPosts);
-  const [displayedCount, setDisplayedCount] = React.useState(pageSize);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const cacheRef = React.useRef<Map<string, WPPostCard[]>>(new Map([["all", initialPosts]]));
-  const requestIdRef = React.useRef(0);
-  const animatedWords = React.useMemo(
+  const heroHeadingId = useId();
+  const featuredPostsHeadingId = useId();
+  const [allPosts, setAllPosts] = useState<WPPostCard[]>(initialPosts);
+  const [displayedCount, setDisplayedCount] = useState(pageSize);
+  const [isLoading, setIsLoading] = useState(false);
+  const cacheRef = useRef<Map<string, WPPostCard[]>>(new Map([["all", initialPosts]]));
+  const requestIdRef = useRef(0);
+  const animatedWords = useMemo(
     () => HERO_KEYWORDS[uiLocale as string] || HERO_KEYWORDS.en,
     [uiLocale],
   );
-  const stableWidthCh = React.useMemo(
+  const stableWidthCh = useMemo(
     () => Math.max(...animatedWords.map((word) => word.length)) + 0.3,
     [animatedWords],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     cacheRef.current = new Map([["all", initialPosts]]);
     requestIdRef.current += 1;
     setAllPosts(initialPosts);
@@ -373,7 +373,7 @@ export default function HeroWithFilters({
     setIsLoading(false);
   }, [initialPosts, pageSize]);
 
-  const handleCategorySelect = React.useCallback(
+  const handleCategorySelect = useCallback(
     async (slug: string | null) => {
       const key = slug ?? "all";
       const cached = cacheRef.current.get(key);
@@ -425,11 +425,11 @@ export default function HeroWithFilters({
     [initialPosts, locale, pageSize],
   );
 
-  const loadMore = React.useCallback(() => {
+  const loadMore = useCallback(() => {
     setDisplayedCount((prev) => prev + pageSize);
   }, [pageSize]);
 
-  const displayedPosts = React.useMemo(
+  const displayedPosts = useMemo(
     () => allPosts.slice(0, displayedCount),
     [allPosts, displayedCount],
   );

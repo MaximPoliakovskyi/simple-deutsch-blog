@@ -1,9 +1,9 @@
-﻿// cards.tsx — PostCard + CategoryPills combined (formerly post-card.tsx + category-pills.tsx)
+// cards.tsx — PostCard + CategoryPills combined (formerly post-card.tsx + category-pills.tsx)
 "use client";
 
 import Image from "next/image";
 import Link from "next/link";
-import * as React from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import {
   buildLocalizedHref,
@@ -99,7 +99,7 @@ function extractImage(p: PostCardPost) {
   return { url: "", alt: "" };
 }
 
-const PostCard = React.memo(function PostCard({
+const PostCard = memo(function PostCard({
   post,
   className,
   priority = false,
@@ -214,7 +214,7 @@ export function CategoryPillsSkeleton({
 
 type Category = { id: string; name: string; slug: string };
 
-const CategoryPills = React.memo(function CategoryPills({
+const CategoryPills = memo(function CategoryPills({
   categories,
   onSelect,
   initialSelected,
@@ -235,8 +235,8 @@ const CategoryPills = React.memo(function CategoryPills({
 }) {
   const { t, locale } = useI18n();
 
-  const CEFR_ORDER = React.useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
-  const CEFR_ORDER_MAP = React.useMemo(() => {
+  const CEFR_ORDER = useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
+  const CEFR_ORDER_MAP = useMemo(() => {
     const m = new Map<string, number>();
     for (let i = 0; i < CEFR_ORDER.length; i++) {
       m.set(CEFR_ORDER[i], i);
@@ -244,7 +244,7 @@ const CategoryPills = React.memo(function CategoryPills({
     return m;
   }, [CEFR_ORDER]);
 
-  const CEFR_STICKER: Record<string, string> = React.useMemo(
+  const CEFR_STICKER: Record<string, string> = useMemo(
     () => ({
       A1: "bg-green-500",
       A2: "bg-yellow-400",
@@ -256,7 +256,7 @@ const CategoryPills = React.memo(function CategoryPills({
     [],
   );
 
-  const isCefrLevel = React.useCallback(
+  const isCefrLevel = useCallback(
     (slug?: string): boolean => {
       if (!slug) return false;
       return CEFR_ORDER.includes(slug.toUpperCase());
@@ -264,7 +264,7 @@ const CategoryPills = React.memo(function CategoryPills({
     [CEFR_ORDER],
   );
 
-  const sortedCategories = React.useMemo(() => {
+  const sortedCategories = useMemo(() => {
     const cefr = categories.filter((c) => isCefrLevel(c.slug));
     const nonCefr = categories.filter((c) => !isCefrLevel(c.slug));
     const sortedCefr = cefr.sort((a, b) => {
@@ -275,7 +275,7 @@ const CategoryPills = React.memo(function CategoryPills({
     return [...sortedCefr, ...nonCefr];
   }, [categories, CEFR_ORDER_MAP, isCefrLevel]);
 
-  const getTagDescription = React.useCallback(
+  const getTagDescription = useCallback(
     (slug: string): string | undefined => {
       const fromLevels = getLevelDescription(slug, locale ?? "en");
       if (fromLevels) return fromLevels;
@@ -284,7 +284,7 @@ const CategoryPills = React.memo(function CategoryPills({
     [t, locale],
   );
 
-  const defaultSelected = React.useMemo(() => {
+  const defaultSelected = useMemo(() => {
     if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
     if (sortedCategories.some((c) => isCefrLevel(c.slug))) {
       const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
@@ -294,14 +294,14 @@ const CategoryPills = React.memo(function CategoryPills({
     return null;
   }, [initialSelected, required, sortedCategories, isCefrLevel]);
 
-  const [internalSelected, setInternalSelected] = React.useState<string | null>(
+  const [internalSelected, setInternalSelected] = useState<string | null>(
     defaultSelected ?? null,
   );
-  const previousDefaultSelectedRef = React.useRef<string | null>(defaultSelected ?? null);
+  const previousDefaultSelectedRef = useRef<string | null>(defaultSelected ?? null);
   const isControlled = selected !== undefined;
   const currentSelected = isControlled ? selected : internalSelected;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isControlled) return;
     if (previousDefaultSelectedRef.current === (defaultSelected ?? null)) return;
     previousDefaultSelectedRef.current = defaultSelected ?? null;

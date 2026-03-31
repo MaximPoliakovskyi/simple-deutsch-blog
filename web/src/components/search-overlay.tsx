@@ -20,6 +20,8 @@ import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion"
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 type SlimPost = {
   id: string;
   slug: string;
@@ -105,7 +107,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     setShowResults(should);
   }, [loading, items.length, hasSearched]);
   // Measure and animate height on showResults changes (layout effect to avoid flicker)
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const wrap = resultsWrapRef.current;
     const list = listRef.current;
     const panel = panelRef.current;
@@ -142,7 +144,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   }, [showResults]);
 
   // When items change while shown (e.g. load more or fewer results), smoothly adjust the wrapper max-height
-  useLayoutEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     if (!showResults) return;
     const wrap = resultsWrapRef.current;
     const list = listRef.current;
