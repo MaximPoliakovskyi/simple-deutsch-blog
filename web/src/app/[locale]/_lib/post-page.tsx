@@ -20,6 +20,7 @@ import {
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
+import RelatedArticles from "./related-articles";
 
 function PostContent({ html, className = "" }: { html: string; className?: string }) {
   const classes = [
@@ -31,7 +32,6 @@ function PostContent({ html, className = "" }: { html: string; className?: strin
   ];
   return <article className={classes.join(" ")} dangerouslySetInnerHTML={{ __html: html }} />;
 }
-import RelatedArticles from "./related-articles";
 
 type LanguageSlug = Locale;
 

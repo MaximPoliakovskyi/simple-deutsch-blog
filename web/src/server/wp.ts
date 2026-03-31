@@ -1,18 +1,13 @@
 export * from "./client";
 export * from "./posts";
 export * from "./queries";
-export {
-  mapGraphQLEnumToUi,
-  mapUiToGraphQLEnum,
-  parseTranslations,
-} from "./types";
 export type {
   Connection,
   NextInit,
+  PolylangTranslation,
   PostDetail,
   PostLanguage,
   PostListItem,
-  PolylangTranslation,
   PostsConnectionResponse,
   PostTranslation,
   SearchPostsArgs,
@@ -21,4 +16,9 @@ export type {
   WPAuthor,
   WPImage,
   WPPostCard,
+} from "./types";
+export {
+  mapGraphQLEnumToUi,
+  mapUiToGraphQLEnum,
+  parseTranslations,
 } from "./types";

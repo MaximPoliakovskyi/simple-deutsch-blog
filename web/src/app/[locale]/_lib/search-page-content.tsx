@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { buildSearchMetadataCopy, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
-import { getSearchPageResults, type WPPostCard } from "@/lib/posts";
 import PostCard from "@/components/cards";
 import SearchBox from "@/components/search-box";
+import { buildSearchMetadataCopy, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
+import { getSearchPageResults, type WPPostCard } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
 

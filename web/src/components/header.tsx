@@ -3,7 +3,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
+import {
+  type MouseEvent as ReactMouseEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import { useI18n } from "@/components/providers";
 import {
   buildLocalizedHref,
   DEFAULT_LOCALE,
@@ -11,7 +18,6 @@ import {
   SUPPORTED_LOCALES,
   TRANSLATIONS,
 } from "@/lib/i18n";
-import { useI18n } from "@/components/providers";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
 import type { NavLocale } from "./navigation";
@@ -111,47 +117,62 @@ export default function Header() {
     });
   });
 
-  const buildLocaleRootHref = (target: Lang) => buildLocalizedHref(target, "/");
+  const buildLocaleRootHref = useCallback((target: Lang) => buildLocalizedHref(target, "/"), []);
 
-  const buildLocalePath = (path: string, target: Lang = currentLocale) => {
-    const p = path.startsWith("/") ? path : `/${path}`;
-    return buildLocalizedHref(target, p);
-  };
+  const buildLocalePath = useCallback(
+    (path: string, target: Lang = currentLocale) => {
+      const p = path.startsWith("/") ? path : `/${path}`;
+      return buildLocalizedHref(target, p);
+    },
+    [currentLocale],
+  );
 
   // helper: prefer fast route-derived translations, then provider `t`, then fallback.
-  const label = (key: string, fallback: string) => {
-    try {
-      const fast = TRANSLATIONS[currentLocale]?.[key];
-      if (fast && fast !== key) return fast;
-    } catch {}
-    try {
-      const v = tFromProvider(key);
-      if (v && v !== key) return v;
-    } catch {}
-    return fallback;
-  };
+  const label = useCallback(
+    (key: string, fallback: string) => {
+      try {
+        const fast = TRANSLATIONS[currentLocale]?.[key];
+        if (fast && fast !== key) return fast;
+      } catch {}
+      try {
+        const v = tFromProvider(key);
+        if (v && v !== key) return v;
+      } catch {}
+      return fallback;
+    },
+    [currentLocale, tFromProvider],
+  );
   const logoHref = buildLocaleRootHref(currentLocale);
   const transition = useTransitionNav();
 
-  const handleLogoClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
-    // Close the mobile menu so the UI doesn't remain open during navigation.
-    setOpen(false);
-    if (!isUnmodifiedLeftClick(event)) return;
+  const handleLogoClick = useCallback(
+    (event: ReactMouseEvent<HTMLAnchorElement>) => {
+      // Close the mobile menu so the UI doesn't remain open during navigation.
+      setOpen(false);
+      if (!isUnmodifiedLeftClick(event)) return;
 
-    const isHomepage = normalizedPathname === normalizePathname(logoHref);
-    if (isHomepage) {
+      const isHomepage = normalizedPathname === normalizePathname(logoHref);
+      if (isHomepage) {
+        event.preventDefault();
+        scrollToTopWithMotionPreference();
+        return;
+      }
+
       event.preventDefault();
-      scrollToTopWithMotionPreference();
-      return;
-    }
+      const didStartTransition = transition.navigateFromLogo(logoHref);
+      if (!didStartTransition && typeof window !== "undefined") {
+        // Fallback so home navigation still works if transition state is temporarily busy.
+        window.location.assign(logoHref);
+      }
+    },
+    [normalizedPathname, logoHref, transition],
+  );
 
-    event.preventDefault();
-    const didStartTransition = transition.navigateFromLogo(logoHref);
-    if (!didStartTransition && typeof window !== "undefined") {
-      // Fallback so home navigation still works if transition state is temporarily busy.
-      window.location.assign(logoHref);
-    }
-  };
+  const handleToggleMenu = useCallback(() => setOpen((v) => !v), []);
+  const handleCloseMenu = useCallback(() => setOpen(false), []);
+  const handleToggleTheme = useCallback(() => {
+    runThemeTransition(() => applyTheme(mobileTheme === "dark" ? "light" : "dark"));
+  }, [mobileTheme]);
 
   // Keep mobile label in sync with the single root theme source.
   useEffect(() => {
@@ -312,7 +333,7 @@ export default function Header() {
               buildLocalePath={buildLocalePath}
               label={label}
               tFromProvider={tFromProvider}
-              onToggleMenu={() => setOpen((v) => !v)}
+              onToggleMenu={handleToggleMenu}
             />
           </div>
           {/* Reading progress bar (fills as user reads the article)
@@ -350,12 +371,9 @@ export default function Header() {
         buildLocalePath={buildLocalePath}
         buildLocaleRootHref={buildLocaleRootHref}
         label={label}
-        onCloseMenu={() => setOpen(false)}
+        onCloseMenu={handleCloseMenu}
         onLogoClick={handleLogoClick}
-        onToggleTheme={() => {
-          runThemeTransition(() => applyTheme(mobileTheme === "dark" ? "light" : "dark"));
-          // keep menu open so user sees the change, or close if preferred
-        }}
+        onToggleTheme={handleToggleTheme}
       />
     </>
   );

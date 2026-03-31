@@ -1,11 +1,10 @@
 ﻿import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import type { ReactNode } from "react";
-import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
-import { INITIAL_PRELOADER_BOOTSTRAP_SCRIPT } from "@/lib/i18n";
 import { AnalyticsClient, ChunkErrorRecovery } from "@/components/chrome-extras";
-import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
 import InitialPreloader from "@/components/preloader";
+import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
+import { DEFAULT_LOCALE, INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const geistSans = Geist({

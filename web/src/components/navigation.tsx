@@ -3,9 +3,9 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
-import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
+import { type MouseEvent, memo, type RefObject, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
+import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { mapPathToLocale } from "@/lib/seo";
 import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
 import { useTransitionNav } from "./route-wrapper";
@@ -205,11 +205,20 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
     }, HOVER_DELAY_MS);
   };
 
-  useEffect(() => () => { if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current); }, []);
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current) window.clearTimeout(closeTimerRef.current);
+    },
+    [],
+  );
 
   const [useHover, setUseHover] = useState(() => {
     if (typeof window === "undefined") return true;
-    try { return window.matchMedia("(hover: hover) and (pointer: fine)").matches; } catch { return true; }
+    try {
+      return window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch {
+      return true;
+    }
   });
 
   useEffect(() => {
@@ -292,7 +301,10 @@ let _searchModulePromise: Promise<unknown> | null = null;
 function _onGlobalSearchShortcut(e: KeyboardEvent) {
   if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) return;
   for (const tryOpen of _openCallbacks) {
-    if (tryOpen()) { e.preventDefault(); return; }
+    if (tryOpen()) {
+      e.preventDefault();
+      return;
+    }
   }
 }
 
@@ -349,7 +361,11 @@ function SearchButton({
       <button
         ref={buttonRef}
         type="button"
-        onClick={() => { _preloadSearchOverlay(); setOpenMethod("click"); setOpen(true); }}
+        onClick={() => {
+          _preloadSearchOverlay();
+          setOpenMethod("click");
+          setOpen(true);
+        }}
         onFocus={_preloadSearchOverlay}
         onMouseEnter={_preloadSearchOverlay}
         className={[
@@ -382,8 +398,11 @@ function SearchButton({
             setOpen(false);
             setOpenMethod(undefined);
             requestAnimationFrame(() => {
-              try { buttonRef.current?.focus({ preventScroll: true }); }
-              catch { buttonRef.current?.focus(); }
+              try {
+                buttonRef.current?.focus({ preventScroll: true });
+              } catch {
+                buttonRef.current?.focus();
+              }
             });
           }}
           openMethod={openMethod}
@@ -495,7 +514,7 @@ type DesktopProps = {
   tFromProvider: (key: string) => string;
 };
 
-export function NavigationDesktop({
+export const NavigationDesktop = memo(function NavigationDesktop({
   currentLocale,
   pathname,
   buildLocalePath,
@@ -520,7 +539,7 @@ export function NavigationDesktop({
       </div>
     </div>
   );
-}
+});
 
 // ---------------------------------------------------------------------------
 // NavigationMobileControls + NavigationMobileDrawer (formerly navigation-mobile.tsx)
@@ -551,7 +570,7 @@ type MobileDrawerProps = {
   onToggleTheme: () => void;
 };
 
-export function NavigationMobileControls({
+export const NavigationMobileControls = memo(function NavigationMobileControls({
   open,
   currentLocale,
   pathname,
@@ -601,9 +620,9 @@ export function NavigationMobileControls({
       </button>
     </div>
   );
-}
+});
 
-export function NavigationMobileDrawer({
+export const NavigationMobileDrawer = memo(function NavigationMobileDrawer({
   open,
   panelRef,
   firstFocusRef,
@@ -689,4 +708,4 @@ export function NavigationMobileDrawer({
       </div>
     </div>
   );
-}
+});

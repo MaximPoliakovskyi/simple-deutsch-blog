@@ -17,6 +17,7 @@ import {
   getRelatedPostsByCategorySlug,
   getRelatedPostsByTagSlug,
   getTagBySlug,
+  mapGraphQLEnumToUi,
   type PostDetail,
   type PostListItem,
   type PostsConnectionResponse,
@@ -24,7 +25,6 @@ import {
   type Tag,
   type Term,
   type WPPostCard,
-  mapGraphQLEnumToUi,
 } from "@/server/wp";
 
 export {

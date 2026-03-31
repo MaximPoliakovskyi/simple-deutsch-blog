@@ -1,7 +1,7 @@
 ﻿import { notFound } from "next/navigation";
+import PostsGridWithPagination from "@/components/posts-grid-with-pagination";
 import { type Locale, TRANSLATIONS, translateCategory } from "@/lib/i18n";
 import { getCategoryBySlug, getLocaleAwareTaxonomySlug, getPostsByCategory } from "@/lib/posts";
-import PostsGridWithPagination from "@/components/posts-grid-with-pagination";
 
 export async function CategoryPageContent({
   category,

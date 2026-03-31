@@ -15,8 +15,8 @@ import {
   useTransition,
 } from "react";
 import { createPortal } from "react-dom";
-import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { useI18n } from "@/components/providers";
+import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 type SlimPost = {

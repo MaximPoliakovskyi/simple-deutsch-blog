@@ -1,7 +1,7 @@
 ﻿import { notFound } from "next/navigation";
+import PostsGridWithPagination from "@/components/posts-grid-with-pagination";
 import { CEFR_UI_CONFIG, getLevelLabel, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import { getLocaleAwareTaxonomySlug, getPostsByTag, getTagBySlug } from "@/lib/posts";
-import PostsGridWithPagination from "@/components/posts-grid-with-pagination";
 
 type TagNode = {
   id: string;

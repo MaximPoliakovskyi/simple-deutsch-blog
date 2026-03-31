@@ -1,3 +1,4 @@
+export type { Locale, TranslationDictionary } from "@/lib/i18n";
 export type {
   PostDetail,
   PostListItem,
@@ -6,5 +7,3 @@ export type {
   Term,
   WPPostCard,
 } from "@/lib/posts";
-
-export type { Locale, TranslationDictionary } from "@/lib/i18n";

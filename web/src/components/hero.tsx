@@ -1,8 +1,8 @@
 ﻿"use client";
 
 import * as React from "react";
-import type { Locale } from "@/lib/i18n";
 import { useI18n } from "@/components/providers";
+import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
 import PostCard, { CategoryPills } from "./cards";
 
@@ -512,5 +512,3 @@ export default function HeroWithFilters({
     </>
   );
 }
-
-

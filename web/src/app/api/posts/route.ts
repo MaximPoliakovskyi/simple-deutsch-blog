@@ -2,11 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { assertLocale, type Locale } from "@/lib/i18n";
 import {
   getPostBySlug,
+  getPosts,
   getPostsByCategory,
   getPostsByTag,
   getPostsByTagDatabaseId,
   getPostsByTagSlug,
-  getPosts,
   getPostsIndex,
   getPostsPageByCategory,
   type WPPostCard,
@@ -37,9 +37,12 @@ export async function GET(req: Request) {
   // When filtering by language, fetch more posts to ensure we get enough after filtering
   const fetchCount = validLocale ? first * 2 : first;
 
-  console.log(
-    `[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", tagId="${tagIdRaw}", canonicalTagId="${canonicalTagIdRaw}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`,
-  );
+  const isDev = process.env.NODE_ENV !== "production";
+  if (isDev) {
+    console.log(
+      `[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", tagId="${tagIdRaw}", canonicalTagId="${canonicalTagIdRaw}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`,
+    );
+  }
 
   try {
     let posts: unknown[] = [];
@@ -51,14 +54,16 @@ export async function GET(req: Request) {
     if (slug) {
       const post = await getPostBySlug(slug, { locale: validLocale, policy: { type: "DYNAMIC" } });
       posts = post ? [post] : [];
-      console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
+      if (isDev) console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
     } else if (!Number.isNaN(tagId) && tagId > 0) {
       const res = await getPostsByTagDatabaseId(tagId, fetchCount, undefined, validLocale);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from tagId "${tagId}" with locale "${lang}"`,
-      );
+      if (isDev) {
+        console.log(
+          `[API /api/posts] Got ${posts.length} posts from tagId "${tagId}" with locale "${lang}"`,
+        );
+      }
 
       if (
         posts.length === 0 &&
@@ -74,9 +79,11 @@ export async function GET(req: Request) {
         );
         posts = fallbackLocalized.posts?.nodes ?? [];
         pageInfo = fallbackLocalized.posts?.pageInfo ?? pageInfo;
-        console.log(
-          `[API /api/posts] Fallback localized canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
-        );
+        if (isDev) {
+          console.log(
+            `[API /api/posts] Fallback localized canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
+          );
+        }
 
         if (posts.length === 0) {
           const fallbackAnyLang = await getPostsByTagDatabaseId(
@@ -87,18 +94,22 @@ export async function GET(req: Request) {
           );
           posts = fallbackAnyLang.posts?.nodes ?? [];
           pageInfo = fallbackAnyLang.posts?.pageInfo ?? pageInfo;
-          console.log(
-            `[API /api/posts] Fallback any-language canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
-          );
+          if (isDev) {
+            console.log(
+              `[API /api/posts] Fallback any-language canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
+            );
+          }
         }
       }
     } else if (tag) {
       const res = await getPostsByTagSlug(tag, fetchCount, undefined, validLocale);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`,
-      );
+      if (isDev) {
+        console.log(
+          `[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`,
+        );
+      }
     } else if (category) {
       // Try with the specified locale first
       const res = await getPostsPageByCategory({
@@ -108,9 +119,11 @@ export async function GET(req: Request) {
       });
       posts = res.posts;
       pageInfo = res.pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`,
-      );
+      if (isDev) {
+        console.log(
+          `[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`,
+        );
+      }
 
       // If locale-specific fetch returned nothing but a locale was requested, try without locale filter
       if (posts.length === 0 && validLocale) {
@@ -121,20 +134,22 @@ export async function GET(req: Request) {
         });
         posts = fallbackRes.posts;
         pageInfo = fallbackRes.pageInfo;
-        console.log(
-          `[API /api/posts] Fallback: got ${posts.length} posts from category "${category}" (no locale filter)`,
-        );
+        if (isDev) {
+          console.log(
+            `[API /api/posts] Fallback: got ${posts.length} posts from category "${category}" (no locale filter)`,
+          );
+        }
       }
     } else if (validLocale) {
       const res = await getPosts({ first: fetchCount, locale: validLocale });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts for locale "${lang}"`);
+      if (isDev) console.log(`[API /api/posts] Got ${posts.length} posts for locale "${lang}"`);
     } else {
       const res = await getPosts({ first: fetchCount });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts (no filters)`);
+      if (isDev) console.log(`[API /api/posts] Got ${posts.length} posts (no filters)`);
     }
 
     return NextResponse.json({ posts, pageInfo });

@@ -1,3 +1,7 @@
+import CategoriesBlock from "@/components/categories-block";
+import HeroWithFilters from "@/components/hero";
+import LatestPostsSlider from "@/components/latest-posts-slider";
+import SuccessStoriesSlider from "@/components/success-stories-slider";
 import { DEFAULT_LOCALE, formatPostCardDate, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
   buildLocalePostHref,
@@ -7,16 +11,14 @@ import {
   filterOutCEFRLevels,
   getAllCategories,
   getHomePagePosts,
-  getPostsByCategory,
   getPosts,
+  getPostsByCategory,
   type WPPostCard,
 } from "@/lib/posts";
-import CategoriesBlock from "@/components/categories-block";
-import HeroWithFilters from "@/components/hero";
-import LatestPostsSlider from "@/components/latest-posts-slider";
-import SuccessStoriesSlider from "@/components/success-stories-slider";
 
 export const revalidate = 60;
+
+type CategoryNode = { id: string; name: string; slug: string };
 
 export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   const effectiveLocale = locale ?? DEFAULT_LOCALE;
@@ -49,7 +51,6 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   }));
 
   // Hero categories
-  type CategoryNode = { id: string; name: string; slug: string };
   const allCategories = extractConnectionNodes<CategoryNode>(allCategoriesResp?.categories);
   const heroCategories = filterOutCEFRLevels(
     deduplicateCategories(filterHiddenCategories(allCategories)),
@@ -57,7 +58,8 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
 
   // Latest posts slider
   const t = TRANSLATIONS[effectiveLocale];
-  const latestPosts = ((latestPostsResp as { posts?: { nodes?: WPPostCard[] } }).posts?.nodes ?? []) as WPPostCard[];
+  const latestPosts: WPPostCard[] =
+    (latestPostsResp as { posts?: { nodes?: WPPostCard[] } | null } | null)?.posts?.nodes ?? [];
   const mappedLatest = latestPosts.map((post) => ({
     ...post,
     readingText: post.readingText ?? null,
@@ -66,7 +68,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
   }));
 
   // Success stories slider
-  const successPosts = (successStoriesResp.posts ?? []) as WPPostCard[];
+  const successPosts: WPPostCard[] = (successStoriesResp.posts ?? []) as WPPostCard[];
   const mappedSuccess = successPosts.map((post) => ({
     ...post,
     readingText: post.readingText ?? null,
@@ -94,9 +96,7 @@ export default async function HomePage({ locale }: { locale?: Locale } = {}) {
           description={t.successStoriesDescription}
         />
       )}
-      {mappedLatest.length > 0 && (
-        <LatestPostsSlider posts={mappedLatest} title={t.latestPosts} />
-      )}
+      {mappedLatest.length > 0 && <LatestPostsSlider posts={mappedLatest} title={t.latestPosts} />}
       <CategoriesBlock locale={effectiveLocale} />
     </>
   );

@@ -2,8 +2,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { DEFAULT_LOCALE } from "@/lib/i18n";
 import StatusPage from "@/components/status-page";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 export default function AppError({
   error,
@@ -13,8 +13,10 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // console.error(error);
-  }, []);
+    if (process.env.NODE_ENV !== "production") {
+      console.error("[AppError]", error);
+    }
+  }, [error]);
 
   const isDev = process.env.NODE_ENV === "development";
   const message = isDev ? error.message : "Something went wrong. Please try again.";
