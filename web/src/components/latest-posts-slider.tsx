@@ -83,7 +83,7 @@ export default function LatestPostsSlider({ posts = [], title = "Latest posts" }
           data-stories-scroller
           className="
             flex snap-x snap-mandatory overflow-x-auto
-            gap-8 pb-4
+            gap-8 pt-2 pb-4
             [-ms-overflow-style:none] [scrollbar-width:none]
           "
           style={{ scrollBehavior: "smooth" }}

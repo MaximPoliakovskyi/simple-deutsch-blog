@@ -107,17 +107,17 @@ export default async function CategoriesBlock({
 
     if (!selectedCategory) {
       return (
-        <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
+        <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
           <section
             aria-label={TRANSLATIONS[effectiveLocale].levels}
             data-categories-scope
-            className="mx-auto max-w-7xl px-4 py-10 text-white"
+            className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
           >
             <div className="space-y-2">
-              <h2 className="text-3xl font-extrabold mb-8">
+              <h2 className="text-3xl font-semibold tracking-tight mb-8">
                 {TRANSLATIONS[effectiveLocale].levelsHeading}
               </h2>
-              <p className="text-base leading-relaxed text-gray-300 max-w-2xl">
+              <p className="text-base leading-relaxed text-neutral-600 dark:text-gray-300 max-w-2xl">
                 {TRANSLATIONS[effectiveLocale].levelsDescription}
               </p>
             </div>
@@ -159,67 +159,45 @@ export default async function CategoriesBlock({
 
   return (
     // Match success stories slider background (full-bleed dark band)
-    <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
+    <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
       <section
         aria-label={TRANSLATIONS[effectiveLocale].levels}
         data-categories-scope
-        className="mx-auto max-w-7xl px-4 py-10 text-white"
+        className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
       >
+        {/* Heading/hover color scoping for dark mode */}
         <style>{`
-          [data-categories-scope] h1,
-          [data-categories-scope] h2,
-          [data-categories-scope] h3,
-          [data-categories-scope] h4,
-          [data-categories-scope] h5,
-          [data-categories-scope] h6,
-          [data-categories-scope] h1 *,
-          [data-categories-scope] h2 *,
-          [data-categories-scope] h3 *,
-          [data-categories-scope] h4 *,
-          [data-categories-scope] h5 *,
-          [data-categories-scope] h6 *,
-          [data-categories-scope] .post-title,
-          [data-categories-scope] [data-post-title],
-          [data-categories-scope] .prose :where(h1,h2,h3,h4,h5,h6),
-          [data-categories-scope] .prose :where(h1,h2,h3,h4,h5,h6) a {
+          html.dark [data-categories-scope] h1,
+          html.dark [data-categories-scope] h2,
+          html.dark [data-categories-scope] h3,
+          html.dark [data-categories-scope] h4,
+          html.dark [data-categories-scope] h5,
+          html.dark [data-categories-scope] h6,
+          html.dark [data-categories-scope] h1 *,
+          html.dark [data-categories-scope] h2 *,
+          html.dark [data-categories-scope] h3 *,
+          html.dark [data-categories-scope] h4 *,
+          html.dark [data-categories-scope] h5 *,
+          html.dark [data-categories-scope] h6 * {
             color: #ffffff !important;
             transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
-            will-change: color;
           }
-          [data-categories-scope] .group:hover h1,
-          [data-categories-scope] .group:hover h2,
-          [data-categories-scope] .group:hover h3,
-          [data-categories-scope] .group:hover h4,
-          [data-categories-scope] .group:hover h5,
-          [data-categories-scope] .group:hover h6,
-          [data-categories-scope] .group:focus-within h1,
-          [data-categories-scope] .group:focus-within h2,
-          [data-categories-scope] .group:focus-within h3,
-          [data-categories-scope] .group:focus-within h4,
-          [data-categories-scope] .group:focus-within h5,
-          [data-categories-scope] .group:focus-within h6,
-          [data-categories-scope] .group:hover h1 *,
-          [data-categories-scope] .group:hover h2 *,
-          [data-categories-scope] .group:hover h3 *,
-          [data-categories-scope] .group:hover h4 *,
-          [data-categories-scope] .group:hover h5 *,
-          [data-categories-scope] .group:hover h6 *,
-          [data-categories-scope] .group:focus-within h1 *,
-          [data-categories-scope] .group:focus-within h2 *,
-          [data-categories-scope] .group:focus-within h3 *,
-          [data-categories-scope] .group:focus-within h4 *,
-          [data-categories-scope] .group:focus-within h5 *,
-          [data-categories-scope] .group:focus-within h6 * {
-            color: #d1d5db !important; /* gray-300 */
+          html.dark [data-categories-scope] .group:hover h1 *,
+          html.dark [data-categories-scope] .group:hover h2 *,
+          html.dark [data-categories-scope] .group:hover h3 *,
+          html.dark [data-categories-scope] .group:focus-within h1 *,
+          html.dark [data-categories-scope] .group:focus-within h2 *,
+          html.dark [data-categories-scope] .group:focus-within h3 * {
+            color: #d1d5db !important;
             transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
           }
         `}</style>
 
         <div className="space-y-2">
-          <h2 className="text-3xl font-extrabold mb-8">
+          <h2 className="text-3xl font-semibold tracking-tight mb-8">
             {TRANSLATIONS[effectiveLocale].levelsHeading}
           </h2>
-          <p className="text-base leading-relaxed text-gray-300 max-w-2xl">
+          <p className="text-base leading-relaxed text-neutral-600 dark:text-gray-300 max-w-2xl">
             {TRANSLATIONS[effectiveLocale].levelsDescription}
           </p>
         </div>

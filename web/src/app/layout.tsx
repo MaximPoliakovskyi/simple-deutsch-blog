@@ -30,6 +30,16 @@ const THEME_INIT_SCRIPT = `
     const theme = stored === "dark" || stored === "light" ? stored : (prefersDark ? "dark" : "light");
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
+    // Seed the two most critical CSS variables inline so the preloader
+    // background is opaque from the very first paint — before globals.css
+    // has been fetched and parsed (especially important on slow connections).
+    if (theme === "dark") {
+      root.style.setProperty("--bg", "222 47% 8%");
+      root.style.setProperty("--fg", "210 15% 96%");
+    } else {
+      root.style.setProperty("--bg", "0 0% 100%");
+      root.style.setProperty("--fg", "222 22% 12%");
+    }
   } catch (_) {}
 })();
 `;

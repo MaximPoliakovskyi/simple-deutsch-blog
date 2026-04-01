@@ -42,63 +42,40 @@ export default function SuccessStoriesSlider({
 
   const baseBtn =
     "h-10 w-10 rounded-full border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
-  const enabledBtn = "border-white/20 text-white hover:bg-white/10 cursor-pointer";
-  const disabledBtn = "border-white/10 bg-white/5 text-white/40 cursor-not-allowed";
+  const enabledBtn = "border-neutral-300 text-neutral-700 hover:bg-neutral-200/60 dark:border-neutral-600 dark:text-neutral-200 dark:hover:bg-neutral-700/40 cursor-pointer";
+  const disabledBtn = "border-neutral-200 text-neutral-400 dark:border-neutral-700 dark:text-neutral-600 cursor-not-allowed";
 
   return (
-    <div className="dark -mx-[calc(50vw-50%)] w-screen bg-[#0B0D16]">
+    <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
       <section
         aria-label={title}
         data-slider-scope
-        className="mx-auto max-w-7xl px-4 py-10 text-white"
+        className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
       >
-        {/* Force white titles; keep smooth hover color */}
+        {/* Heading/hover color scoping for dark mode */}
         <style>{`
-          [data-slider-scope][data-slider-scope] h1,
-          [data-slider-scope][data-slider-scope] h2,
-          [data-slider-scope][data-slider-scope] h3,
-          [data-slider-scope][data-slider-scope] h4,
-          [data-slider-scope][data-slider-scope] h5,
-          [data-slider-scope][data-slider-scope] h6,
-          [data-slider-scope][data-slider-scope] h1 *,
-          [data-slider-scope][data-slider-scope] h2 *,
-          [data-slider-scope][data-slider-scope] h3 *,
-          [data-slider-scope][data-slider-scope] h4 *,
-          [data-slider-scope][data-slider-scope] h5 *,
-          [data-slider-scope][data-slider-scope] h6 *,
-          [data-slider-scope][data-slider-scope] .post-title,
-          [data-slider-scope][data-slider-scope] [data-post-title],
-          [data-slider-scope][data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6),
-          [data-slider-scope][data-slider-scope] .prose :where(h1,h2,h3,h4,h5,h6) a {
+          html.dark [data-slider-scope][data-slider-scope] h1,
+          html.dark [data-slider-scope][data-slider-scope] h2,
+          html.dark [data-slider-scope][data-slider-scope] h3,
+          html.dark [data-slider-scope][data-slider-scope] h4,
+          html.dark [data-slider-scope][data-slider-scope] h5,
+          html.dark [data-slider-scope][data-slider-scope] h6,
+          html.dark [data-slider-scope][data-slider-scope] h1 *,
+          html.dark [data-slider-scope][data-slider-scope] h2 *,
+          html.dark [data-slider-scope][data-slider-scope] h3 *,
+          html.dark [data-slider-scope][data-slider-scope] h4 *,
+          html.dark [data-slider-scope][data-slider-scope] h5 *,
+          html.dark [data-slider-scope][data-slider-scope] h6 * {
             color: #ffffff !important;
             transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
-            will-change: color;
           }
-          [data-slider-scope][data-slider-scope] .group:hover h1,
-          [data-slider-scope][data-slider-scope] .group:hover h2,
-          [data-slider-scope][data-slider-scope] .group:hover h3,
-          [data-slider-scope][data-slider-scope] .group:hover h4,
-          [data-slider-scope][data-slider-scope] .group:hover h5,
-          [data-slider-scope][data-slider-scope] .group:hover h6,
-          [data-slider-scope][data-slider-scope] .group:focus-within h1,
-          [data-slider-scope][data-slider-scope] .group:focus-within h2,
-          [data-slider-scope][data-slider-scope] .group:focus-within h3,
-          [data-slider-scope][data-slider-scope] .group:focus-within h4,
-          [data-slider-scope][data-slider-scope] .group:focus-within h5,
-          [data-slider-scope][data-slider-scope] .group:focus-within h6,
-          [data-slider-scope][data-slider-scope] .group:hover h1 *,
-          [data-slider-scope][data-slider-scope] .group:hover h2 *,
-          [data-slider-scope][data-slider-scope] .group:hover h3 *,
-          [data-slider-scope][data-slider-scope] .group:hover h4 *,
-          [data-slider-scope][data-slider-scope] .group:hover h5 *,
-          [data-slider-scope][data-slider-scope] .group:hover h6 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h3 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h4 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h5 *,
-          [data-slider-scope][data-slider-scope] .group:focus-within h6 * {
-            color: #d1d5db !important; /* gray-300 */
+          html.dark [data-slider-scope][data-slider-scope] .group:hover h1 *,
+          html.dark [data-slider-scope][data-slider-scope] .group:hover h2 *,
+          html.dark [data-slider-scope][data-slider-scope] .group:hover h3 *,
+          html.dark [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
+          html.dark [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
+          html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
+            color: #d1d5db !important;
             transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
           }
         `}</style>
@@ -139,7 +116,7 @@ export default function SuccessStoriesSlider({
           data-stories-scroller
           className="
             flex snap-x snap-mandatory overflow-x-auto
-            gap-8 pb-4
+            gap-8 pt-2 pb-4
             [-ms-overflow-style:none] [scrollbar-width:none]
           "
           style={{ scrollBehavior: "smooth" }}

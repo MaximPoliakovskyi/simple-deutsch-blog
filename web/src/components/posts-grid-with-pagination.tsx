@@ -59,7 +59,7 @@ export default function PostsGridWithPagination({
         skipIds,
       };
 
-      const res = await fetch(`/api/posts/load-more`, {
+      const res = await fetch(`/api/posts`, {
         method: "POST",
         headers: { "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify(body),
@@ -94,7 +94,7 @@ export default function PostsGridWithPagination({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
         {posts.map((post, idx) => (
           <div key={stableKey(post) || (post.slug as string)}>
             <PostCard post={post} index={idx} />

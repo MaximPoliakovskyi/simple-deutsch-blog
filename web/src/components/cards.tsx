@@ -118,7 +118,7 @@ const PostCard = memo(function PostCard({
 
   return (
     <article
-      className={["group", "sd-fade-in-item", className].filter(Boolean).join(" ")}
+      className={["group", "sd-fade-in-item", "transition-transform duration-300 ease-out hover:-translate-y-1.5", className].filter(Boolean).join(" ")}
       style={{ animationDelay: `${index * 75}ms` }}
     >
       <Link href={href} className="block" aria-label={post.title}>

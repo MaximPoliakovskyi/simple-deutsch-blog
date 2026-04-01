@@ -75,44 +75,46 @@ export async function LevelsIndexContent({ locale }: { locale: Locale }) {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-8 text-3xl font-semibold">{t.levelsHeading}</h1>
-      <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
-        {t.levelsDescription}
-      </p>
-      <ul className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-        {CEFR_ORDER.map((code, idx) => {
-          const slug = code.toLowerCase();
-          const ui = CEFR_UI_CONFIG[code];
-          const count = countsMap.get(slug) ?? 0;
-          const titleLabel = (t[`cefr.${code}.title`] as string) ?? getLevelLabel(slug, locale);
-          const description =
-            (t[`cefr.${code}.description`] as string) ?? getLevelDescription(slug, locale) ?? "";
+    <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
+      <div className="mx-auto max-w-7xl px-4 py-10">
+        <h1 className="mb-4 text-3xl font-semibold">{t.levelsHeading}</h1>
+        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+          {t.levelsDescription}
+        </p>
+        <ul className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+          {CEFR_ORDER.map((code, idx) => {
+            const slug = code.toLowerCase();
+            const ui = CEFR_UI_CONFIG[code];
+            const count = countsMap.get(slug) ?? 0;
+            const titleLabel = (t[`cefr.${code}.title`] as string) ?? getLevelLabel(slug, locale);
+            const description =
+              (t[`cefr.${code}.description`] as string) ?? getLevelDescription(slug, locale) ?? "";
 
-          return (
-            <li
-              key={slug}
-              className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
-              style={{ animationDelay: `${idx * 60}ms` }}
-            >
-              <Link href={buildLocalizedHref(locale, `/levels/${slug}`)} className="group block">
-                <div className="mb-1 flex items-baseline justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={`h-3 w-3 rounded-full ${ui.dotClass}`} />
-                    <h2 className="text-lg font-medium group-hover:underline">
-                      {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
-                    </h2>
+            return (
+              <li
+                key={slug}
+                className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+                style={{ animationDelay: `${idx * 60}ms` }}
+              >
+                <Link href={buildLocalizedHref(locale, `/levels/${slug}`)} className="group block">
+                  <div className="mb-1 flex items-baseline justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`h-3 w-3 rounded-full ${ui.dotClass}`} />
+                      <h2 className="text-lg font-medium group-hover:underline">
+                        {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
+                      </h2>
+                    </div>
+                    <span className="text-xs text-neutral-500">
+                      {formatLocalizedPostCount(count, locale)}
+                    </span>
                   </div>
-                  <span className="text-xs text-neutral-500">
-                    {formatLocalizedPostCount(count, locale)}
-                  </span>
-                </div>
-                <p className="text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </div>
   );
 }

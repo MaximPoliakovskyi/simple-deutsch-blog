@@ -7,7 +7,7 @@ import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "re
 import { useI18n } from "@/components/providers";
 import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { mapPathToLocale } from "@/lib/seo";
-import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
+import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme, type ThemeTransitionCoords } from "@/lib/theme";
 import { useTransitionNav } from "./route-wrapper";
 
 // ---------------------------------------------------------------------------
@@ -26,9 +26,9 @@ function ThemeToggle() {
     return unsubscribe;
   }, []);
 
-  function setTheme(next: Theme): void {
+  function setTheme(next: Theme, coords?: ThemeTransitionCoords): void {
     if (!mounted) return;
-    runThemeTransition(() => applyTheme(next));
+    runThemeTransition(() => applyTheme(next), coords);
   }
 
   if (!mounted) return null;
@@ -36,7 +36,7 @@ function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={(e) => setTheme(isDark ? "light" : "dark", { x: e.clientX, y: e.clientY })}
       aria-pressed={isDark}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Light mode" : "Dark mode"}
@@ -567,7 +567,7 @@ type MobileDrawerProps = {
   label: (key: string, fallback: string) => string;
   onCloseMenu: () => void;
   onLogoClick: (event: MouseEvent<HTMLAnchorElement>) => void;
-  onToggleTheme: () => void;
+  onToggleTheme: (event: MouseEvent<HTMLButtonElement>) => void;
 };
 
 export function NavigationMobileControls({

@@ -5,7 +5,6 @@ import {
   type TransitionEvent,
   useCallback,
   useEffect,
-  useId,
   useRef,
   useState,
 } from "react";
@@ -13,31 +12,42 @@ import { setDocumentLoadingState } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 // ---------------------------------------------------------------------------
-// PreloaderUI — animation engine (formerly preloader-client.tsx)
+// PreloaderUI — quote-cycling animation with per-letter stagger
 // ---------------------------------------------------------------------------
 
-const FADE_OUT_MS = 320;
-const FADE_OUT_WATCHDOG_MS = FADE_OUT_MS + 150;
-const HIDE_AFTER_MS = 1500;
-const FLIP_INTERVAL_MS = 820;
-const LETTER_STAGGER_MS = 52;
-const LETTER_SWAP_MS = 150;
-const ROTATION_STEP_MS = 900;
+const FADE_OUT_MS = 600;
+const FADE_OUT_WATCHDOG_MS = FADE_OUT_MS + 250;
+const LETTER_STAGGER_MS = 30;
+const QUOTE_HOLD_MS = 2000;
+const QUOTE_FADE_OUT_MS = 400;
+const QUOTE_PRE_FADE_MS = 300;
 
-const WORDS = [
-  "Weiter so",
-  "Gut gemacht",
-  "Du schaffst das",
-  "Kleiner Schritt",
-  "Dranbleiben",
-  "Los geht's",
-  "Sehr gut",
-  "Mutig weiter",
+const QUOTES = [
+  "Jede Sprache ist ein Schlüssel zu einer neuen Welt",
+  "Schritt für Schritt wird der Weg kürzer",
+  "Übung macht den Meister",
+  "Wer eine Sprache lernt, gewinnt eine Seele",
+  "Heute ein Wort, morgen ein Satz",
+  "Jeder Fehler bringt dich näher ans Ziel",
+  "Sprache öffnet Türen, die kein Schlüssel erreicht",
+  "Kleine Fortschritte sind auch Fortschritte",
+  "Die beste Zeit anzufangen ist jetzt",
+  "Mut steht am Anfang, Glück am Ende",
+  "Wissen ist ein Schatz, der überall willkommen ist",
+  "Lernen ist wie Rudern gegen den Strom",
 ];
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const shuffled = arr.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 function prefersReducedMotionNow() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
-
   try {
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   } catch {
@@ -45,45 +55,43 @@ function prefersReducedMotionNow() {
   }
 }
 
-function clearTimer(timerRef: MutableRefObject<number | null>) {
-  if (timerRef.current !== null) {
-    window.clearTimeout(timerRef.current);
-    timerRef.current = null;
+function clearTimer(ref: MutableRefObject<number | null>) {
+  if (ref.current !== null) {
+    window.clearTimeout(ref.current);
+    ref.current = null;
   }
 }
+
+type LetterState = { char: string; visible: boolean };
+type WordGroup = { letters: LetterState[]; isSpace: boolean };
 
 function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
   const [phase, setPhase] = useState<"visible" | "fadingOut">("visible");
   const [showPreloader, setShowPreloader] = useState(true);
-  const [chars, setChars] = useState<string[]>([]);
-  const [flips, setFlips] = useState<boolean[]>([]);
+  const [words, setWords] = useState<WordGroup[]>([]);
+  const [quoteReady, setQuoteReady] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
   const [jsReady, setJsReady] = useState(false);
+
   const fadeStartedRef = useRef(false);
   const finishedRef = useRef(false);
-  const hideTimerRef = useRef<number | null>(null);
+  const pageLoadedRef = useRef(false);
+  const quotesShownRef = useRef(0);
   const fadeWatchdogRef = useRef<number | null>(null);
   const cycleTimerRef = useRef<number | null>(null);
-  const animationTimersRef = useRef<number[]>([]);
-  const charsRef = useRef<string[]>([]);
-  const lastWordRef = useRef<string | null>(null);
-  const id = useId();
-  const charKeysRef = useRef<Record<number, string>>({});
+  const letterTimersRef = useRef<number[]>([]);
 
-  const clearAnimationTimers = useCallback(() => {
-    for (const timer of animationTimersRef.current) {
-      window.clearTimeout(timer);
-    }
-    animationTimersRef.current = [];
+  const clearAllTimers = useCallback(() => {
     clearTimer(cycleTimerRef);
+    for (const t of letterTimersRef.current) window.clearTimeout(t);
+    letterTimersRef.current = [];
   }, []);
 
   const finishPreloader = useCallback(() => {
     if (finishedRef.current) return;
-
     finishedRef.current = true;
-    clearTimer(hideTimerRef);
     clearTimer(fadeWatchdogRef);
-    clearAnimationTimers();
+    clearAllTimers();
 
     try {
       unlockScroll();
@@ -93,127 +101,130 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
     document.documentElement.setAttribute("data-app-visible", "1");
     onFinished?.();
     setShowPreloader(false);
-  }, [clearAnimationTimers, onFinished]);
+  }, [clearAllTimers, onFinished]);
 
   const startFadeOut = useCallback(() => {
     if (fadeStartedRef.current) return;
-
     fadeStartedRef.current = true;
-    clearAnimationTimers();
+    clearAllTimers();
 
     if (prefersReducedMotionNow()) {
       finishPreloader();
       return;
     }
 
-    setPhase("fadingOut");
-    fadeWatchdogRef.current = window.setTimeout(finishPreloader, FADE_OUT_WATCHDOG_MS);
-  }, [clearAnimationTimers, finishPreloader]);
+    // Fade out quote first, then fade the whole overlay
+    setDismissing(true);
+    window.setTimeout(() => {
+      setPhase("fadingOut");
+    }, QUOTE_PRE_FADE_MS);
+    fadeWatchdogRef.current = window.setTimeout(
+      finishPreloader,
+      QUOTE_PRE_FADE_MS + FADE_OUT_WATCHDOG_MS,
+    );
+  }, [clearAllTimers, finishPreloader]);
 
-  useEffect(() => {
-    charsRef.current = chars;
-  }, [chars]);
+  /** Reveal letters of a quote one by one, then call onComplete after the hold. */
+  const revealQuote = useCallback(
+    (
+      quote: string,
+      onComplete: () => void,
+    ) => {
+      // Split into word groups, preserving spaces as separators
+      const rawWords = quote.split(/(\s+)/);
+      const groups: WordGroup[] = rawWords.map((seg) => {
+        const isSpace = /^\s+$/.test(seg);
+        return {
+          isSpace,
+          letters: Array.from(seg).map((c) => ({ char: isSpace ? "\u00A0" : c, visible: false })),
+        };
+      });
+      setWords(groups);
+      setQuoteReady(true);
+      setDismissing(false);
+
+      // Build a flat index → (groupIdx, letterIdx) mapping for stagger
+      const flatMap: { g: number; l: number }[] = [];
+      for (let g = 0; g < groups.length; g++) {
+        for (let l = 0; l < groups[g].letters.length; l++) {
+          flatMap.push({ g, l });
+        }
+      }
+
+      // Stagger each letter in
+      for (let i = 0; i < flatMap.length; i++) {
+        const { g, l } = flatMap[i];
+        const timer = window.setTimeout(() => {
+          setWords((prev) => {
+            const next = prev.map((w) => ({ ...w, letters: w.letters.slice() }));
+            if (next[g]?.letters[l]) {
+              next[g].letters[l] = { ...next[g].letters[l], visible: true };
+            }
+            return next;
+          });
+        }, i * LETTER_STAGGER_MS);
+        letterTimersRef.current.push(timer);
+      }
+
+      // After all letters revealed + hold time, call onComplete
+      const totalRevealMs = flatMap.length * LETTER_STAGGER_MS;
+      cycleTimerRef.current = window.setTimeout(() => {
+        if (fadeStartedRef.current || finishedRef.current) return;
+        onComplete();
+      }, totalRevealMs + QUOTE_HOLD_MS);
+    },
+    [],
+  );
 
   useEffect(() => {
     try {
       lockScroll();
     } catch {}
 
-    const pickNextWord = (exclude?: string) => {
-      if (WORDS.length === 0) return "";
-      if (!exclude) return WORDS[0];
+    const shuffled = shuffleArray(QUOTES);
+    let idx = 0;
 
-      const currentIndex = WORDS.indexOf(exclude);
-      if (currentIndex === -1) return WORDS[0];
-      return WORDS[(currentIndex + 1) % WORDS.length];
-    };
+    setJsReady(true);
 
-    const setWordImmediately = (word: string) => {
-      const nextChars = Array.from(word).map((char) => (char === " " ? "\u00A0" : char));
-      charsRef.current = nextChars;
-      setChars(nextChars);
-      setFlips(new Array(nextChars.length).fill(false));
-    };
-
-    const scheduleNextCycle = () => {
-      clearTimer(cycleTimerRef);
-      cycleTimerRef.current = window.setTimeout(runFlipCycle, FLIP_INTERVAL_MS);
-    };
-
-    const runFlipCycle = () => {
+    const showQuote = () => {
       if (fadeStartedRef.current || finishedRef.current) return;
 
-      const nextWord = pickNextWord(lastWordRef.current ?? undefined);
-      lastWordRef.current = nextWord;
+      revealQuote(shuffled[idx], () => {
+        quotesShownRef.current += 1;
 
-      const nextChars = Array.from(nextWord).map((char) => (char === " " ? "\u00A0" : char));
-      const maxLength = Math.max(charsRef.current.length, nextChars.length);
+        // Can we dismiss? Page loaded AND at least one full quote shown
+        if (pageLoadedRef.current && quotesShownRef.current >= 1) {
+          startFadeOut();
+          return;
+        }
 
-      setChars((previousChars) => {
-        const padded = previousChars.slice();
-        while (padded.length < maxLength) padded.push("");
-        charsRef.current = padded.slice();
-        return padded;
+        // Fade out current quote
+        setDismissing(true);
+
+        cycleTimerRef.current = window.setTimeout(() => {
+          if (fadeStartedRef.current || finishedRef.current) return;
+          idx = (idx + 1) % shuffled.length;
+          showQuote();
+        }, QUOTE_FADE_OUT_MS);
       });
-      setFlips((previousFlips) => {
-        const padded = previousFlips.slice();
-        while (padded.length < maxLength) padded.push(false);
-        return padded;
-      });
-
-      for (let index = 0; index < maxLength; index += 1) {
-        const startDelay = index * LETTER_STAGGER_MS;
-
-        const flipTimer = window.setTimeout(() => {
-          setFlips((previousFlips) => {
-            const nextFlips = previousFlips.slice();
-            nextFlips[index] = true;
-            return nextFlips;
-          });
-        }, startDelay);
-
-        const swapTimer = window.setTimeout(() => {
-          setChars((previousChars) => {
-            const updatedChars = previousChars.slice();
-            updatedChars[index] = nextChars[index] ?? "";
-            charsRef.current = updatedChars.slice();
-            return updatedChars;
-          });
-          setFlips((previousFlips) => {
-            const nextFlips = previousFlips.slice();
-            nextFlips[index] = false;
-            return nextFlips;
-          });
-        }, startDelay + LETTER_SWAP_MS);
-
-        animationTimersRef.current.push(flipTimer, swapTimer);
-      }
-
-      scheduleNextCycle();
     };
 
-    const initialWord = pickNextWord();
-    lastWordRef.current = initialWord;
-    setWordImmediately(initialWord);
-    setJsReady(true);
-    scheduleNextCycle();
+    showQuote();
 
-    const scheduleHide = () => {
-      clearTimer(hideTimerRef);
-      hideTimerRef.current = window.setTimeout(startFadeOut, HIDE_AFTER_MS);
+    const onPageLoad = () => {
+      pageLoadedRef.current = true;
     };
 
     if (document.readyState === "complete") {
-      scheduleHide();
+      pageLoadedRef.current = true;
     } else {
-      window.addEventListener("load", scheduleHide, { once: true });
+      window.addEventListener("load", onPageLoad, { once: true });
     }
 
     return () => {
-      window.removeEventListener("load", scheduleHide);
-      clearTimer(hideTimerRef);
+      window.removeEventListener("load", onPageLoad);
       clearTimer(fadeWatchdogRef);
-      clearAnimationTimers();
+      clearAllTimers();
 
       if (!finishedRef.current) {
         try {
@@ -221,7 +232,7 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
         } catch {}
       }
     };
-  }, [clearAnimationTimers, startFadeOut]);
+  }, [clearAllTimers, revealQuote, startFadeOut]);
 
   const handleTransitionEnd = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
@@ -251,47 +262,53 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
       style={{ ["--sd-preloader-fade-ms" as string]: `${FADE_OUT_MS}ms` }}
       onTransitionEnd={handleTransitionEnd}
       onTransitionCancel={handleTransitionCancel}
-      className="select-none"
     >
-      <div className={`sd-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
-        {WORDS.slice(0, 6).map((word, index) => (
+      {/* CSS-only fallback rotator (before JS hydrates) */}
+      <div className={`sd-quote-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
+        {QUOTES.slice(0, 4).map((quote, i) => (
           <span
-            key={word}
-            className="sd-rotator-word"
-            style={{
-              ["--sd-preloader-word-delay" as string]: `${index * ROTATION_STEP_MS}ms`,
-            }}
+            key={quote}
+            className="sd-rotator-quote"
+            // opacity:0 in HTML ensures text is invisible before CSS loads (FOUC fix).
+            // CSS animations override inline styles, so the animation still runs correctly.
+            style={{ animationDelay: `${i * 3}s`, opacity: 0 }}
           >
-            {word}
+            {quote}
           </span>
         ))}
       </div>
 
+      {/* JS-powered letter-by-letter quote display */}
       <div
-        suppressHydrationWarning
-        className={`sd-preloader-word ${jsReady ? "sd-js-active" : "sd-js-hidden"}`}
+        className={`sd-preloader-quote ${jsReady ? "" : "sd-js-hidden"} ${quoteReady ? "sd-quote-ready" : ""} ${dismissing ? "sd-quote-dismiss" : ""}`}
         aria-live="polite"
       >
-        {chars.map((char, index) => {
-          let key = charKeysRef.current[index];
-          if (!key) {
-            key = `${id}-${index}`;
-            charKeysRef.current[index] = key;
-          }
-
-          return (
-            <span key={key} className={`sd-letter ${flips[index] ? "flipping" : ""}`}>
-              {char}
+        <p className="sd-quote-text">
+          {words.map((word, wi) => (
+            <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: stable word position
+              key={wi}
+              className={word.isSpace ? "sd-word-space" : "sd-word"}
+            >
+              {word.letters.map((l, li) => (
+                <span
+                  // biome-ignore lint/suspicious/noArrayIndexKey: stable letter position
+                  key={li}
+                  className={`sd-letter ${l.visible ? "sd-letter-in" : ""}`}
+                >
+                  {l.char}
+                </span>
+              ))}
             </span>
-          );
-        })}
+          ))}
+        </p>
       </div>
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
-// InitialPreloader — default export (formerly initial-preloader.tsx)
+// InitialPreloader — default export
 // ---------------------------------------------------------------------------
 
 export default function InitialPreloader() {

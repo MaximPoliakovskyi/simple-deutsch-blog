@@ -1,10 +1,14 @@
 "use client";
 
 export type Theme = "light" | "dark";
+export type ThemeTransitionCoords = { x: number; y: number };
 
 export const THEME_STORAGE_KEY = "sd-theme";
-const THEME_CROSSFADE_MS = 220;
-const THEME_CROSSFADE_EASE = "ease-in-out";
+const THEME_VEIL_IN_MS = 180;
+const THEME_VEIL_OUT_MS = 680;
+const THEME_VEIL_PEAK_OPACITY = 0.96;
+const THEME_VEIL_EASE_IN = "cubic-bezier(0.33, 1, 0.68, 1)";
+const THEME_VEIL_EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
 const THEME_OVERLAY_CLASS = "sd-theme-crossfade-overlay";
 const THEME_STEP_DEBUG_WINDOW_MS = 1000;
 const DEBUG_THEME_STEP =
@@ -25,6 +29,12 @@ export function getRootTheme(): Theme {
 
 export function applyTheme(theme: Theme): void {
   const root = getRoot();
+
+  // Remove the inline CSS variables seeded by the bootstrap init script.
+  // By the time the user can interact (React has hydrated), globals.css is
+  // definitely loaded, so CSS rules can take over cleanly.
+  root.style.removeProperty("--bg");
+  root.style.removeProperty("--fg");
 
   if (DEBUG_THEME_STEP) {
     debugThemeStep(root, theme);
@@ -51,7 +61,10 @@ function clearThemeTransitionArtifacts() {
   activeOverlay = null;
 }
 
-export function runThemeTransition(toggleTheme: () => void) {
+export function runThemeTransition(
+  toggleTheme: () => void,
+  coords?: ThemeTransitionCoords,
+) {
   if (typeof window === "undefined" || typeof document === "undefined") {
     toggleTheme();
     return;
@@ -65,40 +78,51 @@ export function runThemeTransition(toggleTheme: () => void) {
   }
 
   clearThemeTransitionArtifacts();
+  void coords;
 
-  const overlay = document.createElement("div");
-  overlay.className = THEME_OVERLAY_CLASS;
-  overlay.style.transitionDuration = `${Math.round(THEME_CROSSFADE_MS / 2)}ms`;
-  overlay.style.transitionTimingFunction = THEME_CROSSFADE_EASE;
-  overlay.style.opacity = "0";
-  overlay.style.backgroundColor =
+  const oldBg =
     window.getComputedStyle(document.body).backgroundColor ||
     window.getComputedStyle(document.documentElement).backgroundColor ||
     "#ffffff";
+
+  const overlay = document.createElement("div");
+  overlay.className = THEME_OVERLAY_CLASS;
+  Object.assign(overlay.style, {
+    backgroundColor: oldBg,
+    opacity: "0",
+    transition: "none",
+  });
   document.body.appendChild(overlay);
   activeOverlay = overlay;
 
-  const fadeInId = window.setTimeout(() => {
-    overlay.style.opacity = "1";
-  }, 0);
+  // Phase 1: cover the screen with the old-theme veil so the theme swap is invisible.
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      overlay.style.transition = `opacity ${THEME_VEIL_IN_MS}ms ${THEME_VEIL_EASE_IN}`;
+      overlay.style.opacity = String(THEME_VEIL_PEAK_OPACITY);
+    });
+  });
 
-  const switchId = window.setTimeout(
-    () => {
-      toggleTheme();
+  const swapId = window.setTimeout(() => {
+    if (activeOverlay !== overlay) return;
+
+    toggleTheme();
+
+    requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (!activeOverlay || overlay !== activeOverlay) return;
+        if (activeOverlay !== overlay) return;
+        overlay.style.transition = `opacity ${THEME_VEIL_OUT_MS}ms ${THEME_VEIL_EASE_OUT}`;
         overlay.style.opacity = "0";
       });
-    },
-    Math.round(THEME_CROSSFADE_MS / 2),
-  );
+    });
+  }, THEME_VEIL_IN_MS + 40);
 
   const cleanupId = window.setTimeout(() => {
     if (activeOverlay !== overlay) return;
     clearThemeTransitionArtifacts();
-  }, THEME_CROSSFADE_MS + 40);
+  }, THEME_VEIL_IN_MS + THEME_VEIL_OUT_MS + 180);
 
-  activeTimers = [fadeInId, switchId, cleanupId];
+  activeTimers = [swapId, cleanupId];
 }
 
 export function subscribeRootTheme(onThemeChange: (theme: Theme) => void): () => void {

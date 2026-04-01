@@ -483,7 +483,7 @@ export default function HeroWithFilters({
         {displayedPosts.length === 0 && !isLoading && <div>{t("noPosts")}</div>}
 
         {displayedPosts.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
             {displayedPosts.map((post, idx) => (
               <div key={post.id ?? post.slug}>
                 <PostCard post={post} priority={idx < 3} index={idx} />

@@ -130,14 +130,13 @@ html.scroll-locked {
 }
 
 /* GPU-friendly theme switch crossfade overlay */
+/* ── Theme transition: circle-reveal ── */
 .sd-theme-crossfade-overlay {
   position: fixed;
   inset: 0;
   z-index: 100000;
   pointer-events: none;
-  opacity: 0;
   will-change: opacity;
-  transition-property: opacity;
 }
 
 /* Accessible focus baseline */
@@ -462,7 +461,7 @@ html[data-app-visible="1"] .app-fade {
 
 /* Center content precisely in viewport */
 #sd-preloader {
-  --sd-preloader-fade-ms: 320ms;
+  --sd-preloader-fade-ms: 600ms;
   position: fixed;
   inset: 0;
   display: flex;
@@ -475,7 +474,7 @@ html[data-app-visible="1"] .app-fade {
   background: hsl(var(--bg));
   background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
   opacity: 1;
-  transition: opacity var(--sd-preloader-fade-ms) ease-in-out;
+  transition: opacity var(--sd-preloader-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
   will-change: opacity;
 }
 
@@ -494,78 +493,107 @@ html[data-app-visible="1"] .app-fade {
 
 /* No spinner — only flipping text */
 
-.sd-preloader-word {
-  font-weight: 800;
+/* --- JS-powered quote display --- */
+.sd-preloader-quote {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: clamp(16rem, 90vw, 42rem);
+  opacity: 0;
+  transition:
+    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sd-preloader-quote.sd-quote-ready {
+  opacity: 1;
+}
+
+.sd-preloader-quote.sd-quote-dismiss {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.sd-quote-text {
+  font-weight: 700;
   font-size: 1.5rem;
+  line-height: 1.5;
   letter-spacing: 0.01em;
   color: hsl(var(--fg));
-  transition:
-    opacity 250ms ease,
-    transform 250ms ease;
   text-align: center;
+  margin: 0;
+  display: inline;
 }
 
-/* --- CSS-only rotator (server rendered) --- */
-.sd-rotator {
+/* --- Per-letter stagger animation --- */
+.sd-word {
+  display: inline-flex;
+  white-space: nowrap;
+}
+
+.sd-word-space {
+  display: inline;
+}
+
+.sd-letter {
   display: inline-block;
+  opacity: 0;
+  transform: rotateX(90deg);
+  transform-origin: center;
+  backface-visibility: hidden;
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease;
+}
+
+.sd-letter.sd-letter-in {
+  opacity: 1;
+  transform: rotateX(0deg);
+}
+
+/* --- CSS-only quote rotator (before JS hydrates) --- */
+.sd-quote-rotator {
   position: relative;
-  height: 1.5rem;
+  max-width: clamp(16rem, 90vw, 42rem);
+  min-height: 4rem;
+  text-align: center;
+  padding: 0 1.5rem;
   overflow: hidden;
 }
-.sd-rotator-word {
+
+.sd-rotator-quote {
   display: block;
   position: absolute;
-  left: 0;
-  right: 0;
+  inset: 0;
   opacity: 0;
-  transform: translateY(100%);
-  animation: sd-rotator 24s linear infinite;
-}
-.sd-rotator-word:nth-child(1) {
-  animation-delay: 0s;
-}
-.sd-rotator-word:nth-child(2) {
-  animation-delay: 5s;
-}
-.sd-rotator-word:nth-child(3) {
-  animation-delay: 10s;
-}
-.sd-rotator-word:nth-child(4) {
-  animation-delay: 15s;
-}
-.sd-rotator-word:nth-child(5) {
-  animation-delay: 20s;
-}
-.sd-rotator-word:nth-child(6) {
-  animation-delay: 25s;
-}
-.sd-rotator-word:nth-child(7) {
-  animation-delay: 30s;
-}
-.sd-rotator-word:nth-child(8) {
-  animation-delay: 35s;
+  font-weight: 700;
+  font-size: 1.5rem;
+  line-height: 1.5;
+  color: hsl(var(--fg));
+  animation: sd-quote-rotate 12s ease-in-out infinite;
+  animation-delay: var(--sd-rotator-delay, 0s);
+  animation-fill-mode: both;
 }
 
-@keyframes sd-rotator {
+@keyframes sd-quote-rotate {
   0% {
     opacity: 0;
-    transform: translateY(100%);
+    transform: translateY(6px);
   }
-  3% {
+  5% {
     opacity: 1;
-    transform: translateY(0%);
+    transform: translateY(0);
   }
-  80% {
+  20% {
     opacity: 1;
-    transform: translateY(0%);
+    transform: translateY(0);
   }
-  85% {
+  25% {
     opacity: 0;
-    transform: translateY(-100%);
+    transform: translateY(-6px);
   }
   100% {
     opacity: 0;
-    transform: translateY(-100%);
   }
 }
 
@@ -575,38 +603,6 @@ html[data-app-visible="1"] .app-fade {
 
 .sd-js-hidden {
   display: none;
-}
-
-.sd-js-active {
-  display: inline-flex;
-}
-
-/* On dark backgrounds, invert the word color for better contrast if needed */
-html.dark #sd-preloader .sd-preloader-word {
-  color: hsl(var(--fg));
-}
-
-.sd-preloader-word {
-  display: inline-flex;
-  gap: 0.02em;
-  backface-visibility: hidden;
-  perspective: 600px;
-  transform-origin: center;
-}
-
-.sd-letter {
-  display: inline-block;
-  transform-origin: center;
-  backface-visibility: hidden;
-  transition:
-    transform 320ms ease,
-    opacity 320ms ease;
-  will-change: transform, opacity;
-}
-
-.sd-letter.flipping {
-  transform: rotateX(90deg);
-  opacity: 0.2;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -627,13 +623,21 @@ html.dark #sd-preloader .sd-preloader-word {
   #sd-preloader {
     transition: none;
   }
-  .sd-letter {
+
+  .sd-preloader-quote {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition: none !important;
   }
-  .sd-preloader-word {
+
+  .sd-letter {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition: none !important;
+    opacity: 1;
+    transform: none;
+  }
+
+  .sd-rotator-quote {
+    animation: none;
   }
 }
 
@@ -787,4 +791,13 @@ html.dark #sd-preloader .sd-preloader-word {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ── Section gradient backgrounds ────────────────────────────────────────── */
+.bg-gradient-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #f0f4f8 50%, #e8f0f7 100%);
+}
+
+.dark .bg-gradient-section {
+  background: linear-gradient(135deg, #09090b 0%, #0f1117 50%, #070a10 100%);
 }

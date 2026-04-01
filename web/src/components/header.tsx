@@ -13,7 +13,7 @@ import {
   TRANSLATIONS,
 } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
-import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
+import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme, type ThemeTransitionCoords } from "@/lib/theme";
 import type { NavLocale } from "./navigation";
 import { NavigationDesktop, NavigationMobileControls, NavigationMobileDrawer } from "./navigation";
 import { isUnmodifiedLeftClick, useTransitionNav } from "./route-wrapper";
@@ -352,9 +352,11 @@ export default function Header() {
         label={label}
         onCloseMenu={() => setOpen(false)}
         onLogoClick={handleLogoClick}
-        onToggleTheme={() => {
-          runThemeTransition(() => applyTheme(mobileTheme === "dark" ? "light" : "dark"));
-          // keep menu open so user sees the change, or close if preferred
+        onToggleTheme={(e) => {
+          runThemeTransition(
+            () => applyTheme(mobileTheme === "dark" ? "light" : "dark"),
+            { x: e.clientX, y: e.clientY },
+          );
         }}
       />
     </>

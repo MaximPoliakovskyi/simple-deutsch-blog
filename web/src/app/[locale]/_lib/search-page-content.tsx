@@ -55,7 +55,7 @@ export async function SearchPageContent({
         </p>
       )}
 
-      <section className="grid gap-6">
+      <section className="grid gap-6 py-2">
         {posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
