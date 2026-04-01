@@ -624,52 +624,98 @@ export function useRouteReadySignal() {
 type FadeState = "visible" | "fading-out" | "hidden" | "fading-in";
 
 export function AppFadeWrapper({ children }: { children: ReactNode }) {
-  const pathname = usePathname() || "/";
   const { phase } = useTransitionNav();
   const [fadeState, setFadeState] = useState<FadeState>("visible");
   const wasTransitionActiveRef = useRef(false);
-  const previousPathnameRef = useRef(pathname);
 
+  // ─── Phase effect ────────────────────────────────────────────────────────
+  // Only participates in the custom logo/locale-switch overlay transition.
+  // For normal <Link> navigation wasTransitionActiveRef.current stays false
+  // so the effect short-circuits and content always remains at opacity:1.
+  //
+  // Phase visibility contract:
+  //   entering / covered / waiting_ready — overlay fully covers the screen:
+  //     keep page content at opacity:0 (class fading-out).
+  //   exiting — overlay slides away over EXIT_MS (1500 ms):
+  //     page content STILL stays at opacity:0. Revealing content during the
+  //     slide would bleed partial content under the moving panel.
+  //   idle — slide animation is complete, overlay is CSS-hidden in the same
+  //     React commit (transition-duration:0ms on the idle rule, so no flash):
+  //     fire one rAF so the browser paints the now-invisible overlay, then
+  //     start the 1000 ms opacity:0→1 CSS fade-in. No blank frame.
   useIsomorphicLayoutEffect(() => {
-    if (phase !== "idle") {
+    if (DEBUG) {
+      console.log(
+        `[AppFadeWrapper] phase=${phase} fadeState=${fadeState} T=${performance.now().toFixed(1)}`,
+      );
+    }
+
+    // All phases where the overlay is on screen (or sliding out) → keep content
+    // hidden beneath it. This includes "exiting": the 1500 ms slide-out must
+    // complete before content is revealed, so there is no partial-content bleed
+    // under the moving overlay panel.
+    if (
+      phase === "entering" ||
+      phase === "covered" ||
+      phase === "waiting_ready" ||
+      phase === "exiting"
+    ) {
       wasTransitionActiveRef.current = true;
       setFadeState((current) =>
         current === "hidden" || current === "fading-out" ? current : "fading-out",
       );
       return;
     }
+
+    // phase === "idle": slide animation is fully complete. The overlay has
+    // already snapped to opacity:0 / visibility:hidden (transition-duration:0ms
+    // on the idle CSS rule) in the same React commit that changed the phase.
+    // A single rAF gives the browser one paint to make that invisible, then the
+    // CSS fade-in begins from opacity:0 → no blank white frame between slide
+    // end and fade-in start.
     if (!wasTransitionActiveRef.current) return;
-    // Skip the "hidden" snap: content is already opacity:0 from fading-out.
-    // Going directly to fading-in avoids the ~33 ms blank frame that occurred
-    // between the overlay exiting and the content becoming visible.
-    const firstFrame = requestAnimationFrame(() => {
+    const raf = requestAnimationFrame(() => {
+      if (DEBUG) {
+        console.log(
+          `[AppFadeWrapper] → fading-in T=${performance.now().toFixed(1)}`,
+        );
+      }
       setFadeState("fading-in");
     });
-    return () => {
-      cancelAnimationFrame(firstFrame);
-    };
-  }, [phase]);
+    return () => cancelAnimationFrame(raf);
+  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps -- fadeState read only for debug
 
   useEffect(() => {
     if (fadeState !== "fading-in") return;
     const timeout = window.setTimeout(() => {
       setFadeState("visible");
       wasTransitionActiveRef.current = false;
+      if (DEBUG) {
+        console.log(`[AppFadeWrapper] → visible T=${performance.now().toFixed(1)}`);
+      }
     }, 1000);
-    return () => {
-      window.clearTimeout(timeout);
-    };
+    return () => window.clearTimeout(timeout);
   }, [fadeState]);
 
-  useIsomorphicLayoutEffect(() => {
-    if (previousPathnameRef.current === pathname) return;
-    previousPathnameRef.current = pathname;
-    // For navigations that do NOT go through the custom overlay (standard <Link>
-    // clicks, browser back/forward), Next.js natively keeps the previous page
-    // visible via startTransition, then swaps. Manually setting `hidden` here
-    // was overriding that native behaviour, causing a blank flash. The
-    // loading.tsx skeleton handles the in-progress Suspense state instead.
-  }, [pathname]);
+  // ─── Pathname effect — INTENTIONALLY REMOVED ─────────────────────────────
+  //
+  // The previous implementation had a third useIsomorphicLayoutEffect that
+  // watched [pathname, phase] and ran this sequence:
+  //
+  //   pathname changes (new page committed)
+  //   → setFadeState("hidden")      // opacity:0, no CSS transition — INSTANT BLANK
+  //   → rAF → rAF → "fading-in"    // then 1 000 ms fade from 0
+  //
+  // This ran synchronously in the same microtask as React's commit of the new
+  // page. New content was fully in the DOM but immediately made invisible,
+  // then took ~1 second to reappear. That was the primary ~1 s blank.
+  //
+  // Why removal is safe:
+  // Next.js wraps <Link> navigation in React's startTransition. startTransition
+  // keeps the previous page's Suspense-resolved content visible while the new
+  // RSC payload streams in — the old page literally does not unmount until the
+  // new one is committed. Once the new page commits, it should be immediately
+  // visible; there is no reason to artificially hide it.
 
   return (
     <div className="app-fade">
