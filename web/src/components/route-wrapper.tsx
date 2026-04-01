@@ -639,16 +639,14 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
       return;
     }
     if (!wasTransitionActiveRef.current) return;
-    let secondFrame = 0;
+    // Skip the "hidden" snap: content is already opacity:0 from fading-out.
+    // Going directly to fading-in avoids the ~33 ms blank frame that occurred
+    // between the overlay exiting and the content becoming visible.
     const firstFrame = requestAnimationFrame(() => {
-      setFadeState("hidden");
-      secondFrame = requestAnimationFrame(() => {
-        setFadeState("fading-in");
-      });
+      setFadeState("fading-in");
     });
     return () => {
       cancelAnimationFrame(firstFrame);
-      cancelAnimationFrame(secondFrame);
     };
   }, [phase]);
 
@@ -666,19 +664,12 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
   useIsomorphicLayoutEffect(() => {
     if (previousPathnameRef.current === pathname) return;
     previousPathnameRef.current = pathname;
-    if (wasTransitionActiveRef.current || phase !== "idle") return;
-    let secondFrame = 0;
-    setFadeState("hidden");
-    const firstFrame = requestAnimationFrame(() => {
-      secondFrame = requestAnimationFrame(() => {
-        setFadeState("fading-in");
-      });
-    });
-    return () => {
-      cancelAnimationFrame(firstFrame);
-      cancelAnimationFrame(secondFrame);
-    };
-  }, [pathname, phase]);
+    // For navigations that do NOT go through the custom overlay (standard <Link>
+    // clicks, browser back/forward), Next.js natively keeps the previous page
+    // visible via startTransition, then swaps. Manually setting `hidden` here
+    // was overriding that native behaviour, causing a blank flash. The
+    // loading.tsx skeleton handles the in-progress Suspense state instead.
+  }, [pathname]);
 
   return (
     <div className="app-fade">
