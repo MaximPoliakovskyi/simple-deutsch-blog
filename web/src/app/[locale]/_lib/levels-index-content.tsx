@@ -75,7 +75,7 @@ export async function LevelsIndexContent({ locale }: { locale: Locale }) {
   });
 
   return (
-    <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
+    <div className="-mx-[calc(50vw-50%)] w-screen">
       <div className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="mb-4 text-3xl font-semibold">{t.levelsHeading}</h1>
         <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
