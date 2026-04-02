@@ -14,7 +14,13 @@ export async function CategoryPageContent({
   if (!term) return notFound();
   const lang: Locale = locale;
 
-  const localeCategorySlug = getLocaleAwareTaxonomySlug(category, lang);
+  // Normalize: strip an existing locale suffix before applying getLocaleAwareTaxonomySlug.
+  // Post card categories on /ru/ and /uk/ already carry locale-specific WP slugs (e.g.
+  // "grammar-ru"). Without stripping, we'd produce "grammar-ru-ru" and fetch 0 posts.
+  const baseSlug = lang !== "en" && category.endsWith(`-${lang}`)
+    ? category.slice(0, -(lang.length + 1))
+    : category;
+  const localeCategorySlug = getLocaleAwareTaxonomySlug(baseSlug, lang);
   const PAGE_SIZE = 3;
   const pageRes = await getPostsByCategory({
     first: PAGE_SIZE,
