@@ -67,7 +67,7 @@ export default function SuccessStoriesSlider({
           html.dark [data-slider-scope][data-slider-scope] h5 *,
           html.dark [data-slider-scope][data-slider-scope] h6 * {
             color: #ffffff !important;
-            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
+            transition: color var(--motion-normal) var(--motion-spring) !important;
           }
           html.dark [data-slider-scope][data-slider-scope] .group:hover h1 *,
           html.dark [data-slider-scope][data-slider-scope] .group:hover h2 *,
@@ -76,7 +76,7 @@ export default function SuccessStoriesSlider({
           html.dark [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
           html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
             color: #d1d5db !important;
-            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
+            transition: color var(--motion-normal) var(--motion-spring) !important;
           }
         `}</style>
 

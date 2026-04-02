@@ -60,6 +60,19 @@
 
   /* Let UA know we support dark + light native controls */
   color-scheme: light dark;
+
+  /* ── Motion tokens ──────────────────────────────────────────────────────── */
+  /* Easings */
+  --motion-spring:  cubic-bezier(0.22, 1, 0.36, 1); /* gentle deceleration – primary */
+  --motion-snappy:  cubic-bezier(0.33, 1, 0.68, 1); /* fast snap-in (theme crossfade) */
+  --motion-slide:   cubic-bezier(0.42, 0, 0.58, 1); /* symmetric slide (page overlay) */
+  --motion-resize:  cubic-bezier(0.16, 1, 0.3, 1);  /* height / layout expand        */
+  /* Durations */
+  --motion-fast:           200ms; /* hover micro, close / open panels */
+  --motion-normal:         300ms; /* default UI transitions           */
+  --motion-relaxed:        500ms; /* content reveals                  */
+  --motion-slow:           600ms; /* page-level fades                 */
+  --motion-route-content: 1000ms; /* content fade after route overlay */
 }
 
 /* Dark theme token overrides applied when `.dark` is on <html> */
@@ -207,9 +220,9 @@ html.scroll-locked {
   font-weight: 600;
   line-height: 1;
   transition:
-    background-color 180ms ease,
-    color 180ms ease,
-    transform 120ms ease;
+    background-color var(--motion-fast) ease-out,
+    color var(--motion-fast) ease-out,
+    transform var(--motion-fast) ease-out;
   border: 1px solid transparent;
 }
 
@@ -396,7 +409,7 @@ html[data-preloader="0"] #sd-preloader {
 /* Global app fade-in after preloader completes. */
 .app-fade {
   opacity: 0;
-  transition: opacity 600ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--motion-slow) var(--motion-spring);
   will-change: opacity;
 }
 
@@ -411,7 +424,7 @@ html[data-app-visible="1"] .app-fade {
 
 .app-route-fade--fading-out {
   opacity: 0;
-  transition: opacity 180ms ease-out;
+  transition: opacity var(--motion-fast) ease-out;
 }
 
 .app-route-fade--hidden {
@@ -420,7 +433,7 @@ html[data-app-visible="1"] .app-fade {
 
 .app-route-fade--fading-in {
   opacity: 1;
-  transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--motion-route-content) var(--motion-spring);
 }
 
 .sd-shimmer {
@@ -474,7 +487,7 @@ html[data-app-visible="1"] .app-fade {
   background: hsl(var(--bg));
   background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
   opacity: 1;
-  transition: opacity var(--sd-preloader-fade-ms) cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity var(--sd-preloader-fade-ms) var(--motion-spring);
   will-change: opacity;
 }
 
@@ -501,8 +514,8 @@ html[data-app-visible="1"] .app-fade {
   max-width: clamp(16rem, 90vw, 42rem);
   opacity: 0;
   transition:
-    opacity 400ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 400ms cubic-bezier(0.22, 1, 0.36, 1);
+    opacity var(--motion-normal) var(--motion-spring),
+    transform var(--motion-normal) var(--motion-spring);
 }
 
 .sd-preloader-quote.sd-quote-ready {
@@ -646,7 +659,7 @@ html[data-app-visible="1"] .app-fade {
   --rt-enter-ms: 1500ms;
   --rt-exit-ms: 1500ms;
   --rt-opacity-ms: 140ms;
-  --rt-ease: cubic-bezier(0.42, 0, 0.58, 1);
+  --rt-ease: var(--motion-slide);
   --rt-start-x: -110%;
   --rt-end-x: 110%;
 
@@ -768,19 +781,19 @@ html[data-app-visible="1"] .app-fade {
   }
 }
 
-/* Fast fade (300ms) — UI elements, small sections */
+/* Fast fade — UI elements, small sections */
 .sd-fade-in {
-  animation: sd-fade-in 300ms ease-out both;
+  animation: sd-fade-in var(--motion-normal) ease-out both;
 }
 
-/* Slow fade (500ms) — hero, page wrappers, article content */
+/* Slow fade — hero, page wrappers, article content */
 .sd-fade-in-slow {
-  animation: sd-fade-in-slow 500ms cubic-bezier(0.33, 0.66, 0.66, 1) both;
+  animation: sd-fade-in-slow var(--motion-relaxed) var(--motion-spring) both;
 }
 
-/* Per-item fade (400ms) — pair with inline animationDelay for stagger */
+/* Per-item fade — pair with inline animationDelay for stagger */
 .sd-fade-in-item {
-  animation: sd-fade-in 400ms ease-out both;
+  animation: sd-fade-in var(--motion-normal) ease-out both;
 }
 
 @media (prefers-reduced-motion: reduce) {

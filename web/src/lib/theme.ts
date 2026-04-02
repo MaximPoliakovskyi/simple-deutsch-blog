@@ -1,14 +1,12 @@
 "use client";
 
+import { MOTION } from "./motion";
+
 export type Theme = "light" | "dark";
 export type ThemeTransitionCoords = { x: number; y: number };
 
 export const THEME_STORAGE_KEY = "sd-theme";
-const THEME_VEIL_IN_MS = 180;
-const THEME_VEIL_OUT_MS = 680;
 const THEME_VEIL_PEAK_OPACITY = 0.96;
-const THEME_VEIL_EASE_IN = "cubic-bezier(0.33, 1, 0.68, 1)";
-const THEME_VEIL_EASE_OUT = "cubic-bezier(0.22, 1, 0.36, 1)";
 const THEME_OVERLAY_CLASS = "sd-theme-crossfade-overlay";
 const THEME_STEP_DEBUG_WINDOW_MS = 1000;
 const DEBUG_THEME_STEP =
@@ -98,7 +96,7 @@ export function runThemeTransition(
   // Phase 1: cover the screen with the old-theme veil so the theme swap is invisible.
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
-      overlay.style.transition = `opacity ${THEME_VEIL_IN_MS}ms ${THEME_VEIL_EASE_IN}`;
+      overlay.style.transition = `opacity ${MOTION.fast}ms ${MOTION.snappy}`;
       overlay.style.opacity = String(THEME_VEIL_PEAK_OPACITY);
     });
   });
@@ -111,16 +109,16 @@ export function runThemeTransition(
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         if (activeOverlay !== overlay) return;
-        overlay.style.transition = `opacity ${THEME_VEIL_OUT_MS}ms ${THEME_VEIL_EASE_OUT}`;
+        overlay.style.transition = `opacity ${MOTION.themeVeilOut}ms ${MOTION.spring}`;
         overlay.style.opacity = "0";
       });
     });
-  }, THEME_VEIL_IN_MS + 40);
+  }, MOTION.fast + 40);
 
   const cleanupId = window.setTimeout(() => {
     if (activeOverlay !== overlay) return;
     clearThemeTransitionArtifacts();
-  }, THEME_VEIL_IN_MS + THEME_VEIL_OUT_MS + 180);
+  }, MOTION.fast + MOTION.themeVeilOut + 180);
 
   activeTimers = [swapId, cleanupId];
 }

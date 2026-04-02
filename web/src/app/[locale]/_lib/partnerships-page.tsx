@@ -17,16 +17,16 @@ export default function PartnershipsClient({
   const t = (key: string) => dict[key] ?? key;
 
   return (
-    <main className="min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
+    <main className="sd-fade-in-slow min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
       <section className="mx-auto max-w-7xl px-4 pt-24 text-center">
         <SectionText
           title={
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-[var(--sd-text)] text-center">
+            <h1 className="sd-fade-in-item text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-[var(--sd-text)] text-center">
               {t("partnerships.hero.title")}
             </h1>
           }
         >
-          <div className="text-center">
+          <div className="sd-fade-in-item text-center" style={{ animationDelay: "90ms" }}>
             <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
               {t("partnerships.hero.intro")}
             </p>
@@ -36,7 +36,7 @@ export default function PartnershipsClient({
 
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:pt-10 mb-28">
         <SectionText>
-          <div className="mx-auto w-full max-w-[72ch] space-y-4 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
+          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]" style={{ animationDelay: "180ms" }}>
             <p>{t("partnerships.sections.preLogos.p1")}</p>
             <p>{t("partnerships.sections.preLogos.p2")}</p>
             <p>{t("partnerships.sections.preLogos.p3")}</p>
@@ -47,7 +47,7 @@ export default function PartnershipsClient({
       <section className="relative w-full bg-[#0B0D16] py-32">
         <div className="absolute inset-x-0 top-0">
           <div className="mx-auto max-w-7xl px-4 pt-[40px] text-white">
-            <h2 className="text-center text-3xl font-semibold tracking-tight">
+            <h2 className="sd-fade-in-item text-center text-3xl font-semibold tracking-tight">
               {t("partnerships.partners.heading")}
             </h2>
           </div>
@@ -60,7 +60,8 @@ export default function PartnershipsClient({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit La Red"
-              className="group block cursor-pointer"
+              className="sd-fade-in-item group block cursor-pointer"
+              style={{ animationDelay: "80ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
                 <Image
@@ -78,7 +79,8 @@ export default function PartnershipsClient({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit Deutschlandstiftung Integration"
-              className="group block cursor-pointer"
+              className="sd-fade-in-item group block cursor-pointer"
+              style={{ animationDelay: "160ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
                 <Image
@@ -96,7 +98,8 @@ export default function PartnershipsClient({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit Fast Track"
-              className="group block cursor-pointer"
+              className="sd-fade-in-item group block cursor-pointer"
+              style={{ animationDelay: "240ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
                 <Image
@@ -114,7 +117,8 @@ export default function PartnershipsClient({
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit NexKI"
-              className="group block cursor-pointer"
+              className="sd-fade-in-item group block cursor-pointer"
+              style={{ animationDelay: "320ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
                 <Image
@@ -132,7 +136,7 @@ export default function PartnershipsClient({
 
       <section className="mx-auto w-full max-w-7xl px-4 mt-28 pb-20 md:pb-24">
         <SectionText>
-          <div className="mx-auto w-full max-w-[72ch] space-y-5 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
+          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-5 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
             <p>{t("partnerships.sections.postLogos.p1")}</p>
             <p>{t("partnerships.sections.postLogos.p2")}</p>
             <p>{t("partnerships.sections.postLogos.p3")}</p>
@@ -146,18 +150,18 @@ export default function PartnershipsClient({
         <SectionText
           className="[&>div>div]:space-y-3 md:[&>div>div]:space-y-3"
           title={
-            <h2 className="text-3xl sm:text-4xl font-semibold text-[var(--sd-text)] text-center">
+            <h2 className="sd-fade-in-item text-3xl sm:text-4xl font-semibold text-[var(--sd-text)] text-center">
               {t("partnerships.cta.title")}
             </h2>
           }
         >
-          <div className="text-center">
+          <div className="sd-fade-in-item text-center" style={{ animationDelay: "80ms" }}>
             <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
               {t("partnerships.cta.lead")}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <div className="sd-fade-in-item flex flex-wrap items-center justify-center gap-3 pt-2" style={{ animationDelay: "160ms" }}>
             <a
               href={TELEGRAM_LINK}
               target="_blank"

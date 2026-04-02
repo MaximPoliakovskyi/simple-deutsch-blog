@@ -180,7 +180,7 @@ export default async function CategoriesBlock({
           html.dark [data-categories-scope] h5 *,
           html.dark [data-categories-scope] h6 * {
             color: #ffffff !important;
-            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
+            transition: color var(--motion-normal) var(--motion-spring) !important;
           }
           html.dark [data-categories-scope] .group:hover h1 *,
           html.dark [data-categories-scope] .group:hover h2 *,
@@ -189,7 +189,7 @@ export default async function CategoriesBlock({
           html.dark [data-categories-scope] .group:focus-within h2 *,
           html.dark [data-categories-scope] .group:focus-within h3 * {
             color: #d1d5db !important;
-            transition: color 420ms cubic-bezier(.22,1,.36,1) !important;
+            transition: color var(--motion-normal) var(--motion-spring) !important;
           }
         `}</style>
 

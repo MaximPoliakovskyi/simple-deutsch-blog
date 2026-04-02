@@ -26,8 +26,8 @@ export default function TermsPage({ locale }: { locale?: Locale }) {
     .replace("{date}", t["terms.lastUpdatedDate"] || "2025-12-25");
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-12">
-      <div className="mx-auto max-w-3xl prose dark:prose-invert">
+    <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-12">
+      <div className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert" style={{ animationDelay: "80ms" }}>
         <h1>{t["terms.title"]}</h1>
         <p className="text-sm text-muted-foreground">{lastUpdated}</p>
 

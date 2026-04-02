@@ -13,6 +13,13 @@ type Props = {
   params: Promise<{ locale: string }>;
 };
 
+/**
+ * Site layout for all [locale]/ routes.
+ *
+ * NavProgress is intentionally NOT mounted here — it lives in (site)/layout.tsx
+ * so it only activates for real pages, not for the 404 boundary (not-found.tsx),
+ * which resolves at this level and skips the (site) group entirely.
+ */
 export default async function LocaleRootLayout({ children, params }: Props) {
   const { locale } = await params;
   const validated = getRequiredRouteLocale(locale);

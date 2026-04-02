@@ -291,6 +291,7 @@ export default function Header() {
             <Link
               href={logoHref}
               onClick={handleLogoClick}
+              data-no-progress="true"
               className="text-xl font-semibold tracking-tight"
               aria-label={label("home", "Home")}
             >

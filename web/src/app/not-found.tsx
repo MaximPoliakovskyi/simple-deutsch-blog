@@ -51,7 +51,7 @@ export default async function NotFound({ locale }: { locale?: string } = {}) {
 
   return (
     <main
-      className="fixed inset-0 min-h-screen h-screen w-full flex items-center justify-center overflow-hidden px-4 py-6 sm:px-6"
+      className="sd-fade-in-slow fixed inset-0 min-h-screen h-screen w-full flex items-center justify-center overflow-hidden px-4 py-6 sm:px-6"
       style={{
         paddingTop: "max(env(safe-area-inset-top), 1rem)",
         paddingBottom: "max(env(safe-area-inset-bottom), 1rem)",

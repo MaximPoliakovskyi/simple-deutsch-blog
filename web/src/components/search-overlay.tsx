@@ -17,6 +17,7 @@ import {
 import { createPortal } from "react-dom";
 import { useI18n } from "@/components/providers";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import { MOTION } from "@/lib/motion";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
@@ -99,7 +100,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const [showResults, setShowResults] = useState(false);
   const [wrapHeight, setWrapHeight] = useState<string | number>(0);
   const [contentMax, setContentMax] = useState<number | null>(null);
-  const CLOSE_MS = 180;
+  const CLOSE_MS = MOTION.fast;
   const RESIZE_MS = 260;
 
   useEffect(() => {
@@ -216,7 +217,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   // --- mount/unmount animation state ---
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false); // drives enter/exit transitions
-  const TRANSITION_MS = prefersReducedMotion ? 0 : 200;
+  const TRANSITION_MS = prefersReducedMotion ? 0 : MOTION.fast;
 
   // Lock scroll and trigger **smooth enter animation**
   useEffect(() => {
@@ -557,7 +558,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
             padding: 0,
             opacity: showResults ? 1 : 0,
             transform: showResults ? "translateY(0)" : "translateY(-6px)",
-            transition: `height ${RESIZE_MS}ms cubic-bezier(.16,1,.3,1), opacity 220ms ease, transform 220ms ease`,
+            transition: `height ${RESIZE_MS}ms ${MOTION.resize}, opacity ${MOTION.fast}ms ease-out, transform ${MOTION.fast}ms ease-out`,
             willChange: "height, opacity, transform",
             msOverflowStyle: "none",
             scrollbarWidth: "none",

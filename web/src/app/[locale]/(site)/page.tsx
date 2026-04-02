@@ -1,7 +1,7 @@
 import { SUPPORTED_LOCALES, TRANSLATIONS } from "@/lib/i18n";
 import { buildI18nAlternates } from "@/lib/seo";
-import HomePage from "./home-page";
-import { getOptionalRouteLocale, getRequiredRouteLocale } from "./locale-route";
+import HomePage from "../home-page";
+import { getOptionalRouteLocale, getRequiredRouteLocale } from "../locale-route";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
 

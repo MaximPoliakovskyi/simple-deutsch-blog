@@ -22,8 +22,12 @@ export function proxy(request: NextRequest): NextResponse {
 
   // Already has a locale-like prefix? Let Next.js route it.
   // Valid locales render normally; invalid ones trigger notFound() in locale-route.ts.
+  // Forward x-pathname so server components (e.g. not-found.tsx) can detect the locale
+  // even when Next.js doesn't pass segment params to not-found.tsx boundaries.
   if (LOCALE_PREFIX_RE.test(pathname)) {
-    return NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-pathname", pathname);
+    return NextResponse.next({ request: { headers: requestHeaders } });
   }
 
   // No locale prefix - redirect to the user's preferred or default locale

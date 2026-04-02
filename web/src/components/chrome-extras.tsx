@@ -116,13 +116,13 @@ function BackButton() {
       type="button"
       aria-label="Back"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-      className="fixed bottom-8 right-6 z-50 flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm transition transform-gpu duration-200 ease-out hover:scale-[1.03] shadow-sm hover:shadow-md focus:outline-none focus-visible:outline-none cursor-pointer sd-pill"
+      className="fixed bottom-8 right-6 z-50 flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm transform-gpu hover:scale-[1.03] shadow-sm focus:outline-none focus-visible:outline-none cursor-pointer sd-pill"
       style={{
         padding: 0,
         outlineColor: "oklch(0.371 0 0)",
         transform: visible ? "translateY(0) scale(1)" : "translateY(12px) scale(0.96)",
         opacity: visible ? 1 : 0,
-        transition: "transform .18s ease-out, opacity .14s ease-out",
+        transition: "opacity var(--motion-fast) ease-out, transform var(--motion-fast) ease-out",
       }}
       title="Zurück"
     >

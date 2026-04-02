@@ -128,7 +128,7 @@ const PostCard = memo(function PostCard({
             style={{
               transitionProperty: "transform, scale",
               transitionDuration: "1200ms",
-              transitionTimingFunction: "cubic-bezier(.22,1,.36,1)",
+              transitionTimingFunction: "var(--motion-spring)",
             }}
           >
             {img.url ? (
@@ -209,7 +209,7 @@ export function CategoryPillsSkeleton({
           className={[
             "relative h-10 rounded-full overflow-hidden",
             item.widthClass,
-            "border border-white/8 bg-neutral-900/90 shadow-sm",
+            "bg-neutral-200 dark:bg-neutral-700/60",
             "sd-shimmer",
           ].join(" ")}
         />

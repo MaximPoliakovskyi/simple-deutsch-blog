@@ -1,6 +1,6 @@
-﻿import type { Metadata } from "next";
-import { generateMappedMetadata, renderMappedPage } from "../_lib/page-map";
-import { getOptionalRouteLocale, getRequiredRouteLocale } from "../locale-route";
+import type { Metadata } from "next";
+import { generateMappedMetadata, renderMappedPage } from "../../_lib/page-map";
+import { getOptionalRouteLocale, getRequiredRouteLocale } from "../../locale-route";
 
 export const revalidate = 60;
 
