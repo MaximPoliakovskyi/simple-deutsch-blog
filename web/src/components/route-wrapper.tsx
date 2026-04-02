@@ -506,6 +506,21 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     setIsInitialLoad(false);
   }, []);
 
+  // Disable browser scroll-restoration so it never fights our explicit reset.
+  useEffect(() => {
+    if (typeof history !== "undefined" && history.scrollRestoration) {
+      history.scrollRestoration = "manual";
+    }
+  }, []);
+
+  // Reset scroll on every route change.
+  // useIsomorphicLayoutEffect fires synchronously after React commits but
+  // BEFORE the browser paints, so the new page is always positioned at the
+  // top from the very first frame — no visible jump or scroll-up flash.
+  useIsomorphicLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   useEffect(() => {
     pathnameRef.current = pathname;
     const activeToken = activeTransitionRef.current?.token;
