@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLevelLabel, type Locale, TRANSLATIONS } from "@/lib/i18n";
-import { getCategoryBySlug, getTagBySlug } from "@/lib/posts";
+import { type Locale, TRANSLATIONS } from "@/lib/i18n";
+import {
+  buildLevelTranslationMap,
+  filterWordPressBadgesByLocale,
+  getCategoryBySlug,
+  getTagBySlug,
+} from "@/lib/posts";
 import { buildI18nAlternates } from "@/lib/seo";
 import HomePage from "../home-page";
 import AboutPage from "./about-page";
@@ -72,20 +77,19 @@ export async function generateMappedMetadata({
       if (rest.length === 1) {
         const tag = rest[0];
         const term = await getTagBySlug(tag, locale);
-        if (!term) {
+        if (!term || filterWordPressBadgesByLocale([term], locale).length === 0) {
           return {
             title: t.levelNotFound as string,
             alternates: buildI18nAlternates(`/levels/${tag}`, locale),
           };
         }
         const prefix = (t["level.titlePrefix"] as string) ?? (t.levelLabel as string) ?? "Level:";
-        const code = tag.toUpperCase();
-        const levelLabel = getLevelLabel(tag, locale);
-        const title =
-          levelLabel && ["A1", "A2", "B1", "B2", "C1", "C2"].includes(code)
-            ? `${prefix} ${code} (${levelLabel}) — ${t.siteTitle}`
-            : `${prefix} ${term.name} — ${t.siteTitle}`;
-        return { title, alternates: buildI18nAlternates(`/levels/${tag}`, locale) };
+        const title = `${prefix} ${term.name} — ${t.siteTitle}`;
+        const translationMap = buildLevelTranslationMap(term, locale);
+        return {
+          title,
+          alternates: buildI18nAlternates(`/levels/${tag}`, locale, { translationMap }),
+        };
       }
       return {};
     case "partnerships":
@@ -169,7 +173,6 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
       return (
         <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />
       );
-    case "blog":
     default:
       break;
   }

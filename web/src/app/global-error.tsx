@@ -27,14 +27,16 @@ export default function GlobalError({
 
   return (
     <html lang={DEFAULT_LOCALE}>
+      {/* Use the same application font without re-importing globals.css. */}
       <body
         style={{
           margin: 0,
           padding: 0,
           minHeight: "100vh",
-          fontFamily: "system-ui, -apple-system, sans-serif",
           backgroundColor: "#ffffff",
           color: "#000000",
+          fontFamily:
+            '"Nunito", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
         <StatusPage

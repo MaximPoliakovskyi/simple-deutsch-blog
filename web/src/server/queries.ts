@@ -321,6 +321,21 @@ const TAG_FIELDS = /* GraphQL */ `
     description
     count
     uri
+    language {
+      code
+      slug
+      locale
+    }
+    translations {
+      databaseId
+      slug
+      uri
+      language {
+        code
+        slug
+        locale
+      }
+    }
   }
 `;
 

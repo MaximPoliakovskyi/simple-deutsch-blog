@@ -1,5 +1,14 @@
 import Link from "next/link";
-import { buildLocalizedHref, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
+import { normalizeLevelSlug, sortWordPressBadgesByCefr } from "@/lib/cefr";
+import {
+  buildLocalizedHref,
+  type CefrLevelCode,
+  DEFAULT_LOCALE,
+  getCefrLevelLabel,
+  type Locale,
+  TRANSLATIONS,
+} from "@/lib/i18n";
+import { getLocaleAwareTaxonomySlug, getWordPressLevelBadges } from "@/lib/posts";
 
 const TYPO_STYLE = {
   fontSize: "var(--text-base)",
@@ -7,12 +16,16 @@ const TYPO_STYLE = {
 };
 
 type LinkItem = { label: string; href: string; external?: boolean };
-type Section = { title: string; items: LinkItem[] };
+type SectionKey = "categories" | "levels" | "platform" | "community" | "legal";
+type Section = { key: SectionKey; title: string; items: LinkItem[] };
+const FOOTER_LEVEL_SLUGS = ["a1", "a2", "b1", "b2", "c1", "c2"] as const;
+type FooterLevelSlug = (typeof FOOTER_LEVEL_SLUGS)[number];
 
 const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
   en: {
     sections: [
       {
+        key: "categories",
         title: "Categories",
         items: [
           { label: "Speaking & Pronunciation", href: "/categories/speaking-pronunciation" },
@@ -24,17 +37,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "levels",
         title: "Levels",
-        items: [
-          { label: "A1 — Beginner", href: "/levels/a1" },
-          { label: "A2 — Elementary", href: "/levels/a2" },
-          { label: "B1 — Intermediate", href: "/levels/b1" },
-          { label: "B2 — Upper-Intermediate", href: "/levels/b2" },
-          { label: "C1 — Advanced", href: "/levels/c1" },
-          { label: "C2 — Proficient", href: "/levels/c2" },
-        ],
+        items: [],
       },
       {
+        key: "platform",
         title: "Platform",
         items: [
           { label: "About the project", href: "/about" },
@@ -43,6 +51,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "community",
         title: "Community",
         items: [
           { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
@@ -50,6 +59,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "legal",
         title: "Legal",
         items: [
           { label: "Imprint", href: "/imprint" },
@@ -58,12 +68,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
           { label: "Cookie Settings", href: "/cookies" },
         ],
       },
-      // Language switcher intentionally omitted from footer; navigation owns locale switching.
     ],
   },
   uk: {
     sections: [
       {
+        key: "categories",
         title: "Категорії",
         items: [
           { label: "Розмовна практика та вимова", href: "/categories/speaking-pronunciation" },
@@ -75,17 +85,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "levels",
         title: "Рівні",
-        items: [
-          { label: "A1 — Початковий", href: "/levels/a1" },
-          { label: "A2 — Елементарний", href: "/levels/a2" },
-          { label: "B1 — Середній", href: "/levels/b1" },
-          { label: "B2 — Вище середнього", href: "/levels/b2" },
-          { label: "C1 — Просунутий", href: "/levels/c1" },
-          { label: "C2 — Професійний", href: "/levels/c2" },
-        ],
+        items: [],
       },
       {
+        key: "platform",
         title: "Платформа",
         items: [
           { label: "Про проєкт", href: "/about" },
@@ -94,6 +99,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "community",
         title: "Спільнота",
         items: [
           { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
@@ -101,6 +107,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "legal",
         title: "Правова інформація",
         items: [
           { label: "Юридична інформація", href: "/imprint" },
@@ -114,6 +121,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
   ru: {
     sections: [
       {
+        key: "categories",
         title: "Категории",
         items: [
           {
@@ -128,17 +136,12 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "levels",
         title: "Уровни",
-        items: [
-          { label: "A1 — Начальный", href: "/levels/a1" },
-          { label: "A2 — Элементарный", href: "/levels/a2" },
-          { label: "B1 — Средний", href: "/levels/b1" },
-          { label: "B2 — Выше среднего", href: "/levels/b2" },
-          { label: "C1 — Продвинутый", href: "/levels/c1" },
-          { label: "C2 — Профессиональный", href: "/levels/c2" },
-        ],
+        items: [],
       },
       {
+        key: "platform",
         title: "Платформа",
         items: [
           { label: "О проекте", href: "/about" },
@@ -147,6 +150,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "community",
         title: "Сообщество",
         items: [
           { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
@@ -154,6 +158,7 @@ const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
         ],
       },
       {
+        key: "legal",
         title: "Юридическая информация",
         items: [
           { label: "Выходные данные", href: "/imprint" },
@@ -171,26 +176,80 @@ function prefixHrefForLocale(href: string, locale: Locale) {
   return buildLocalizedHref(locale, href);
 }
 
-export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+function toCefrLevelCode(level: FooterLevelSlug): CefrLevelCode {
+  return level.toUpperCase() as CefrLevelCode;
+}
+
+function buildFooterLevelFallbackItems(locale: Locale): LinkItem[] {
+  return FOOTER_LEVEL_SLUGS.map((level) => ({
+    label: getCefrLevelLabel(locale, toCefrLevelCode(level)),
+    href: `/levels/${getLocaleAwareTaxonomySlug(level, locale)}`,
+  }));
+}
+
+function buildFooterLevelItems(
+  locale: Locale,
+  badges: Array<{ slug?: string | null; name?: string | null }>,
+): LinkItem[] {
+  const itemsByLevel = new Map<FooterLevelSlug, LinkItem>();
+
+  for (const badge of sortWordPressBadgesByCefr(badges)) {
+    const level = normalizeLevelSlug(badge.slug) ?? normalizeLevelSlug(badge.name);
+    if (!level || !badge.slug) {
+      continue;
+    }
+
+    const footerLevel = level as FooterLevelSlug;
+    if (itemsByLevel.has(footerLevel)) {
+      continue;
+    }
+
+    itemsByLevel.set(footerLevel, {
+      label: getCefrLevelLabel(locale, toCefrLevelCode(footerLevel)),
+      href: `/levels/${footerLevel}`,
+    });
+  }
+
+  if (itemsByLevel.size === FOOTER_LEVEL_SLUGS.length) {
+    return FOOTER_LEVEL_SLUGS.map((level) => itemsByLevel.get(level)).filter(
+      (item): item is LinkItem => Boolean(item),
+    );
+  }
+
+  return buildFooterLevelFallbackItems(locale);
+}
+
+export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const dictionary = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  const sections = (FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [];
+  const configuredSections = (FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [];
+  const levelItems = buildFooterLevelItems(
+    locale,
+    await getWordPressLevelBadges(locale).catch(() => []),
+  );
+  const sections: Section[] = configuredSections
+    .map((section) =>
+      section.key === "levels"
+        ? {
+            ...section,
+            items: levelItems,
+          }
+        : section,
+    )
+    .filter((section) => section.key === "levels" || section.items.length > 0);
   const copyrightTemplate =
     dictionary["footer.copyright"] ||
     "(c) {year} Simple Deutsch. All rights reserved. German-language learning platform.";
   const currentYear = String(new Date().getFullYear());
 
-  // Footer: light theme uses pure white (#FFFFFF); dark theme uses deep navy (#0B101E).
-  // Footer root is the single source of truth for background color.
   return (
     <footer className="bg-[#FFFFFF] dark:bg-[#0B101E] min-h-[28rem] md:min-h-[24rem]">
-      {/* main footer background area (no inner background so it inherits from footer root) */}
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
             {sections.map((section) => (
-              <div key={section.title}>
+              <div key={section.key}>
                 <h3
-                  className="font-medium text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
+                  className="type-ui-label text-slate-900 dark:text-[rgba(255,255,255,0.92)]"
                   style={TYPO_STYLE}
                 >
                   {section.title}
@@ -236,13 +295,10 @@ export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale })
         </div>
       </div>
 
-      {/* bottom bar area: full-width background with container-aligned content (no bg here) */}
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8">
-          {/* divider aligned to container: light mode black/10, dark mode white/10 */}
           <div className="h-px w-full bg-black/10 dark:bg-white/10" />
 
-          {/* copyright row aligned to container; text colors remain theme-aware elsewhere */}
           <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">
             {copyrightTemplate.replace("{year}", currentYear)}
           </div>

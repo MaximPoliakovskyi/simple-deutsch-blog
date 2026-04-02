@@ -1,5 +1,6 @@
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
+import PageSkeleton from "@/components/page-skeleton";
 
 export default function SiteLayout({ children }: { children: ReactNode }) {
-  return <>{children}</>;
+  return <Suspense fallback={<PageSkeleton />}>{children}</Suspense>;
 }

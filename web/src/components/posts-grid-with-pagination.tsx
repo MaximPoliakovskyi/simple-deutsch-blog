@@ -95,9 +95,9 @@ export default function PostsGridWithPagination({
   return (
     <div className="flex flex-col gap-8">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
-        {posts.map((post, idx) => (
+        {posts.map((post) => (
           <div key={stableKey(post) || (post.slug as string)}>
-            <PostCard post={post} index={idx} />
+            <PostCard post={post} />
           </div>
         ))}
       </div>
@@ -110,7 +110,7 @@ export default function PostsGridWithPagination({
         <div className="flex justify-center">
           <button
             type="button"
-            className="mx-auto rounded-full px-5 py-2 text-sm font-medium transition-transform duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="type-button mx-auto rounded-full px-5 py-2 transition-transform duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
             onClick={loadMore}
             disabled={isLoading}

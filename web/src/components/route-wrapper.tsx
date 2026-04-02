@@ -14,7 +14,13 @@ import {
   useRef,
   useState,
 } from "react";
-import { forceUnlockScroll, lockScroll, unlockScroll } from "@/lib/scroll";
+import {
+  forceUnlockScroll,
+  lockScroll,
+  resetScrollToTop,
+  setManualScrollRestoration,
+  unlockScroll,
+} from "@/lib/scroll";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -609,14 +615,6 @@ export function RouteReady({ when = true }: { when?: boolean }) {
   return null;
 }
 
-export function useRouteReadySignal() {
-  const pathname = normalizeRoutePathname(usePathname() || "/");
-  const { token, signalRouteReady } = useTransitionNav();
-  return useCallback(() => {
-    signalRouteReady(pathname, token);
-  }, [pathname, signalRouteReady, token]);
-}
-
 // ---------------------------------------------------------------------------
 // AppFadeWrapper (formerly app-fade-wrapper.tsx)
 // ---------------------------------------------------------------------------
@@ -624,9 +622,17 @@ export function useRouteReadySignal() {
 type FadeState = "visible" | "fading-out" | "hidden" | "fading-in";
 
 export function AppFadeWrapper({ children }: { children: ReactNode }) {
+  const pathname = normalizeRoutePathname(usePathname() || "/");
   const { phase } = useTransitionNav();
   const [fadeState, setFadeState] = useState<FadeState>("visible");
+  const phaseRef = useRef(phase);
   const wasTransitionActiveRef = useRef(false);
+  const committedPathnameRef = useRef(pathname);
+  const pathnameResetTokenRef = useRef(0);
+
+  useIsomorphicLayoutEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   // ─── Phase effect ────────────────────────────────────────────────────────
   // Only participates in the custom logo/locale-switch overlay transition.
@@ -676,9 +682,7 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
     if (!wasTransitionActiveRef.current) return;
     const raf = requestAnimationFrame(() => {
       if (DEBUG) {
-        console.log(
-          `[AppFadeWrapper] → fading-in T=${performance.now().toFixed(1)}`,
-        );
+        console.log(`[AppFadeWrapper] → fading-in T=${performance.now().toFixed(1)}`);
       }
       setFadeState("fading-in");
     });
@@ -696,6 +700,46 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
     }, 1000);
     return () => window.clearTimeout(timeout);
   }, [fadeState]);
+
+  // Hide normal route commits until the scroll reset has completed.
+  useIsomorphicLayoutEffect(() => {
+    setManualScrollRestoration();
+
+    if (committedPathnameRef.current === pathname) return;
+    committedPathnameRef.current = pathname;
+    pathnameResetTokenRef.current += 1;
+    const resetToken = pathnameResetTokenRef.current;
+
+    if (phaseRef.current === "idle") {
+      setFadeState("hidden");
+    }
+
+    resetScrollToTop();
+
+    let firstFrame = 0;
+    let secondFrame = 0;
+
+    firstFrame = requestAnimationFrame(() => {
+      if (pathnameResetTokenRef.current !== resetToken) return;
+      setManualScrollRestoration();
+      resetScrollToTop();
+
+      secondFrame = requestAnimationFrame(() => {
+        if (pathnameResetTokenRef.current !== resetToken) return;
+        setManualScrollRestoration();
+        resetScrollToTop();
+
+        if (phaseRef.current === "idle") {
+          setFadeState("visible");
+        }
+      });
+    });
+
+    return () => {
+      cancelAnimationFrame(firstFrame);
+      cancelAnimationFrame(secondFrame);
+    };
+  }, [pathname]);
 
   // ─── Pathname effect — INTENTIONALLY REMOVED ─────────────────────────────
   //

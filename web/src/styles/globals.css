@@ -31,21 +31,39 @@
   --brand: 222 47% 11%;
   --fg: 222 22% 12%;
   --muted: 222 8% 45%;
+  --fg-muted: var(--muted);
   --bg: 0 0% 100%;
   --radius: 12px;
+
+  /* Typography tokens */
+  --font-sans:
+    var(--font-nunito), "Segoe UI", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: clamp(1.125rem, 1.07rem + 0.28vw, 1.25rem);
+  --text-2xl: clamp(1.375rem, 1.24rem + 0.62vw, 1.625rem);
+  --text-3xl: clamp(1.75rem, 1.6rem + 0.75vw, 2rem);
+  --text-4xl: clamp(2rem, 1.82rem + 0.95vw, 2.5rem);
+  --tracking-copy: 0.002em;
+  --tracking-ui: 0.01em;
+  --tracking-heading: -0.015em;
+  --leading-body: 1.72;
+  --leading-body-relaxed: 1.8;
+  --leading-heading-tight: 1.12;
+  --leading-heading: 1.32;
+  --leading-ui: 1.25;
 
   /* Accent used for focus rings, etc. */
   --sd-accent: hsl(222 80% 56%);
 
-  /* Back-compat aliases (mapped to new tokens) */
-  --sd-bg: hsl(var(--bg));
-  --sd-fg: hsl(var(--fg));
-  /* New semantic tokens used across the site */
+  /* Semantic tokens used across the site */
   --sd-page-bg: hsl(var(--bg));
   --sd-text: hsl(var(--fg));
   --sd-text-muted: hsl(var(--muted));
   --sd-border: rgba(0, 0, 0, 0.06);
-  --sd-surface: var(--sd-card-bg);
 
   /* Pill/button surface tokens (used for header/search/load-more pills) */
   --sd-pill-bg: #ffffff;
@@ -63,15 +81,15 @@
 
   /* ── Motion tokens ──────────────────────────────────────────────────────── */
   /* Easings */
-  --motion-spring:  cubic-bezier(0.22, 1, 0.36, 1); /* gentle deceleration – primary */
-  --motion-snappy:  cubic-bezier(0.33, 1, 0.68, 1); /* fast snap-in (theme crossfade) */
-  --motion-slide:   cubic-bezier(0.42, 0, 0.58, 1); /* symmetric slide (page overlay) */
-  --motion-resize:  cubic-bezier(0.16, 1, 0.3, 1);  /* height / layout expand        */
+  --motion-spring: cubic-bezier(0.22, 1, 0.36, 1); /* gentle deceleration – primary */
+  --motion-snappy: cubic-bezier(0.33, 1, 0.68, 1); /* fast snap-in (theme crossfade) */
+  --motion-slide: cubic-bezier(0.42, 0, 0.58, 1); /* symmetric slide (page overlay) */
+  --motion-resize: cubic-bezier(0.16, 1, 0.3, 1); /* height / layout expand        */
   /* Durations */
-  --motion-fast:           200ms; /* hover micro, close / open panels */
-  --motion-normal:         300ms; /* default UI transitions           */
-  --motion-relaxed:        500ms; /* content reveals                  */
-  --motion-slow:           600ms; /* page-level fades                 */
+  --motion-fast: 200ms; /* hover micro, close / open panels */
+  --motion-normal: 300ms; /* default UI transitions           */
+  --motion-relaxed: 500ms; /* content reveals                  */
+  --motion-slow: 600ms; /* page-level fades                 */
   --motion-route-content: 1000ms; /* content fade after route overlay */
 }
 
@@ -95,12 +113,21 @@ html.dark {
   --sd-text: hsl(var(--fg));
   --sd-text-muted: hsl(var(--muted));
   --sd-border: rgba(255, 255, 255, 0.06);
-  --sd-surface: var(--sd-card-bg);
 }
 
-/* Keep layout stable when scrollbars appear/disappear */
+/* Keep the root scrollbar visible by default while reserving a stable gutter.
+   Search is the only state that hides the root scrollbar, so layout width
+   stays stable when the overlay opens and closes. */
 html {
   scrollbar-gutter: stable;
+}
+
+html.search-open {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html.search-open::-webkit-scrollbar {
+  display: none;
 }
 
 /* Preserve intrinsic image ratios when width/height attributes are present. */
@@ -121,17 +148,6 @@ html.scroll-locked {
 /* Optional fallback to force a vertical scrollbar on all pages to avoid layout shift
    (uncomment if browser support is insufficient) */
 /* body { overflow-y: scroll; } */
-
-/* Local forced-dark scope: apply dark color-scheme inside the wrapper
-   Use by adding class "dark sd-dark-scope" to an element to force Tailwind
-   `dark:` utilities to apply within that subtree without toggling <html>. */
-.sd-dark-scope {
-  color-scheme: dark;
-}
-.sd-dark-scope :where(*) {
-  /* ensure form controls and UA surfaces prefer dark rendering */
-  color-scheme: dark;
-}
 
 /* Shared pill surface class used by search, header and Load more so they match exactly */
 .sd-pill {
@@ -159,22 +175,53 @@ html.scroll-locked {
   border-radius: 6px;
 }
 
-/* Content container helper */
-.container-content {
-  margin-inline: auto;
-  padding-inline: clamp(1rem, 4vw, 2rem);
-  @media (min-width: 40rem) {
-    max-width: 65ch;
-  }
-}
-
 /* ── Typography (Prose) tweaks ───────────────────────────────────────────── */
 .prose {
   --tw-prose-images-margin-top: 1.25em;
   --tw-prose-images-margin-bottom: 1.25em;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: var(--leading-body-relaxed);
+  letter-spacing: var(--tracking-copy);
+}
+
+@media (min-width: 640px) {
+  .prose {
+    font-size: var(--text-base);
+  }
 }
 .prose.max-w-none {
   max-width: none;
+}
+.prose :where(h1, h2, h3, h4):not(:where([class~="not-prose"] *)) {
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+.prose :where(h1):not(:where([class~="not-prose"] *)) {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: var(--leading-heading-tight);
+}
+.prose :where(h2):not(:where([class~="not-prose"] *)) {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  line-height: var(--leading-heading-tight);
+}
+.prose :where(h3):not(:where([class~="not-prose"] *)) {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--leading-heading);
+}
+.prose :where(h4):not(:where([class~="not-prose"] *)) {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.38;
+  letter-spacing: -0.006em;
+}
+.prose :where(p, li):not(:where([class~="not-prose"] *)) {
+  line-height: var(--leading-body-relaxed);
 }
 .prose :where(img):not(:where([class~="not-prose"] *)) {
   border-radius: 0.75rem;
@@ -217,8 +264,11 @@ html.scroll-locked {
   padding: 0.35rem 0.8rem;
   border-radius: 9999px;
   text-decoration: none;
+  font-family: var(--font-sans);
+  font-size: clamp(0.875rem, 0.84rem + 0.2vw, 1rem);
   font-weight: 600;
-  line-height: 1;
+  line-height: var(--leading-ui);
+  letter-spacing: var(--tracking-ui);
   transition:
     background-color var(--motion-fast) ease-out,
     color var(--motion-fast) ease-out,
@@ -339,32 +389,205 @@ body {
   background-color: hsl(var(--bg));
 }
 
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+  letter-spacing: var(--tracking-copy);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1,
+    "calt" 1;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: hsl(var(--fg));
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: var(--leading-heading-tight);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  line-height: var(--leading-heading-tight);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--leading-heading);
+}
+
+h4 {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.38;
+}
+
+h5 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.004em;
+}
+
+h6 {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: var(--tracking-copy);
+}
+
+p,
+li,
+dd {
+  line-height: var(--leading-body-relaxed);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  font-family: var(--font-sans);
+  letter-spacing: var(--tracking-copy);
+}
+
+button,
+[role="button"],
+.sd-pill {
+  font-size: clamp(0.875rem, 0.84rem + 0.2vw, 1rem);
+  font-weight: 600;
+  line-height: var(--leading-ui);
+  letter-spacing: var(--tracking-ui);
+}
+
+label,
+caption,
+figcaption,
+.type-ui-label {
+  font-family: var(--font-sans);
+  font-size: clamp(0.75rem, 0.72rem + 0.15vw, 0.875rem);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: var(--tracking-ui);
+}
+
+.type-display {
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 1.2rem + 4vw, 4.5rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+
+.type-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  line-height: var(--leading-heading-tight);
+  letter-spacing: var(--tracking-heading);
+  text-wrap: balance;
+}
+
+.type-lead {
+  font-size: var(--text-base);
+  font-weight: 400;
+  line-height: var(--leading-body-relaxed);
+  letter-spacing: var(--tracking-copy);
+}
+
+@media (min-width: 640px) {
+  .type-lead {
+    font-size: var(--text-lg);
+  }
+}
+
+.type-card-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: 600;
+  line-height: var(--leading-heading);
+  letter-spacing: -0.014em;
+  text-wrap: balance;
+}
+
+.type-heading-4 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.38;
+  letter-spacing: -0.006em;
+  text-wrap: balance;
+}
+
+.type-brand {
+  font-family: var(--font-sans);
+  font-size: clamp(1.125rem, 1.08rem + 0.22vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.type-button {
+  font-family: var(--font-sans);
+  font-size: clamp(0.875rem, 0.84rem + 0.2vw, 1rem);
+  font-weight: 600;
+  line-height: var(--leading-ui);
+  letter-spacing: var(--tracking-ui);
+}
+
+.type-caption {
+  font-size: var(--text-xs);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: var(--tracking-ui);
+}
+
+/* Keep descendant scrollbars hidden where the app already expects that
+   treatment, but leave the root scrollbar visible in the default state. */
+body * {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+body *::-webkit-scrollbar {
+  display: none;
+}
+
 /* Prevent a site-wide horizontal scrollbar caused by elements that
    use 100vw or slight overflow (e.g. wide embeds or alignfull blocks).
-   `overflow-x: clip` avoids showing a scrollbar while still clipping
-   content; fall back to `hidden` for browsers that don't support `clip`. */
-html,
-body {
+   Applied only to <html> — not <body> — because `overflow: clip` on a
+   non-root element can act as a paint-containment boundary for
+   `position: fixed` descendants (Chrome Overflow Level 4), which would
+   clip the search overlay to body's width and leave a right-side gap. */
+html {
   overflow-x: clip;
 }
 
 @supports not (overflow-x: clip) {
-  html,
-  body {
+  html {
     overflow-x: hidden;
   }
 }
 
 /* ✅ Next.js-compliant smooth scrolling */
-html[data-scroll-behavior="smooth"] {
-  scroll-behavior: smooth;
-}
-@media (prefers-reduced-motion: reduce) {
-  html[data-scroll-behavior="smooth"] {
-    scroll-behavior: auto;
-  }
-}
-
 /* Input: remove Safari search halo */
 input[type="search"] {
   appearance: none;
@@ -392,87 +615,88 @@ html[data-preloader="1"] body {
   overflow: hidden;
 }
 
-html[data-preloader="1"] #app-shell {
-  visibility: hidden;
-}
-
-html[data-preloader="0"] #app-shell {
-  visibility: visible;
-}
-
 html[data-preloader="0"] #sd-preloader {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-/* Global app fade-in after preloader completes. */
-.app-fade {
-  opacity: 0;
-  transition: opacity var(--motion-slow) var(--motion-spring);
-  will-change: opacity;
-}
-
-html[data-app-visible="1"] .app-fade {
-  opacity: 1;
-}
+/* Content is immediately painted so the browser can measure LCP from first paint. */
 
 .app-route-fade {
   opacity: 1;
-  will-change: opacity;
 }
 
 .app-route-fade--fading-out {
   opacity: 0;
   transition: opacity var(--motion-fast) ease-out;
+  will-change: opacity;
 }
 
 .app-route-fade--hidden {
   opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .app-route-fade--fading-in {
   opacity: 1;
   transition: opacity var(--motion-route-content) var(--motion-spring);
+  will-change: opacity;
 }
 
-.sd-shimmer {
-  position: relative;
-  isolation: isolate;
+/* ── Skeleton blocks ────────────────────────────────────────────────────────
+   Root-cause fix for the dark-mode left-edge artifact:
+   - Previous implementations used opacity animation → the browser promotes
+     animated elements to GPU compositing layers. The layer boundary at x=0
+     bleeds through when the background has alpha (bg-neutral-700/60), because
+     the compositor must blend the semi-transparent block against the dark page
+     background. The layer edge at x=0 renders 1-2px incorrectly in Chromium.
+   - This implementation animates background-color between two fully-opaque
+     shades. background-color animation never creates a GPU compositing layer,
+     so there is no layer boundary to bleed. Since every state is opaque,
+     there is no alpha blending at any point in the cycle.
+   Used by: sd-skeleton class (replaces sd-shimmer everywhere).
+────────────────────────────────────────────────────────────────────────── */
+.sd-skeleton {
+  /* Light mode: neutral-200 → neutral-300 */
+  --_sk-from: #e5e7eb;
+  --_sk-to: #d1d5db;
+  background-color: var(--_sk-from);
+  animation: sd-skeleton-bg 1.6s ease-in-out infinite;
 }
 
-.sd-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(255 255 255 / 0.08) 45%,
-    rgb(255 255 255 / 0.18) 50%,
-    rgb(255 255 255 / 0.08) 55%,
-    transparent 100%
-  );
-  animation: sd-shimmer 1.8s linear infinite;
+html.dark .sd-skeleton {
+  /* Dark mode: neutral-700 → neutral-800  (both fully opaque — no /alpha) */
+  --_sk-from: #374151;
+  --_sk-to: #1f2937;
 }
 
-@keyframes sd-shimmer {
+@keyframes sd-skeleton-bg {
+  0%,
   100% {
-    transform: translateX(100%);
+    background-color: var(--_sk-from);
+  }
+  50% {
+    background-color: var(--_sk-to);
   }
 }
 
-.sd-hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.sd-hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 /* Center content precisely in viewport */
+
+/* Prefer explicit contrast for light/dark schemes before JS runs */
+/* ── Preloader quote + accent bar ──────────────────────────────────────────
+   Animation approach:
+   • Text: filter:blur(8px) + opacity:0 + translateY(8px) as hidden state.
+     Adding .sd-quote-visible transitions all three to their natural values in
+     one single CSS transition — the quote sharpens into focus as it rises.
+     One setState call → one React re-render → CSS handles everything.
+     No per-letter state, no intermediate broken render.
+   • Bar: pure CSS scaleX + opacity breath animation (infinite). No JS,
+     no ::after, no overflow clipping needed — element scales from its center.
+────────────────────────────────────────────────────────────────────────── */
+/* Decorative bar: scales from 35% → 100% of its own width from center.
+   scaleX never moves the element outside its box — no overflow clip needed. */
 #sd-preloader {
   --sd-preloader-fade-ms: 600ms;
   position: fixed;
@@ -481,9 +705,6 @@ html[data-app-visible="1"] .app-fade {
   align-items: center;
   justify-content: center;
   z-index: 99999;
-  /* Use a theme-aware overlay that matches the user's preference even
-     before JavaScript runs. The overlay uses background tokens but adds a
-     subtle tint for contrast. */
   background: hsl(var(--bg));
   background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
   opacity: 1;
@@ -496,7 +717,6 @@ html[data-app-visible="1"] .app-fade {
   pointer-events: none;
 }
 
-/* Prefer explicit contrast for light/dark schemes before JS runs */
 @media (prefers-color-scheme: dark) {
   #sd-preloader {
     background: hsl(var(--bg));
@@ -504,132 +724,71 @@ html[data-app-visible="1"] .app-fade {
   }
 }
 
-/* No spinner — only flipping text */
-
-/* --- JS-powered quote display --- */
-.sd-preloader-quote {
+.sd-preloader-inner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 1.75rem;
+}
+
+.sd-preloader-quote {
   max-width: clamp(16rem, 90vw, 42rem);
+  padding: 0 1.5rem;
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(8px);
   transition:
-    opacity var(--motion-normal) var(--motion-spring),
-    transform var(--motion-normal) var(--motion-spring);
-}
-
-.sd-preloader-quote.sd-quote-ready {
-  opacity: 1;
-}
-
-.sd-preloader-quote.sd-quote-dismiss {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.sd-quote-text {
+    opacity 500ms var(--motion-spring),
+    filter 500ms var(--motion-spring),
+    transform 500ms var(--motion-spring);
+  font-family: var(--font-sans);
   font-weight: 700;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  letter-spacing: 0.01em;
+  font-size: var(--text-2xl);
+  line-height: 1.35;
+  letter-spacing: var(--tracking-heading);
   color: hsl(var(--fg));
   text-align: center;
   margin: 0;
-  display: inline;
 }
 
-/* --- Per-letter stagger animation --- */
-.sd-word {
-  display: inline-flex;
-  white-space: nowrap;
-}
-
-.sd-word-space {
-  display: inline;
-}
-
-.sd-letter {
-  display: inline-block;
-  opacity: 0;
-  transform: rotateX(90deg);
-  transform-origin: center;
-  backface-visibility: hidden;
-  transition:
-    opacity 280ms ease,
-    transform 280ms ease;
-}
-
-.sd-letter.sd-letter-in {
+.sd-preloader-quote.sd-quote-visible {
   opacity: 1;
-  transform: rotateX(0deg);
+  filter: blur(0);
+  transform: translateY(0);
 }
 
-/* --- CSS-only quote rotator (before JS hydrates) --- */
-.sd-quote-rotator {
-  position: relative;
-  max-width: clamp(16rem, 90vw, 42rem);
-  min-height: 4rem;
-  text-align: center;
-  padding: 0 1.5rem;
-  overflow: hidden;
+.sd-preloader-bar {
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 1px;
+  background: hsl(var(--fg));
+  transform: scaleX(0.35);
+  opacity: 0.2;
+  animation: sd-bar-breathe 2.2s ease-in-out infinite;
 }
 
-.sd-rotator-quote {
-  display: block;
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  font-weight: 700;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  color: hsl(var(--fg));
-  animation: sd-quote-rotate 12s ease-in-out infinite;
-  animation-delay: var(--sd-rotator-delay, 0s);
-  animation-fill-mode: both;
-}
-
-@keyframes sd-quote-rotate {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  5% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  25% {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
+@keyframes sd-bar-breathe {
+  0%,
   100% {
-    opacity: 0;
+    transform: scaleX(0.35);
+    opacity: 0.2;
   }
-}
-
-.sd-hidden {
-  display: none !important;
-}
-
-.sd-js-hidden {
-  display: none;
+  50% {
+    transform: scaleX(1);
+    opacity: 0.45;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-fade {
+  .app-route-fade,
+  .app-route-fade--fading-out,
+  .app-route-fade--fading-in {
     transition: none;
     opacity: 1;
+    will-change: auto;
   }
 
-  .app-route-fade {
-    transition: none;
-    opacity: 1;
-  }
-
-  .sd-shimmer::after {
+  .sd-skeleton {
     animation: none;
   }
 
@@ -638,19 +797,16 @@ html[data-app-visible="1"] .app-fade {
   }
 
   .sd-preloader-quote {
-    /* biome-disable-next-line lint/complexity/noImportantStyles */
-    transition: none !important;
-  }
-
-  .sd-letter {
-    /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition: none !important;
     opacity: 1;
+    filter: none;
     transform: none;
   }
 
-  .sd-rotator-quote {
+  .sd-preloader-bar {
     animation: none;
+    opacity: 0.3;
+    transform: scaleX(1);
   }
 }
 
@@ -722,6 +878,12 @@ html[data-app-visible="1"] .app-fade {
   transition-timing-function: var(--rt-ease);
   will-change: transform;
   backface-visibility: hidden;
+}
+
+@media (max-width: 640px) {
+  .rt-overlay__logo {
+    width: clamp(168px, 46vw, 220px);
+  }
 }
 
 .rt-overlay[data-phase="idle"] .rt-overlay__logo {
@@ -814,3 +976,113 @@ html[data-app-visible="1"] .app-fade {
 .dark .bg-gradient-section {
   background: linear-gradient(135deg, #09090b 0%, #0f1117 50%, #070a10 100%);
 }
+
+/* ── Post sliders (LatestPostsSlider + SuccessStoriesSlider) ─────────────── */
+/* These rules were previously injected via JS <style> strings inside each
+   slider component.  Moving them here removes the runtime DOM mutation and
+   keeps style delivery in the static CSS bundle.                             */
+
+/* Scroller scrollbar hidden via utility class; webkit variant needs an
+   attribute selector because it escapes Tailwind's purge. */
+[data-stories-scroller]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive card widths inside both sliders */
+[data-card] {
+  flex: 0 0 100%; /* 1 column (mobile) */
+}
+@media (min-width: 768px) {
+  [data-card] {
+    flex: 0 0 calc((100% - 32px) / 2); /* md: 2 columns */
+  }
+}
+@media (min-width: 1280px) {
+  [data-card] {
+    flex: 0 0 calc((100% - 64px) / 3); /* xl: 3 columns */
+  }
+}
+
+/* Latest posts slider: ensure heading text inherits the section color token */
+[data-latest-slider-scope] .post-title,
+[data-latest-slider-scope] [data-post-title],
+[data-latest-slider-scope] h1,
+[data-latest-slider-scope] h2,
+[data-latest-slider-scope] h3,
+[data-latest-slider-scope] h4,
+[data-latest-slider-scope] h5,
+[data-latest-slider-scope] h6,
+[data-latest-slider-scope] h1 a,
+[data-latest-slider-scope] h2 a,
+[data-latest-slider-scope] h3 a,
+[data-latest-slider-scope] h4 a,
+[data-latest-slider-scope] h5 a,
+[data-latest-slider-scope] h6 a {
+  color: inherit;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Success stories slider: dark-mode heading color overrides */
+/* biome-disable-next-line lint/complexity/noImportantStyles */
+html.dark [data-slider-scope][data-slider-scope] h1,
+html.dark [data-slider-scope][data-slider-scope] h2,
+html.dark [data-slider-scope][data-slider-scope] h3,
+html.dark [data-slider-scope][data-slider-scope] h4,
+html.dark [data-slider-scope][data-slider-scope] h5,
+html.dark [data-slider-scope][data-slider-scope] h6,
+html.dark [data-slider-scope][data-slider-scope] h1 *,
+html.dark [data-slider-scope][data-slider-scope] h2 *,
+html.dark [data-slider-scope][data-slider-scope] h3 *,
+html.dark [data-slider-scope][data-slider-scope] h4 *,
+html.dark [data-slider-scope][data-slider-scope] h5 *,
+html.dark [data-slider-scope][data-slider-scope] h6 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #ffffff !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}
+html.dark [data-slider-scope][data-slider-scope] .group:hover h1 *,
+html.dark [data-slider-scope][data-slider-scope] .group:hover h2 *,
+html.dark [data-slider-scope][data-slider-scope] .group:hover h3 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #d1d5db !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}
+
+.caret-realistic {
+  animation: caret-blink 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
+@keyframes caret-blink {
+  0% {
+    opacity: 1;
+  }
+  62% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 0;
+  }
+  88% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-realistic {
+    animation: none;
+  }
+}
+
+/* Typewriter cursor blink — moved from per-component <style jsx> to the
+   static bundle so the keyframe is parsed once, not re-injected per render. */

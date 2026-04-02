@@ -1,118 +1,79 @@
 import Link from "next/link";
+import { normalizeLevelSlug, sortWordPressBadgesByCefr } from "@/lib/cefr";
 import {
   buildLocalizedHref,
-  CEFR_ORDER,
-  CEFR_UI_CONFIG,
+  type CefrLevelCode,
   formatLocalizedPostCount,
-  getLevelDescription,
-  getLevelLabel,
-  isLocale,
+  getCefrLevelLabel,
   type Locale,
   TRANSLATIONS,
 } from "@/lib/i18n";
-import {
-  getAllPostsForCounts,
-  mapGraphQLEnumToUi,
-  normalizeLevelSlug,
-  type PostListItem,
-} from "@/lib/posts";
+import { getWordPressLevelBadges } from "@/lib/posts";
+
+/** Extracts the leading emoji character (if any) from a WordPress tag name like "🟢 A1 (Beginner)". */
+function extractLeadingEmoji(name: string | null | undefined): string | null {
+  if (!name) return null;
+  const match = name.match(/^\p{Emoji_Presentation}/u);
+  return match ? match[0] : null;
+}
+
+function localizedBadgeTitle(slug: string | undefined, locale: Locale): string | null {
+  const code = normalizeLevelSlug(slug)?.toUpperCase() as CefrLevelCode | undefined;
+  if (!code) return null;
+  // getCefrLevelLabel returns e.g. "A1 — Початковий"; strip the "A1 — " prefix to get just the label.
+  const full = getCefrLevelLabel(locale, code);
+  const label = full.replace(/^[A-C][12]\s*[—–-]\s*/i, "").trim();
+  return `${code} (${label})`;
+}
 
 export async function LevelsIndexContent({ locale }: { locale: Locale }) {
   const t = TRANSLATIONS[locale];
-
-  function getPostLanguage(post: {
-    slug?: string;
-    categories?: { nodes?: { slug?: string | null }[] } | null;
-    language?: { code?: string | null } | null;
-  }): Locale | null {
-    const fromLangField = post.language?.code ? mapGraphQLEnumToUi(post.language.code) : null;
-    if (fromLangField) {
-      return fromLangField;
-    }
-
-    const categoryLanguage = post.categories?.nodes
-      ?.map((category) => category?.slug)
-      .find((slug): slug is Locale => isLocale(slug));
-    if (categoryLanguage) {
-      return categoryLanguage;
-    }
-
-    const prefixFromSlug = post.slug?.split("-")[0];
-    return prefixFromSlug && isLocale(prefixFromSlug) ? prefixFromSlug : null;
-  }
-
-  let allPosts: Awaited<ReturnType<typeof getAllPostsForCounts>> = [];
-  try {
-    allPosts = await getAllPostsForCounts(locale);
-  } catch (error) {
-    console.error("Failed to fetch posts for levels page during prerender:", error);
-  }
-
-  function getPostTags(post: PostListItem): Array<{ slug?: string; name?: string }> {
-    return (post.tags?.nodes ?? []).map((tag) => ({
-      name: tag?.name ?? "",
-      slug: tag?.slug ?? "",
-    }));
-  }
-
-  const countsMap = new Map<string, number>(CEFR_ORDER.map((code) => [code.toLowerCase(), 0]));
-  allPosts.forEach((post) => {
-    if (getPostLanguage(post) !== locale) {
-      return;
-    }
-
-    const levelsForPost = new Set<string>();
-    getPostTags(post).forEach((tag) => {
-      const level = normalizeLevelSlug(tag.name) ?? normalizeLevelSlug(tag.slug);
-      if (level) {
-        levelsForPost.add(level);
-      }
-    });
-
-    levelsForPost.forEach((level) => {
-      countsMap.set(level, (countsMap.get(level) ?? 0) + 1);
-    });
-  });
+  const badges = sortWordPressBadgesByCefr(await getWordPressLevelBadges(locale));
 
   return (
     <div className="-mx-[calc(50vw-50%)] w-screen">
       <div className="mx-auto max-w-7xl px-4 py-10">
-        <h1 className="mb-4 text-3xl font-semibold">{t.levelsHeading}</h1>
-        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+        <h1 className="type-display mb-4">{t.levelsHeading}</h1>
+        <p className="type-lead mb-8 max-w-2xl text-neutral-600 dark:text-neutral-300">
           {t.levelsDescription}
         </p>
-        <ul className="grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
-          {CEFR_ORDER.map((code, idx) => {
-            const slug = code.toLowerCase();
-            const ui = CEFR_UI_CONFIG[code];
-            const count = countsMap.get(slug) ?? 0;
-            const titleLabel = (t[`cefr.${code}.title`] as string) ?? getLevelLabel(slug, locale);
-            const description =
-              (t[`cefr.${code}.description`] as string) ?? getLevelDescription(slug, locale) ?? "";
-
-            return (
-              <li
-                key={slug}
-                className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
-                style={{ animationDelay: `${idx * 60}ms` }}
+        <ul className="list-none grid grid-cols-1 gap-x-8 gap-y-8 md:grid-cols-2 xl:grid-cols-3">
+          {badges.map((badge, idx) => (
+            <li
+              key={badge.id}
+              className="sd-fade-in-item rounded-lg border border-neutral-200/60 p-4 dark:border-neutral-800/60"
+              style={{ animationDelay: `${idx * 60}ms` }}
+            >
+              <Link
+                href={buildLocalizedHref(
+                  locale,
+                  `/levels/${normalizeLevelSlug(badge.slug) ?? badge.slug}`,
+                )}
+                className="group block"
               >
-                <Link href={buildLocalizedHref(locale, `/levels/${slug}`)} className="group block">
-                  <div className="mb-1 flex items-baseline justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className={`h-3 w-3 rounded-full ${ui.dotClass}`} />
-                      <h2 className="text-lg font-medium group-hover:underline">
-                        {ui.emoji ? `${ui.emoji} ${code} — ${titleLabel}` : `${code} — ${titleLabel}`}
-                      </h2>
-                    </div>
-                    <span className="text-xs text-neutral-500">
-                      {formatLocalizedPostCount(count, locale)}
-                    </span>
+                <div className="mb-1 flex items-baseline justify-between">
+                  <div className="flex items-center gap-2">
+                    {extractLeadingEmoji(badge.name) && (
+                      <span className="shrink-0 text-xl leading-none" aria-hidden="true">
+                        {extractLeadingEmoji(badge.name)}
+                      </span>
+                    )}
+                    <h2 className="type-heading-4 group-hover:underline">
+                      {localizedBadgeTitle(badge.slug, locale) ?? badge.name}
+                    </h2>
                   </div>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">{description}</p>
-                </Link>
-              </li>
-            );
-          })}
+                  <span className="type-caption text-neutral-500">
+                    {formatLocalizedPostCount(badge.count ?? 0, locale)}
+                  </span>
+                </div>
+                {badge.description ? (
+                  <p className="text-sm leading-7 text-neutral-600 dark:text-neutral-400">
+                    {badge.description}
+                  </p>
+                ) : null}
+              </Link>
+            </li>
+          ))}
         </ul>
       </div>
     </div>

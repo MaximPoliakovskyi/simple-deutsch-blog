@@ -26,9 +26,7 @@ export default function SectionText({
         <div className="mx-auto w-full max-w-[72ch] text-center md:text-left space-y-6 md:space-y-8">
           {title ? (
             typeof title === "string" ? (
-              <h2 className="text-3xl md:text-4xl font-semibold leading-[1.05] tracking-tight text-(--sd-text) text-center">
-                {title}
-              </h2>
+              <h2 className="type-title text-[var(--sd-text)] text-center">{title}</h2>
             ) : (
               // allow passing custom heading nodes (e.g. h1)
               <div className="text-center">{title}</div>
@@ -36,13 +34,11 @@ export default function SectionText({
           ) : null}
 
           {lead ? (
-            <p className="text-lg md:text-xl leading-relaxed text-(--sd-text-muted) text-center md:text-left">
-              {lead}
-            </p>
+            <p className="type-lead text-[var(--sd-text-muted)] text-center md:text-left">{lead}</p>
           ) : null}
 
           {paragraphs && (
-            <div className="space-y-6 text-lg md:text-xl leading-relaxed text-(--sd-text-muted) hyphens-auto wrap-break-word">
+            <div className="space-y-6 text-base sm:text-lg leading-[1.78] text-[var(--sd-text-muted)] hyphens-auto wrap-break-word">
               {paragraphs.map((p) => (
                 <p key={p} className="md:text-left text-center">
                   {p}
@@ -52,10 +48,10 @@ export default function SectionText({
           )}
 
           {quote ? (
-            <blockquote className="mx-auto italic text-xl text-(--sd-text-muted) my-10 border-l-2 border-(--sd-border) pl-4 md:pl-6">
+            <blockquote className="mx-auto my-10 border-l-2 border-[var(--sd-border)] pl-4 text-lg italic leading-[1.7] text-[var(--sd-text-muted)] md:pl-6">
               {quote.text}
               {quote.author ? (
-                <cite className="block mt-2 text-sm not-italic">— {quote.author}</cite>
+                <cite className="type-caption block mt-2 not-italic">— {quote.author}</cite>
               ) : null}
             </blockquote>
           ) : null}

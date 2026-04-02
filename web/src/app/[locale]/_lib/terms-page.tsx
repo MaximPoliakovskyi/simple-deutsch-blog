@@ -27,9 +27,12 @@ export default function TermsPage({ locale }: { locale?: Locale }) {
 
   return (
     <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-12">
-      <div className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert" style={{ animationDelay: "80ms" }}>
+      <div
+        className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert"
+        style={{ animationDelay: "80ms" }}
+      >
         <h1>{t["terms.title"]}</h1>
-        <p className="text-sm text-muted-foreground">{lastUpdated}</p>
+        <p className="type-caption text-[var(--sd-text-muted)]">{lastUpdated}</p>
 
         <p>{t["terms.s1.p"]}</p>
 

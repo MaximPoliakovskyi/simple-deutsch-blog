@@ -3,13 +3,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
+import { normalizeLevelSlug, sortWordPressBadgesByCefr } from "@/lib/cefr";
 import {
   buildLocalizedHref,
+  type CefrLevelCode,
   formatPostCardDate,
-  getLevelDescription,
-  getLevelLabel,
+  getCefrLevelLabel,
   translateCategory,
 } from "@/lib/i18n";
 
@@ -32,7 +33,9 @@ type FeaturedImageFlat = {
   height?: number | null;
 };
 
-type Categories = { nodes: Array<{ name: string; slug: string }> } | null;
+type Categories = {
+  nodes: Array<{ name: string; slug: string }>;
+} | null;
 
 function isHiddenCategory(name?: string | null, slug?: string | null) {
   const hiddenKeys = [
@@ -76,8 +79,6 @@ export type PostCardProps = {
   className?: string;
   priority?: boolean;
   safeExcerpt?: boolean;
-  /** Zero-based index used to stagger the fade-in animation delay */
-  index?: number;
 };
 
 function hasNode(fi: unknown): fi is FeaturedImageNode {
@@ -101,16 +102,12 @@ function extractImage(p: PostCardPost) {
   return { url: "", alt: "" };
 }
 
-const PostCard = memo(function PostCard({
-  post,
-  className,
-  priority = false,
-  index = 0,
-}: PostCardProps) {
+const PostCard = memo(function PostCard({ post, className, priority = false }: PostCardProps) {
   const img = extractImage(post);
-  const { t, locale } = useI18n();
+  const { locale } = useI18n();
   const computedDateText = formatPostCardDate(post.date, locale) ?? "";
   const imageAlt = (img.alt?.trim() || post.title || "").slice(0, 280);
+  const titleId = useId();
   const categories = (post.categories?.nodes ?? []).filter(
     (c) => !isHiddenCategory(c.name, c.slug),
   );
@@ -118,10 +115,15 @@ const PostCard = memo(function PostCard({
 
   return (
     <article
-      className={["group", "sd-fade-in-item", "transition-transform duration-300 ease-out hover:-translate-y-1.5", className].filter(Boolean).join(" ")}
-      style={{ animationDelay: `${index * 75}ms` }}
+      className={[
+        "group",
+        "transition-transform duration-300 ease-out hover:-translate-y-1.5",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
-      <Link href={href} className="block" aria-label={post.title}>
+      <Link href={href} className="block" aria-labelledby={titleId}>
         <div className="relative overflow-hidden rounded-2xl aspect-4/3 bg-neutral-200 dark:bg-neutral-800">
           <div
             className="absolute inset-0 transform-gpu will-change-transform origin-center group-hover:scale-[1.06] group-focus-within:scale-[1.06]"
@@ -157,7 +159,7 @@ const PostCard = memo(function PostCard({
             {post.readingText}
           </p>
         )}
-        <h3 className="mt-1 text-[clamp(1.25rem,2.2vw,1.75rem)] font-semibold leading-snug tracking-tight">
+        <h3 id={titleId} className="mt-1 type-card-title">
           <span className="transition-colors duration-300 text-[hsl(var(--fg))] group-hover:text-slate-600 group-focus-within:text-slate-600 dark:group-hover:text-slate-300 dark:group-focus-within:text-slate-300">
             {post.title}
           </span>
@@ -169,10 +171,9 @@ const PostCard = memo(function PostCard({
             <Link
               key={cat.slug}
               href={buildLocalizedHref(locale, `/categories/${cat.slug}`)}
-              aria-label={`${t("viewCategoryAria")} ${getLevelLabel(cat.slug, locale) ?? translateCategory(cat.name, cat.slug, locale)}`}
-              className="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-xs font-medium text-neutral-700 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/10 transition-colors"
+              className="type-ui-label inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1 text-neutral-700 transition-colors hover:bg-neutral-100 dark:border-white/10 dark:bg-white/5 dark:text-neutral-200 dark:hover:bg-white/10"
             >
-              {getLevelLabel(cat.slug, locale) ?? translateCategory(cat.name, cat.slug, locale)}
+              {translateCategory(cat.name, cat.slug, locale)}
             </Link>
           ))}
         </div>
@@ -206,12 +207,7 @@ export function CategoryPillsSkeleton({
       {items.map((item) => (
         <div
           key={item.key}
-          className={[
-            "relative h-10 rounded-full overflow-hidden",
-            item.widthClass,
-            "bg-neutral-200 dark:bg-neutral-700/60",
-            "sd-shimmer",
-          ].join(" ")}
+          className={["h-10 rounded-full", item.widthClass, "sd-skeleton"].join(" ")}
         />
       ))}
     </div>
@@ -219,6 +215,13 @@ export function CategoryPillsSkeleton({
 }
 
 type Category = { id: string; name: string; slug: string };
+type WordPressBadgePill = {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  levelColor?: string | null;
+};
 
 const CategoryPills = memo(function CategoryPills({
   categories,
@@ -241,68 +244,18 @@ const CategoryPills = memo(function CategoryPills({
 }) {
   const { t, locale } = useI18n();
 
-  const CEFR_ORDER = useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
-  const CEFR_ORDER_MAP = useMemo(() => {
-    const m = new Map<string, number>();
-    for (let i = 0; i < CEFR_ORDER.length; i++) {
-      m.set(CEFR_ORDER[i], i);
-    }
-    return m;
-  }, [CEFR_ORDER]);
-
-  const CEFR_STICKER: Record<string, string> = useMemo(
-    () => ({
-      A1: "bg-green-500",
-      A2: "bg-yellow-400",
-      B1: "bg-orange-500",
-      B2: "bg-red-500",
-      C1: "bg-purple-500",
-      C2: "bg-black",
-    }),
-    [],
-  );
-
-  const isCefrLevel = useCallback(
-    (slug?: string): boolean => {
-      if (!slug) return false;
-      return CEFR_ORDER.includes(slug.toUpperCase());
-    },
-    [CEFR_ORDER],
-  );
-
-  const sortedCategories = useMemo(() => {
-    const cefr = categories.filter((c) => isCefrLevel(c.slug));
-    const nonCefr = categories.filter((c) => !isCefrLevel(c.slug));
-    const sortedCefr = cefr.sort((a, b) => {
-      const ia = CEFR_ORDER_MAP.get(a.slug?.toUpperCase() ?? "") ?? 999;
-      const ib = CEFR_ORDER_MAP.get(b.slug?.toUpperCase() ?? "") ?? 999;
-      return ia - ib;
-    });
-    return [...sortedCefr, ...nonCefr];
-  }, [categories, CEFR_ORDER_MAP, isCefrLevel]);
-
   const getTagDescription = useCallback(
-    (slug: string): string | undefined => {
-      const fromLevels = getLevelDescription(slug, locale ?? "en");
-      if (fromLevels) return fromLevels;
-      return t(`${slug.toLowerCase()}Description`);
-    },
-    [t, locale],
+    (slug: string): string | undefined => t(`${slug.toLowerCase()}Description`),
+    [t],
   );
 
   const defaultSelected = useMemo(() => {
     if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
-    if (sortedCategories.some((c) => isCefrLevel(c.slug))) {
-      const a1 = sortedCategories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
-      if (a1) return a1.slug;
-    }
-    if (required) return sortedCategories.length > 0 ? sortedCategories[0].slug : null;
+    if (required) return categories.length > 0 ? categories[0].slug : null;
     return null;
-  }, [initialSelected, required, sortedCategories, isCefrLevel]);
+  }, [categories, initialSelected, required]);
 
-  const [internalSelected, setInternalSelected] = useState<string | null>(
-    defaultSelected ?? null,
-  );
+  const [internalSelected, setInternalSelected] = useState<string | null>(defaultSelected ?? null);
   const previousDefaultSelectedRef = useRef<string | null>(defaultSelected ?? null);
   const isControlled = selected !== undefined;
   const currentSelected = isControlled ? selected : internalSelected;
@@ -322,15 +275,13 @@ const CategoryPills = memo(function CategoryPills({
 
   return (
     <div className={containerClass}>
-      {sortedCategories.length === 0 ? (
+      {categories.length === 0 ? (
         <div className="text-sm text-neutral-500 dark:text-neutral-400">{t("noCategories")}</div>
       ) : (
-        sortedCategories.map((cat) => {
+        categories.map((cat) => {
           const active = currentSelected === cat.slug;
           const description = getTagDescription(cat.slug);
-          const displayName =
-            getLevelLabel(cat.slug, locale ?? "en") ??
-            translateCategory(cat.name, cat.slug, locale);
+          const displayName = translateCategory(cat.name, cat.slug, locale);
           return (
             <button
               key={cat.id}
@@ -340,7 +291,7 @@ const CategoryPills = memo(function CategoryPills({
                 if (!isControlled) setInternalSelected(next);
                 onSelect(next);
               }}
-              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium border shadow-sm focus:outline-none focus-visible:outline-none transition-colors cursor-pointer ${
+              className={`type-button inline-flex items-center px-4 py-2 rounded-full border shadow-sm focus:outline-none focus-visible:outline-none transition-colors cursor-pointer ${
                 active
                   ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
                   : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
@@ -348,15 +299,7 @@ const CategoryPills = memo(function CategoryPills({
               title={description}
               aria-label={description ? `${displayName}: ${description}` : displayName}
             >
-              <span className="flex items-center">
-                {(() => {
-                  const stickerClass = CEFR_STICKER[cat.slug?.toUpperCase() ?? ""] ?? "";
-                  return stickerClass ? (
-                    <span className={`w-2.5 h-2.5 rounded-full ${stickerClass} mr-2`} />
-                  ) : null;
-                })()}
-                <span>{displayName}</span>
-              </span>
+              <span>{displayName}</span>
             </button>
           );
         })
@@ -365,4 +308,102 @@ const CategoryPills = memo(function CategoryPills({
   );
 });
 
-export { CategoryPills };
+const WordPressBadgePills = memo(function WordPressBadgePills({
+  badges,
+  onSelect,
+  initialSelected,
+  selected,
+  alignment = "center",
+  required = false,
+  loading = false,
+  loadingCount = 6,
+}: {
+  badges: WordPressBadgePill[];
+  onSelect: (slug: string | null) => void;
+  initialSelected?: string | null;
+  selected?: string | null;
+  alignment?: "left" | "center";
+  required?: boolean;
+  loading?: boolean;
+  loadingCount?: number;
+}) {
+  const { locale } = useI18n();
+  const sortedBadges = useMemo(() => sortWordPressBadgesByCefr(badges), [badges]);
+
+  const defaultSelected = useMemo(() => {
+    if (initialSelected !== undefined && initialSelected !== null) return initialSelected;
+    if (required) return sortedBadges[0]?.slug ?? null;
+    return null;
+  }, [initialSelected, required, sortedBadges]);
+
+  const [internalSelected, setInternalSelected] = useState<string | null>(defaultSelected ?? null);
+  const previousDefaultSelectedRef = useRef<string | null>(defaultSelected ?? null);
+  const isControlled = selected !== undefined;
+  const currentSelected = isControlled ? selected : internalSelected;
+
+  useEffect(() => {
+    if (isControlled) return;
+    if (previousDefaultSelectedRef.current === (defaultSelected ?? null)) return;
+    previousDefaultSelectedRef.current = defaultSelected ?? null;
+    setInternalSelected(defaultSelected ?? null);
+  }, [defaultSelected, isControlled]);
+
+  const containerClass = `mx-0 my-8 flex flex-wrap gap-3 ${alignment === "center" ? "justify-center" : "justify-start"}`;
+
+  if (loading) {
+    return <CategoryPillsSkeleton count={loadingCount} alignment={alignment} />;
+  }
+
+  if (sortedBadges.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className={containerClass}>
+      {sortedBadges.map((badge) => {
+        const active = currentSelected === badge.slug;
+        const description = badge.description?.trim() || undefined;
+        const cefrCode = normalizeLevelSlug(badge.slug)?.toUpperCase() as CefrLevelCode | undefined;
+        const emojiPrefix = (() => {
+          const m = badge.name?.match(/^\p{Emoji_Presentation}/u);
+          return m ? m[0] : null;
+        })();
+        const displayName = cefrCode
+          ? (() => {
+              const full = getCefrLevelLabel(locale, cefrCode);
+              const label = full.replace(/^[A-C][12]\s*[—–-]\s*/i, "").trim();
+              const localized = `${cefrCode} (${label})`;
+              return emojiPrefix ? `${emojiPrefix} ${localized}` : localized;
+            })()
+          : badge.name;
+
+        return (
+          <button
+            key={badge.id}
+            type="button"
+            onClick={() => {
+              const next = required
+                ? badge.slug
+                : currentSelected === badge.slug
+                  ? null
+                  : badge.slug;
+              if (!isControlled) setInternalSelected(next);
+              onSelect(next);
+            }}
+            className={`type-button inline-flex items-center px-4 py-2 rounded-full border shadow-sm focus:outline-none focus-visible:outline-none transition-colors cursor-pointer ${
+              active
+                ? "sd-pill ring-2 ring-blue-50 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800"
+                : "sd-pill text-slate-700 dark:text-neutral-300 border-slate-200 dark:border-neutral-700 hover:opacity-95"
+            }`}
+            title={description}
+            aria-label={description ? `${displayName}: ${description}` : displayName}
+          >
+            <span>{displayName}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+});
+
+export { CategoryPills, WordPressBadgePills };
