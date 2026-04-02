@@ -13,7 +13,7 @@ import {
   TRANSLATIONS,
 } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
-import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme, type ThemeTransitionCoords } from "@/lib/theme";
+import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme } from "@/lib/theme";
 import type { NavLocale } from "./navigation";
 import { NavigationDesktop, NavigationMobileControls, NavigationMobileDrawer } from "./navigation";
 import { isUnmodifiedLeftClick, useTransitionNav } from "./route-wrapper";
@@ -23,15 +23,15 @@ import { isUnmodifiedLeftClick, useTransitionNav } from "./route-wrapper";
 
 type Lang = NavLocale;
 
-function scrollToTopWithMotionPreference() {
+function scrollToTopInstantly() {
   if (typeof window === "undefined") return;
-  let behavior: ScrollBehavior = "smooth";
-  try {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      behavior = "auto";
-    }
-  } catch {}
-  window.scrollTo({ top: 0, left: 0, behavior });
+  const html = document.documentElement;
+  const previousScrollBehavior = html.style.scrollBehavior;
+  html.style.scrollBehavior = "auto";
+  window.scrollTo(0, 0);
+  html.scrollTop = 0;
+  document.body.scrollTop = 0;
+  html.style.scrollBehavior = previousScrollBehavior;
 }
 
 function normalizePathname(pathname: string | null): string {
@@ -67,21 +67,17 @@ export default function Header() {
   const [mobileTheme, setMobileTheme] = useState<Theme>("light");
   const navRef = useRef<HTMLElement | null>(null);
   const pathname = usePathname();
-  const [_progressLeft, setProgressLeft] = useState<number | null>(null);
-  const [_progressWidth, setProgressWidth] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
   const firstFocusRef = useRef<HTMLAnchorElement>(null);
-  const lastDebugPathRef = useRef<string | null>(null);
 
   // Navigation is outside the per-locale provider, so derive the active locale from the URL.
   const { locale: uiLocale, t: tFromProvider } = useI18n();
   const normalizedPathname = normalizePathname(pathname);
   const segments = normalizedPathname.split("/").filter(Boolean);
-  const segmentsKey = segments.join("/");
   const localeFromPath =
     segments.length > 0 ? parseLocaleFromPath(`/${segments[0].toLowerCase()}`) : null;
-  const isLocaleRoot =
+  const _isLocaleRoot =
     segments.length === 1 && localeFromPath !== null && SUPPORTED_LOCALES.includes(localeFromPath);
   const isArticleDetailRoute = isLocalizedPostDetailRoute(normalizedPathname);
   const shouldEnableProgressBar = hasMounted && isArticleDetailRoute;
@@ -91,25 +87,6 @@ export default function Header() {
   useEffect(() => {
     setHasMounted(true);
   }, []);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-    if (process.env.NEXT_PUBLIC_DEBUG_PROGRESSBAR !== "1") return;
-    if (lastDebugPathRef.current === normalizedPathname) return;
-    lastDebugPathRef.current = normalizedPathname;
-
-    console.log("[progressbar-debug]", {
-      pathname,
-      normalizedPathname,
-      segments,
-      segmentsKey,
-      locale: routeLocale,
-      isLocaleRoot,
-      isArticleDetailRoute,
-      hasMounted,
-      shouldEnableProgressBar,
-    });
-  });
 
   const buildLocaleRootHref = (target: Lang) => buildLocalizedHref(target, "/");
 
@@ -141,7 +118,7 @@ export default function Header() {
     const isHomepage = normalizedPathname === normalizePathname(logoHref);
     if (isHomepage) {
       event.preventDefault();
-      scrollToTopWithMotionPreference();
+      scrollToTopInstantly();
       return;
     }
 
@@ -230,8 +207,6 @@ export default function Header() {
       }
 
       const rect = article.getBoundingClientRect();
-      const articleLeft = rect.left;
-      const articleWidth = rect.width;
       const navHeight = navRef.current?.offsetHeight ?? 0;
       const articleTop = rect.top + window.scrollY;
       const articleHeight = article.offsetHeight;
@@ -251,8 +226,6 @@ export default function Header() {
       }
 
       setProgress(Number(percent.toFixed(2)));
-      setProgressLeft(Math.round(articleLeft));
-      setProgressWidth(Math.round(articleWidth));
       setVisible(true);
     };
 
@@ -283,17 +256,12 @@ export default function Header() {
       <nav
         ref={navRef}
         data-main-nav="true"
-        className="sticky top-0 z-[1000] bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
+        className="sticky top-0 z-[100] bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
         aria-label="Main navigation"
       >
         <div>
           <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 md:py-5">
-            <Link
-              href={logoHref}
-              onClick={handleLogoClick}
-              className="text-xl font-semibold tracking-tight"
-              aria-label={label("home", "Home")}
-            >
+            <Link href={logoHref} onClick={handleLogoClick} className="type-brand">
               simple-deutsch.de
             </Link>
             <NavigationDesktop
@@ -353,10 +321,10 @@ export default function Header() {
         onCloseMenu={() => setOpen(false)}
         onLogoClick={handleLogoClick}
         onToggleTheme={(e) => {
-          runThemeTransition(
-            () => applyTheme(mobileTheme === "dark" ? "light" : "dark"),
-            { x: e.clientX, y: e.clientY },
-          );
+          runThemeTransition(() => applyTheme(mobileTheme === "dark" ? "light" : "dark"), {
+            x: e.clientX,
+            y: e.clientY,
+          });
         }}
       />
     </>

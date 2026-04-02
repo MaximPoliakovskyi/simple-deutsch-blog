@@ -14,7 +14,14 @@ export async function CategoryPageContent({
   if (!term) return notFound();
   const lang: Locale = locale;
 
-  const localeCategorySlug = getLocaleAwareTaxonomySlug(category, lang);
+  // Normalize: strip an existing locale suffix before applying getLocaleAwareTaxonomySlug.
+  // Post card categories on /ru/ and /uk/ already carry locale-specific WP slugs (e.g.
+  // "grammar-ru"). Without stripping, we'd produce "grammar-ru-ru" and fetch 0 posts.
+  const baseSlug =
+    lang !== "en" && category.endsWith(`-${lang}`)
+      ? category.slice(0, -(lang.length + 1))
+      : category;
+  const localeCategorySlug = getLocaleAwareTaxonomySlug(baseSlug, lang);
   const PAGE_SIZE = 3;
   const pageRes = await getPostsByCategory({
     first: PAGE_SIZE,
@@ -31,9 +38,9 @@ export async function CategoryPageContent({
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-semibold">{`${label} ${translatedName}`}</h1>
+      <h1 className="type-display mb-6">{`${label} ${translatedName}`}</h1>
       {category === "success-stories" && (
-        <p className="mb-8 max-w-2xl text-sm text-neutral-600 dark:text-neutral-300">
+        <p className="mb-8 max-w-2xl text-sm leading-7 text-neutral-600 dark:text-neutral-300">
           {t.successStoriesDescription}
         </p>
       )}

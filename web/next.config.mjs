@@ -5,14 +5,53 @@ const DEV_WATCH_IGNORED = [
   "**/devserver.log",
 ];
 
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+
+function buildCsp() {
+  const scriptSrc = ["'self'", "'unsafe-inline'"];
+  if (!IS_PRODUCTION) {
+    scriptSrc.push("'unsafe-eval'");
+  }
+
+  const styleSrc = ["'self'", "'unsafe-inline'"];
+  const imgSrc = ["'self'", "data:", "https:"];
+  const fontSrc = ["'self'", "data:"];
+  const connectSrc = ["'self'", "https://cms.simple-deutsch.de"];
+  const frameSrc = ["'self'"];
+
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc.join(" ")}`,
+    `script-src-elem ${scriptSrc.join(" ")}`,
+    `style-src ${styleSrc.join(" ")}`,
+    `img-src ${imgSrc.join(" ")}`,
+    `font-src ${fontSrc.join(" ")}`,
+    `connect-src ${connectSrc.join(" ")}`,
+    `frame-src ${frameSrc.join(" ")}`,
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
+const CONTENT_SECURITY_POLICY = buildCsp();
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow cross-origin HMR/dev requests from local network devices (e.g. phone on same Wi-Fi).
+  // This is development-only — has no effect in production builds.
+  allowedDevOrigins: ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"],
   // Harden HTTP fingerprint
   poweredByHeader: false,
   reactStrictMode: true,
   // Enable streaming and concurrent features for better performance
   experimental: {
-    optimizePackageImports: ["@vercel/analytics", "@vercel/speed-insights"],
+    // Inline per-page CSS into the HTML response to eliminate the render-blocking
+    // stylesheet request. Saves ~130 ms on the critical path (LCP / FCP).
+    inlineCss: true,
+    // Tree-shake re-exported symbols from these packages to avoid pulling
+    // in full modules when only a few named exports are used.
+    optimizePackageImports: ["next/dist/client/components/error-boundary"],
   },
   images: {
     remotePatterns: [
@@ -82,8 +121,7 @@ const nextConfig = {
           },
           {
             key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https://va.vercel-scripts.com https://vercel.live https://cms.simple-deutsch.de; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+            value: CONTENT_SECURITY_POLICY,
           },
         ],
       },

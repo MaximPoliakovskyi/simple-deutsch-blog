@@ -22,9 +22,12 @@ export default function PrivacyPage({ locale }: { locale?: Locale }) {
 
   return (
     <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-12">
-      <div className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert" style={{ animationDelay: "80ms" }}>
+      <div
+        className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert"
+        style={{ animationDelay: "80ms" }}
+      >
         <h1>{t["privacy.title"]}</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="type-caption text-[var(--sd-text-muted)]">
           {(t["privacy.lastUpdated"] || "").replace("{date}", "2025-12-25")}
         </p>
 
@@ -34,21 +37,21 @@ export default function PrivacyPage({ locale }: { locale?: Locale }) {
         <p>{t["privacy.s2.p"]}</p>
 
         <h2>{t["privacy.s3.title"]}</h2>
-        <h3 className="text-base font-semibold">{t["privacy.s3.a.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s3.a.title"]}</h3>
         <p>{t["privacy.s3.a.p"]}</p>
-        <h3 className="text-base font-semibold">{t["privacy.s3.b.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s3.b.title"]}</h3>
         <p>{t["privacy.s3.b.p"]}</p>
-        <h3 className="text-base font-semibold">{t["privacy.s3.c.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s3.c.title"]}</h3>
         <p>{t["privacy.s3.c.p"]}</p>
-        <h3 className="text-base font-semibold">{t["privacy.s3.d.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s3.d.title"]}</h3>
         <p>{t["privacy.s3.d.p"]}</p>
 
         <h2>{t["privacy.s4.title"]}</h2>
-        <h3 className="text-base font-semibold">{t["privacy.s4.a.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s4.a.title"]}</h3>
         <p>{t["privacy.s4.a.p"]}</p>
-        <h3 className="text-base font-semibold">{t["privacy.s4.b.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s4.b.title"]}</h3>
         <p>{t["privacy.s4.b.p"]}</p>
-        <h3 className="text-base font-semibold">{t["privacy.s4.c.title"]}</h3>
+        <h3 className="type-heading-4">{t["privacy.s4.c.title"]}</h3>
         <p>{t["privacy.s4.c.p"]}</p>
 
         <h2>{t["privacy.s5.title"]}</h2>

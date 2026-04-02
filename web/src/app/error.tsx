@@ -1,7 +1,6 @@
 // app/error.tsx
 "use client";
 
-import { useEffect } from "react";
 import StatusPage from "@/components/status-page";
 import { DEFAULT_LOCALE } from "@/lib/i18n";
 
@@ -12,10 +11,6 @@ export default function AppError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  useEffect(() => {
-    // console.error(error);
-  }, []);
-
   const isDev = process.env.NODE_ENV === "development";
   const message = isDev ? error.message : "Something went wrong. Please try again.";
 

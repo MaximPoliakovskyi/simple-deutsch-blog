@@ -609,14 +609,6 @@ export function RouteReady({ when = true }: { when?: boolean }) {
   return null;
 }
 
-export function useRouteReadySignal() {
-  const pathname = normalizeRoutePathname(usePathname() || "/");
-  const { token, signalRouteReady } = useTransitionNav();
-  return useCallback(() => {
-    signalRouteReady(pathname, token);
-  }, [pathname, signalRouteReady, token]);
-}
-
 // ---------------------------------------------------------------------------
 // AppFadeWrapper (formerly app-fade-wrapper.tsx)
 // ---------------------------------------------------------------------------
@@ -676,9 +668,7 @@ export function AppFadeWrapper({ children }: { children: ReactNode }) {
     if (!wasTransitionActiveRef.current) return;
     const raf = requestAnimationFrame(() => {
       if (DEBUG) {
-        console.log(
-          `[AppFadeWrapper] → fading-in T=${performance.now().toFixed(1)}`,
-        );
+        console.log(`[AppFadeWrapper] → fading-in T=${performance.now().toFixed(1)}`);
       }
       setFadeState("fading-in");
     });

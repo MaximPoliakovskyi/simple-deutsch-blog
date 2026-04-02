@@ -231,9 +231,7 @@ export async function renderPostPage({
       <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <article className="md:col-span-3" data-reading-target="post">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6">
-              {post.title}
-            </h1>
+            <h1 className="type-display mb-6">{post.title}</h1>
 
             {showCategories ? (
               <div className="mb-6 flex flex-wrap gap-2">
@@ -241,7 +239,7 @@ export async function renderPostPage({
                   <Link
                     key={cat?.slug}
                     href={buildLocalizedHref(resolvedLocale, `/categories/${cat?.slug}`)}
-                    className="inline-block text-sm bg-white border border-gray-200 text-gray-700 px-3 py-1 rounded-full hover:bg-gray-50 dark:bg-neutral-800 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-700"
+                    className="type-ui-label inline-flex items-center rounded-full border border-gray-200 bg-white px-3 py-1 text-gray-700 hover:bg-gray-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200 dark:hover:bg-neutral-700"
                   >
                     {translateCategory(cat?.name, cat?.slug, resolvedLocale)}
                   </Link>
@@ -250,11 +248,11 @@ export async function renderPostPage({
             ) : null}
 
             <div className="flex items-center gap-4 mb-6">
-              <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-medium">
+              <div className="w-14 h-14 rounded-full bg-neutral-900 flex items-center justify-center text-white text-base font-semibold">
                 {(authorName || "").charAt(0).toUpperCase()}
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
-                <div className="font-medium text-gray-900 dark:text-gray-100">{authorName}</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{authorName}</div>
                 <div className="dark:text-gray-400">
                   {formattedDate}
                   {formattedDate && post.readingText ? " · " : ""}
@@ -264,7 +262,7 @@ export async function renderPostPage({
             </div>
 
             <div className="sd-card p-8 mb-6">
-              <h3 className="font-semibold text-lg mb-3">{t.tableOfContents}</h3>
+              <h3 className="type-heading-4 mb-3">{t.tableOfContents}</h3>
               {toc.length ? (
                 <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-400 space-y-2">
                   {toc.map((t) => (
@@ -288,7 +286,7 @@ export async function renderPostPage({
             <div className="sticky top-20 space-y-6">
               {/* Promo rounded card (fill sidebar width) */}
               <div className="sd-card px-6 py-6 w-full text-center">
-                <h3 className="mb-4 text-2xl font-semibold text-gray-900 dark:text-white">
+                <h3 className="type-heading-4 mb-4 text-gray-900 dark:text-white">
                   {t.promoHeading}
                 </h3>
                 <div className="flex justify-center">
@@ -303,7 +301,7 @@ export async function renderPostPage({
 
               {/* More articles (no background/borders, fill sidebar width) */}
               <div className="px-3 py-3 rounded-xl w-full">
-                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-4">
+                <h4 className="type-ui-label mb-4 text-gray-700 dark:text-gray-300">
                   {t.moreArticles}
                 </h4>
                 <ul className="text-sm text-gray-600 dark:text-gray-400">

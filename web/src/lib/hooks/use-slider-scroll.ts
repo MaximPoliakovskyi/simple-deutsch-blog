@@ -35,13 +35,11 @@ export function useSliderScroll() {
     el.addEventListener("scroll", updateEdgeState, { passive: true });
     const ro = new ResizeObserver(() => updateEdgeState());
     ro.observe(el);
-    const tm = setInterval(updateEdgeState, 300);
-    const stopAfter = setTimeout(() => clearInterval(tm), 2000);
+    const rafId = requestAnimationFrame(updateEdgeState);
     return () => {
       el.removeEventListener("scroll", updateEdgeState);
       ro.disconnect();
-      clearInterval(tm);
-      clearTimeout(stopAfter);
+      cancelAnimationFrame(rafId);
     };
   }, [updateEdgeState]);
 

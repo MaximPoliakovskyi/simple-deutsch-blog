@@ -117,7 +117,7 @@ export default async function RelatedArticles({
 
   return (
     <section className="mt-14 border-t border-neutral-200/70 pt-8 dark:border-neutral-800/70">
-      <h2 className="mb-5 text-2xl font-semibold tracking-tight">{sectionTitle}</h2>
+      <h2 className="type-title mb-5">{sectionTitle}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
         {relatedPosts.map((post) => (
           <div key={getPostKey(post)}>

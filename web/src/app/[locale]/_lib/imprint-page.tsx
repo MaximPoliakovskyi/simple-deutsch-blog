@@ -12,7 +12,10 @@ export default function ImprintPage({ locale }: { locale?: Locale }) {
 
   return (
     <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-12">
-      <div className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert" style={{ animationDelay: "80ms" }}>
+      <div
+        className="sd-fade-in-item mx-auto max-w-3xl prose dark:prose-invert"
+        style={{ animationDelay: "80ms" }}
+      >
         <h1>{t["imprint.title"]}</h1>
         <p className="text-sm">{lastUpdated}</p>
 

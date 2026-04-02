@@ -1,23 +1,18 @@
-﻿import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Nunito } from "next/font/google";
 import type { ReactNode } from "react";
 import { ChunkErrorRecovery } from "@/components/chrome-extras";
-import { LazyAnalyticsClient } from "@/components/lazy-analytics";
 import InitialPreloader from "@/components/preloader";
+import RouteScrollReset from "@/components/route-scroll-reset";
 import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
 import { DEFAULT_LOCALE, INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const nunito = Nunito({
+  variable: "--font-nunito",
   subsets: ["latin"],
-  display: "swap",
-  preload: true,
-});
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  display: "swap",
+  weight: ["400", "500", "600", "700"],
+  display: "optional",
   preload: true,
 });
 
@@ -62,10 +57,6 @@ export const viewport: Viewport = {
 
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const isProd = process.env.NODE_ENV === "production";
-  const isVercel = process.env.VERCEL === "1";
-  const enableAnalytics = isProd && isVercel;
-
   return (
     <html
       lang={DEFAULT_LOCALE}
@@ -77,7 +68,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         <meta charSet="UTF-8" />
 
-        {/* Organization structured data (JSON-LD) */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -91,22 +81,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
 
-        {/* DNS prefetch for CMS image origin */}
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
-        {/* Set loading flags before paint so the app shell does not flash before the preloader. */}
         <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
-
-        {/* Apply theme before paint to avoid flash and hydration drift. */}
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
         className={[
-          geistSans.variable,
-          geistMono.variable,
+          nunito.variable,
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
+        <RouteScrollReset />
         <ChunkErrorRecovery />
         <InitialPreloader />
         <RouteTransitionProvider>
@@ -115,8 +101,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div id="app-shell">{children}</div>
           </AppFadeWrapper>
         </RouteTransitionProvider>
-        {/* Load analytics only in production and defer to avoid blocking */}
-        <LazyAnalyticsClient enabled={enableAnalytics} />
+        {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton overlay mount point. */}
+        <div id="overlay-root" />
       </body>
     </html>
   );

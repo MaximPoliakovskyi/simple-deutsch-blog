@@ -14,18 +14,11 @@ type Props = {
 };
 
 const primaryCls =
-  "inline-flex items-center rounded-[var(--radius)] bg-[var(--sd-accent)] px-5 py-2.5 text-sm font-medium text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]/60";
+  "type-button inline-flex items-center rounded-[var(--radius)] bg-[var(--sd-accent)] px-5 py-2.5 text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]/60";
 const secondaryCls =
-  "inline-flex items-center rounded-[var(--radius)] border px-5 py-2.5 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]/60";
+  "type-button inline-flex items-center rounded-[var(--radius)] border px-5 py-2.5 transition-colors hover:bg-black/5 dark:hover:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)]/60";
 
-export default function StatusPage({
-  icon,
-  code,
-  title,
-  message,
-  actions = [],
-  children,
-}: Props) {
+export default function StatusPage({ icon, code, title, message, actions = [], children }: Props) {
   return (
     <main className="sd-fade-in-slow min-h-[70vh] grid place-items-center px-6 py-16">
       <div className="text-center max-w-prose">
@@ -35,14 +28,12 @@ export default function StatusPage({
           </div>
         ) : null}
         {code ? (
-          <div className="inline-flex items-center rounded-full border px-3 py-1 text-xs uppercase tracking-widest opacity-60 mb-5">
+          <div className="type-ui-label mb-5 inline-flex items-center rounded-full border px-3 py-1 uppercase tracking-[0.16em] opacity-60">
             {code}
           </div>
         ) : null}
-        <h1 className="text-3xl md:text-4xl font-semibold mb-3">{title}</h1>
-        {message ? (
-          <p className="text-balance text-sm md:text-base opacity-70 mb-8">{message}</p>
-        ) : null}
+        <h1 className="type-display mb-3">{title}</h1>
+        {message ? <p className="type-lead mb-8 text-balance opacity-70">{message}</p> : null}
         {children}
         {actions.length > 0 ? (
           <div className="flex flex-wrap items-center justify-center gap-3 mt-8">

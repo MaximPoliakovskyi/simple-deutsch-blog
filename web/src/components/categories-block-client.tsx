@@ -4,14 +4,28 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
-import PostCard, { CategoryPills } from "./cards";
+import PostCard, { WordPressBadgePills } from "./cards";
+
+function PostCardSkeleton() {
+  return (
+    <div>
+      <div className="relative aspect-[4/3] rounded-2xl sd-skeleton" />
+      <div className="mt-4 h-3 w-24 rounded-full sd-skeleton" />
+      <div className="mt-2 h-5 w-3/4 rounded-full sd-skeleton" />
+      <div className="mt-1 h-5 w-1/2 rounded-full sd-skeleton" />
+    </div>
+  );
+}
 
 type Category = {
   id: string;
   name: string;
   slug: string;
-  tagDatabaseId: number;
-  canonicalTagDatabaseId: number;
+  databaseId?: number;
+  description?: string | null;
+  count?: number;
+  uri?: string;
+  levelColor?: string | null;
 };
 
 type Props = {
@@ -34,11 +48,7 @@ export default function CategoriesBlockClient({
   locale,
 }: Props) {
   const { t } = useI18n();
-  // Prefer A1 level when available to ensure A1 is selected initially
-  const preferredInitial = useMemo(() => {
-    const a1 = categories.find((c) => (c.slug ?? "").toLowerCase() === "a1");
-    return a1 ? a1.slug : categories.length > 0 ? categories[0].slug : null;
-  }, [categories]);
+  const preferredInitial = useMemo(() => categories[0]?.slug ?? null, [categories]);
   const selectedOnMount = initialSelectedCategory ?? preferredInitial;
 
   const cacheRef = useRef<Map<string, WPPostCard[]>>(
@@ -74,6 +84,14 @@ export default function CategoriesBlockClient({
         return;
       }
 
+      if (!selectedTag.databaseId) {
+        if (process.env.NODE_ENV !== "production") {
+          console.error(`[levels] WordPress badge "${slug}" is missing a databaseId.`);
+        }
+        setAllPosts([]);
+        return;
+      }
+
       const cached = cacheRef.current.get(slug);
       if (cached) {
         setAllPosts(cached);
@@ -85,13 +103,13 @@ export default function CategoriesBlockClient({
 
       const requestId = requestIdRef.current + 1;
       requestIdRef.current = requestId;
+      setAllPosts([]);
       setIsFetching(true);
       setIsLoading(true);
       try {
         const url = new URL("/api/posts", window.location.origin);
         url.searchParams.set("first", "100");
-        url.searchParams.set("tagId", String(selectedTag.tagDatabaseId));
-        url.searchParams.set("canonicalTagId", String(selectedTag.canonicalTagDatabaseId));
+        url.searchParams.set("tagId", String(selectedTag.databaseId));
         if (locale) url.searchParams.set("lang", locale);
 
         const res = await fetch(url.toString());
@@ -127,11 +145,15 @@ export default function CategoriesBlockClient({
   const displayedPosts = allPosts.slice(0, displayedCount);
   const hasMore = displayedCount < allPosts.length;
 
+  if (categories.length === 0) {
+    return null;
+  }
+
   return (
     <div>
       <div className="mb-1">
-        <CategoryPills
-          categories={categories}
+        <WordPressBadgePills
+          badges={categories}
           initialSelected={selectedOnMount}
           selected={selectedCategory}
           onSelect={handleCategorySelect}
@@ -142,6 +164,17 @@ export default function CategoriesBlockClient({
 
       <div className="flex flex-col gap-8">
         {displayedPosts.length === 0 && !isFetching && <div>{t("noPosts")}</div>}
+
+        {isFetching && displayedPosts.length === 0 && (
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6 py-2"
+            aria-hidden="true"
+          >
+            {["level-skeleton-1", "level-skeleton-2", "level-skeleton-3"].map((key) => (
+              <PostCardSkeleton key={key} />
+            ))}
+          </div>
+        )}
 
         {displayedPosts.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6 py-2">
@@ -159,7 +192,7 @@ export default function CategoriesBlockClient({
             onClick={loadMore}
             disabled={isLoading}
             className={[
-              "mx-auto rounded-full px-5 py-2 text-sm font-medium",
+              "type-button mx-auto rounded-full px-5 py-2",
               "transition duration-200 ease-out",
               "transform-gpu hover:scale-[1.03] motion-reduce:transform-none",
               "shadow-md hover:shadow-lg disabled:opacity-60",

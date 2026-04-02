@@ -1,14 +1,22 @@
 ﻿"use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { mapPathToLocale } from "@/lib/seo";
-import { applyTheme, runThemeTransition, subscribeRootTheme, type Theme, type ThemeTransitionCoords } from "@/lib/theme";
+import {
+  applyTheme,
+  runThemeTransition,
+  subscribeRootTheme,
+  type Theme,
+  type ThemeTransitionCoords,
+} from "@/lib/theme";
 import { useTransitionNav } from "./route-wrapper";
+
+const MOBILE_MENU_ITEM_CLASS =
+  "block w-full rounded-lg px-2 py-3 text-left !text-base !font-normal !leading-6 !tracking-[var(--tracking-copy)] hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60";
 
 // ---------------------------------------------------------------------------
 // ThemeToggle (formerly theme-toggle.tsx)
@@ -31,11 +39,10 @@ function ThemeToggle() {
     runThemeTransition(() => applyTheme(next), coords);
   }
 
-  if (!mounted) return null;
-
   return (
     <button
       type="button"
+      disabled={!mounted}
       onClick={(e) => setTheme(isDark ? "light" : "dark", { x: e.clientX, y: e.clientY })}
       aria-pressed={isDark}
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
@@ -47,25 +54,29 @@ function ThemeToggle() {
       }
       style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
     >
-      {isDark ? (
-        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="currentColor" />
-        </svg>
+      {mounted ? (
+        isDark ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" fill="currentColor" />
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
+            <path
+              d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M12 2v2M12 20v2M2 12h2M20 12h2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+            />
+          </svg>
+        )
       ) : (
-        <svg width="20" height="20" viewBox="0 0 24 24" role="img" aria-hidden="true">
-          <path
-            d="M12 18a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M12 2v2M12 20v2M2 12h2M20 12h2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
+        <span className="block h-5 w-5" aria-hidden="true" />
       )}
     </button>
   );
@@ -258,13 +269,12 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
           "cursor-pointer sd-pill"
         }
         style={{ padding: 0, outlineColor: "oklch(0.371 0 0)" }}
-        aria-label={t("language") || `Language (${labelsFull[currentLocale]})`}
         title={labelsFull[currentLocale]}
       >
-        <span className="sr-only">{t("language")}</span>
         <span className="leading-none text-neutral-900 dark:text-neutral-100">
           {labelsShort[routeLocale ?? currentLocale]}
         </span>
+        <span className="sr-only"> {t("language")}</span>
       </button>
       {open && (
         <ul
@@ -290,7 +300,7 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
 // SearchButton (formerly search-button.tsx)
 // ---------------------------------------------------------------------------
 
-const SearchOverlay = dynamic(() => import("./search-overlay"), { ssr: false });
+import SearchOverlay from "./search-overlay";
 
 type OpenMethod = "click" | "keyboard" | undefined;
 
@@ -322,7 +332,15 @@ function _maybeDetachShortcutListener() {
 
 function _preloadSearchOverlay() {
   if (_searchModulePromise) return;
-  _searchModulePromise = import("./search-overlay");
+  // Always attach a no-op .catch() so a chunk-load failure never becomes an
+  // unhandled promise rejection.  ChunkErrorRecovery (chrome-extras.tsx)
+  // monitors `window.unhandledrejection` and calls window.location.replace()
+  // when it sees a ChunkLoadError — that is the full-page reload the user
+  // observes when hovering the search button.
+  _searchModulePromise = import("./search-overlay").catch(() => {
+    // Allow retry on the next hover/focus by resetting the promise slot.
+    _searchModulePromise = null;
+  });
 }
 
 function SearchButton({
@@ -367,7 +385,6 @@ function SearchButton({
           setOpen(true);
         }}
         onFocus={_preloadSearchOverlay}
-        onMouseEnter={_preloadSearchOverlay}
         className={[
           "flex text-sm focus:outline-none",
           variant === "icon"
@@ -381,7 +398,7 @@ function SearchButton({
           className,
         ].join(" ")}
         style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
-        aria-label={ariaLabel}
+        aria-label={variant === "icon" ? ariaLabel : undefined}
         title={`${ariaLabel} (Ctrl+K)`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
@@ -485,11 +502,10 @@ export function NavLinks({ mode, buildLocalePath, label, onNavigate }: NavLinksP
             <Link
               href={href}
               prefetch
-              scroll={item.path === "/search" ? false : undefined}
               onMouseEnter={() => prefetchIntent(href)}
               onFocus={() => prefetchIntent(href)}
               onClick={onNavigate}
-              className="block rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
+              className={MOBILE_MENU_ITEM_CLASS}
             >
               {label(item.key, item.fallback)}
             </Link>
@@ -637,7 +653,9 @@ export function NavigationMobileDrawer({
 }: MobileDrawerProps) {
   return (
     <div
-      className={["md:hidden", "fixed inset-0 z-90", open ? "" : "pointer-events-none"].join(" ")}
+      className={["md:hidden", "fixed inset-0 z-[110]", open ? "" : "pointer-events-none"].join(
+        " ",
+      )}
     >
       <div
         className={[
@@ -663,7 +681,7 @@ export function NavigationMobileDrawer({
           <Link
             href={buildLocaleRootHref(currentLocale)}
             onClick={onLogoClick}
-            className="text-xl font-semibold tracking-tight"
+            className="type-brand"
             ref={firstFocusRef}
           >
             simple-deutsch.de
@@ -695,11 +713,7 @@ export function NavigationMobileDrawer({
               onNavigate={onCloseMenu}
             />
             <li>
-              <button
-                type="button"
-                onClick={onToggleTheme}
-                className="block w-full text-left rounded-lg px-2 py-3 text-base hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60"
-              >
+              <button type="button" onClick={onToggleTheme} className={MOBILE_MENU_ITEM_CLASS}>
                 {isDarkMobile ? label("lightMode", "Light theme") : label("darkMode", "Dark theme")}
               </button>
             </li>

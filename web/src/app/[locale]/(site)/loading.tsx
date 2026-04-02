@@ -24,16 +24,9 @@
  *   - Refresh
  *   - Programmatic navigation outside startTransition
  *
- * Set NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION=1 to see when the fallback mounts.
  */
 import PageSkeleton from "@/components/page-skeleton";
-import LoadingDebug from "../_lib/loading-debug";
 
 export default function Loading() {
-  return (
-    <>
-      <PageSkeleton />
-      <LoadingDebug />
-    </>
-  );
+  return <PageSkeleton />;
 }

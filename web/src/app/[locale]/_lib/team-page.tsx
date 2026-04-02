@@ -97,21 +97,16 @@ export default function TeamPageContent({ locale }: { locale: Locale }) {
   const copy = TEAM_COPY[locale];
 
   return (
-    <div>
+    <div className="sd-fade-in-slow min-h-[70vh] bg-[var(--sd-page-bg)] text-[var(--sd-text)]">
       <section className="mx-auto max-w-6xl px-6 py-20 sm:py-24 lg:py-28">
-        <div className="mx-auto max-w-3xl translate-y-4 text-center opacity-0 motion-safe:animate-[team-fade-in_500ms_ease-out_forwards]">
-          <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl md:text-6xl">
-            {copy.title}
-          </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-base leading-8 text-gray-600 dark:text-gray-400 sm:text-lg">
+        <div className="sd-fade-in-item mx-auto max-w-3xl text-center">
+          <h1 className="type-display text-balance">{copy.title}</h1>
+          <p className="type-lead mx-auto mt-6 max-w-2xl text-gray-600 dark:text-gray-400">
             {copy.description}
           </p>
         </div>
 
-        <div
-          className="mt-20 translate-y-4 opacity-0 motion-safe:animate-[team-fade-in_500ms_ease-out_forwards] sm:mt-24"
-          style={{ animationDelay: "120ms" }}
-        >
+        <div className="sd-fade-in-item mt-20 sm:mt-24" style={{ animationDelay: "120ms" }}>
           <div className="mx-auto grid max-w-5xl grid-cols-1 justify-items-center gap-y-14 sm:grid-cols-2 sm:gap-x-12 sm:gap-y-12 lg:grid-cols-3 lg:gap-x-10 lg:gap-y-12">
             {copy.members.map((member) => (
               <article key={`${locale}-${member.name}`} className="w-full max-w-sm text-center">
@@ -124,8 +119,8 @@ export default function TeamPageContent({ locale }: { locale: Locale }) {
                     className="object-cover"
                   />
                 </div>
-                <h2 className="mt-7 text-xl font-semibold tracking-tight sm:mt-8">{member.name}</h2>
-                <p className="mt-3 text-sm uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">
+                <h2 className="type-heading-4 mt-7 sm:mt-8">{member.name}</h2>
+                <p className="type-ui-label mt-3 uppercase tracking-[0.18em] text-gray-500 dark:text-gray-400">
                   {member.role}
                 </p>
               </article>
@@ -133,19 +128,6 @@ export default function TeamPageContent({ locale }: { locale: Locale }) {
           </div>
         </div>
       </section>
-
-      <style>{`
-        @keyframes team-fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(1rem);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

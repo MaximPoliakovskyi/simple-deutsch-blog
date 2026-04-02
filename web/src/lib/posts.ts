@@ -1,3 +1,4 @@
+import { normalizeLevelSlug } from "@/lib/cefr";
 import { buildLocalizedHref, DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { slugify } from "@/lib/utils";
 import {
@@ -51,6 +52,7 @@ export {
 
 export type { PostDetail, PostListItem, PostsConnectionResponse, Tag, Term, WPPostCard };
 export { mapGraphQLEnumToUi };
+export { normalizeLevelSlug };
 
 export type PostsPageInfo = { endCursor: string | null; hasNextPage: boolean };
 
@@ -58,6 +60,8 @@ export type SearchPageResult = {
   pageInfo: PostsPageInfo;
   posts: WPPostCard[];
 };
+
+export type WordPressBadge = Tag;
 
 /** Maps a UI locale to the WordPress/Polylang GraphQL language enum value. */
 export function getWordPressLanguage(locale: Locale): "EN" | "RU" | "UK" {
@@ -119,6 +123,65 @@ export async function getHomePagePosts(
   };
 }
 
+function getTagUriPrefix(locale: Locale): string {
+  return locale === DEFAULT_LOCALE ? "/tag/" : `/${locale}/tag/`;
+}
+
+export function filterWordPressBadgesByLocale<T extends { uri?: string | null }>(
+  tags: T[],
+  locale: Locale,
+): T[] {
+  const prefix = getTagUriPrefix(locale);
+  return tags.filter((tag) => typeof tag.uri === "string" && tag.uri.startsWith(prefix));
+}
+
+export async function getWordPressLevelBadges(locale: Locale): Promise<WordPressBadge[]> {
+  const response = await getAllTags({ first: 200, locale });
+  return filterWordPressBadgesByLocale(extractConnectionNodes<Tag>(response?.tags), locale);
+}
+
+function normalizeTermSlug(slug?: string | null): string | null {
+  const normalized = String(slug ?? "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "");
+  return normalized || null;
+}
+
+export function buildLocaleLevelHref(
+  locale: Locale,
+  slug: string | null | undefined,
+): string | null {
+  const normalizedSlug = normalizeTermSlug(slug);
+  return normalizedSlug ? buildLocalizedHref(locale, `/levels/${normalizedSlug}`) : null;
+}
+
+export function buildLevelTranslationMap(
+  term: Pick<Tag, "slug" | "language" | "translations">,
+  currentLocale: Locale,
+): Record<Locale, string | null> {
+  const links: Record<Locale, string | null> = { en: null, ru: null, uk: null };
+  const currentTermLocale = mapGraphQLEnumToUi(term.language?.code) ?? currentLocale;
+  const currentTermHref = buildLocaleLevelHref(currentTermLocale, normalizeLevelSlug(term.slug));
+
+  if (currentTermHref) {
+    links[currentTermLocale] = currentTermHref;
+  }
+
+  for (const translation of term.translations ?? []) {
+    const uiLocale = mapGraphQLEnumToUi(translation.language?.code);
+    const href = buildLocaleLevelHref(uiLocale, normalizeLevelSlug(translation.slug));
+    if (href) {
+      links[uiLocale] = href;
+    }
+  }
+
+  if (!links[currentLocale]) {
+    links[currentLocale] = buildLocaleLevelHref(currentLocale, normalizeLevelSlug(term.slug));
+  }
+
+  return links;
+}
+
 /**
  * Builds a fully-qualified locale-prefixed href for a single post.
  * @example buildLocalePostHref("ru", "hello") // "/ru/posts/hello"
@@ -139,34 +202,6 @@ export function getLocaleAwareTaxonomySlug(slug: string, locale: Locale): string
  * Normalizes a CEFR level slug to its canonical lowercase form (a1–c2).
  * Returns `null` if the slug does not contain a valid CEFR level.
  */
-export function normalizeLevelSlug(slug?: string | null): string | null {
-  if (!slug) {
-    return null;
-  }
-
-  const normalized = slug.toLowerCase().trim().replace(/_/g, "-");
-  const cleaned = normalized
-    .replace(/^(?:cefrlevel-)/, "")
-    .replace(/^(?:cefr-)/, "")
-    .replace(/^(?:level-)/, "")
-    .replace(/^(?:ger-)/, "");
-  const tokens = cleaned.split(/[^a-z0-9]+/).filter(Boolean);
-
-  for (const token of tokens) {
-    if (["a1", "a2", "b1", "b2", "c1", "c2"].includes(token)) {
-      return token;
-    }
-  }
-
-  if (/\bc2\b/.test(cleaned)) return "c2";
-  if (/\bc1\b/.test(cleaned)) return "c1";
-  if (/\bb2\b/.test(cleaned)) return "b2";
-  if (/\bb1\b/.test(cleaned)) return "b1";
-  if (/\ba2\b/.test(cleaned)) return "a2";
-  if (/\ba1\b/.test(cleaned)) return "a1";
-  return null;
-}
-
 /** Returns `true` if the category should be hidden from public UI (language names, "blog", etc.). */
 export function isHiddenCategory(name?: string | null, slug?: string | null) {
   const hiddenKeys = [

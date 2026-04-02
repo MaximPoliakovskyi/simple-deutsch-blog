@@ -56,25 +56,8 @@ export function LocaleProvider({ children, locale: providedLocale }: LocaleProvi
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
-export const I18nProvider = LocaleProvider;
-
 export function useI18n() {
   return useContext(I18nContext);
 }
 
-export function useTranslation() {
-  const { t } = useI18n();
-  return t;
-}
-
 export type { PostLangLinks, SiteLang };
-
-export default function Providers({
-  children,
-  locale: _locale,
-}: {
-  children: ReactNode;
-  locale: Locale;
-}) {
-  return <>{children}</>;
-}

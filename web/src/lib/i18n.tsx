@@ -56,18 +56,6 @@ export function defaultLocale(): Locale {
 type Translations = Record<string, string>;
 export type TranslationDictionary = Translations;
 
-export const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
-type CefrCode = (typeof CEFR_ORDER)[number];
-
-export const CEFR_UI_CONFIG: Record<CefrCode, { dotClass: string; emoji: string }> = {
-  A1: { dotClass: "bg-green-500", emoji: "\u{1F7E2}" },
-  A2: { dotClass: "bg-yellow-400", emoji: "\u{1F7E1}" },
-  B1: { dotClass: "bg-orange-500", emoji: "\u{1F7E0}" },
-  B2: { dotClass: "bg-red-500", emoji: "\u{1F534}" },
-  C1: { dotClass: "bg-purple-500", emoji: "\u{1F7E3}" },
-  C2: { dotClass: "bg-black", emoji: "\u26AB" },
-};
-
 const en: Translations = {
   __locale: "en",
   siteTitle: "Simple Deutsch",
@@ -366,6 +354,10 @@ const uk: Translations = {
   noCategories: "Категорій не знайдено.",
   minRead: "хв читання",
   viewCategoryAria: "Переглянути категорію",
+  /* Post count pluralization (Ukrainian forms) */
+  "post.count.one": "пост",
+  "post.count.few": "пости",
+  "post.count.many": "постів",
   /* Page titles and not-found */
   backToHome: "Повернутися на головну",
   "notFound.title": "Сторінку не знайдено",
@@ -620,6 +612,10 @@ const ru: Translations = {
   noCategories: "Категорий не найдено.",
   minRead: "мин чтения",
   viewCategoryAria: "Просмотреть категорию",
+  /* Post count pluralization (Russian forms) */
+  "post.count.one": "пост",
+  "post.count.few": "поста",
+  "post.count.many": "постов",
   /* Page titles and not-found */
   backToHome: "Вернуться на главную",
   "notFound.title": "Страница не найдена",
@@ -831,6 +827,40 @@ const ru: Translations = {
     "© {year} Simple Deutsch. Платформа для изучения немецкого языка. Все права защищены.",
 };
 
+export const CEFR_LEVEL_CODES = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+export type CefrLevelCode = (typeof CEFR_LEVEL_CODES)[number];
+
+export const CEFR_LEVEL_LABELS: Record<Locale, Record<CefrLevelCode, string>> = {
+  en: {
+    A1: "A1 — Beginner",
+    A2: "A2 — Elementary",
+    B1: "B1 — Intermediate",
+    B2: "B2 — Upper-Intermediate",
+    C1: "C1 — Advanced",
+    C2: "C2 — Proficient",
+  },
+  uk: {
+    A1: "A1 — Початковий",
+    A2: "A2 — Елементарний",
+    B1: "B1 — Середній",
+    B2: "B2 — Вище середнього",
+    C1: "C1 — Просунутий",
+    C2: "C2 — Вільне володіння",
+  },
+  ru: {
+    A1: "A1 — Начальный",
+    A2: "A2 — Элементарный",
+    B1: "B1 — Средний",
+    B2: "B2 — Выше среднего",
+    C1: "C1 — Продвинутый",
+    C2: "C2 — Свободное владение",
+  },
+};
+
+export function getCefrLevelLabel(locale: Locale, level: CefrLevelCode): string {
+  return CEFR_LEVEL_LABELS[locale]?.[level] ?? CEFR_LEVEL_LABELS[DEFAULT_LOCALE][level];
+}
+
 export const TRANSLATIONS: Record<Locale, Translations> = {
   en,
   uk,
@@ -954,35 +984,6 @@ export function formatPostCardDate(
   locale: Locale,
 ): string | null {
   return formatLongDate(value, locale, { timeZone: "UTC" });
-}
-
-function getCefrCodeFromSlug(slug?: string | null): CefrCode | undefined {
-  const normalized = String(slug ?? "").toUpperCase();
-  return CEFR_ORDER.includes(normalized as CefrCode) ? (normalized as CefrCode) : undefined;
-}
-
-export function getLevelLabel(slug?: string | null, locale: Locale = DEFAULT_LOCALE) {
-  const code = getCefrCodeFromSlug(slug);
-  if (!code) {
-    return undefined;
-  }
-
-  return (
-    getTranslations(locale)[`${code.toLowerCase()}Title`] ??
-    getTranslations(locale)[`cefr.${code}.title`]
-  );
-}
-
-export function getLevelDescription(slug?: string | null, locale: Locale = DEFAULT_LOCALE) {
-  const code = getCefrCodeFromSlug(slug);
-  if (!code) {
-    return undefined;
-  }
-
-  return (
-    getTranslations(locale)[`${code.toLowerCase()}Description`] ??
-    getTranslations(locale)[`cefr.${code}.description`]
-  );
 }
 
 function makeLookupVariants(value: string | undefined | null) {
@@ -1232,7 +1233,6 @@ export type PostLangLinks = {
   links: Record<SiteLang, string | null>;
 };
 
-// -- Initial Load Gate --------------------------------------------------------
 function setDocumentLoadingState(isLoading: boolean) {
   if (typeof document === "undefined") return;
   const root = document.documentElement;

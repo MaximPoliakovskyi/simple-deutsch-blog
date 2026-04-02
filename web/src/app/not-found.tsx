@@ -1,6 +1,6 @@
 import { cookies, headers } from "next/headers";
-import { assertLocale, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import StatusPage from "@/components/status-page";
+import { assertLocale, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 
 function cookieValueFromHeader(rawCookieHeader: string | null, key: string) {
   if (!rawCookieHeader) return undefined;
@@ -57,12 +57,6 @@ export default async function NotFound({ locale }: { locale?: string } = {}) {
 
   const lang: Locale = (maybeLang as Locale | undefined) ?? (await resolveLocaleFromCookies());
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  if (process.env.NODE_ENV !== "production" && t.__locale !== lang) {
-    // eslint-disable-next-line no-console
-    console.error(
-      `[404] Locale/message mismatch: requested "${lang}" but dictionary is "${t.__locale}".`,
-    );
-  }
 
   return (
     <StatusPage
@@ -74,4 +68,3 @@ export default async function NotFound({ locale }: { locale?: string } = {}) {
     />
   );
 }
-

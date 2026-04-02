@@ -1,70 +1,29 @@
+import dynamic from "next/dynamic";
 import type { ReactElement } from "react";
-import { CEFR_ORDER, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
-import {
-  extractConnectionNodes,
-  getAllTags,
-  getPostsByTagDatabaseId,
-  type WPPostCard,
-} from "@/lib/posts";
-import CategoriesBlockClient from "./categories-block-client";
+import { sortWordPressBadgesByCefr } from "@/lib/cefr";
+import { DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
+import { getPostsByTagDatabaseId, getWordPressLevelBadges, type WPPostCard } from "@/lib/posts";
 
-type TagNode = { id: string; databaseId?: number; name: string; slug: string };
-type Category = {
+// Code-split CategoriesBlockClient (the interactive WordPress badge tabs + posts grid).
+// It sits at the very bottom of the homepage; deferring its JS lets React
+// prioritise hydration of above-fold content first.
+const CategoriesBlockClient = dynamic(() => import("./categories-block-client"));
+
+type WordPressBadge = {
   id: string;
+  databaseId?: number;
   name: string;
   slug: string;
-  tagDatabaseId: number;
-  canonicalTagDatabaseId: number;
+  description?: string | null;
+  count?: number;
+  uri?: string;
+  levelColor?: string | null;
 };
+
 type PageInfo = { endCursor: string | null; hasNextPage: boolean };
-const LEVEL_CODES = CEFR_ORDER.map((slug) => slug.toLowerCase());
-
-function getLevelSlugCandidates(levelCode: string, locale: Locale) {
-  if (locale === "ru") return [`${levelCode}-ru`, levelCode];
-  if (locale === "uk") return [`${levelCode}-uk`, levelCode];
-  return [levelCode];
-}
-
-function resolveLevelCategories(tags: TagNode[], locale: Locale): Category[] {
-  const tagsBySlug = new Map(tags.map((tag) => [tag.slug.toLowerCase(), tag]));
-
-  const resolved: Category[] = [];
-  for (const levelCode of LEVEL_CODES) {
-    const canonical = tagsBySlug.get(levelCode);
-    const localized = getLevelSlugCandidates(levelCode, locale)
-      .map((candidate) => tagsBySlug.get(candidate))
-      .find((tag): tag is TagNode => Boolean(tag));
-    const picked = localized ?? canonical;
-
-    if (!picked || !picked.databaseId) {
-      if (process.env.NODE_ENV !== "production") {
-        console.error(
-          `[levels] Could not resolve tag for level "${levelCode}" in locale "${locale}".`,
-        );
-      }
-      continue;
-    }
-
-    if (!localized && process.env.NODE_ENV !== "production") {
-      console.warn(
-        `[levels] Locale-specific tag missing for "${levelCode}" in "${locale}", falling back to canonical.`,
-      );
-    }
-
-    resolved.push({
-      id: picked.id,
-      name: picked.name,
-      slug: levelCode,
-      tagDatabaseId: picked.databaseId,
-      canonicalTagDatabaseId: canonical?.databaseId ?? picked.databaseId,
-    });
-  }
-
-  return resolved;
-}
 
 /**
- * Server component: fetches categories and a small posts page, then
+ * Server component: fetches WordPress badges and a small posts page, then
  * renders the client component that provides interactivity.
  */
 export default async function CategoriesBlock({
@@ -73,35 +32,24 @@ export default async function CategoriesBlock({
   locale?: Locale;
 } = {}): Promise<ReactElement> {
   const effectiveLocale: Locale = locale ?? DEFAULT_LOCALE;
+  const visibleCategories: WordPressBadge[] = sortWordPressBadgesByCefr(
+    await getWordPressLevelBadges(effectiveLocale),
+  );
+  const preferredInitialCategory = visibleCategories[0]?.slug ?? null;
 
-  // Fetch enough tags to ensure we get all CEFR level tags (A1-C2)
-  // Increased from 12 to 50 to make sure A1 and C1 are included
-  const tagsResp = await getAllTags({ first: 200 });
-  const tags = extractConnectionNodes<TagNode>(tagsResp?.tags).map((t) => ({
-    id: t.id,
-    databaseId: t.databaseId,
-    name: t.name,
-    slug: t.slug,
-  }));
-
-  const visibleCategories: Category[] = resolveLevelCategories(tags, effectiveLocale);
-
-  const preferredInitialCategory =
-    visibleCategories.find((category) => category.slug.toLowerCase() === "a1")?.slug ??
-    visibleCategories[0]?.slug ??
-    null;
-
-  // Server-render initial posts for the initial selected level to avoid client-side filling
+  // Server-render initial posts for the initial selected badge to avoid client-side filling
   // after locale navigation.
   let initialPosts: WPPostCard[] = [];
   const pageInfo: PageInfo = { endCursor: null, hasNextPage: false };
+
   if (preferredInitialCategory && visibleCategories.length > 0) {
     const selectedCategory = visibleCategories.find(
       (category) => category.slug === preferredInitialCategory,
     );
+
     if (!selectedCategory && process.env.NODE_ENV !== "production") {
       console.error(
-        `[levels] Preferred level "${preferredInitialCategory}" is missing in resolved categories for locale "${effectiveLocale}".`,
+        `[levels] Preferred badge "${preferredInitialCategory}" is missing from the WordPress badge payload for locale "${effectiveLocale}".`,
       );
     }
 
@@ -114,10 +62,8 @@ export default async function CategoriesBlock({
             className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
           >
             <div className="space-y-2">
-              <h2 className="text-3xl font-semibold tracking-tight mb-8">
-                {TRANSLATIONS[effectiveLocale].levelsHeading}
-              </h2>
-              <p className="text-base leading-relaxed text-neutral-600 dark:text-gray-300 max-w-2xl">
+              <h2 className="type-title mb-8">{TRANSLATIONS[effectiveLocale].levelsHeading}</h2>
+              <p className="type-lead max-w-2xl text-neutral-600 dark:text-gray-300">
                 {TRANSLATIONS[effectiveLocale].levelsDescription}
               </p>
             </div>
@@ -127,45 +73,25 @@ export default async function CategoriesBlock({
     }
 
     try {
-      let initialPostsRes = await getPostsByTagDatabaseId(
-        selectedCategory.tagDatabaseId,
+      const initialPostsRes = await getPostsByTagDatabaseId(
+        selectedCategory.databaseId ?? 0,
         100,
         undefined,
         effectiveLocale,
       );
       initialPosts = (initialPostsRes.posts?.nodes ?? []) as WPPostCard[];
-
-      if (
-        initialPosts.length === 0 &&
-        selectedCategory.canonicalTagDatabaseId !== selectedCategory.tagDatabaseId
-      ) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `[levels] No posts for locale tagId=${selectedCategory.tagDatabaseId}; falling back to canonical tagId=${selectedCategory.canonicalTagDatabaseId}.`,
-          );
-        }
-        initialPostsRes = await getPostsByTagDatabaseId(
-          selectedCategory.canonicalTagDatabaseId,
-          100,
-          undefined,
-          effectiveLocale,
-        );
-        initialPosts = (initialPostsRes.posts?.nodes ?? []) as WPPostCard[];
-      }
     } catch (error) {
       console.error("Failed to load initial level posts:", error);
     }
   }
 
   return (
-    // Match success stories slider background (full-bleed dark band)
     <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
       <section
         aria-label={TRANSLATIONS[effectiveLocale].levels}
         data-categories-scope
         className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
       >
-        {/* Heading/hover color scoping for dark mode */}
         <style>{`
           html.dark [data-categories-scope] h1,
           html.dark [data-categories-scope] h2,
@@ -194,15 +120,12 @@ export default async function CategoriesBlock({
         `}</style>
 
         <div className="space-y-2">
-          <h2 className="text-3xl font-semibold tracking-tight mb-8">
-            {TRANSLATIONS[effectiveLocale].levelsHeading}
-          </h2>
-          <p className="text-base leading-relaxed text-neutral-600 dark:text-gray-300 max-w-2xl">
+          <h2 className="type-title mb-8">{TRANSLATIONS[effectiveLocale].levelsHeading}</h2>
+          <p className="type-lead max-w-2xl text-neutral-600 dark:text-gray-300">
             {TRANSLATIONS[effectiveLocale].levelsDescription}
           </p>
         </div>
 
-        {/* Client component gets serializable props only */}
         <div className="mt-8">
           <CategoriesBlockClient
             categories={visibleCategories}
