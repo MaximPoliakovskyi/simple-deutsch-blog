@@ -509,30 +509,33 @@ html.dark .sd-skeleton {
   }
 }
 
-/* No spinner — only flipping text */
-
-/* --- JS-powered quote display --- */
-.sd-preloader-quote {
+/* ── Preloader quote + accent bar ──────────────────────────────────────────
+   Animation approach:
+   • Text: filter:blur(8px) + opacity:0 + translateY(8px) as hidden state.
+     Adding .sd-quote-visible transitions all three to their natural values in
+     one single CSS transition — the quote sharpens into focus as it rises.
+     One setState call → one React re-render → CSS handles everything.
+     No per-letter state, no intermediate broken render.
+   • Bar: pure CSS scaleX + opacity breath animation (infinite). No JS,
+     no ::after, no overflow clipping needed — element scales from its center.
+────────────────────────────────────────────────────────────────────────── */
+.sd-preloader-inner {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 1.75rem;
+}
+
+.sd-preloader-quote {
   max-width: clamp(16rem, 90vw, 42rem);
+  padding: 0 1.5rem;
   opacity: 0;
+  filter: blur(8px);
+  transform: translateY(8px);
   transition:
-    opacity var(--motion-normal) var(--motion-spring),
-    transform var(--motion-normal) var(--motion-spring);
-}
-
-.sd-preloader-quote.sd-quote-ready {
-  opacity: 1;
-}
-
-.sd-preloader-quote.sd-quote-dismiss {
-  opacity: 0;
-  transform: translateY(-6px);
-}
-
-.sd-quote-text {
+    opacity   500ms var(--motion-spring),
+    filter    500ms var(--motion-spring),
+    transform 500ms var(--motion-spring);
   font-weight: 700;
   font-size: 1.5rem;
   line-height: 1.5;
@@ -540,87 +543,33 @@ html.dark .sd-skeleton {
   color: hsl(var(--fg));
   text-align: center;
   margin: 0;
-  display: inline;
 }
 
-/* --- Per-letter stagger animation --- */
-.sd-word {
-  display: inline-flex;
-  white-space: nowrap;
-}
-
-.sd-word-space {
-  display: inline;
-}
-
-.sd-letter {
-  display: inline-block;
-  opacity: 0;
-  transform: rotateX(90deg);
-  transform-origin: center;
-  backface-visibility: hidden;
-  transition:
-    opacity 280ms ease,
-    transform 280ms ease;
-}
-
-.sd-letter.sd-letter-in {
+.sd-preloader-quote.sd-quote-visible {
   opacity: 1;
-  transform: rotateX(0deg);
+  filter: blur(0);
+  transform: translateY(0);
 }
 
-/* --- CSS-only quote rotator (before JS hydrates) --- */
-.sd-quote-rotator {
-  position: relative;
-  max-width: clamp(16rem, 90vw, 42rem);
-  min-height: 4rem;
-  text-align: center;
-  padding: 0 1.5rem;
-  overflow: hidden;
+/* Decorative bar: scales from 35% → 100% of its own width from center.
+   scaleX never moves the element outside its box — no overflow clip needed. */
+.sd-preloader-bar {
+  width: 2.5rem;
+  height: 2px;
+  border-radius: 1px;
+  background: hsl(var(--fg));
+  transform: scaleX(0.35);
+  opacity: 0.2;
+  animation: sd-bar-breathe 2.2s ease-in-out infinite;
 }
 
-.sd-rotator-quote {
-  display: block;
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  font-weight: 700;
-  font-size: 1.5rem;
-  line-height: 1.5;
-  color: hsl(var(--fg));
-  animation: sd-quote-rotate 12s ease-in-out infinite;
-  animation-delay: var(--sd-rotator-delay, 0s);
-  animation-fill-mode: both;
-}
-
-@keyframes sd-quote-rotate {
-  0% {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  5% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  20% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  25% {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  100% {
-    opacity: 0;
-  }
+@keyframes sd-bar-breathe {
+  0%, 100% { transform: scaleX(0.35); opacity: 0.2; }
+  50%       { transform: scaleX(1);   opacity: 0.45; }
 }
 
 .sd-hidden {
   display: none !important;
-}
-
-.sd-js-hidden {
-  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -645,17 +594,15 @@ html.dark .sd-skeleton {
   .sd-preloader-quote {
     /* biome-disable-next-line lint/complexity/noImportantStyles */
     transition: none !important;
-  }
-
-  .sd-letter {
-    /* biome-disable-next-line lint/complexity/noImportantStyles */
-    transition: none !important;
     opacity: 1;
+    filter: none;
     transform: none;
   }
 
-  .sd-rotator-quote {
+  .sd-preloader-bar {
     animation: none;
+    opacity: 0.3;
+    transform: scaleX(1);
   }
 }
 

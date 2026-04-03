@@ -12,15 +12,12 @@ import { setDocumentLoadingState } from "@/lib/i18n";
 import { lockScroll, unlockScroll } from "@/lib/scroll";
 
 // ---------------------------------------------------------------------------
-// PreloaderUI — quote-cycling animation with per-letter stagger
+// Timing constants
 // ---------------------------------------------------------------------------
 
-const FADE_OUT_MS = 600;
-const FADE_OUT_WATCHDOG_MS = FADE_OUT_MS + 250;
-const LETTER_STAGGER_MS = 30;
-const QUOTE_HOLD_MS = 2000;
-const QUOTE_FADE_OUT_MS = 400;
-const QUOTE_PRE_FADE_MS = 300;
+const FADE_OUT_MS = 600;           // overlay fade-out duration
+const QUOTE_HOLD_MS = 2200;        // how long a quote stays fully visible
+const QUOTE_FADE_MS = 350;         // quote fade-in / fade-out duration
 
 const QUOTES = [
   "Jede Sprache ist ein Schlüssel zu einer neuen Welt",
@@ -62,16 +59,29 @@ function clearTimer(ref: MutableRefObject<number | null>) {
   }
 }
 
-type LetterState = { char: string; visible: boolean };
-type WordGroup = { letters: LetterState[]; isSpace: boolean };
+// ---------------------------------------------------------------------------
+// PreloaderUI
+// ---------------------------------------------------------------------------
 
+/**
+ * Design:
+ * - One <p> element that fades in/out as a complete unit — no per-letter
+ *   animation. Per-letter stagger was the source of the "fragmented text"
+ *   artifact: during the 30ms×N stagger window the element was in a valid
+ *   but visually broken intermediate state indistinguishable from a render
+ *   error.
+ * - No CSS-only rotator / JS handoff. The two-system architecture created a
+ *   blank gap between when the CSS rotator was hidden and when the JS quote
+ *   became visible (multiple async state updates across different renders).
+ * - Single state slice: { text, visible }. The quote goes from
+ *   hidden → committed (DOM, opacity:0) → visible → hidden again.
+ *   Two rAF frames between "commit" and "show" guarantee the text node is
+ *   fully painted before the CSS opacity transition begins.
+ */
 function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
-  const [phase, setPhase] = useState<"visible" | "fadingOut">("visible");
+  const [overlayPhase, setOverlayPhase] = useState<"visible" | "fadingOut">("visible");
   const [showPreloader, setShowPreloader] = useState(true);
-  const [words, setWords] = useState<WordGroup[]>([]);
-  const [quoteReady, setQuoteReady] = useState(false);
-  const [dismissing, setDismissing] = useState(false);
-  const [jsReady, setJsReady] = useState(false);
+  const [quoteState, setQuoteState] = useState<{ text: string; visible: boolean } | null>(null);
 
   const fadeStartedRef = useRef(false);
   const finishedRef = useRef(false);
@@ -79,102 +89,50 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
   const quotesShownRef = useRef(0);
   const fadeWatchdogRef = useRef<number | null>(null);
   const cycleTimerRef = useRef<number | null>(null);
-  const letterTimersRef = useRef<number[]>([]);
-
-  const clearAllTimers = useCallback(() => {
-    clearTimer(cycleTimerRef);
-    for (const t of letterTimersRef.current) window.clearTimeout(t);
-    letterTimersRef.current = [];
-  }, []);
+  const rafRef = useRef<number | null>(null);
 
   const finishPreloader = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
     clearTimer(fadeWatchdogRef);
-    clearAllTimers();
-
+    clearTimer(cycleTimerRef);
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
     try {
       unlockScroll();
     } catch {}
-
     document.documentElement.setAttribute("data-preloader", "0");
     document.documentElement.setAttribute("data-app-visible", "1");
     onFinished?.();
     setShowPreloader(false);
-  }, [clearAllTimers, onFinished]);
+  }, [onFinished]);
 
   const startFadeOut = useCallback(() => {
     if (fadeStartedRef.current) return;
     fadeStartedRef.current = true;
-    clearAllTimers();
+    clearTimer(cycleTimerRef);
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
 
     if (prefersReducedMotionNow()) {
       finishPreloader();
       return;
     }
 
-    // Fade out quote first, then fade the whole overlay
-    setDismissing(true);
+    // Fade quote out first, then fade the overlay itself
+    setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
     window.setTimeout(() => {
-      setPhase("fadingOut");
-    }, QUOTE_PRE_FADE_MS);
+      setOverlayPhase("fadingOut");
+    }, QUOTE_FADE_MS);
     fadeWatchdogRef.current = window.setTimeout(
       finishPreloader,
-      QUOTE_PRE_FADE_MS + FADE_OUT_WATCHDOG_MS,
+      QUOTE_FADE_MS + FADE_OUT_MS + 250,
     );
-  }, [clearAllTimers, finishPreloader]);
-
-  /** Reveal letters of a quote one by one, then call onComplete after the hold. */
-  const revealQuote = useCallback(
-    (
-      quote: string,
-      onComplete: () => void,
-    ) => {
-      // Split into word groups, preserving spaces as separators
-      const rawWords = quote.split(/(\s+)/);
-      const groups: WordGroup[] = rawWords.map((seg) => {
-        const isSpace = /^\s+$/.test(seg);
-        return {
-          isSpace,
-          letters: Array.from(seg).map((c) => ({ char: isSpace ? "\u00A0" : c, visible: false })),
-        };
-      });
-      setWords(groups);
-      setQuoteReady(true);
-      setDismissing(false);
-
-      // Build a flat index → (groupIdx, letterIdx) mapping for stagger
-      const flatMap: { g: number; l: number }[] = [];
-      for (let g = 0; g < groups.length; g++) {
-        for (let l = 0; l < groups[g].letters.length; l++) {
-          flatMap.push({ g, l });
-        }
-      }
-
-      // Stagger each letter in
-      for (let i = 0; i < flatMap.length; i++) {
-        const { g, l } = flatMap[i];
-        const timer = window.setTimeout(() => {
-          setWords((prev) => {
-            const next = prev.map((w) => ({ ...w, letters: w.letters.slice() }));
-            if (next[g]?.letters[l]) {
-              next[g].letters[l] = { ...next[g].letters[l], visible: true };
-            }
-            return next;
-          });
-        }, i * LETTER_STAGGER_MS);
-        letterTimersRef.current.push(timer);
-      }
-
-      // After all letters revealed + hold time, call onComplete
-      const totalRevealMs = flatMap.length * LETTER_STAGGER_MS;
-      cycleTimerRef.current = window.setTimeout(() => {
-        if (fadeStartedRef.current || finishedRef.current) return;
-        onComplete();
-      }, totalRevealMs + QUOTE_HOLD_MS);
-    },
-    [],
-  );
+  }, [finishPreloader]);
 
   useEffect(() => {
     try {
@@ -184,32 +142,47 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
     const shuffled = shuffleArray(QUOTES);
     let idx = 0;
 
-    setJsReady(true);
-
-    const showQuote = () => {
+    const showNextQuote = () => {
       if (fadeStartedRef.current || finishedRef.current) return;
 
-      revealQuote(shuffled[idx], () => {
-        quotesShownRef.current += 1;
+      const text = shuffled[idx];
 
-        // Can we dismiss? Page loaded AND at least one full quote shown
-        if (pageLoadedRef.current && quotesShownRef.current >= 1) {
-          startFadeOut();
-          return;
-        }
+      // Phase 1: commit text into DOM at opacity:0. No visible change yet.
+      setQuoteState({ text, visible: false });
 
-        // Fade out current quote
-        setDismissing(true);
-
-        cycleTimerRef.current = window.setTimeout(() => {
+      // Phase 2: two rAF frames so the element is painted to the GPU before
+      // the CSS transition begins. Avoids the "appears then jumps" artifact
+      // that occurs when an opacity transition starts on an uncommitted element.
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = requestAnimationFrame(() => {
+          rafRef.current = null;
           if (fadeStartedRef.current || finishedRef.current) return;
-          idx = (idx + 1) % shuffled.length;
-          showQuote();
-        }, QUOTE_FADE_OUT_MS);
+
+          setQuoteState({ text, visible: true });
+
+          // Phase 3: hold, then decide whether to exit or cycle
+          cycleTimerRef.current = window.setTimeout(() => {
+            if (fadeStartedRef.current || finishedRef.current) return;
+            quotesShownRef.current += 1;
+
+            if (pageLoadedRef.current && quotesShownRef.current >= 1) {
+              startFadeOut();
+              return;
+            }
+
+            // Fade out quote, then show next
+            setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
+            cycleTimerRef.current = window.setTimeout(() => {
+              if (fadeStartedRef.current || finishedRef.current) return;
+              idx = (idx + 1) % shuffled.length;
+              showNextQuote();
+            }, QUOTE_FADE_MS);
+          }, QUOTE_HOLD_MS);
+        });
       });
     };
 
-    showQuote();
+    showNextQuote();
 
     const onPageLoad = () => {
       pageLoadedRef.current = true;
@@ -224,32 +197,35 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
     return () => {
       window.removeEventListener("load", onPageLoad);
       clearTimer(fadeWatchdogRef);
-      clearAllTimers();
-
+      clearTimer(cycleTimerRef);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
       if (!finishedRef.current) {
         try {
           unlockScroll();
         } catch {}
       }
     };
-  }, [clearAllTimers, revealQuote, startFadeOut]);
+  }, [startFadeOut]);
 
   const handleTransitionEnd = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
-      if (phase !== "fadingOut") return;
+      if (overlayPhase !== "fadingOut") return;
       finishPreloader();
     },
-    [finishPreloader, phase],
+    [finishPreloader, overlayPhase],
   );
 
   const handleTransitionCancel = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
-      if (phase !== "fadingOut") return;
+      if (overlayPhase !== "fadingOut") return;
       finishPreloader();
     },
-    [finishPreloader, phase],
+    [finishPreloader, overlayPhase],
   );
 
   if (!showPreloader) return null;
@@ -258,50 +234,23 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
     // biome-ignore lint/correctness/useUniqueElementIds: Singleton overlay element.
     <div
       id="sd-preloader"
-      data-phase={phase}
+      data-phase={overlayPhase}
       style={{ ["--sd-preloader-fade-ms" as string]: `${FADE_OUT_MS}ms` }}
       onTransitionEnd={handleTransitionEnd}
       onTransitionCancel={handleTransitionCancel}
     >
-      {/* CSS-only fallback rotator (before JS hydrates) */}
-      <div className={`sd-quote-rotator ${jsReady ? "sd-hidden" : ""}`} aria-hidden={jsReady}>
-        {QUOTES.slice(0, 4).map((quote, i) => (
-          <span
-            key={quote}
-            className="sd-rotator-quote"
-            // opacity:0 in HTML ensures text is invisible before CSS loads (FOUC fix).
-            // CSS animations override inline styles, so the animation still runs correctly.
-            style={{ animationDelay: `${i * 3}s`, opacity: 0 }}
+      <div className="sd-preloader-inner">
+        {quoteState !== null && (
+          <p
+            className={`sd-preloader-quote${quoteState.visible ? " sd-quote-visible" : ""}`}
+            aria-live="polite"
+            aria-atomic="true"
           >
-            {quote}
-          </span>
-        ))}
-      </div>
-
-      {/* JS-powered letter-by-letter quote display */}
-      <div
-        className={`sd-preloader-quote ${jsReady ? "" : "sd-js-hidden"} ${quoteReady ? "sd-quote-ready" : ""} ${dismissing ? "sd-quote-dismiss" : ""}`}
-        aria-live="polite"
-      >
-        <p className="sd-quote-text">
-          {words.map((word, wi) => (
-            <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: stable word position
-              key={wi}
-              className={word.isSpace ? "sd-word-space" : "sd-word"}
-            >
-              {word.letters.map((l, li) => (
-                <span
-                  // biome-ignore lint/suspicious/noArrayIndexKey: stable letter position
-                  key={li}
-                  className={`sd-letter ${l.visible ? "sd-letter-in" : ""}`}
-                >
-                  {l.char}
-                </span>
-              ))}
-            </span>
-          ))}
-        </p>
+            {quoteState.text}
+          </p>
+        )}
+        {/* Decorative breathing bar — pure CSS, no JS state dependency */}
+        <div className="sd-preloader-bar" aria-hidden="true" />
       </div>
     </div>
   );
