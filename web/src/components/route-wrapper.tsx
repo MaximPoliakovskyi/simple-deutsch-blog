@@ -59,6 +59,7 @@ const COVERED_MS = 90;
 const READY_MAX_MS = 2200;
 const OPACITY_MS = 140;
 const DEBUG = process.env.NEXT_PUBLIC_DEBUG_ROUTE_TRANSITION === "1";
+const DEBUG_SCROLL = process.env.NEXT_PUBLIC_DEBUG_SCROLL === "1";
 
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
@@ -434,6 +435,13 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       setToken(nextToken);
       setTargetPathname(nextTargetPathname);
       setPhaseSafe("entering");
+      if (DEBUG_SCROLL) {
+        console.log("[scroll-reset][nav-start] overlay navigation started", {
+          href: nextTargetHref,
+          targetPathname: nextTargetPathname,
+          scrollYAtStart: window.scrollY,
+        });
+      }
       lockScroll();
       logDev("begin", {
         token: nextToken,
@@ -506,29 +514,67 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     setIsInitialLoad(false);
   }, []);
 
-  // Disable browser scroll-restoration so it never fights our explicit reset.
+  // Prevent the browser from restoring scroll on back-navigation or reload.
   useEffect(() => {
-    if (typeof history !== "undefined" && history.scrollRestoration) {
+    if (typeof history !== "undefined") {
       history.scrollRestoration = "manual";
     }
   }, []);
 
-  // Reset scroll on every route change.
-  // Both window.scrollTo(0,0) and element.scrollTop = 0 respect CSS
-  // scroll-behavior:smooth (per spec), producing a visible animated scroll
-  // on mobile instead of an instant jump. Applying scroll-behavior:auto as
-  // an inline style overrides the attribute-selector CSS rule synchronously
-  // before the scrollTo call, making the reset always instant. The inline
-  // style is cleared in the same pre-paint frame so smooth scrolling is
-  // restored for the user's own interactions.
+  // Scroll-to-top for plain <Link> / router.push() navigations.
+  //
+  // Why overlay-path navigations are excluded:
+  //   When the overlay transition is active (phase !== "idle"), lockScroll()
+  //   has put overflow:hidden on <html>. Calling scrollTo(0,0) while that lock
+  //   is live writes to the wrong scrolling context on Chrome (scroll is routed
+  //   to <body> during the lock) and is silently discarded on iOS Safari (the
+  //   compositor manages scroll independently). The browser caches the pre-lock
+  //   scrollTop and restores it when overflow is removed, overwriting the reset.
+  //   The overlay path is handled by scroll.ts → restoreStyles(), which resets
+  //   scroll AFTER overflow is released — in the same synchronous block so
+  //   there is no paint at the old position.
+  //
+  // This effect fires synchronously before paint (useLayoutEffect), so for
+  // plain navigations the reset is guaranteed before the user sees anything.
   useIsomorphicLayoutEffect(() => {
+    if (DEBUG_SCROLL) {
+      console.log("[scroll-reset][pathname-effect] pathname changed", {
+        pathname,
+        phase: phaseRef.current,
+        scrollY: window.scrollY,
+      });
+    }
+
+    if (phaseRef.current !== "idle") {
+      // Overlay active — scroll reset delegated to restoreStyles() / unlockScroll().
+      if (DEBUG_SCROLL) {
+        console.log("[scroll-reset][pathname-effect] skipped — overlay active, deferred to unlockScroll");
+      }
+      return;
+    }
+
     const html = document.documentElement;
     html.style.scrollBehavior = "auto";
+    html.scrollTop = 0;
     window.scrollTo(0, 0);
     html.style.scrollBehavior = "";
+
+    if (DEBUG_SCROLL) {
+      console.log("[scroll-reset][pathname-effect] reset applied", { scrollY: window.scrollY });
+      requestAnimationFrame(() => {
+        console.log("[scroll-reset][pathname-effect] after paint", { scrollY: window.scrollY });
+      });
+    }
   }, [pathname]);
 
   useEffect(() => {
+    if (DEBUG_SCROLL) {
+      console.log("[scroll-reset][pathname-committed] new page committed to DOM", {
+        pathname,
+        phase: phaseRef.current,
+        scrollY: window.scrollY,
+      });
+    }
     pathnameRef.current = pathname;
     const activeToken = activeTransitionRef.current?.token;
     if (!activeToken) return;

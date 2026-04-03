@@ -1,3 +1,5 @@
+const DEBUG_SCROLL = process.env.NEXT_PUBLIC_DEBUG_SCROLL === "1";
+
 type StyleSnapshot = {
   htmlOverflow: string;
   htmlOverscrollBehavior: string;
@@ -25,6 +27,13 @@ function applyLockStyles() {
 function restoreStyles() {
   const docEl = document.documentElement;
 
+  // ① Release the scroll lock FIRST.
+  // Do NOT attempt scrollTo while overflow:hidden is active. The browser caches
+  // the pre-lock scrollTop internally. On Chrome, scroll is routed to <body>
+  // while <html> has overflow:hidden, so setting scrollTop on <html> is a
+  // no-op. On iOS Safari the compositor manages scroll independently and
+  // silently discards the write. Either way, the cached value is restored the
+  // moment overflow is removed — overwriting anything we set during the lock.
   docEl.classList.remove("scroll-locked");
 
   if (snapshot) {
@@ -37,14 +46,26 @@ function restoreStyles() {
 
   snapshot = null;
 
-  // Reset scroll AFTER overflow is restored (overflow:hidden freezes the
-  // browser's internal scroll position; removing it would snap back).
-  // Use inline scroll-behavior:auto to override any CSS scroll-behavior:smooth
-  // rule so the reset is always instant — on mobile animated resets are
-  // visible because the compositor runs them independently of the JS thread.
-  document.documentElement.style.scrollBehavior = "auto";
+  // ② Reset scroll in the SAME synchronous block, after overflow is restored.
+  // There is no paint between these lines — no visible flash at the old
+  // position. Inline scrollBehavior overrides the CSS attribute-selector rule
+  // synchronously (spec §6.4.3), bypassing scroll-behavior:smooth on <html>.
+  if (DEBUG_SCROLL) {
+    console.log("[scroll-reset][unlock] before reset", {
+      scrollY: window.scrollY,
+      scrollTop: docEl.scrollTop,
+    });
+  }
+  docEl.style.scrollBehavior = "auto";
+  docEl.scrollTop = 0;
   window.scrollTo(0, 0);
-  document.documentElement.style.scrollBehavior = "";
+  docEl.style.scrollBehavior = "";
+  if (DEBUG_SCROLL) {
+    console.log("[scroll-reset][unlock] after reset", { scrollY: window.scrollY });
+    requestAnimationFrame(() => {
+      console.log("[scroll-reset][unlock] after paint", { scrollY: window.scrollY });
+    });
+  }
 }
 
 export function lockScroll() {

@@ -207,10 +207,9 @@ export function CategoryPillsSkeleton({
         <div
           key={item.key}
           className={[
-            "relative h-10 rounded-full overflow-hidden",
+            "h-10 rounded-full",
             item.widthClass,
-            "bg-neutral-200 dark:bg-neutral-700/60",
-            "sd-shimmer",
+            "sd-skeleton",
           ].join(" ")}
         />
       ))}

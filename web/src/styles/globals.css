@@ -436,31 +436,36 @@ html[data-app-visible="1"] .app-fade {
   transition: opacity var(--motion-route-content) var(--motion-spring);
 }
 
-.sd-shimmer {
-  position: relative;
-  isolation: isolate;
+/* ── Skeleton blocks ────────────────────────────────────────────────────────
+   Root-cause fix for the dark-mode left-edge artifact:
+   - Previous implementations used opacity animation → the browser promotes
+     animated elements to GPU compositing layers. The layer boundary at x=0
+     bleeds through when the background has alpha (bg-neutral-700/60), because
+     the compositor must blend the semi-transparent block against the dark page
+     background. The layer edge at x=0 renders 1-2px incorrectly in Chromium.
+   - This implementation animates background-color between two fully-opaque
+     shades. background-color animation never creates a GPU compositing layer,
+     so there is no layer boundary to bleed. Since every state is opaque,
+     there is no alpha blending at any point in the cycle.
+   Used by: sd-skeleton class (replaces sd-shimmer everywhere).
+────────────────────────────────────────────────────────────────────────── */
+.sd-skeleton {
+  /* Light mode: neutral-200 → neutral-300 */
+  --_sk-from: #e5e7eb;
+  --_sk-to:   #d1d5db;
+  background-color: var(--_sk-from);
+  animation: sd-skeleton-bg 1.6s ease-in-out infinite;
 }
 
-.sd-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(255 255 255 / 0.08) 45%,
-    rgb(255 255 255 / 0.18) 50%,
-    rgb(255 255 255 / 0.08) 55%,
-    transparent 100%
-  );
-  animation: sd-shimmer 1.8s linear infinite;
+html.dark .sd-skeleton {
+  /* Dark mode: neutral-700 → neutral-800  (both fully opaque — no /alpha) */
+  --_sk-from: #374151;
+  --_sk-to:   #1f2937;
 }
 
-@keyframes sd-shimmer {
-  100% {
-    transform: translateX(100%);
-  }
+@keyframes sd-skeleton-bg {
+  0%, 100% { background-color: var(--_sk-from); }
+  50%       { background-color: var(--_sk-to);   }
 }
 
 .sd-hide-scrollbar {
@@ -629,7 +634,7 @@ html[data-app-visible="1"] .app-fade {
     opacity: 1;
   }
 
-  .sd-shimmer::after {
+  .sd-skeleton {
     animation: none;
   }
 

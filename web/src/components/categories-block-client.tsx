@@ -9,10 +9,10 @@ import PostCard, { CategoryPills } from "./cards";
 function PostCardSkeleton() {
   return (
     <div>
-      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-200 dark:bg-neutral-700/60 sd-shimmer" />
-      <div className="mt-4 h-3 w-24 rounded-full bg-neutral-200 dark:bg-neutral-700/60 sd-shimmer" />
-      <div className="mt-2 h-5 w-3/4 rounded-full bg-neutral-200 dark:bg-neutral-700/60 sd-shimmer" />
-      <div className="mt-1 h-5 w-1/2 rounded-full bg-neutral-200 dark:bg-neutral-700/60 sd-shimmer" />
+      <div className="relative aspect-[4/3] rounded-2xl sd-skeleton" />
+      <div className="mt-4 h-3 w-24 rounded-full sd-skeleton" />
+      <div className="mt-2 h-5 w-3/4 rounded-full sd-skeleton" />
+      <div className="mt-1 h-5 w-1/2 rounded-full sd-skeleton" />
     </div>
   );
 }

@@ -7,6 +7,9 @@ const DEV_WATCH_IGNORED = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Allow cross-origin HMR/dev requests from local network devices (e.g. phone on same Wi-Fi).
+  // This is development-only — has no effect in production builds.
+  allowedDevOrigins: ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"],
   // Harden HTTP fingerprint
   poweredByHeader: false,
   reactStrictMode: true,
