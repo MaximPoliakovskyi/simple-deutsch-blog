@@ -1,4 +1,4 @@
-npmimport { Suspense } from "react";
+import { Suspense } from "react";
 import dynamic from "next/dynamic";
 import CategoriesBlock from "@/components/categories-block";
 import { CategoryPillsSkeleton } from "@/components/cards";
