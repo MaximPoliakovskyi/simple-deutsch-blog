@@ -467,7 +467,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-        "fixed inset-0 z-100",
+        "fixed inset-0 z-[200]",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",

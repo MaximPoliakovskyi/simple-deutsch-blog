@@ -283,7 +283,7 @@ export default function Header() {
       <nav
         ref={navRef}
         data-main-nav="true"
-        className="sticky top-0 z-[1000] bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
+        className="sticky top-0 z-[100] bg-[hsl(var(--bg))] text-[hsl(var(--fg))]"
         aria-label="Main navigation"
       >
         <div>

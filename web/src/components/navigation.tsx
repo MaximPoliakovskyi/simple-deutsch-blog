@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
@@ -290,7 +289,7 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
 // SearchButton (formerly search-button.tsx)
 // ---------------------------------------------------------------------------
 
-const SearchOverlay = dynamic(() => import("./search-overlay"), { ssr: false });
+import SearchOverlay from "./search-overlay";
 
 type OpenMethod = "click" | "keyboard" | undefined;
 
@@ -322,7 +321,15 @@ function _maybeDetachShortcutListener() {
 
 function _preloadSearchOverlay() {
   if (_searchModulePromise) return;
-  _searchModulePromise = import("./search-overlay");
+  // Always attach a no-op .catch() so a chunk-load failure never becomes an
+  // unhandled promise rejection.  ChunkErrorRecovery (chrome-extras.tsx)
+  // monitors `window.unhandledrejection` and calls window.location.replace()
+  // when it sees a ChunkLoadError — that is the full-page reload the user
+  // observes when hovering the search button.
+  _searchModulePromise = import("./search-overlay").catch(() => {
+    // Allow retry on the next hover/focus by resetting the promise slot.
+    _searchModulePromise = null;
+  });
 }
 
 function SearchButton({
@@ -367,7 +374,6 @@ function SearchButton({
           setOpen(true);
         }}
         onFocus={_preloadSearchOverlay}
-        onMouseEnter={_preloadSearchOverlay}
         className={[
           "flex text-sm focus:outline-none",
           variant === "icon"
@@ -637,7 +643,7 @@ export function NavigationMobileDrawer({
 }: MobileDrawerProps) {
   return (
     <div
-      className={["md:hidden", "fixed inset-0 z-90", open ? "" : "pointer-events-none"].join(" ")}
+      className={["md:hidden", "fixed inset-0 z-[110]", open ? "" : "pointer-events-none"].join(" ")}
     >
       <div
         className={[
