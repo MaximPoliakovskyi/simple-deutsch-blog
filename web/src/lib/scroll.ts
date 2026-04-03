@@ -36,6 +36,15 @@ function restoreStyles() {
   }
 
   snapshot = null;
+
+  // Reset scroll AFTER overflow is restored (overflow:hidden freezes the
+  // browser's internal scroll position; removing it would snap back).
+  // Use inline scroll-behavior:auto to override any CSS scroll-behavior:smooth
+  // rule so the reset is always instant — on mobile animated resets are
+  // visible because the compositor runs them independently of the JS thread.
+  document.documentElement.style.scrollBehavior = "auto";
+  window.scrollTo(0, 0);
+  document.documentElement.style.scrollBehavior = "";
 }
 
 export function lockScroll() {

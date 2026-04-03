@@ -1,3 +1,4 @@
+import dynamic from "next/dynamic";
 import type { ReactElement } from "react";
 import { CEFR_ORDER, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
@@ -6,7 +7,11 @@ import {
   getPostsByTagDatabaseId,
   type WPPostCard,
 } from "@/lib/posts";
-import CategoriesBlockClient from "./categories-block-client";
+
+// Code-split CategoriesBlockClient (the interactive CEFR tabs + posts grid).
+// It sits at the very bottom of the homepage; deferring its JS lets React
+// prioritise hydration of above-fold content first.
+const CategoriesBlockClient = dynamic(() => import("./categories-block-client"));
 
 type TagNode = { id: string; databaseId?: number; name: string; slug: string };
 type Category = {

@@ -514,11 +514,18 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Reset scroll on every route change.
-  // useIsomorphicLayoutEffect fires synchronously after React commits but
-  // BEFORE the browser paints, so the new page is always positioned at the
-  // top from the very first frame — no visible jump or scroll-up flash.
+  // Both window.scrollTo(0,0) and element.scrollTop = 0 respect CSS
+  // scroll-behavior:smooth (per spec), producing a visible animated scroll
+  // on mobile instead of an instant jump. Applying scroll-behavior:auto as
+  // an inline style overrides the attribute-selector CSS rule synchronously
+  // before the scrollTo call, making the reset always instant. The inline
+  // style is cleared in the same pre-paint frame so smooth scrolling is
+  // restored for the user's own interactions.
   useIsomorphicLayoutEffect(() => {
+    const html = document.documentElement;
+    html.style.scrollBehavior = "auto";
     window.scrollTo(0, 0);
+    html.style.scrollBehavior = "";
   }, [pathname]);
 
   useEffect(() => {

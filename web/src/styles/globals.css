@@ -814,3 +814,102 @@ html[data-app-visible="1"] .app-fade {
 .dark .bg-gradient-section {
   background: linear-gradient(135deg, #09090b 0%, #0f1117 50%, #070a10 100%);
 }
+
+/* ── Post sliders (LatestPostsSlider + SuccessStoriesSlider) ─────────────── */
+/* These rules were previously injected via JS <style> strings inside each
+   slider component.  Moving them here removes the runtime DOM mutation and
+   keeps style delivery in the static CSS bundle.                             */
+
+/* Scroller scrollbar hidden via utility class; webkit variant needs an
+   attribute selector because it escapes Tailwind's purge. */
+[data-stories-scroller]::-webkit-scrollbar {
+  display: none;
+}
+
+/* Responsive card widths inside both sliders */
+[data-card] {
+  flex: 0 0 100%; /* 1 column (mobile) */
+}
+@media (min-width: 768px) {
+  [data-card] {
+    flex: 0 0 calc((100% - 32px) / 2); /* md: 2 columns */
+  }
+}
+@media (min-width: 1280px) {
+  [data-card] {
+    flex: 0 0 calc((100% - 64px) / 3); /* xl: 3 columns */
+  }
+}
+
+/* Latest posts slider: ensure heading text inherits the section color token */
+[data-latest-slider-scope] .post-title,
+[data-latest-slider-scope] [data-post-title],
+[data-latest-slider-scope] h1,
+[data-latest-slider-scope] h2,
+[data-latest-slider-scope] h3,
+[data-latest-slider-scope] h4,
+[data-latest-slider-scope] h5,
+[data-latest-slider-scope] h6,
+[data-latest-slider-scope] h1 a,
+[data-latest-slider-scope] h2 a,
+[data-latest-slider-scope] h3 a,
+[data-latest-slider-scope] h4 a,
+[data-latest-slider-scope] h5 a,
+[data-latest-slider-scope] h6 a {
+  color: inherit;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Success stories slider: dark-mode heading color overrides */
+/* biome-disable-next-line lint/complexity/noImportantStyles */
+html.dark [data-slider-scope][data-slider-scope] h1,
+html.dark [data-slider-scope][data-slider-scope] h2,
+html.dark [data-slider-scope][data-slider-scope] h3,
+html.dark [data-slider-scope][data-slider-scope] h4,
+html.dark [data-slider-scope][data-slider-scope] h5,
+html.dark [data-slider-scope][data-slider-scope] h6,
+html.dark [data-slider-scope][data-slider-scope] h1 *,
+html.dark [data-slider-scope][data-slider-scope] h2 *,
+html.dark [data-slider-scope][data-slider-scope] h3 *,
+html.dark [data-slider-scope][data-slider-scope] h4 *,
+html.dark [data-slider-scope][data-slider-scope] h5 *,
+html.dark [data-slider-scope][data-slider-scope] h6 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #ffffff !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}
+html.dark [data-slider-scope][data-slider-scope] .group:hover h1 *,
+html.dark [data-slider-scope][data-slider-scope] .group:hover h2 *,
+html.dark [data-slider-scope][data-slider-scope] .group:hover h3 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #d1d5db !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}
+
+/* Typewriter cursor blink — moved from per-component <style jsx> to the
+   static bundle so the keyframe is parsed once, not re-injected per render. */
+.caret-realistic {
+  animation: caret-blink 1.25s ease-in-out infinite;
+  will-change: opacity;
+  transform: translateZ(0);
+}
+
+@keyframes caret-blink {
+  0%   { opacity: 1; }
+  55%  { opacity: 1; }
+  70%  { opacity: 0; }
+  80%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret-realistic {
+    animation: none;
+  }
+}

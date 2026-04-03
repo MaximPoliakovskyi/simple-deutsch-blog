@@ -12,7 +12,13 @@ const nextConfig = {
   reactStrictMode: true,
   // Enable streaming and concurrent features for better performance
   experimental: {
-    optimizePackageImports: ["@vercel/analytics", "@vercel/speed-insights"],
+    // Tree-shake re-exported symbols from these packages to avoid pulling
+    // in full modules when only a few named exports are used.
+    optimizePackageImports: [
+      "@vercel/analytics",
+      "@vercel/speed-insights",
+      "next/dist/client/components/error-boundary",
+    ],
   },
   images: {
     remotePatterns: [

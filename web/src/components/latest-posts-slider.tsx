@@ -29,27 +29,7 @@ export default function LatestPostsSlider({ posts = [], title = "Latest posts" }
         data-latest-slider-scope
         className="mx-auto max-w-7xl px-4 py-10 text-neutral-900 dark:text-white"
       >
-        {/* Scope title color inheritance to slider */}
-        <style>{`
-          [data-latest-slider-scope] .post-title,
-          [data-latest-slider-scope] [data-post-title],
-          [data-latest-slider-scope] h1,
-          [data-latest-slider-scope] h2,
-          [data-latest-slider-scope] h3,
-          [data-latest-slider-scope] h4,
-          [data-latest-slider-scope] h5,
-          [data-latest-slider-scope] h6,
-          [data-latest-slider-scope] h1 a,
-          [data-latest-slider-scope] h2 a,
-          [data-latest-slider-scope] h3 a,
-          [data-latest-slider-scope] h4 a,
-          [data-latest-slider-scope] h5 a,
-          [data-latest-slider-scope] h6 a {
-            color: inherit;
-            -webkit-text-fill-color: currentColor;
-          }
-        `}</style>
-
+        {/* [data-latest-slider-scope] color-inheritance rules live in globals.css */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-3xl font-semibold tracking-tight">{title}</h2>
           <div className="flex gap-2">
@@ -88,18 +68,7 @@ export default function LatestPostsSlider({ posts = [], title = "Latest posts" }
           "
           style={{ scrollBehavior: "smooth" }}
         >
-          {/* ✅ Updated only this section */}
-          <style>{`
-            [data-stories-scroller]::-webkit-scrollbar { display: none; }
-            [data-card] { flex: 0 0 100%; } /* 1 column (mobile) */
-            @media (min-width: 768px) {      /* md: 2 columns */
-              [data-card] { flex: 0 0 calc((100% - 32px) / 2); }
-            }
-            @media (min-width: 1280px) {     /* xl: 3 columns */
-              [data-card] { flex: 0 0 calc((100% - 64px) / 3); }
-            }
-          `}</style>
-
+          {/* [data-stories-scroller] and [data-card] flex rules live in globals.css */}
           {posts.map((post: WPPostCard, i: number) => (
             <div key={post.id ?? post.slug ?? i} data-card className="snap-start shrink-0">
               <PostCard post={post} priority={i < 3} />
