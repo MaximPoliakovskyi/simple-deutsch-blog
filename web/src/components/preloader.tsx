@@ -85,8 +85,6 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
 
   const fadeStartedRef = useRef(false);
   const finishedRef = useRef(false);
-  const pageLoadedRef = useRef(false);
-  const quotesShownRef = useRef(0);
   const fadeWatchdogRef = useRef<number | null>(null);
   const cycleTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
@@ -160,23 +158,16 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
 
           setQuoteState({ text, visible: true });
 
-          // Phase 3: hold, then decide whether to exit or cycle
+          // Phase 3: hold, then exit.
+          // The page data is embedded in the SSR HTML — there is no need to
+          // gate on window.load (which fires only when ALL remote resources
+          // including CMS API responses are done, potentially 10-15 s later).
+          // Always exiting after exactly one quote avoids cycling additional
+          // quotes whose text Chrome's LCP algorithm can record as new
+          // (and sometimes larger) candidates, which was pushing LCP to ~3 s.
           cycleTimerRef.current = window.setTimeout(() => {
             if (fadeStartedRef.current || finishedRef.current) return;
-            quotesShownRef.current += 1;
-
-            if (pageLoadedRef.current && quotesShownRef.current >= 1) {
-              startFadeOut();
-              return;
-            }
-
-            // Fade out quote, then show next
-            setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
-            cycleTimerRef.current = window.setTimeout(() => {
-              if (fadeStartedRef.current || finishedRef.current) return;
-              idx = (idx + 1) % shuffled.length;
-              showNextQuote();
-            }, QUOTE_FADE_MS);
+            startFadeOut();
           }, QUOTE_HOLD_MS);
         });
       });
@@ -184,18 +175,7 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
 
     showNextQuote();
 
-    const onPageLoad = () => {
-      pageLoadedRef.current = true;
-    };
-
-    if (document.readyState === "complete") {
-      pageLoadedRef.current = true;
-    } else {
-      window.addEventListener("load", onPageLoad, { once: true });
-    }
-
     return () => {
-      window.removeEventListener("load", onPageLoad);
       clearTimer(fadeWatchdogRef);
       clearTimer(cycleTimerRef);
       if (rafRef.current !== null) {

@@ -9,6 +9,7 @@
     "lint": "biome check .",
     "typecheck": "tsc --noEmit",
     "smoke": "playwright test",
+    "lh": "node scripts/lh.mjs",
     "test:i18n-routing": "tsc --module commonjs --moduleResolution node --target es2022 --outDir .tmp/i18n-tests --rootDir src/shared/i18n --esModuleInterop --skipLibCheck src/shared/i18n/locale.ts src/shared/i18n/localeLinks.ts src/shared/i18n/seo.ts src/shared/i18n/pathMapping.test.ts src/shared/i18n/seo.test.ts && node --test .tmp/i18n-tests/pathMapping.test.js .tmp/i18n-tests/seo.test.js && node -e \"require('node:fs').rmSync('.tmp/i18n-tests',{ recursive: true, force: true })\""
   },
   "dependencies": {

@@ -392,39 +392,23 @@ html[data-preloader="1"] body {
   overflow: hidden;
 }
 
-html[data-preloader="1"] #app-shell {
-  visibility: hidden;
-}
-
-html[data-preloader="0"] #app-shell {
-  visibility: visible;
-}
-
 html[data-preloader="0"] #sd-preloader {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
 
-/* Global app fade-in after preloader completes. */
-.app-fade {
-  opacity: 0;
-  transition: opacity var(--motion-slow) var(--motion-spring);
-  will-change: opacity;
-}
-
-html[data-app-visible="1"] .app-fade {
-  opacity: 1;
-}
+/* App wrapper: preloader overlay covers content visually; no opacity gate needed. */
+/* Content is immediately painted so the browser can measure LCP from first paint. */
 
 .app-route-fade {
   opacity: 1;
-  will-change: opacity;
 }
 
 .app-route-fade--fading-out {
   opacity: 0;
   transition: opacity var(--motion-fast) ease-out;
+  will-change: opacity;
 }
 
 .app-route-fade--hidden {
@@ -434,6 +418,7 @@ html[data-app-visible="1"] .app-fade {
 .app-route-fade--fading-in {
   opacity: 1;
   transition: opacity var(--motion-route-content) var(--motion-spring);
+  will-change: opacity;
 }
 
 /* ── Skeleton blocks ────────────────────────────────────────────────────────
@@ -573,14 +558,12 @@ html.dark .sd-skeleton {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-fade {
+  .app-route-fade,
+  .app-route-fade--fading-out,
+  .app-route-fade--fading-in {
     transition: none;
     opacity: 1;
-  }
-
-  .app-route-fade {
-    transition: none;
-    opacity: 1;
+    will-change: auto;
   }
 
   .sd-skeleton {

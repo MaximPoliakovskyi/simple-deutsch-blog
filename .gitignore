@@ -11,9 +11,13 @@ archive/
 .env.*
 !.env.example
 web/.tmp/
+web/tmp/
 web/lighthouse*.json
 web/lh-report*.json
 web/lighthouse-nav-runs/
 web/smex-*.json
+tmp/
 tmp-*
 tmp_*
+.lighthouse/
+lighthouse-report*
