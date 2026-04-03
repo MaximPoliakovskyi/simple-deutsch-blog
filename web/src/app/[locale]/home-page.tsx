@@ -55,9 +55,93 @@ function PostCardSkeleton() {
 }
 
 // ---------------------------------------------------------------------------
+// SliderSectionSkeleton — height-matching placeholder for the two horizontal
+// sliders (SuccessStoriesSlider and LatestPostsSlider).  The skeleton uses the
+// same container/padding classes and the same [data-card] attribute so that
+// the globals.css responsive flex-basis rules give the skeleton cards exactly
+// the same width (and therefore height via aspect-[4/3]) as the real cards.
+// ---------------------------------------------------------------------------
+function SliderSectionSkeleton({
+  gradient = false,
+  withDescription = false,
+}: {
+  gradient?: boolean;
+  withDescription?: boolean;
+}) {
+  return (
+    <div
+      className={`${gradient ? "bg-gradient-section" : ""} -mx-[calc(50vw-50%)] w-screen`}
+      aria-hidden="true"
+    >
+      <section className="mx-auto max-w-7xl px-4 py-10">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="h-9 w-52 rounded-md sd-skeleton" />
+          <div className="flex gap-2">
+            <div className="h-10 w-10 rounded-full sd-skeleton" />
+            <div className="h-10 w-10 rounded-full sd-skeleton" />
+          </div>
+        </div>
+        {withDescription && <div className="mb-8 h-12 max-w-2xl rounded-md sd-skeleton" />}
+        <div className="flex gap-8 overflow-hidden pt-2 pb-4">
+          {/* Card 1 — always visible */}
+          <div data-card>
+            <div className="relative aspect-[4/3] rounded-2xl sd-skeleton" />
+            <div className="mt-4 h-3 w-24 rounded-full sd-skeleton" />
+            <div className="mt-2 h-5 w-3/4 rounded-full sd-skeleton" />
+            <div className="mt-1 h-5 w-1/2 rounded-full sd-skeleton" />
+          </div>
+          {/* Card 2 — visible at md+ */}
+          <div data-card className="hidden md:block">
+            <div className="relative aspect-[4/3] rounded-2xl sd-skeleton" />
+            <div className="mt-4 h-3 w-24 rounded-full sd-skeleton" />
+            <div className="mt-2 h-5 w-3/4 rounded-full sd-skeleton" />
+            <div className="mt-1 h-5 w-1/2 rounded-full sd-skeleton" />
+          </div>
+          {/* Card 3 — visible at xl+ */}
+          <div data-card className="hidden xl:block">
+            <div className="relative aspect-[4/3] rounded-2xl sd-skeleton" />
+            <div className="mt-4 h-3 w-24 rounded-full sd-skeleton" />
+            <div className="mt-2 h-5 w-3/4 rounded-full sd-skeleton" />
+            <div className="mt-1 h-5 w-1/2 rounded-full sd-skeleton" />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CategoriesBlockSkeleton — height-matching placeholder for CategoriesBlock.
+// Mirrors the bg-gradient-section wrapper, py-10 padding, heading+description
+// block, CategoryPills row (alignment="left"), and the 3-column post grid.
+// ---------------------------------------------------------------------------
+function CategoriesBlockSkeleton() {
+  return (
+    <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen" aria-hidden="true">
+      <section className="mx-auto max-w-7xl px-4 py-10">
+        <div className="space-y-2">
+          <div className="mb-8 h-9 w-32 rounded-md sd-skeleton" />
+          <div className="h-16 max-w-2xl rounded-md sd-skeleton" />
+        </div>
+        <div className="mt-8">
+          <CategoryPillsSkeleton count={6} alignment="left" />
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6 py-2">
+            {[0, 1, 2].map((i) => (
+              // biome-ignore lint/suspicious/noArrayIndexKey: static skeleton
+              <PostCardSkeleton key={i} />
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Static hero skeleton — included in the initial HTML stream as the Suspense
 // fallback. Renders the LCP-critical h1 immediately (no data required) and
-// uses same-height placeholders for dynamic content to avoid CLS on swap.
+// uses same-height placeholders for ALL homepage sections (hero posts, sliders,
+// categories block) so the footer never shifts when the boundary resolves.
 // ---------------------------------------------------------------------------
 function HeroFallback({ locale }: { locale: Locale }) {
   const t = TRANSLATIONS[locale];
@@ -91,8 +175,19 @@ function HeroFallback({ locale }: { locale: Locale }) {
               <PostCardSkeleton key={i} />
             ))}
           </div>
+          {/* Reserve space for the "Load more" button that appears after hydration */}
+          <div className="mx-auto h-9 w-28 rounded-full sd-skeleton" aria-hidden="true" />
         </section>
       </section>
+
+      {/*
+        Reserve space for the three full-bleed sections that appear below the
+        hero grid once the Suspense boundary resolves.  Without these, the
+        footer jumps down ~1500 px causing CLS ≈ 0.436.
+      */}
+      <SliderSectionSkeleton gradient withDescription />
+      <SliderSectionSkeleton />
+      <CategoriesBlockSkeleton />
     </>
   );
 }
