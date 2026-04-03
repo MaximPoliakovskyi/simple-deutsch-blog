@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type { MouseEvent as ReactMouseEvent, ReactNode } from "react";
 import {
@@ -638,14 +637,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
           className="rt-overlay"
           style={overlayStyle}
         >
-          <Image
-            src="/main-logo.svg"
-            alt=""
-            width={220}
-            height={220}
-            className="rt-overlay__logo"
-            priority
-          />
+          <img src="/main-logo.svg" alt="" width={220} height={220} className="rt-overlay__logo" />
         </div>
       ) : null}
     </TransitionNavContext.Provider>

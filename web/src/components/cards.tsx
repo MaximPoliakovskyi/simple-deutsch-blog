@@ -4,6 +4,24 @@
 import Image from "next/image";
 import Link from "next/link";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+// ---------------------------------------------------------------------------
+// CategoryPills — module-level constants (evaluated once, never recreated)
+// ---------------------------------------------------------------------------
+const CEFR_ORDER = ["A1", "A2", "B1", "B2", "C1", "C2"] as const;
+const CEFR_ORDER_MAP = new Map(CEFR_ORDER.map((code, i) => [code, i] as [string, number]));
+const CEFR_STICKER: Record<string, string> = {
+  A1: "bg-green-500",
+  A2: "bg-yellow-400",
+  B1: "bg-orange-500",
+  B2: "bg-red-500",
+  C1: "bg-purple-500",
+  C2: "bg-black",
+};
+function isCefrLevel(slug?: string): boolean {
+  if (!slug) return false;
+  return CEFR_ORDER_MAP.has(slug.toUpperCase());
+}
 import { useI18n } from "@/components/providers";
 import {
   buildLocalizedHref,
@@ -240,35 +258,6 @@ const CategoryPills = memo(function CategoryPills({
 }) {
   const { t, locale } = useI18n();
 
-  const CEFR_ORDER = useMemo(() => ["A1", "A2", "B1", "B2", "C1", "C2"], []);
-  const CEFR_ORDER_MAP = useMemo(() => {
-    const m = new Map<string, number>();
-    for (let i = 0; i < CEFR_ORDER.length; i++) {
-      m.set(CEFR_ORDER[i], i);
-    }
-    return m;
-  }, [CEFR_ORDER]);
-
-  const CEFR_STICKER: Record<string, string> = useMemo(
-    () => ({
-      A1: "bg-green-500",
-      A2: "bg-yellow-400",
-      B1: "bg-orange-500",
-      B2: "bg-red-500",
-      C1: "bg-purple-500",
-      C2: "bg-black",
-    }),
-    [],
-  );
-
-  const isCefrLevel = useCallback(
-    (slug?: string): boolean => {
-      if (!slug) return false;
-      return CEFR_ORDER.includes(slug.toUpperCase());
-    },
-    [CEFR_ORDER],
-  );
-
   const sortedCategories = useMemo(() => {
     const cefr = categories.filter((c) => isCefrLevel(c.slug));
     const nonCefr = categories.filter((c) => !isCefrLevel(c.slug));
@@ -278,7 +267,7 @@ const CategoryPills = memo(function CategoryPills({
       return ia - ib;
     });
     return [...sortedCefr, ...nonCefr];
-  }, [categories, CEFR_ORDER_MAP, isCefrLevel]);
+  }, [categories]);
 
   const getTagDescription = useCallback(
     (slug: string): string | undefined => {
@@ -297,7 +286,7 @@ const CategoryPills = memo(function CategoryPills({
     }
     if (required) return sortedCategories.length > 0 ? sortedCategories[0].slug : null;
     return null;
-  }, [initialSelected, required, sortedCategories, isCefrLevel]);
+  }, [initialSelected, required, sortedCategories]);
 
   const [internalSelected, setInternalSelected] = useState<string | null>(
     defaultSelected ?? null,

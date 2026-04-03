@@ -18,7 +18,9 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
-  preload: true,
+  // Mono is only needed for code blocks, not for the LCP element.
+  // Preloading it on every page wastes a parallel connection slot.
+  preload: false,
 });
 
 const THEME_INIT_SCRIPT = `

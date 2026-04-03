@@ -33,10 +33,10 @@
     "typescript": "^5.9.2"
   },
   "browserslist": [
-    "chrome >= 90",
-    "edge >= 90",
-    "firefox >= 90",
-    "safari >= 14",
+    "chrome >= 93",
+    "edge >= 93",
+    "firefox >= 92",
+    "safari >= 15.4",
     "not dead"
   ]
 }
