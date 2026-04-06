@@ -23,14 +23,13 @@ export async function GET(req: Request) {
   const tag = searchParams.get("tag");
   const tagIdRaw = searchParams.get("tagId");
   const slug = searchParams.get("slug");
-  const first = Number(searchParams.get("first")) || 200;
+  const first = Number(searchParams.get("first")) || 100;
   const tagId = tagIdRaw ? Number(tagIdRaw) : NaN;
 
   // Validate locale (map legacy aliases via assertLocale)
   const validLocale: Locale | undefined = tryParseLocale(lang);
 
-  // When filtering by language, fetch more posts to ensure we get enough after filtering
-  const fetchCount = validLocale ? first * 2 : first;
+  const fetchCount = first;
 
   try {
     let posts: unknown[] = [];

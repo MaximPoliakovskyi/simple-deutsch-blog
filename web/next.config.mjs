@@ -1,10 +1,3 @@
-const DEV_WATCH_IGNORED = [
-  "**/.next/**",
-  "**/.tmp/**",
-  "**/tsconfig.tsbuildinfo",
-  "**/devserver.log",
-];
-
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
 
 function buildCsp() {
@@ -38,10 +31,6 @@ const CONTENT_SECURITY_POLICY = buildCsp();
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Allow cross-origin HMR/dev requests from local network devices (e.g. phone on same Wi-Fi).
-  // This is development-only — has no effect in production builds.
-  allowedDevOrigins: ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"],
-  // Harden HTTP fingerprint
   poweredByHeader: false,
   reactStrictMode: true,
   // Enable streaming and concurrent features for better performance
@@ -59,7 +48,7 @@ const nextConfig = {
       { protocol: "https", hostname: "cms.simple-deutsch.de", pathname: "/wp-content/uploads/**" },
     ],
     formats: ["image/avif", "image/webp"],
-    minimumCacheTTL: 60,
+    minimumCacheTTL: 86400,
     // Responsive image optimization
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -71,25 +60,6 @@ const nextConfig = {
   },
   // Enable response compression
   compress: true,
-  // Optimize bundle analysis
-  onDemandEntries: {
-    maxInactiveAge: 60 * 1000, // 1 minute
-    pagesBufferLength: 5,
-  },
-  webpack: (config, { dev }) => {
-    if (!dev) return config;
-
-    config.watchOptions = {
-      ...(config.watchOptions ?? {}),
-      ignored: DEV_WATCH_IGNORED,
-      // Optional fallback for unstable file events on some Windows setups.
-      ...(process.env.NEXT_WATCH_POLLING === "1"
-        ? { poll: Number(process.env.NEXT_WATCH_POLL_INTERVAL ?? 1000), aggregateTimeout: 300 }
-        : {}),
-    };
-
-    return config;
-  },
   headers: async () => {
     return [
       {

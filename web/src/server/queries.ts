@@ -19,7 +19,6 @@ const POST_CARD_FIELDS = /* GraphQL */ `
     title
     date
     excerpt
-    content
     featuredImage {
       node {
         sourceUrl
