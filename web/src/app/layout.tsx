@@ -2,32 +2,29 @@ import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import type { ReactNode } from "react";
 import { ChunkErrorRecovery } from "@/components/chrome-extras";
-import InitialPreloader from "@/components/preloader";
-import RouteScrollReset from "@/components/route-scroll-reset";
-import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
-import { DEFAULT_LOCALE, INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, TRANSLATIONS } from "@/lib/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "700"],
   display: "optional",
   preload: true,
+  adjustFontFallback: true,
 });
 
+// Inline theme init: runs before first paint to avoid FOUC.
+// Seeds the two critical CSS vars so bg/fg are correct even before globals.css
+// is parsed (important on slow connections).
 const THEME_INIT_SCRIPT = `
 (() => {
   try {
-    const key = "sd-theme";
-    const stored = localStorage.getItem(key);
+    const stored = localStorage.getItem("sd-theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const theme = stored === "dark" || stored === "light" ? stored : (prefersDark ? "dark" : "light");
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    // Seed the two most critical CSS variables inline so the preloader
-    // background is opaque from the very first paint — before globals.css
-    // has been fetched and parsed (especially important on slow connections).
     if (theme === "dark") {
       root.style.setProperty("--bg", "222 47% 8%");
       root.style.setProperty("--fg", "210 15% 96%");
@@ -45,9 +42,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: TRANSLATIONS[DEFAULT_LOCALE].siteTitle,
   description: TRANSLATIONS[DEFAULT_LOCALE].heroDescription,
-  icons: {
-    icon: "/favicon.ico",
-  },
+  icons: { icon: "/favicon.ico" },
 };
 
 export const viewport: Viewport = {
@@ -55,19 +50,11 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-/* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang={DEFAULT_LOCALE}
-      suppressHydrationWarning
-      data-scroll-behavior="smooth"
-      data-preloader="1"
-      data-app-visible="0"
-    >
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         <meta charSet="UTF-8" />
-
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -80,27 +67,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             }),
           }}
         />
-
+        <link rel="preconnect" href="https://cms.simple-deutsch.de" />
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
-
-        <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body
-        className={[
-          nunito.variable,
-          "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
-        ].join(" ")}
+        className={`${nunito.variable} min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]`}
       >
-        <RouteScrollReset />
         <ChunkErrorRecovery />
-        <InitialPreloader />
-        <RouteTransitionProvider>
-          <AppFadeWrapper>
-            {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton app shell wrapper. */}
-            <div id="app-shell">{children}</div>
-          </AppFadeWrapper>
-        </RouteTransitionProvider>
+        {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton app shell wrapper. */}
+        <div id="app-shell">{children}</div>
         {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton overlay mount point. */}
         <div id="overlay-root" />
       </body>
