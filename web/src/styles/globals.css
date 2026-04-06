@@ -80,17 +80,12 @@
   color-scheme: light dark;
 
   /* ── Motion tokens ──────────────────────────────────────────────────────── */
-  /* Easings */
-  --motion-spring: cubic-bezier(0.22, 1, 0.36, 1); /* gentle deceleration – primary */
-  --motion-snappy: cubic-bezier(0.33, 1, 0.68, 1); /* fast snap-in (theme crossfade) */
-  --motion-slide: cubic-bezier(0.42, 0, 0.58, 1); /* symmetric slide (page overlay) */
-  --motion-resize: cubic-bezier(0.16, 1, 0.3, 1); /* height / layout expand        */
-  /* Durations */
-  --motion-fast: 200ms; /* hover micro, close / open panels */
-  --motion-normal: 300ms; /* default UI transitions           */
-  --motion-relaxed: 500ms; /* content reveals                  */
-  --motion-slow: 600ms; /* page-level fades                 */
-  --motion-route-content: 1000ms; /* content fade after route overlay */
+  --motion-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-snappy: cubic-bezier(0.33, 1, 0.68, 1);
+  --motion-resize: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-fast: 200ms;
+  --motion-normal: 300ms;
+  --motion-relaxed: 500ms;
 }
 
 /* Dark theme token overrides applied when `.dark` is on <html> */
@@ -561,13 +556,23 @@ figcaption,
   letter-spacing: var(--tracking-ui);
 }
 
-/* Keep descendant scrollbars hidden where the app already expects that
-   treatment, but leave the root scrollbar visible in the default state. */
-body * {
+/* Hide scrollbars on overflow-scroll/auto elements (e.g. sliders) while
+   keeping the root document scrollbar visible. Scoping to [data-stories-scroller]
+   and [data-slider-scope] is more precise; the catch-all overscroll-x containers
+   below also benefit. */
+[data-stories-scroller],
+[data-overflow-hidden],
+.overflow-x-auto,
+.overflow-y-auto,
+.overflow-auto {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-body *::-webkit-scrollbar {
+[data-stories-scroller]::-webkit-scrollbar,
+[data-overflow-hidden]::-webkit-scrollbar,
+.overflow-x-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar {
   display: none;
 }
 
@@ -615,58 +620,11 @@ input[type="search"]::-webkit-search-results-decoration {
   display: none;
 }
 
-/* ── Preloader styles ───────────────────────────────────────────────────── */
-html[data-preloader="1"] {
-  overflow: hidden;
-}
-
-html[data-preloader="1"] body {
-  overflow: hidden;
-}
-
-html[data-preloader="0"] #sd-preloader {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-/* Content is immediately painted so the browser can measure LCP from first paint. */
-
-.app-route-fade {
-  opacity: 1;
-}
-
-.app-route-fade--fading-out {
-  opacity: 0;
-  transition: opacity var(--motion-fast) ease-out;
-  will-change: opacity;
-}
-
-.app-route-fade--hidden {
-  opacity: 0;
-}
-
-.app-route-fade--fading-in {
-  opacity: 1;
-  transition: opacity var(--motion-route-content) var(--motion-spring);
-  will-change: opacity;
-}
-
 /* ── Skeleton blocks ────────────────────────────────────────────────────────
-   Root-cause fix for the dark-mode left-edge artifact:
-   - Previous implementations used opacity animation → the browser promotes
-     animated elements to GPU compositing layers. The layer boundary at x=0
-     bleeds through when the background has alpha (bg-neutral-700/60), because
-     the compositor must blend the semi-transparent block against the dark page
-     background. The layer edge at x=0 renders 1-2px incorrectly in Chromium.
-   - This implementation animates background-color between two fully-opaque
-     shades. background-color animation never creates a GPU compositing layer,
-     so there is no layer boundary to bleed. Since every state is opaque,
-     there is no alpha blending at any point in the cycle.
-   Used by: sd-skeleton class (replaces sd-shimmer everywhere).
+   Animates background-color (not opacity) so there is no GPU-layer boundary
+   artifact in dark mode on Chromium.
 ────────────────────────────────────────────────────────────────────────── */
 .sd-skeleton {
-  /* Light mode: neutral-200 → neutral-300 */
   --_sk-from: #e5e7eb;
   --_sk-to: #d1d5db;
   background-color: var(--_sk-from);
@@ -674,7 +632,6 @@ html[data-preloader="0"] #sd-preloader {
 }
 
 html.dark .sd-skeleton {
-  /* Dark mode: neutral-700 → neutral-800  (both fully opaque — no /alpha) */
   --_sk-from: #374151;
   --_sk-to: #1f2937;
 }
@@ -689,239 +646,9 @@ html.dark .sd-skeleton {
   }
 }
 
-/* Center content precisely in viewport */
-
-/* Prefer explicit contrast for light/dark schemes before JS runs */
-/* ── Preloader quote + accent bar ──────────────────────────────────────────
-   Animation approach:
-   • Text: filter:blur(8px) + opacity:0 + translateY(8px) as hidden state.
-     Adding .sd-quote-visible transitions all three to their natural values in
-     one single CSS transition — the quote sharpens into focus as it rises.
-     One setState call → one React re-render → CSS handles everything.
-     No per-letter state, no intermediate broken render.
-   • Bar: pure CSS scaleX + opacity breath animation (infinite). No JS,
-     no ::after, no overflow clipping needed — element scales from its center.
-────────────────────────────────────────────────────────────────────────── */
-/* Decorative bar: scales from 35% → 100% of its own width from center.
-   scaleX never moves the element outside its box — no overflow clip needed. */
-#sd-preloader {
-  --sd-preloader-fade-ms: 600ms;
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 99999;
-  background: hsl(var(--bg));
-  background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
-  opacity: 1;
-  transition: opacity var(--sd-preloader-fade-ms) var(--motion-spring);
-  will-change: opacity;
-}
-
-#sd-preloader[data-phase="fadingOut"] {
-  opacity: 0;
-  pointer-events: none;
-}
-
-@media (prefers-color-scheme: dark) {
-  #sd-preloader {
-    background: hsl(var(--bg));
-    background-image: linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02));
-  }
-}
-
-.sd-preloader-inner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.75rem;
-}
-
-.sd-preloader-quote {
-  max-width: clamp(16rem, 90vw, 42rem);
-  padding: 0 1.5rem;
-  opacity: 0;
-  filter: blur(8px);
-  transform: translateY(8px);
-  transition:
-    opacity 500ms var(--motion-spring),
-    filter 500ms var(--motion-spring),
-    transform 500ms var(--motion-spring);
-  font-family: var(--font-sans);
-  font-weight: 700;
-  font-size: var(--text-2xl);
-  line-height: 1.35;
-  letter-spacing: var(--tracking-heading);
-  color: hsl(var(--fg));
-  text-align: center;
-  margin: 0;
-}
-
-.sd-preloader-quote.sd-quote-visible {
-  opacity: 1;
-  filter: blur(0);
-  transform: translateY(0);
-}
-
-.sd-preloader-bar {
-  width: 2.5rem;
-  height: 2px;
-  border-radius: 1px;
-  background: hsl(var(--fg));
-  transform: scaleX(0.35);
-  opacity: 0.2;
-  animation: sd-bar-breathe 2.2s ease-in-out infinite;
-}
-
-@keyframes sd-bar-breathe {
-  0%,
-  100% {
-    transform: scaleX(0.35);
-    opacity: 0.2;
-  }
-  50% {
-    transform: scaleX(1);
-    opacity: 0.45;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .app-route-fade,
-  .app-route-fade--fading-out,
-  .app-route-fade--fading-in {
-    transition: none;
-    opacity: 1;
-    will-change: auto;
-  }
-
   .sd-skeleton {
     animation: none;
-  }
-
-  #sd-preloader {
-    transition: none;
-  }
-
-  .sd-preloader-quote {
-    transition: none !important;
-    opacity: 1;
-    filter: none;
-    transform: none;
-  }
-
-  .sd-preloader-bar {
-    animation: none;
-    opacity: 0.3;
-    transform: scaleX(1);
-  }
-}
-
-/* -- Route transition overlay ----------------------------------------------- */
-.rt-overlay {
-  --rt-enter-ms: 1500ms;
-  --rt-exit-ms: 1500ms;
-  --rt-opacity-ms: 140ms;
-  --rt-ease: var(--motion-slide);
-  --rt-start-x: -110%;
-  --rt-end-x: 110%;
-
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--sd-page-bg, #fff);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translate3d(var(--rt-start-x), 0, 0);
-  transition-property: transform, opacity;
-  transition-duration: var(--rt-enter-ms), var(--rt-opacity-ms);
-  transition-timing-function: var(--rt-ease), linear;
-  will-change: transform, opacity;
-  contain: paint;
-  backface-visibility: hidden;
-}
-
-.rt-overlay[data-direction="back"] {
-  --rt-start-x: 110%;
-  --rt-end-x: -110%;
-}
-
-.rt-overlay[data-phase="idle"] {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transform: translate3d(var(--rt-start-x), 0, 0);
-  transition-duration: 0ms, 0ms;
-}
-
-.rt-overlay[data-phase="entering"],
-.rt-overlay[data-phase="covered"],
-.rt-overlay[data-phase="waiting_ready"] {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translate3d(0%, 0, 0);
-}
-
-.rt-overlay[data-phase="exiting"] {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translate3d(var(--rt-end-x), 0, 0);
-  transition-duration: var(--rt-exit-ms), var(--rt-opacity-ms);
-}
-
-.rt-overlay__logo {
-  width: clamp(138px, 17vw, 220px);
-  height: auto;
-  transform: rotate(0deg);
-  transform-origin: center center;
-  transition-property: transform;
-  transition-duration: 0ms;
-  transition-timing-function: var(--rt-ease);
-  will-change: transform;
-  backface-visibility: hidden;
-}
-
-@media (max-width: 640px) {
-  .rt-overlay__logo {
-    width: clamp(168px, 46vw, 220px);
-  }
-}
-
-.rt-overlay[data-phase="idle"] .rt-overlay__logo {
-  transform: rotate(0deg);
-  transition-duration: 0ms;
-}
-
-.rt-overlay[data-phase="entering"] .rt-overlay__logo {
-  transform: rotate(360deg);
-  transition-duration: var(--rt-enter-ms);
-}
-
-.rt-overlay[data-phase="covered"] .rt-overlay__logo,
-.rt-overlay[data-phase="waiting_ready"] .rt-overlay__logo {
-  transform: rotate(360deg);
-  transition-duration: 0ms;
-}
-
-.rt-overlay[data-phase="exiting"] .rt-overlay__logo {
-  transform: rotate(720deg);
-  transition-duration: var(--rt-exit-ms);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rt-overlay {
-    transition: none;
-  }
-
-  .rt-overlay__logo {
-    transition: none;
-    transform: none !important;
   }
 }
 
@@ -1030,7 +757,7 @@ html.dark .sd-skeleton {
   -webkit-text-fill-color: currentColor;
 }
 
-/* Success stories slider: dark-mode heading color overrides */
+/* Success stories slider + categories block: dark-mode heading color overrides */
 /* biome-disable-next-line lint/complexity/noImportantStyles */
 html.dark [data-slider-scope][data-slider-scope] h1,
 html.dark [data-slider-scope][data-slider-scope] h2,
@@ -1043,7 +770,19 @@ html.dark [data-slider-scope][data-slider-scope] h2 *,
 html.dark [data-slider-scope][data-slider-scope] h3 *,
 html.dark [data-slider-scope][data-slider-scope] h4 *,
 html.dark [data-slider-scope][data-slider-scope] h5 *,
-html.dark [data-slider-scope][data-slider-scope] h6 * {
+html.dark [data-slider-scope][data-slider-scope] h6 *,
+html.dark [data-categories-scope] h1,
+html.dark [data-categories-scope] h2,
+html.dark [data-categories-scope] h3,
+html.dark [data-categories-scope] h4,
+html.dark [data-categories-scope] h5,
+html.dark [data-categories-scope] h6,
+html.dark [data-categories-scope] h1 *,
+html.dark [data-categories-scope] h2 *,
+html.dark [data-categories-scope] h3 *,
+html.dark [data-categories-scope] h4 *,
+html.dark [data-categories-scope] h5 *,
+html.dark [data-categories-scope] h6 * {
   /* biome-disable-next-line lint/complexity/noImportantStyles */
   color: #ffffff !important;
   /* biome-disable-next-line lint/complexity/noImportantStyles */
@@ -1054,7 +793,13 @@ html.dark [data-slider-scope][data-slider-scope] .group:hover h2 *,
 html.dark [data-slider-scope][data-slider-scope] .group:hover h3 *,
 html.dark [data-slider-scope][data-slider-scope] .group:focus-within h1 *,
 html.dark [data-slider-scope][data-slider-scope] .group:focus-within h2 *,
-html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
+html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 *,
+html.dark [data-categories-scope] .group:hover h1 *,
+html.dark [data-categories-scope] .group:hover h2 *,
+html.dark [data-categories-scope] .group:hover h3 *,
+html.dark [data-categories-scope] .group:focus-within h1 *,
+html.dark [data-categories-scope] .group:focus-within h2 *,
+html.dark [data-categories-scope] .group:focus-within h3 * {
   /* biome-disable-next-line lint/complexity/noImportantStyles */
   color: #d1d5db !important;
   /* biome-disable-next-line lint/complexity/noImportantStyles */

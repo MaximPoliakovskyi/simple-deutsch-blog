@@ -92,33 +92,6 @@ export default async function CategoriesBlock({
         data-categories-scope
         className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
       >
-        <style>{`
-          html.dark [data-categories-scope] h1,
-          html.dark [data-categories-scope] h2,
-          html.dark [data-categories-scope] h3,
-          html.dark [data-categories-scope] h4,
-          html.dark [data-categories-scope] h5,
-          html.dark [data-categories-scope] h6,
-          html.dark [data-categories-scope] h1 *,
-          html.dark [data-categories-scope] h2 *,
-          html.dark [data-categories-scope] h3 *,
-          html.dark [data-categories-scope] h4 *,
-          html.dark [data-categories-scope] h5 *,
-          html.dark [data-categories-scope] h6 * {
-            color: #ffffff !important;
-            transition: color var(--motion-normal) var(--motion-spring) !important;
-          }
-          html.dark [data-categories-scope] .group:hover h1 *,
-          html.dark [data-categories-scope] .group:hover h2 *,
-          html.dark [data-categories-scope] .group:hover h3 *,
-          html.dark [data-categories-scope] .group:focus-within h1 *,
-          html.dark [data-categories-scope] .group:focus-within h2 *,
-          html.dark [data-categories-scope] .group:focus-within h3 * {
-            color: #d1d5db !important;
-            transition: color var(--motion-normal) var(--motion-spring) !important;
-          }
-        `}</style>
-
         <div className="space-y-2">
           <h2 className="type-title mb-8">{TRANSLATIONS[effectiveLocale].levelsHeading}</h2>
           <p className="type-lead max-w-2xl text-neutral-600 dark:text-gray-300">
