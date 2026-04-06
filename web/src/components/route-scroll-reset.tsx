@@ -49,7 +49,7 @@ export default function RouteScrollReset() {
       window.cancelAnimationFrame(rafId);
       html.style.scrollBehavior = previousScrollBehavior;
     };
-  }, []);
+  }, [_pathname]);
 
   return null;
 }
