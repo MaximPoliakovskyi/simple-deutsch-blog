@@ -242,7 +242,7 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
   const currentYear = String(new Date().getFullYear());
 
   return (
-    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E] min-h-[28rem] md:min-h-[24rem]">
+    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E]">
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">

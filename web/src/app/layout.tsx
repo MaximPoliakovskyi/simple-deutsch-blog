@@ -67,7 +67,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             }),
           }}
         />
-        <link rel="preconnect" href="https://cms.simple-deutsch.de" />
+        <link rel="preconnect" href="https://cms.simple-deutsch.de" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body

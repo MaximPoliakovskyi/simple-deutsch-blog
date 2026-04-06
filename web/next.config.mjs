@@ -41,6 +41,9 @@ const nextConfig = {
     // Tree-shake re-exported symbols from these packages to avoid pulling
     // in full modules when only a few named exports are used.
     optimizePackageImports: ["next/dist/client/components/error-boundary"],
+    // Prevent Next.js from injecting legacy polyfills for modern baseline APIs
+    // that are already covered by the browserslist targets (Chrome 93+, Safari 15.4+)
+    legacyBrowsersSupport: false,
   },
   images: {
     remotePatterns: [
@@ -48,7 +51,7 @@ const nextConfig = {
       { protocol: "https", hostname: "cms.simple-deutsch.de", pathname: "/wp-content/uploads/**" },
     ],
     formats: ["image/avif", "image/webp"],
-    minimumCacheTTL: 86400,
+    minimumCacheTTL: 31536000, // 1 year
     // Responsive image optimization
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -60,6 +63,27 @@ const nextConfig = {
   },
   // Enable response compression
   compress: true,
+  webpack: (config, { dev }) => {
+    // Tell Webpack the target environment supports modern JS natively
+    // so it skips polyfills for Array.at, Object.fromEntries, etc.
+    if (!dev) {
+      config.output = {
+        ...config.output,
+        environment: {
+          arrowFunction: true,
+          bigIntLiteral: true,
+          const: true,
+          destructuring: true,
+          dynamicImport: true,
+          forOf: true,
+          module: true,
+          optionalChaining: true,
+          templateLiteral: true,
+        },
+      };
+    }
+    return config;
+  },
   headers: async () => {
     return [
       {
