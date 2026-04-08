@@ -58,6 +58,10 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
     const text = QUOTES[Math.floor(Math.random() * QUOTES.length)];
     setQuoteState({ text, visible: false });
 
+    let holdTimer: number | null = null;
+    let fadeTimer: number | null = null;
+    let watchdogTimer: number | null = null;
+
     // Show quote on next paint
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = requestAnimationFrame(() => {
@@ -65,16 +69,14 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
         setQuoteState({ text, visible: true });
 
         // Hold briefly, then fade
-        const holdTimer = window.setTimeout(() => {
+        holdTimer = window.setTimeout(() => {
           setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
-          window.setTimeout(() => {
+          fadeTimer = window.setTimeout(() => {
             setOverlayPhase("fadingOut");
             // Watchdog in case transitionend never fires
-            window.setTimeout(finishPreloader, FADE_OUT_MS + 100);
+            watchdogTimer = window.setTimeout(finishPreloader, FADE_OUT_MS + 100);
           }, QUOTE_FADE_MS);
         }, QUOTE_HOLD_MS);
-
-        return () => window.clearTimeout(holdTimer);
       });
     });
 
@@ -83,6 +85,9 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
+      if (holdTimer !== null) window.clearTimeout(holdTimer);
+      if (fadeTimer !== null) window.clearTimeout(fadeTimer);
+      if (watchdogTimer !== null) window.clearTimeout(watchdogTimer);
     };
   }, [finishPreloader]);
 

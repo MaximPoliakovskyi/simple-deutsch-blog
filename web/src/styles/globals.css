@@ -1095,9 +1095,7 @@ html.dark [data-categories-scope] h3 *,
 html.dark [data-categories-scope] h4 *,
 html.dark [data-categories-scope] h5 *,
 html.dark [data-categories-scope] h6 * {
-  /* biome-disable-next-line lint/complexity/noImportantStyles */
   color: #ffffff !important;
-  /* biome-disable-next-line lint/complexity/noImportantStyles */
   transition: color var(--motion-normal) var(--motion-spring) !important;
 }
 /* biome-disable-next-line lint/complexity/noImportantStyles */
@@ -1107,8 +1105,6 @@ html.dark [data-categories-scope] .group:hover h3 *,
 html.dark [data-categories-scope] .group:focus-within h1 *,
 html.dark [data-categories-scope] .group:focus-within h2 *,
 html.dark [data-categories-scope] .group:focus-within h3 * {
-  /* biome-disable-next-line lint/complexity/noImportantStyles */
   color: #d1d5db !important;
-  /* biome-disable-next-line lint/complexity/noImportantStyles */
   transition: color var(--motion-normal) var(--motion-spring) !important;
 }
