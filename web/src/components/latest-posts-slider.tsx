@@ -2,15 +2,21 @@
 "use client";
 
 import { useSliderScroll } from "@/lib/hooks/use-slider-scroll";
+import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
-import PostCard from "./cards";
+import PostCard from "./post-card";
 
 type Props = {
   posts: WPPostCard[];
   title?: string;
+  locale?: Locale;
 };
 
-export default function LatestPostsSlider({ posts = [], title = "Latest posts" }: Props) {
+export default function LatestPostsSlider({
+  posts = [],
+  title = "Latest posts",
+  locale = "en",
+}: Props) {
   const { scrollerRef, isAtStart, isAtEnd, scrollByOneColumn } = useSliderScroll();
 
   if (!posts?.length) return null;
@@ -71,7 +77,7 @@ export default function LatestPostsSlider({ posts = [], title = "Latest posts" }
           {/* [data-stories-scroller] and [data-card] flex rules live in globals.css */}
           {posts.map((post: WPPostCard, i: number) => (
             <div key={post.id ?? post.slug ?? i} data-card className="snap-start shrink-0">
-              <PostCard post={post} priority={i < 3} />
+              <PostCard post={post} priority={i < 3} locale={locale} />
             </div>
           ))}
         </div>

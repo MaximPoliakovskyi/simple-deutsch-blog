@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { memo, useEffect } from "react";
-import { type PostLangLinks, type SiteLang, useI18n } from "@/components/providers";
+import { type PostLangLinks, type SiteLang, usePostLangLinks } from "@/components/providers";
 
 type Props = {
   currentLang: SiteLang;
@@ -12,7 +12,7 @@ const PostLanguageLinksHydrator = memo(function PostLanguageLinksHydrator({
   currentLang,
   links,
 }: Props) {
-  const { setPostLangLinks } = useI18n();
+  const { setPostLangLinks } = usePostLangLinks();
 
   useEffect(() => {
     const payload: PostLangLinks = { currentLang, links };

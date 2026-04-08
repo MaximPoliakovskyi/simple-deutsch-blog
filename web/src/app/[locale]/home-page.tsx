@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import { Suspense } from "react";
-import { CategoryPillsSkeleton } from "@/components/cards";
 import CategoriesBlock from "@/components/categories-block";
+import { CategoryPillsSkeleton } from "@/components/category-pills";
 import HeroWithFilters from "@/components/hero";
 import {
   getHeroStableWidthCh,
@@ -18,7 +18,6 @@ import {
   filterOutCEFRLevels,
   getAllCategories,
   getHomePagePosts,
-  getPosts,
   getPostsByCategory,
   type WPPostCard,
 } from "@/lib/posts";
@@ -206,11 +205,11 @@ function HeroFallback({ locale }: { locale: Locale }) {
 async function HomePageContent({ locale }: { locale: Locale }) {
   const PAGE_SIZE = 6;
 
-  // Fetch all home-page data in parallel
-  const [{ posts }, allCategoriesResp, latestPostsResp, successStoriesResp] = await Promise.all([
+  // Fetch all home-page data in parallel; hero posts are reused for the
+  // latest-posts slider, eliminating a duplicate GET_POSTS API call.
+  const [{ posts }, allCategoriesResp, successStoriesResp] = await Promise.all([
     getHomePagePosts(locale, PAGE_SIZE),
     getAllCategories({ first: 50, locale }).catch(() => null),
-    getPosts({ first: 8, locale }).catch(() => ({ posts: { nodes: [] } })),
     getPostsByCategory({
       first: 8,
       after: null,
@@ -238,16 +237,10 @@ async function HomePageContent({ locale }: { locale: Locale }) {
     deduplicateCategories(filterHiddenCategories(allCategories)),
   ).slice(0, 7);
 
-  // Latest posts slider
+  // Latest posts slider — reuse the first 8 posts from the hero fetch
+  // (getHomePagePosts fetches first: PAGE_SIZE*2 = 12, so we have enough).
   const t = TRANSLATIONS[locale];
-  const latestPosts = ((latestPostsResp as { posts?: { nodes?: WPPostCard[] } }).posts?.nodes ??
-    []) as WPPostCard[];
-  const mappedLatest = latestPosts.map((post) => ({
-    ...post,
-    readingText: post.readingText ?? null,
-    dateText: formatPostCardDate(post.date, locale),
-    href: buildLocalePostHref(locale, post.slug),
-  }));
+  const mappedLatest = mappedPosts.slice(0, 8);
 
   // Success stories slider — strip the success-story category chips here on
   // the server so SuccessStoriesSlider doesn't need a useMemo for this work.
@@ -280,9 +273,12 @@ async function HomePageContent({ locale }: { locale: Locale }) {
           posts={mappedSuccess}
           title={t.successStories}
           description={t.successStoriesDescription}
+          locale={locale}
         />
       )}
-      {mappedLatest.length > 0 && <LatestPostsSlider posts={mappedLatest} title={t.latestPosts} />}
+      {mappedLatest.length > 0 && (
+        <LatestPostsSlider posts={mappedLatest} title={t.latestPosts} locale={locale} />
+      )}
       <CategoriesBlock locale={locale} />
     </>
   );

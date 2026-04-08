@@ -457,15 +457,3 @@ export const GET_RELATED_LATEST_POSTS = /* GraphQL */ `
     }
   }
 `;
-
-// Lightweight query for homepage initial load - reduced fields for better performance
-export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
-  ${POST_CARD_FIELDS}
-  ${PAGE_INFO_FIELDS}
-  query PostsFeedLightweight($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
-    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, language: $language }) {
-      pageInfo { ...PageInfoFields }
-      nodes { ...PostCardFields }
-    }
-  }
-`;
