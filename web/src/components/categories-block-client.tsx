@@ -32,8 +32,6 @@ type Props = {
   categories: Category[];
   initialSelectedCategory?: string | null;
   initialPosts: WPPostCard[];
-  initialEndCursor: string | null;
-  initialHasNextPage: boolean;
   pageSize?: number;
   locale?: Locale;
 };
@@ -42,8 +40,6 @@ export default function CategoriesBlockClient({
   categories,
   initialSelectedCategory,
   initialPosts,
-  initialEndCursor: _initialEndCursor,
-  initialHasNextPage: _initialHasNextPage,
   pageSize = 3,
   locale,
 }: Props) {

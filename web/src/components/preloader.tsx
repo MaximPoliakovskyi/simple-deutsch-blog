@@ -1,19 +1,10 @@
 "use client";
 
-import {
-  type MutableRefObject,
-  type TransitionEvent,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { setDocumentLoadingState } from "@/lib/i18n";
-import { lockScroll, unlockScroll } from "@/lib/scroll";
+import { type TransitionEvent, useCallback, useEffect, useRef, useState } from "react";
 
+const QUOTE_HOLD_MS = 400;
 const FADE_OUT_MS = 320;
-const QUOTE_HOLD_MS = 850;
-const QUOTE_FADE_MS = 220;
+const QUOTE_FADE_MS = 200;
 
 const QUOTES = [
   "Jede Sprache ist ein Schlüssel zu einer neuen Welt",
@@ -30,15 +21,6 @@ const QUOTES = [
   "Lernen ist wie Rudern gegen den Strom",
 ];
 
-function shuffleArray<T>(arr: T[]): T[] {
-  const shuffled = arr.slice();
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
 function prefersReducedMotionNow() {
   if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
   try {
@@ -48,118 +30,63 @@ function prefersReducedMotionNow() {
   }
 }
 
-function clearTimer(ref: MutableRefObject<number | null>) {
-  if (ref.current !== null) {
-    window.clearTimeout(ref.current);
-    ref.current = null;
-  }
-}
-
-function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
+function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
   const [overlayPhase, setOverlayPhase] = useState<"visible" | "fadingOut">("visible");
   const [showPreloader, setShowPreloader] = useState(true);
   const [quoteState, setQuoteState] = useState<{ text: string; visible: boolean } | null>(null);
-
-  const fadeStartedRef = useRef(false);
   const finishedRef = useRef(false);
-  const fadeWatchdogRef = useRef<number | null>(null);
-  const cycleTimerRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const finishPreloader = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
-    clearTimer(fadeWatchdogRef);
-    clearTimer(cycleTimerRef);
     if (rafRef.current !== null) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    try {
-      unlockScroll();
-    } catch {}
     document.documentElement.setAttribute("data-preloader", "0");
-    document.documentElement.setAttribute("data-app-visible", "1");
     onFinished?.();
     setShowPreloader(false);
   }, [onFinished]);
 
-  const startFadeOut = useCallback(() => {
-    if (fadeStartedRef.current) return;
-    fadeStartedRef.current = true;
-    clearTimer(cycleTimerRef);
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-
+  useEffect(() => {
     if (prefersReducedMotionNow()) {
       finishPreloader();
       return;
     }
 
-    setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
-    window.setTimeout(() => {
-      setOverlayPhase("fadingOut");
-    }, QUOTE_FADE_MS);
-    fadeWatchdogRef.current = window.setTimeout(finishPreloader, QUOTE_FADE_MS + FADE_OUT_MS + 250);
-  }, [finishPreloader]);
+    const text = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+    setQuoteState({ text, visible: false });
 
-  useEffect(() => {
-    try {
-      lockScroll();
-    } catch {}
-
-    const shuffled = shuffleArray(QUOTES);
-    const idx = 0;
-
-    const showNextQuote = () => {
-      if (fadeStartedRef.current || finishedRef.current) return;
-
-      const text = shuffled[idx];
-      setQuoteState({ text, visible: false });
-
+    // Show quote on next paint
+    rafRef.current = requestAnimationFrame(() => {
       rafRef.current = requestAnimationFrame(() => {
-        rafRef.current = requestAnimationFrame(() => {
-          rafRef.current = null;
-          if (fadeStartedRef.current || finishedRef.current) return;
+        rafRef.current = null;
+        setQuoteState({ text, visible: true });
 
-          setQuoteState({ text, visible: true });
-          cycleTimerRef.current = window.setTimeout(() => {
-            if (fadeStartedRef.current || finishedRef.current) return;
-            startFadeOut();
-          }, QUOTE_HOLD_MS);
-        });
+        // Hold briefly, then fade
+        const holdTimer = window.setTimeout(() => {
+          setQuoteState((prev) => (prev ? { ...prev, visible: false } : null));
+          window.setTimeout(() => {
+            setOverlayPhase("fadingOut");
+            // Watchdog in case transitionend never fires
+            window.setTimeout(finishPreloader, FADE_OUT_MS + 100);
+          }, QUOTE_FADE_MS);
+        }, QUOTE_HOLD_MS);
+
+        return () => window.clearTimeout(holdTimer);
       });
-    };
-
-    showNextQuote();
+    });
 
     return () => {
-      clearTimer(fadeWatchdogRef);
-      clearTimer(cycleTimerRef);
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
-      if (!finishedRef.current) {
-        try {
-          unlockScroll();
-        } catch {}
-      }
     };
-  }, [startFadeOut]);
+  }, [finishPreloader]);
 
   const handleTransitionEnd = useCallback(
-    (event: TransitionEvent<HTMLDivElement>) => {
-      if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
-      if (overlayPhase !== "fadingOut") return;
-      finishPreloader();
-    },
-    [finishPreloader, overlayPhase],
-  );
-
-  const handleTransitionCancel = useCallback(
     (event: TransitionEvent<HTMLDivElement>) => {
       if (event.target !== event.currentTarget || event.propertyName !== "opacity") return;
       if (overlayPhase !== "fadingOut") return;
@@ -177,7 +104,6 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
       data-phase={overlayPhase}
       style={{ ["--sd-preloader-fade-ms" as string]: `${FADE_OUT_MS}ms` }}
       onTransitionEnd={handleTransitionEnd}
-      onTransitionCancel={handleTransitionCancel}
     >
       <div className="sd-preloader-inner">
         {quoteState !== null && (
@@ -198,12 +124,7 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void } = {}) {
 export default function InitialPreloader() {
   const [shouldRender, setShouldRender] = useState(true);
 
-  useEffect(() => {
-    setDocumentLoadingState(true);
-  }, []);
-
   const handleFinished = useCallback(() => {
-    setDocumentLoadingState(false);
     setShouldRender(false);
   }, []);
 

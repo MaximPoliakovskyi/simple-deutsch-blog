@@ -69,40 +69,38 @@ export default async function RelatedArticles({
   const uniqueCategorySlugs = uniqueSlugs(categorySlugs);
   const uniqueTagSlugs = uniqueSlugs(tagSlugs);
 
-  for (const categorySlug of uniqueCategorySlugs) {
+  // Fetch all category and tag buckets in parallel instead of serially.
+  const categoryResults = await Promise.allSettled(
+    uniqueCategorySlugs.map((categorySlug) =>
+      getRelatedPostsByCategorySlug({ slug: categorySlug, first: QUERY_PAGE_SIZE, locale }),
+    ),
+  );
+  for (const result of categoryResults) {
     if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByCategorySlug({
-        slug: categorySlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
-      tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed category fetch for "${categorySlug}"`, error);
+    if (result.status === "fulfilled") {
+      tryAddPosts(result.value.posts);
+    } else {
+      console.error("[related] failed category fetch", result.reason);
     }
   }
 
-  for (const tagSlug of uniqueTagSlugs) {
+  const tagResults = await Promise.allSettled(
+    uniqueTagSlugs.map((tagSlug) =>
+      getRelatedPostsByTagSlug({ slug: tagSlug, first: QUERY_PAGE_SIZE, locale }),
+    ),
+  );
+  for (const result of tagResults) {
     if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByTagSlug({
-        slug: tagSlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
-      tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed tag fetch for "${tagSlug}"`, error);
+    if (result.status === "fulfilled") {
+      tryAddPosts(result.value.posts);
+    } else {
+      console.error("[related] failed tag fetch", result.reason);
     }
   }
 
   if (picked.length < MAX_RELATED_POSTS) {
     try {
-      const { posts } = await getLatestPostsForRelated({
-        first: 24,
-        locale,
-      });
+      const { posts } = await getLatestPostsForRelated({ first: 24, locale });
       tryAddPosts(posts);
     } catch (error) {
       console.error("[related] failed latest posts fetch", error);

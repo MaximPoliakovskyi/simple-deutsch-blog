@@ -607,21 +607,12 @@ input[type="search"]::-webkit-search-results-decoration {
 }
 
 /* ── Preloader styles ───────────────────────────────────────────────────── */
-html[data-preloader="1"] {
-  overflow: hidden;
-}
-
-html[data-preloader="1"] body {
-  overflow: hidden;
-}
 
 html[data-preloader="0"] #sd-preloader {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 }
-
-/* Content is immediately painted so the browser can measure LCP from first paint. */
 
 .app-route-fade {
   opacity: 1;
@@ -708,6 +699,7 @@ html.dark .sd-skeleton {
   background: hsl(var(--bg));
   background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
   opacity: 1;
+  pointer-events: none;
   transition: opacity var(--sd-preloader-fade-ms) var(--motion-spring);
   will-change: opacity;
 }
@@ -812,8 +804,8 @@ html.dark .sd-skeleton {
 
 /* -- Route transition overlay ----------------------------------------------- */
 .rt-overlay {
-  --rt-enter-ms: 1500ms;
-  --rt-exit-ms: 1500ms;
+  --rt-enter-ms: 600ms;
+  --rt-exit-ms: 600ms;
   --rt-opacity-ms: 140ms;
   --rt-ease: var(--motion-slide);
   --rt-start-x: -110%;
@@ -1086,3 +1078,37 @@ html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
 
 /* Typewriter cursor blink — moved from per-component <style jsx> to the
    static bundle so the keyframe is parsed once, not re-injected per render. */
+
+/* ── Categories block (levels section) dark-mode heading overrides ────────
+   Previously injected as an inline <style> from categories-block.tsx.
+   Moving here removes the runtime DOM mutation and puts it in the static bundle. */
+/* biome-disable-next-line lint/complexity/noImportantStyles */
+html.dark [data-categories-scope] h1,
+html.dark [data-categories-scope] h2,
+html.dark [data-categories-scope] h3,
+html.dark [data-categories-scope] h4,
+html.dark [data-categories-scope] h5,
+html.dark [data-categories-scope] h6,
+html.dark [data-categories-scope] h1 *,
+html.dark [data-categories-scope] h2 *,
+html.dark [data-categories-scope] h3 *,
+html.dark [data-categories-scope] h4 *,
+html.dark [data-categories-scope] h5 *,
+html.dark [data-categories-scope] h6 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #ffffff !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}
+/* biome-disable-next-line lint/complexity/noImportantStyles */
+html.dark [data-categories-scope] .group:hover h1 *,
+html.dark [data-categories-scope] .group:hover h2 *,
+html.dark [data-categories-scope] .group:hover h3 *,
+html.dark [data-categories-scope] .group:focus-within h1 *,
+html.dark [data-categories-scope] .group:focus-within h2 *,
+html.dark [data-categories-scope] .group:focus-within h3 * {
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  color: #d1d5db !important;
+  /* biome-disable-next-line lint/complexity/noImportantStyles */
+  transition: color var(--motion-normal) var(--motion-spring) !important;
+}

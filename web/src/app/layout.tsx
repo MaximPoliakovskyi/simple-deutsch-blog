@@ -5,7 +5,7 @@ import { ChunkErrorRecovery } from "@/components/chrome-extras";
 import InitialPreloader from "@/components/preloader";
 import RouteScrollReset from "@/components/route-scroll-reset";
 import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
-import { DEFAULT_LOCALE, INITIAL_PRELOADER_BOOTSTRAP_SCRIPT, TRANSLATIONS } from "@/lib/i18n";
+import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
 
 const nunito = Nunito({
@@ -68,12 +68,7 @@ export const viewport: Viewport = {
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html
-      lang={DEFAULT_LOCALE}
-      suppressHydrationWarning
-      data-preloader="1"
-      data-app-visible="0"
-    >
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
       <head>
         <meta charSet="UTF-8" />
 
@@ -92,7 +87,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
-        <script dangerouslySetInnerHTML={{ __html: INITIAL_PRELOADER_BOOTSTRAP_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORATION_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
