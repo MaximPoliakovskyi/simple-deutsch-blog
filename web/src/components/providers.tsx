@@ -51,8 +51,8 @@ type LocaleProviderProps = {
 };
 
 export function LocaleProvider({ children, locale: providedLocale }: LocaleProviderProps) {
-  const locale = providedLocale ?? DEFAULT_LOCALE;
   const [postLangLinks, setPostLangLinks] = useState<PostLangLinks | null>(null);
+  const locale = providedLocale ?? DEFAULT_LOCALE;
 
   // html[lang] is set by the inline script in [locale]/layout.tsx before
   // hydration; this effect keeps it in sync on soft navigations.
