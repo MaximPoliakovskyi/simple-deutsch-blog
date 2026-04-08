@@ -2,14 +2,49 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
-import { getHeroStaticLineClassNames, HERO_KEYWORDS } from "@/components/hero-content";
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
 import { CategoryPills } from "./category-pills";
-import { HERO_DESCRIPTION_CLASS_NAME, HERO_TITLE_CLASS_NAME } from "./hero-styles";
 import PostCard from "./post-card";
 import type { TypewriterWordsProps } from "./typewriter-words";
+
+// ---------------------------------------------------------------------------
+// Inlined from hero-content.ts and hero-styles.ts (deleted)
+// ---------------------------------------------------------------------------
+
+const HERO_KEYWORDS: Record<string, string[]> = {
+  en: ["work", "travel", "life", "goals"],
+  uk: ["роботи", "подорожей", "навчання", "мрій"],
+  ru: ["работы", "путешествий", "учёбы", "мечты"],
+};
+
+const HERO_STATIC_LINE_CLASS_NAMES: Record<
+  string,
+  { titleClassName: string; line1ClassName: string; line2ClassName: string }
+> = {
+  en: {
+    titleClassName: "",
+    line1ClassName: "block whitespace-nowrap",
+    line2ClassName: "block whitespace-normal text-balance min-[430px]:whitespace-nowrap",
+  },
+  uk: {
+    titleClassName: "lg:max-w-[980px] xl:max-w-[1100px]",
+    line1ClassName: "mx-auto block whitespace-normal text-balance",
+    line2ClassName: "mx-auto block whitespace-normal text-balance",
+  },
+  ru: {
+    titleClassName: "lg:max-w-[980px] xl:max-w-[1100px]",
+    line1ClassName: "mx-auto block whitespace-normal text-balance",
+    line2ClassName: "mx-auto block whitespace-normal text-balance",
+  },
+};
+
+const HERO_TITLE_CLASS_NAME =
+  "m-0 flex w-full max-w-4xl flex-col items-center p-0 text-center font-sans !text-[clamp(2.75rem,7.5vw,3.25rem)] font-bold !leading-[1.15] !tracking-tight text-[hsl(var(--fg))] select-text sm:!text-5xl lg:!text-6xl xl:!text-7xl dark:text-[hsl(var(--fg))]";
+
+const HERO_DESCRIPTION_CLASS_NAME =
+  "type-lead mx-auto mt-0 max-w-xl text-center text-[hsl(var(--fg-muted))]";
 
 const TypewriterWords = dynamic<TypewriterWordsProps>(() => import("./typewriter-words"));
 
@@ -39,7 +74,10 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
     () => Math.max(...animatedWords.map((word) => word.length)) + 0.3,
     [animatedWords],
   );
-  const staticLineClassNames = useMemo(() => getHeroStaticLineClassNames(uiLocale), [uiLocale]);
+  const staticLineClassNames = useMemo(
+    () => HERO_STATIC_LINE_CLASS_NAMES[uiLocale as string] ?? HERO_STATIC_LINE_CLASS_NAMES.en,
+    [uiLocale],
+  );
 
   useEffect(() => {
     cacheRef.current = new Map([["all", initialPosts]]);
