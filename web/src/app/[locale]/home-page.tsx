@@ -35,8 +35,6 @@ const SUCCESS_STORY_SLUGS = new Set([
   "success-stories-ru",
 ]);
 
-export const revalidate = 60;
-
 // ---------------------------------------------------------------------------
 // PostCard-shaped skeleton — matches real PostCard aspect ratio so that
 // placeholder height equals real card height and prevents CLS on swap.

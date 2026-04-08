@@ -38,8 +38,6 @@ export default async function LocaleRootLayout({ children, params }: Props) {
       />
       <Header />
       <ChromeExtrasDeferred />
-      <div data-layout="root-locale" hidden />
-      <div data-layout="site" hidden />
       <main className="mt-8 md:mt-12">{children}</main>
       <Footer locale={validated} />
     </LocaleProvider>

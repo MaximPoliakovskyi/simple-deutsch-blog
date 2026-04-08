@@ -163,12 +163,6 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
       return <PrivacyPage locale={locale} />;
     case "terms":
       return <TermsPage locale={locale} />;
-    case "start":
-      return (
-        <main data-testid="start-marker">
-          <HomePage locale={locale} />
-        </main>
-      );
     case "search":
       return (
         <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />

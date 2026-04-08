@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PostCard from "@/components/cards";
+import PostCard from "@/components/post-card";
 import SearchBox from "@/components/search-box";
 import { buildSearchMetadataCopy, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import { getSearchPageResults, type WPPostCard } from "@/lib/posts";

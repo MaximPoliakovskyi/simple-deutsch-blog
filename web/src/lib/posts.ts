@@ -1,6 +1,5 @@
 import { normalizeLevelSlug } from "@/lib/cefr";
 import { buildLocalizedHref, DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
-import { slugify } from "@/lib/utils";
 import {
   getAllCategories,
   getAllPostsForCounts,
@@ -273,6 +272,16 @@ export function extractConnectionNodes<T>(
 export function generateTocFromHtml(html: string) {
   const toc: Array<{ depth: number; id: string; text: string }> = [];
   const seen: Record<string, number> = {};
+
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/<[^>]+>/g, "")
+      .replace(/[\s]+/g, "-")
+      .replace(/[^a-z0-9-]/g, "")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
 
   const nextHtml = html.replace(
     /<h([1-6])([^>]*)>([\s\S]*?)<\/h\1>/gi,
