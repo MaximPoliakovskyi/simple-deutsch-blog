@@ -7,6 +7,7 @@ import {
   getCefrLevelLabel,
   type Locale,
   TRANSLATIONS,
+  translateCategory,
 } from "@/lib/i18n";
 import { getLocaleAwareTaxonomySlug, getWordPressLevelBadges } from "@/lib/posts";
 
@@ -20,156 +21,6 @@ type SectionKey = "categories" | "levels" | "platform" | "community" | "legal";
 type Section = { key: SectionKey; title: string; items: LinkItem[] };
 const FOOTER_LEVEL_SLUGS = ["a1", "a2", "b1", "b2", "c1", "c2"] as const;
 type FooterLevelSlug = (typeof FOOTER_LEVEL_SLUGS)[number];
-
-const FOOTER_I18N: Partial<Record<Locale, { sections: Section[] }>> = {
-  en: {
-    sections: [
-      {
-        key: "categories",
-        title: "Categories",
-        items: [
-          { label: "Speaking & Pronunciation", href: "/categories/speaking-pronunciation" },
-          { label: "Exercises & Practice", href: "/categories/exercises-practice" },
-          { label: "Grammar", href: "/categories/grammar" },
-          { label: "Success Stories", href: "/categories/success-stories" },
-          { label: "Tips & Motivation", href: "/categories/tips-motivation" },
-          { label: "Vocabulary", href: "/categories/vocabulary" },
-        ],
-      },
-      {
-        key: "levels",
-        title: "Levels",
-        items: [],
-      },
-      {
-        key: "platform",
-        title: "Platform",
-        items: [
-          { label: "About the project", href: "/about" },
-          { label: "Team", href: "/team" },
-          { label: "Partnerships", href: "/partnerships" },
-        ],
-      },
-      {
-        key: "community",
-        title: "Community",
-        items: [
-          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
-          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
-        ],
-      },
-      {
-        key: "legal",
-        title: "Legal",
-        items: [
-          { label: "Imprint", href: "/imprint" },
-          { label: "Privacy Policy", href: "/privacy" },
-          { label: "Terms of Service", href: "/terms" },
-          { label: "Cookie Settings", href: "/cookies" },
-        ],
-      },
-    ],
-  },
-  uk: {
-    sections: [
-      {
-        key: "categories",
-        title: "Категорії",
-        items: [
-          { label: "Розмовна практика та вимова", href: "/categories/speaking-pronunciation" },
-          { label: "Вправи та практика", href: "/categories/exercises-practice" },
-          { label: "Граматика", href: "/categories/grammar" },
-          { label: "Історії успіху", href: "/categories/success-stories" },
-          { label: "Поради та мотивація", href: "/categories/tips-motivation" },
-          { label: "Словник", href: "/categories/vocabulary" },
-        ],
-      },
-      {
-        key: "levels",
-        title: "Рівні",
-        items: [],
-      },
-      {
-        key: "platform",
-        title: "Платформа",
-        items: [
-          { label: "Про проєкт", href: "/about" },
-          { label: "Команда", href: "/team" },
-          { label: "Партнерства", href: "/partnerships" },
-        ],
-      },
-      {
-        key: "community",
-        title: "Спільнота",
-        items: [
-          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
-          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
-        ],
-      },
-      {
-        key: "legal",
-        title: "Правова інформація",
-        items: [
-          { label: "Юридична інформація", href: "/imprint" },
-          { label: "Політика конфіденційності", href: "/privacy" },
-          { label: "Умови користування", href: "/terms" },
-          { label: "Налаштування файлів cookie", href: "/cookies" },
-        ],
-      },
-    ],
-  },
-  ru: {
-    sections: [
-      {
-        key: "categories",
-        title: "Категории",
-        items: [
-          {
-            label: "Разговорная практика и произношение",
-            href: "/categories/speaking-pronunciation",
-          },
-          { label: "Упражнения и практика", href: "/categories/exercises-practice" },
-          { label: "Грамматика", href: "/categories/grammar" },
-          { label: "Истории успеха", href: "/categories/success-stories" },
-          { label: "Советы и мотивация", href: "/categories/tips-motivation" },
-          { label: "Словарь", href: "/categories/vocabulary" },
-        ],
-      },
-      {
-        key: "levels",
-        title: "Уровни",
-        items: [],
-      },
-      {
-        key: "platform",
-        title: "Платформа",
-        items: [
-          { label: "О проекте", href: "/about" },
-          { label: "Команда", href: "/team" },
-          { label: "Партнёрства", href: "/partnerships" },
-        ],
-      },
-      {
-        key: "community",
-        title: "Сообщество",
-        items: [
-          { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
-          { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
-        ],
-      },
-      {
-        key: "legal",
-        title: "Юридическая информация",
-        items: [
-          { label: "Выходные данные", href: "/imprint" },
-          { label: "Политика конфиденциальности", href: "/privacy" },
-          { label: "Условия использования", href: "/terms" },
-          { label: "Настройки файлов cookie", href: "/cookies" },
-        ],
-      },
-    ],
-  },
-};
 
 function prefixHrefForLocale(href: string, locale: Locale) {
   if (!href || !href.startsWith("/")) return href;
@@ -195,15 +46,9 @@ function buildFooterLevelItems(
 
   for (const badge of sortWordPressBadgesByCefr(badges)) {
     const level = normalizeLevelSlug(badge.slug) ?? normalizeLevelSlug(badge.name);
-    if (!level || !badge.slug) {
-      continue;
-    }
-
+    if (!level || !badge.slug) continue;
     const footerLevel = level as FooterLevelSlug;
-    if (itemsByLevel.has(footerLevel)) {
-      continue;
-    }
-
+    if (itemsByLevel.has(footerLevel)) continue;
     itemsByLevel.set(footerLevel, {
       label: getCefrLevelLabel(locale, toCefrLevelCode(footerLevel)),
       href: `/levels/${footerLevel}`,
@@ -219,23 +64,71 @@ function buildFooterLevelItems(
   return buildFooterLevelFallbackItems(locale);
 }
 
+const CATEGORY_SLUGS = [
+  "speaking-pronunciation",
+  "exercises-practice",
+  "grammar",
+  "success-stories",
+  "tips-motivation",
+  "vocabulary",
+] as const;
+
+function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
+  const t = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
+
+  return [
+    {
+      key: "categories",
+      title: t.categories ?? "Categories",
+      items: CATEGORY_SLUGS.map((slug) => ({
+        label: translateCategory(null, slug, locale),
+        href: `/categories/${slug}`,
+      })),
+    },
+    {
+      key: "levels",
+      title: t.levels ?? "Levels",
+      items: levelItems,
+    },
+    {
+      key: "platform",
+      title: t["footer.section.platform"] ?? "Platform",
+      items: [
+        { label: t["footer.link.aboutProject"] ?? "About the project", href: "/about" },
+        { label: t.team ?? "Team", href: "/team" },
+        { label: t["footer.link.partnerships"] ?? "Partnerships", href: "/partnerships" },
+      ],
+    },
+    {
+      key: "community",
+      title: t["footer.section.community"] ?? "Community",
+      items: [
+        { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
+        { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
+      ],
+    },
+    {
+      key: "legal",
+      title: t["footer.section.legal"] ?? "Legal",
+      items: [
+        { label: t.imprint ?? "Imprint", href: "/imprint" },
+        { label: t["footer.link.privacyPolicy"] ?? "Privacy Policy", href: "/privacy" },
+        { label: t["footer.link.termsOfService"] ?? "Terms of Service", href: "/terms" },
+        { label: t["footer.link.cookieSettings"] ?? "Cookie Settings", href: "/cookies" },
+      ],
+    },
+  ];
+}
+
 export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const dictionary = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  const configuredSections = (FOOTER_I18N[locale] ?? FOOTER_I18N[DEFAULT_LOCALE])?.sections ?? [];
   const levelItems = buildFooterLevelItems(
     locale,
     await getWordPressLevelBadges(locale).catch(() => []),
   );
-  const sections: Section[] = configuredSections
-    .map((section) =>
-      section.key === "levels"
-        ? {
-            ...section,
-            items: levelItems,
-          }
-        : section,
-    )
-    .filter((section) => section.key === "levels" || section.items.length > 0);
+  const sections = buildSections(locale, levelItems).filter(
+    (section) => section.key === "levels" || section.items.length > 0,
+  );
   const copyrightTemplate =
     dictionary["footer.copyright"] ||
     "(c) {year} Simple Deutsch. All rights reserved. German-language learning platform.";
@@ -298,7 +191,6 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8">
           <div className="h-px w-full bg-black/10 dark:bg-white/10" />
-
           <div className="py-4 text-[12px] text-slate-700 dark:text-[rgba(255,255,255,0.7)]">
             {copyrightTemplate.replace("{year}", currentYear)}
           </div>

@@ -8,7 +8,6 @@ import {
   getTagBySlug,
 } from "@/lib/posts";
 import { buildI18nAlternates } from "@/lib/seo";
-import HomePage from "../home-page";
 import AboutPage from "./about-page";
 import { CategoriesIndexContent } from "./categories-index-content";
 import { CategoryPageContent } from "./category-page-content";
@@ -163,12 +162,6 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
       return <PrivacyPage locale={locale} />;
     case "terms":
       return <TermsPage locale={locale} />;
-    case "start":
-      return (
-        <main data-testid="start-marker">
-          <HomePage locale={locale} />
-        </main>
-      );
     case "search":
       return (
         <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />

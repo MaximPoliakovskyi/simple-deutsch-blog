@@ -3,7 +3,6 @@ import { Nunito } from "next/font/google";
 import type { ReactNode } from "react";
 import { ChunkErrorRecovery } from "@/components/chrome-extras";
 import InitialPreloader from "@/components/preloader";
-import RouteScrollReset from "@/components/route-scroll-reset";
 import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
 import { DEFAULT_LOCALE, TRANSLATIONS } from "@/lib/i18n";
 import "@/styles/globals.css";
@@ -43,9 +42,13 @@ const THEME_INIT_SCRIPT = `
 const SCROLL_RESTORATION_SCRIPT = `
 (() => {
   try {
-    if ("scrollRestoration" in window.history) {
-      window.history.scrollRestoration = "manual";
-    }
+    const set = () => {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+    };
+    set();
+    window.addEventListener("pageshow", set);
   } catch (_) {}
 })();
 `;
@@ -97,7 +100,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
-        <RouteScrollReset />
         <ChunkErrorRecovery />
         <InitialPreloader />
         <RouteTransitionProvider>
