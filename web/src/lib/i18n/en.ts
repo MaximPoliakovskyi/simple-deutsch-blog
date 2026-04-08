@@ -1,4 +1,4 @@
-// DO NOT EDIT: generated from i18n.tsx locale split
+// Locale translations for EN. Add or update keys here.
 const en: Record<string, string> = {
   __locale: "en",
   siteTitle: "Simple Deutsch",

@@ -1,4 +1,4 @@
-// DO NOT EDIT: generated from i18n.tsx locale split
+// Locale translations for UK. Add or update keys here.
 const uk: Record<string, string> = {
   __locale: "uk",
   siteTitle: "Simple Deutsch",

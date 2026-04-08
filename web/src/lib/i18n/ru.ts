@@ -1,4 +1,4 @@
-// DO NOT EDIT: generated from i18n.tsx locale split
+// Locale translations for RU. Add or update keys here.
 const ru: Record<string, string> = {
   __locale: "ru",
   siteTitle: "Simple Deutsch",
