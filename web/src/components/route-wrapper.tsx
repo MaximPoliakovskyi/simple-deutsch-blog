@@ -13,6 +13,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 import { MOTION } from "@/lib/motion";
 import { resetScrollToTop, setManualScrollRestoration } from "@/lib/scroll";
 
@@ -35,8 +36,6 @@ export type TransitionNavContextValue = {
   targetPathname: string | null;
   navigateFromLogo: (href: string) => boolean;
   navigateFromLanguageSwitch: (href: string) => boolean;
-  /** @deprecated No-op. Kept for API compatibility. */
-  signalRouteReady: (pathname: string, token: number) => void;
 };
 
 export const TransitionNavContext = createContext<TransitionNavContextValue | null>(null);
@@ -78,19 +77,6 @@ function toPathname(href: string, currentPathname: string) {
   } catch {
     return normalizeRoutePathname(href.startsWith("/") ? href : currentPathname);
   }
-}
-
-function usePrefersReducedMotion() {
-  const [reduced, setReduced] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const m = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduced(m.matches);
-    const h = () => setReduced(m.matches);
-    m.addEventListener("change", h);
-    return () => m.removeEventListener("change", h);
-  }, []);
-  return reduced;
 }
 
 // ---------------------------------------------------------------------------
@@ -181,8 +167,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     [beginTransition, pathname],
   );
 
-  // No-op: kept for API compatibility with RouteReady consumers.
-  const signalRouteReady = useCallback((_pathname: string, _token: number) => {}, []);
+  // No-op signalRouteReady removed — was deprecated and had no consumers.
 
   // Map to legacy phase type for CSS data-phase compatibility.
   const legacyPhase: TransitionPhase =
@@ -198,9 +183,8 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       targetPathname: null,
       navigateFromLogo,
       navigateFromLanguageSwitch,
-      signalRouteReady,
     }),
-    [legacyPhase, navigateFromLanguageSwitch, navigateFromLogo, pathname, phase, signalRouteReady],
+    [legacyPhase, navigateFromLanguageSwitch, navigateFromLogo, pathname, phase],
   );
 
   return (
@@ -225,14 +209,6 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       )}
     </TransitionNavContext.Provider>
   );
-}
-
-// ---------------------------------------------------------------------------
-// RouteReady — no-op, kept for API compatibility.
-// ---------------------------------------------------------------------------
-
-export function RouteReady({ when: _when = true }: { when?: boolean }) {
-  return null;
 }
 
 // ---------------------------------------------------------------------------

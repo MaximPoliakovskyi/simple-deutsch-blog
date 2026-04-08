@@ -24,7 +24,6 @@
       "@/*": ["./src/*"],
       "@/app/*": ["./src/app/*"],
       "@/components/*": ["./src/components/*"],
-      "@/core/*": ["./src/core/*"],
       "@/server/*": ["./src/server/*"],
       "@/lib/*": ["./src/lib/*"]
     }

@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { PostListItem, WPPostCard } from "@/lib/posts";
-import PostCard, { type PostCardPost } from "./cards";
+import PostCard, { type PostCardPost } from "./post-card";
 
 type Post = WPPostCard | PostListItem | PostCardPost;
 
@@ -34,7 +34,7 @@ export default function PostsGridWithPagination({
   pageSize = 3,
   query,
 }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [posts, setPosts] = useState<Post[]>(() => initialPosts ?? []);
   const [pageInfo, setPageInfo] = useState<{ hasNextPage: boolean; endCursor: string | null }>(
     initialPageInfo ?? { hasNextPage: false, endCursor: null },
@@ -97,7 +97,7 @@ export default function PostsGridWithPagination({
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
         {posts.map((post) => (
           <div key={stableKey(post) || (post.slug as string)}>
-            <PostCard post={post} />
+            <PostCard post={post} locale={locale} />
           </div>
         ))}
       </div>

@@ -14,6 +14,7 @@ const nunito = Nunito({
   weight: ["400", "500", "600", "700"],
   display: "optional",
   preload: true,
+  fallback: ["system-ui", "sans-serif"],
 });
 
 const THEME_INIT_SCRIPT = `

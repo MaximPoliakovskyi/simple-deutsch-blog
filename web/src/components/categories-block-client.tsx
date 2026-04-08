@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
-import PostCard, { WordPressBadgePills } from "./cards";
+import { WordPressBadgePills } from "./category-pills";
+import PostCard from "./post-card";
 
 function PostCardSkeleton() {
   return (
@@ -104,7 +105,7 @@ export default function CategoriesBlockClient({
       setIsLoading(true);
       try {
         const url = new URL("/api/posts", window.location.origin);
-        url.searchParams.set("first", "100");
+        url.searchParams.set("first", "12");
         url.searchParams.set("tagId", String(selectedTag.databaseId));
         if (locale) url.searchParams.set("lang", locale);
 
@@ -176,7 +177,7 @@ export default function CategoriesBlockClient({
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-6 py-2">
             {displayedPosts.map((post) => (
               <div key={post.id ?? post.slug}>
-                <PostCard post={post} />
+                <PostCard post={post} locale={locale} />
               </div>
             ))}
           </div>

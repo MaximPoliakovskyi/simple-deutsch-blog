@@ -1,4 +1,4 @@
-﻿import PostCard from "@/components/cards";
+﻿import PostCard from "@/components/post-card";
 import { type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
   buildLocalePostHref,
@@ -122,6 +122,7 @@ export default async function RelatedArticles({
             <PostCard
               post={{ ...post, href: buildLocalePostHref(locale, post.slug) }}
               priority={false}
+              locale={locale}
             />
           </div>
         ))}

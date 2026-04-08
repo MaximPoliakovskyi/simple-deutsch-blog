@@ -6,8 +6,9 @@ import { getHeroStaticLineClassNames, HERO_KEYWORDS } from "@/components/hero-co
 import { useI18n } from "@/components/providers";
 import type { Locale } from "@/lib/i18n";
 import type { WPPostCard } from "@/lib/posts";
-import PostCard, { CategoryPills } from "./cards";
+import { CategoryPills } from "./category-pills";
 import { HERO_DESCRIPTION_CLASS_NAME, HERO_TITLE_CLASS_NAME } from "./hero-styles";
+import PostCard from "./post-card";
 import type { TypewriterWordsProps } from "./typewriter-words";
 
 const TypewriterWords = dynamic<TypewriterWordsProps>(() => import("./typewriter-words"));
@@ -165,7 +166,7 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
           <div className="grid grid-cols-1 gap-x-8 gap-y-16 py-2 md:grid-cols-2 xl:grid-cols-3">
             {displayedPosts.map((post, idx) => (
               <div key={post.id ?? post.slug}>
-                <PostCard post={post} priority={idx < 3} />
+                <PostCard post={post} priority={idx < 3} locale={uiLocale} />
               </div>
             ))}
           </div>

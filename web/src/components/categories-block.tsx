@@ -72,7 +72,7 @@ export default async function CategoriesBlock({
     try {
       const initialPostsRes = await getPostsByTagDatabaseId(
         selectedCategory.databaseId ?? 0,
-        100,
+        12,
         undefined,
         effectiveLocale,
       );

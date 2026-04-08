@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type MouseEvent, type RefObject, useEffect, useRef, useState } from "react";
-import { useI18n } from "@/components/providers";
+import { useI18n, usePostLangLinks } from "@/components/providers";
 import { type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { mapPathToLocale } from "@/lib/seo";
 import {
@@ -99,7 +99,8 @@ function usePostLanguageSwitch() {
   const transition = useTransitionNav();
   const pathname = usePathname() || "/";
   const searchParams = useSearchParams();
-  const { locale: currentLocale, postLangLinks } = useI18n();
+  const { locale: currentLocale } = useI18n();
+  const { postLangLinks } = usePostLangLinks();
 
   const routeLocale = parseLocaleFromPath(pathname) ?? currentLocale;
   const siteLang: Locale = postLangLinks?.currentLang ?? routeLocale;

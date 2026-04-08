@@ -3,7 +3,6 @@ import ChromeExtrasDeferred from "@/components/chrome-extras-deferred";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { LocaleProvider } from "@/components/providers";
-import { RouteReady } from "@/components/route-wrapper";
 import { getRequiredRouteLocale } from "./locale-route";
 
 const HTML_LANG_MAP: Record<string, string> = {
@@ -39,7 +38,6 @@ export default async function LocaleRootLayout({ children, params }: Props) {
       />
       <Header />
       <ChromeExtrasDeferred />
-      <RouteReady />
       <div data-layout="root-locale" hidden />
       <div data-layout="site" hidden />
       <main className="mt-8 md:mt-12">{children}</main>
