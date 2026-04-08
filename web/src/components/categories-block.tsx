@@ -20,8 +20,6 @@ type WordPressBadge = {
   levelColor?: string | null;
 };
 
-type PageInfo = { endCursor: string | null; hasNextPage: boolean };
-
 /**
  * Server component: fetches WordPress badges and a small posts page, then
  * renders the client component that provides interactivity.
@@ -40,7 +38,6 @@ export default async function CategoriesBlock({
   // Server-render initial posts for the initial selected badge to avoid client-side filling
   // after locale navigation.
   let initialPosts: WPPostCard[] = [];
-  const pageInfo: PageInfo = { endCursor: null, hasNextPage: false };
 
   if (preferredInitialCategory && visibleCategories.length > 0) {
     const selectedCategory = visibleCategories.find(
@@ -92,33 +89,6 @@ export default async function CategoriesBlock({
         data-categories-scope
         className="mx-auto max-w-7xl px-4 py-10 dark:text-white"
       >
-        <style>{`
-          html.dark [data-categories-scope] h1,
-          html.dark [data-categories-scope] h2,
-          html.dark [data-categories-scope] h3,
-          html.dark [data-categories-scope] h4,
-          html.dark [data-categories-scope] h5,
-          html.dark [data-categories-scope] h6,
-          html.dark [data-categories-scope] h1 *,
-          html.dark [data-categories-scope] h2 *,
-          html.dark [data-categories-scope] h3 *,
-          html.dark [data-categories-scope] h4 *,
-          html.dark [data-categories-scope] h5 *,
-          html.dark [data-categories-scope] h6 * {
-            color: #ffffff !important;
-            transition: color var(--motion-normal) var(--motion-spring) !important;
-          }
-          html.dark [data-categories-scope] .group:hover h1 *,
-          html.dark [data-categories-scope] .group:hover h2 *,
-          html.dark [data-categories-scope] .group:hover h3 *,
-          html.dark [data-categories-scope] .group:focus-within h1 *,
-          html.dark [data-categories-scope] .group:focus-within h2 *,
-          html.dark [data-categories-scope] .group:focus-within h3 * {
-            color: #d1d5db !important;
-            transition: color var(--motion-normal) var(--motion-spring) !important;
-          }
-        `}</style>
-
         <div className="space-y-2">
           <h2 className="type-title mb-8">{TRANSLATIONS[effectiveLocale].levelsHeading}</h2>
           <p className="type-lead max-w-2xl text-neutral-600 dark:text-gray-300">
@@ -131,8 +101,6 @@ export default async function CategoriesBlock({
             categories={visibleCategories}
             initialSelectedCategory={preferredInitialCategory}
             initialPosts={initialPosts}
-            initialEndCursor={pageInfo.endCursor}
-            initialHasNextPage={pageInfo.hasNextPage}
             pageSize={3}
             locale={effectiveLocale}
           />

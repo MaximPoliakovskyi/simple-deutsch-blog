@@ -207,23 +207,22 @@ async function HomePageContent({ locale }: { locale: Locale }) {
   const PAGE_SIZE = 6;
 
   // Fetch all home-page data in parallel
-  const [{ posts, pageInfo }, allCategoriesResp, latestPostsResp, successStoriesResp] =
-    await Promise.all([
-      getHomePagePosts(locale, PAGE_SIZE),
-      getAllCategories({ first: 50, locale }).catch(() => null),
-      getPosts({ first: 8, locale }).catch(() => ({ posts: { nodes: [] } })),
-      getPostsByCategory({
-        first: 8,
-        after: null,
-        locale,
-        categorySlug:
-          locale === "uk"
-            ? "success-stories-uk"
-            : locale === "ru"
-              ? "success-stories-ru"
-              : "success-stories",
-      }).catch(() => ({ posts: [] })),
-    ]);
+  const [{ posts }, allCategoriesResp, latestPostsResp, successStoriesResp] = await Promise.all([
+    getHomePagePosts(locale, PAGE_SIZE),
+    getAllCategories({ first: 50, locale }).catch(() => null),
+    getPosts({ first: 8, locale }).catch(() => ({ posts: { nodes: [] } })),
+    getPostsByCategory({
+      first: 8,
+      after: null,
+      locale,
+      categorySlug:
+        locale === "uk"
+          ? "success-stories-uk"
+          : locale === "ru"
+            ? "success-stories-ru"
+            : "success-stories",
+    }).catch(() => ({ posts: [] })),
+  ]);
 
   const mappedPosts = posts.map((post) => ({
     ...post,
@@ -271,8 +270,6 @@ async function HomePageContent({ locale }: { locale: Locale }) {
         <HeroWithFilters
           categories={heroCategories}
           initialPosts={mappedPosts}
-          initialEndCursor={pageInfo.endCursor}
-          initialHasNextPage={pageInfo.hasNextPage}
           pageSize={PAGE_SIZE}
           locale={locale}
         />

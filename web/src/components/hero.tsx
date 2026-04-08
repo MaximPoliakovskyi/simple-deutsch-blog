@@ -17,20 +17,11 @@ type Category = { id: string; name: string; slug: string };
 type Props = {
   categories: Category[];
   initialPosts: WPPostCard[];
-  initialEndCursor: string | null;
-  initialHasNextPage: boolean;
   pageSize?: number;
   locale?: Locale;
 };
 
-export default function HeroWithFilters({
-  categories,
-  initialPosts,
-  initialEndCursor: _initialEndCursor,
-  initialHasNextPage: _initialHasNextPage,
-  pageSize = 6,
-  locale,
-}: Props) {
+export default function HeroWithFilters({ categories, initialPosts, pageSize = 6, locale }: Props) {
   const { t, locale: uiLocale } = useI18n();
   const heroHeadingId = useId();
   const featuredPostsHeadingId = useId();

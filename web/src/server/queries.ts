@@ -19,7 +19,6 @@ const POST_CARD_FIELDS = /* GraphQL */ `
     title
     date
     excerpt
-    content
     featuredImage {
       node {
         sourceUrl
@@ -212,7 +211,6 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language { code slug locale }
           featuredImage { node { sourceUrl altText } }
