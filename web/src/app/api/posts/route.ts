@@ -46,12 +46,20 @@ export async function GET(req: Request) {
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
     } else if (category) {
-      const res = await getPostsPageByCategory({ first, categorySlug: category, locale: validLocale });
+      const res = await getPostsPageByCategory({
+        first,
+        categorySlug: category,
+        locale: validLocale,
+      });
       posts = res.posts;
       pageInfo = res.pageInfo;
 
       if (posts.length === 0 && validLocale) {
-        const fallbackRes = await getPostsPageByCategory({ first, categorySlug: category, locale: undefined });
+        const fallbackRes = await getPostsPageByCategory({
+          first,
+          categorySlug: category,
+          locale: undefined,
+        });
         posts = fallbackRes.posts;
         pageInfo = fallbackRes.pageInfo;
       }

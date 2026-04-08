@@ -8,7 +8,6 @@ import {
   getTagBySlug,
 } from "@/lib/posts";
 import { buildI18nAlternates } from "@/lib/seo";
-import HomePage from "../home-page";
 import AboutPage from "./about-page";
 import { CategoriesIndexContent } from "./categories-index-content";
 import { CategoryPageContent } from "./category-page-content";

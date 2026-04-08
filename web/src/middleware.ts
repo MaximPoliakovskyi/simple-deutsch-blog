@@ -1,1 +1,1 @@
-export { proxy as default, config } from "./proxy";
+export { config, proxy as default } from "./proxy";

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { memo, useEffect } from "react";
 import { type PostLangLinks, type SiteLang, usePostLangLinks } from "@/components/providers";
