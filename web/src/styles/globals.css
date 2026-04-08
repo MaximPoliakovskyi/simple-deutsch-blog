@@ -699,6 +699,9 @@ html.dark .sd-skeleton {
   background: hsl(var(--bg));
   background-image: linear-gradient(rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.02));
   opacity: 1;
+  /* Non-blocking by design: the preloader contains no focusable/interactive elements
+     (only decorative text and a bar). pointer-events:none lets content below remain
+     interactive immediately, matching the non-blocking preloader requirement. */
   pointer-events: none;
   transition: opacity var(--sd-preloader-fade-ms) var(--motion-spring);
   will-change: opacity;

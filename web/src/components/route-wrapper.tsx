@@ -182,7 +182,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
   );
 
   // No-op: kept for API compatibility with RouteReady consumers.
-  const signalRouteReady = useCallback((_p: string, _t: number) => {}, []);
+  const signalRouteReady = useCallback((_pathname: string, _token: number) => {}, []);
 
   // Map to legacy phase type for CSS data-phase compatibility.
   const legacyPhase: TransitionPhase =
