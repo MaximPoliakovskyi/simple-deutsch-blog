@@ -54,8 +54,9 @@ export function isUnmodifiedLeftClick(event: ReactMouseEvent<HTMLElement>) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const ENTER_MS = MOTION.routeEnter; // 600ms
-const EXIT_MS = MOTION.routeExit; // 600ms
+const ENTER_MS = MOTION.routeEnter; // 1500ms
+const EXIT_MS = MOTION.routeExit; // 1500ms
+const MIN_MS = MOTION.routeMinDuration; // 3000ms
 
 function normalizeRoutePathname(pathname: string) {
   let value = pathname || "/";
@@ -124,6 +125,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         return true;
       }
 
+      const startTime = Date.now();
       phaseRef.current = "entering";
       setPhase("entering");
 
@@ -132,16 +134,22 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
         router.push(href);
       }, ENTER_MS / 2);
 
-      // Start exit phase after enter completes.
+      // Switch to exiting after enter completes, but respect minimum duration.
       const t2 = window.setTimeout(() => {
-        if (phaseRef.current === "entering") {
-          phaseRef.current = "exiting";
-          setPhase("exiting");
-        }
+        if (phaseRef.current !== "entering") return;
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, MIN_MS - elapsed);
+        const t2b = window.setTimeout(() => {
+          if (phaseRef.current === "entering") {
+            phaseRef.current = "exiting";
+            setPhase("exiting");
+          }
+        }, remaining);
+        timersRef.current.push(t2b);
       }, ENTER_MS);
 
-      // Return to idle after exit completes.
-      const t3 = window.setTimeout(resetToIdle, ENTER_MS + EXIT_MS);
+      // Return to idle after exit phase; use generous upper bound.
+      const t3 = window.setTimeout(resetToIdle, MIN_MS + EXIT_MS + 200);
 
       timersRef.current = [t1, t2, t3];
       return true;

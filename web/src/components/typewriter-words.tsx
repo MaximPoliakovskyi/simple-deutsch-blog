@@ -237,7 +237,7 @@ const TypewriterWords = memo(function TypewriterWords({
       />
 
       <span
-        className={`inline-flex items-baseline whitespace-nowrap align-baseline select-text ${containerClassName} ${className}`}
+        className={`inline-flex items-baseline whitespace-nowrap align-baseline select-text relative ${containerClassName} ${className}`}
         style={{
           width: stableWidth,
           minWidth: stableWidth,
@@ -253,8 +253,9 @@ const TypewriterWords = memo(function TypewriterWords({
         </span>
         {showCursor && !prefersReducedMotion ? (
           <span
-            className="caret-realistic ml-px inline-block leading-none pointer-events-none select-none"
+            className="caret-realistic pointer-events-none select-none"
             aria-hidden="true"
+            style={{ position: "absolute", right: "-0.6ch" }}
           >
             |
           </span>

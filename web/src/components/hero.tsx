@@ -71,7 +71,7 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
     [uiLocale],
   );
   const stableWidthCh = useMemo(
-    () => Math.max(...animatedWords.map((word) => word.length)) + 0.3,
+    () => Math.max(...animatedWords.map((word) => word.length)) + 1.5,
     [animatedWords],
   );
   const staticLineClassNames = useMemo(
@@ -162,7 +162,7 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
             <span className="mt-1 flex w-full justify-center sm:mt-2">
               <span
                 className="inline-flex items-baseline justify-center whitespace-nowrap text-blue-600"
-                style={{ width: `${stableWidthCh}ch`, minWidth: `${stableWidthCh}ch` }}
+                style={{ width: `${stableWidthCh}ch`, minWidth: `${stableWidthCh}ch`, flexShrink: 0 }}
               >
                 <TypewriterWords
                   words={animatedWords}
