@@ -38,6 +38,8 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
   const finishedRef = useRef(false);
   const rafRef = useRef<number | null>(null);
 
+  const scrollLockedRef = useRef(false);
+
   const finishPreloader = useCallback(() => {
     if (finishedRef.current) return;
     finishedRef.current = true;
@@ -45,7 +47,10 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
-    unlockScroll();
+    if (scrollLockedRef.current) {
+      scrollLockedRef.current = false;
+      unlockScroll();
+    }
     document.documentElement.setAttribute("data-preloader", "0");
     onFinished?.();
     setShowPreloader(false);
@@ -53,9 +58,13 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
 
   useEffect(() => {
     lockScroll();
+    scrollLockedRef.current = true;
     return () => {
       // Safety cleanup if component unmounts unexpectedly
-      unlockScroll();
+      if (scrollLockedRef.current) {
+        scrollLockedRef.current = false;
+        unlockScroll();
+      }
     };
   }, []);
 

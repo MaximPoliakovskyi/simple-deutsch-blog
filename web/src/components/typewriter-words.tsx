@@ -239,7 +239,6 @@ const TypewriterWords = memo(function TypewriterWords({
       <span
         className={`relative inline-flex items-baseline whitespace-nowrap align-baseline select-text ${containerClassName} ${className}`}
         style={{
-          position: "relative",
           width: stableWidth,
           minWidth: stableWidth,
           verticalAlign: "baseline",
