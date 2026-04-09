@@ -31,10 +31,12 @@ export const MOTION = {
   // ── System-specific (not general-purpose CSS vars) ────────────────────────
   /** 1 000 ms — content fade-in after route overlay completes. (--motion-route-content) */
   routeContent: 1000,
-  /** 600 ms — route overlay slide-in. Matches CSS --rt-enter-ms. */
-  routeEnter: 600,
-  /** 600 ms — route overlay slide-out. Matches CSS --rt-exit-ms. */
-  routeExit: 600,
+  /** 1500 ms — route overlay slide-in. Matches CSS --rt-enter-ms. */
+  routeEnter: 1500,
+  /** 1500 ms — route overlay slide-out. Matches CSS --rt-exit-ms. */
+  routeExit: 1500,
+  /** 3000 ms — minimum total route transition duration. */
+  routeMinDuration: 3000,
   /** 680 ms — theme crossfade reveal phase. Intentionally luxurious. */
   themeVeilOut: 680,
 } as const;

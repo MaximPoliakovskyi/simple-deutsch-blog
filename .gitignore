@@ -21,3 +21,5 @@ tmp-*
 tmp_*
 .lighthouse/
 lighthouse-report*
+.vercel
+.env*.local

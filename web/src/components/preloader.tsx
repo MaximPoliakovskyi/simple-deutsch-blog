@@ -2,9 +2,9 @@
 
 import { type TransitionEvent, useCallback, useEffect, useRef, useState } from "react";
 
-const QUOTE_HOLD_MS = 400;
-const FADE_OUT_MS = 320;
-const QUOTE_FADE_MS = 200;
+const QUOTE_HOLD_MS = 800;
+const FADE_OUT_MS = 400;
+const QUOTE_FADE_MS = 250;
 
 const QUOTES = [
   "Jede Sprache ist ein Schlüssel zu einer neuen Welt",
