@@ -1,22 +1,6 @@
 "use client";
 
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 import { useEffect, useRef, useState } from "react";
-
-// ---------------------------------------------------------------------------
-// AnalyticsClient (formerly analytics-client.tsx)
-// ---------------------------------------------------------------------------
-
-export function AnalyticsClient({ enabled }: { enabled: boolean }) {
-  if (!enabled) return null;
-  return (
-    <>
-      <Analytics mode="production" />
-      <SpeedInsights sampleRate={0.1} />
-    </>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // ChunkErrorRecovery (formerly chunk-error-recovery.tsx)
@@ -95,6 +79,16 @@ function BackButton() {
   const ticking = useRef(false);
   const desiredVisible = useRef(false);
 
+  const scrollToTopInstantly = () => {
+    const html = document.documentElement;
+    const previousScrollBehavior = html.style.scrollBehavior;
+    html.style.scrollBehavior = "auto";
+    window.scrollTo(0, 0);
+    html.scrollTop = 0;
+    document.body.scrollTop = 0;
+    html.style.scrollBehavior = previousScrollBehavior;
+  };
+
   useEffect(() => {
     function onScroll() {
       desiredVisible.current = window.scrollY > SCROLL_THRESHOLD;
@@ -115,7 +109,7 @@ function BackButton() {
     <button
       type="button"
       aria-label="Back"
-      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      onClick={scrollToTopInstantly}
       className="fixed bottom-8 right-6 z-50 flex items-center justify-center w-9.5 h-9.5 rounded-full text-sm transform-gpu hover:scale-[1.03] shadow-sm focus:outline-none focus-visible:outline-none cursor-pointer sd-pill"
       style={{
         padding: 0,
@@ -146,56 +140,9 @@ function BackButton() {
 }
 
 // ---------------------------------------------------------------------------
-// FirstVisitDisclaimer (formerly first-visit-disclaimer.tsx)
-// ---------------------------------------------------------------------------
-
-function FirstVisitDisclaimer() {
-  const [isVisible, setIsVisible] = useState(true);
-  if (!isVisible) return null;
-  return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[70] flex justify-center px-4 md:bottom-6">
-      <section
-        aria-atomic="true"
-        aria-live="polite"
-        className="pointer-events-auto w-full max-w-xl rounded-2xl border px-4 py-3 backdrop-blur-sm"
-        style={{
-          backgroundColor: "var(--sd-surface-elevated)",
-          borderColor: "var(--sd-border-strong)",
-          boxShadow: "var(--shadow-xl)",
-        }}
-      >
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-5 text-[color:var(--sd-text)]">
-              The site is currently finishing its technical implementation
-            </p>
-            <p className="mt-1 text-sm leading-5 text-[color:var(--sd-text-muted)]">
-              First content will be published in April
-            </p>
-          </div>
-          <button
-            aria-label="Dismiss site notice"
-            className="shrink-0 rounded-full px-3 py-1.5 text-sm font-medium text-[color:var(--sd-text-muted)] transition-colors hover:bg-black/5 hover:text-[color:var(--sd-text)] dark:hover:bg-white/10"
-            onClick={() => setIsVisible(false)}
-            type="button"
-          >
-            Close
-          </button>
-        </div>
-      </section>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // DeferredChromeExtras — dynamically imported from locale layout (ssr: false)
 // ---------------------------------------------------------------------------
 
 export default function DeferredChromeExtras() {
-  return (
-    <>
-      <FirstVisitDisclaimer />
-      <BackButton />
-    </>
-  );
+  return <BackButton />;
 }

@@ -1,12 +1,15 @@
-﻿import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
+import ChromeExtrasDeferred from "@/components/chrome-extras-deferred";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
-import Providers, { LocaleProvider } from "@/components/providers";
-import { RouteReady } from "@/components/route-wrapper";
+import { LocaleProvider } from "@/components/providers";
 import { getRequiredRouteLocale } from "./locale-route";
 
-const DeferredChromeExtras = dynamic(() => import("@/components/chrome-extras"));
+const HTML_LANG_MAP: Record<string, string> = {
+  en: "en",
+  ru: "ru",
+  uk: "uk",
+};
 
 type Props = {
   children: ReactNode;
@@ -16,29 +19,27 @@ type Props = {
 /**
  * Site layout for all [locale]/ routes.
  *
- * NavProgress is intentionally NOT mounted here — it lives in (site)/layout.tsx
+ * NavProgress is intentionally NOT mounted here - it lives in (site)/layout.tsx
  * so it only activates for real pages, not for the 404 boundary (not-found.tsx),
  * which resolves at this level and skips the (site) group entirely.
  */
 export default async function LocaleRootLayout({ children, params }: Props) {
   const { locale } = await params;
   const validated = getRequiredRouteLocale(locale);
-
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[hydration][server][LocaleLayout]", { localeParam: locale, validated });
-  }
+  const htmlLang = HTML_LANG_MAP[validated] ?? validated;
 
   return (
     <LocaleProvider locale={validated}>
+      {/* Set html[lang] synchronously so it's correct for screen readers before hydration */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `document.documentElement.lang="${htmlLang}";`,
+        }}
+      />
       <Header />
-      <DeferredChromeExtras />
-      <RouteReady />
-      <div data-layout="root-locale" hidden />
-      <div data-layout="site" hidden />
-      <Providers locale={validated}>
-        <main className="mt-8 md:mt-12 min-h-[60vh]">{children}</main>
-        <Footer locale={validated} />
-      </Providers>
+      <ChromeExtrasDeferred />
+      <main className="mt-8 md:mt-12">{children}</main>
+      <Footer locale={validated} />
     </LocaleProvider>
   );
 }

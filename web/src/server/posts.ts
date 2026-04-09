@@ -1,6 +1,7 @@
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/client";
+import { withWordPressLevelColor, withWordPressLevelColors } from "@/server/level-styles";
 import {
   GET_ALL_CATEGORIES,
   GET_ALL_TAGS,
@@ -28,6 +29,7 @@ import type {
   PostDetail,
   PostListItem,
   PostsConnectionResponse,
+  PostTermNode,
   SearchPostsArgs,
   Tag,
   Term,
@@ -53,6 +55,11 @@ type ReadingTimeResult = {
 type ReadablePost = {
   content?: string | null;
   excerpt?: string | null;
+};
+
+type PostWithTermCollections = {
+  categories?: { nodes?: PostTermNode[] | null } | null;
+  tags?: { nodes?: PostTermNode[] | null } | null;
 };
 
 const WORD_RE = /[\p{L}\p{N}]+(?:[-'][\p{L}\p{N}]+)*/gu;
@@ -177,6 +184,25 @@ export function withReadingTimeForList<T extends ReadablePost>(
   return posts.map((post) => withReadingTime(post, locale));
 }
 
+async function withLevelColorsForPost<T extends PostWithTermCollections>(post: T): Promise<T> {
+  const categories = Array.isArray(post.categories?.nodes)
+    ? { ...post.categories, nodes: await withWordPressLevelColors(post.categories?.nodes ?? []) }
+    : post.categories;
+  const tags = Array.isArray(post.tags?.nodes)
+    ? { ...post.tags, nodes: await withWordPressLevelColors(post.tags?.nodes ?? []) }
+    : post.tags;
+
+  return {
+    ...post,
+    ...(categories ? { categories } : {}),
+    ...(tags ? { tags } : {}),
+  };
+}
+
+async function withLevelColorsForPostList<T extends PostWithTermCollections>(posts: T[]) {
+  return Promise.all(posts.map((post) => withLevelColorsForPost(post)));
+}
+
 export async function getCategoryBySlug(slug: string, locale?: Locale) {
   const data = await fetchGraphQL<{ category: Term | null }>(
     GET_CATEGORY_BY_SLUG,
@@ -230,7 +256,12 @@ export async function getAllTags({
       policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags] },
     },
   );
-  return { tags: data.tags };
+  return {
+    tags: {
+      ...data.tags,
+      nodes: await withWordPressLevelColors(data.tags.nodes ?? []),
+    },
+  };
 }
 
 export async function getTagBySlug(slug: string, locale?: Locale) {
@@ -242,7 +273,7 @@ export async function getTagBySlug(slug: string, locale?: Locale) {
       policy: { type: "ISR", revalidate: 600, tags: [CACHE_TAGS.tags, `tag:${slug}`] },
     },
   );
-  return data.tag ?? null;
+  return data.tag ? withWordPressLevelColor(data.tag) : null;
 }
 
 export async function getPostsByTagSlug(slug: string, first = 12, after?: string, locale?: Locale) {
@@ -281,7 +312,10 @@ export async function getPostsByTagSlug(slug: string, first = 12, after?: string
 
   posts = {
     ...posts,
-    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    nodes: withReadingTimeForList(
+      await withLevelColorsForPostList(posts.nodes ?? []),
+      locale ?? DEFAULT_LOCALE,
+    ),
   };
 
   return {
@@ -330,7 +364,10 @@ export async function getPostsByTagDatabaseId(
 
   posts = {
     ...posts,
-    nodes: withReadingTimeForList(posts.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    nodes: withReadingTimeForList(
+      await withLevelColorsForPostList(posts.nodes ?? []),
+      locale ?? DEFAULT_LOCALE,
+    ),
   };
 
   return {
@@ -362,7 +399,10 @@ export async function getPostsByCategorySlug(
   return {
     posts: {
       ...data.posts,
-      nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+      nodes: withReadingTimeForList(
+        await withLevelColorsForPostList(data.posts?.nodes ?? []),
+        locale ?? DEFAULT_LOCALE,
+      ),
     },
   };
 }
@@ -391,7 +431,10 @@ export async function getRelatedPostsByCategorySlug(params: {
   );
 
   return {
-    posts: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    posts: withReadingTimeForList(
+      await withLevelColorsForPostList(data.posts?.nodes ?? []),
+      locale ?? DEFAULT_LOCALE,
+    ),
     pageInfo: data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
   };
 }
@@ -426,7 +469,10 @@ export async function getRelatedPostsByTagSlug(params: {
   const filtered = targetLang ? nodes.filter((post) => post.language?.code === targetLang) : nodes;
 
   return {
-    posts: withReadingTimeForList(filtered, locale ?? DEFAULT_LOCALE),
+    posts: withReadingTimeForList(
+      await withLevelColorsForPostList(filtered),
+      locale ?? DEFAULT_LOCALE,
+    ),
     pageInfo: data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
   };
 }
@@ -453,7 +499,10 @@ export async function getLatestPostsForRelated(params: {
   );
 
   return {
-    posts: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+    posts: withReadingTimeForList(
+      await withLevelColorsForPostList(data.posts?.nodes ?? []),
+      locale ?? DEFAULT_LOCALE,
+    ),
     pageInfo: data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null },
   };
 }
@@ -505,7 +554,10 @@ export async function getPosts(
   return {
     posts: {
       ...data.posts,
-      nodes: withReadingTimeForList(data.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE),
+      nodes: withReadingTimeForList(
+        await withLevelColorsForPostList(data.posts?.nodes ?? []),
+        locale ?? DEFAULT_LOCALE,
+      ),
     },
   };
 }
@@ -538,7 +590,7 @@ export async function getPostBySlug(slug: string, init?: NextInit) {
   );
   const post = data.post ?? null;
   if (!post) return null;
-  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
+  return withReadingTime(await withLevelColorsForPost(post), init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostByUri(uri: string, init?: NextInit) {
@@ -553,7 +605,7 @@ export async function getPostByUri(uri: string, init?: NextInit) {
   );
   const post = data.post ?? null;
   if (!post) return null;
-  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
+  return withReadingTime(await withLevelColorsForPost(post), init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostByDatabaseId(id: number, init?: NextInit) {
@@ -568,7 +620,7 @@ export async function getPostByDatabaseId(id: number, init?: NextInit) {
   );
   const post = data.post ?? null;
   if (!post) return null;
-  return withReadingTime(post, init?.locale ?? DEFAULT_LOCALE);
+  return withReadingTime(await withLevelColorsForPost(post), init?.locale ?? DEFAULT_LOCALE);
 }
 
 export async function getPostsPage(params: { first: number; after?: string | null }) {
@@ -584,7 +636,7 @@ export async function getPostsPage(params: { first: number; after?: string | nul
 
   const edges = data.posts?.edges ?? [];
   const nodes = withReadingTimeForList(
-    edges.map((e) => e.node),
+    await withLevelColorsForPostList(edges.map((e) => e.node)),
     DEFAULT_LOCALE,
   );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
@@ -620,7 +672,7 @@ export async function getPostsPageFiltered(params: {
 
   const edges = data.posts?.edges ?? [];
   const nodes = withReadingTimeForList(
-    edges.map((e) => e.node),
+    await withLevelColorsForPostList(edges.map((e) => e.node)),
     locale ?? DEFAULT_LOCALE,
   );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
@@ -680,7 +732,10 @@ export async function getPostsByCategory(params: {
       : fallbackNodes;
 
     return {
-      posts: withReadingTimeForList(filteredFallback, locale ?? DEFAULT_LOCALE),
+      posts: withReadingTimeForList(
+        await withLevelColorsForPostList(filteredFallback),
+        locale ?? DEFAULT_LOCALE,
+      ),
       pageInfo: fallbackPageInfo,
     };
   }
@@ -692,7 +747,10 @@ export async function getPostsByCategory(params: {
   const pageInfo = data.category?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return {
-    posts: withReadingTimeForList(filteredNodes, locale ?? DEFAULT_LOCALE),
+    posts: withReadingTimeForList(
+      await withLevelColorsForPostList(filteredNodes),
+      locale ?? DEFAULT_LOCALE,
+    ),
     pageInfo,
   };
 }
@@ -726,7 +784,10 @@ export async function getPostsByTag(params: {
   const pageInfo = data.tag?.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
 
   return {
-    posts: withReadingTimeForList(filteredNodes, locale ?? DEFAULT_LOCALE),
+    posts: withReadingTimeForList(
+      await withLevelColorsForPostList(filteredNodes),
+      locale ?? DEFAULT_LOCALE,
+    ),
     pageInfo,
   };
 }
@@ -750,7 +811,7 @@ export async function getPostsIndex(params: {
 
   const edges = data.posts?.edges ?? [];
   const nodes = withReadingTimeForList(
-    edges.map((e) => e.node),
+    await withLevelColorsForPostList(edges.map((e) => e.node)),
     locale ?? DEFAULT_LOCALE,
   );
   const pageInfo = data.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
@@ -857,7 +918,10 @@ export async function getPostsPageByCategory(params: {
     },
   );
 
-  const nodes = withReadingTimeForList(res.posts?.nodes ?? [], locale ?? DEFAULT_LOCALE);
+  const nodes = withReadingTimeForList(
+    await withLevelColorsForPostList(res.posts?.nodes ?? []),
+    locale ?? DEFAULT_LOCALE,
+  );
   const pageInfo = res.posts?.pageInfo ?? { hasNextPage: false, endCursor: null };
   return { posts: nodes, pageInfo };
 }
@@ -898,5 +962,8 @@ export async function searchPosts({
     },
   );
 
-  return { posts: data.posts.nodes, pageInfo: data.posts.pageInfo };
+  return {
+    posts: await withLevelColorsForPostList(data.posts.nodes),
+    pageInfo: data.posts.pageInfo,
+  };
 }

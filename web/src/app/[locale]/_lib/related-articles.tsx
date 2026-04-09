@@ -1,4 +1,4 @@
-﻿import PostCard from "@/components/cards";
+﻿import PostCard from "@/components/post-card";
 import { type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
   buildLocalePostHref,
@@ -69,40 +69,38 @@ export default async function RelatedArticles({
   const uniqueCategorySlugs = uniqueSlugs(categorySlugs);
   const uniqueTagSlugs = uniqueSlugs(tagSlugs);
 
-  for (const categorySlug of uniqueCategorySlugs) {
+  // Fetch all category and tag buckets in parallel instead of serially.
+  const categoryResults = await Promise.allSettled(
+    uniqueCategorySlugs.map((categorySlug) =>
+      getRelatedPostsByCategorySlug({ slug: categorySlug, first: QUERY_PAGE_SIZE, locale }),
+    ),
+  );
+  for (const result of categoryResults) {
     if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByCategorySlug({
-        slug: categorySlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
-      tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed category fetch for "${categorySlug}"`, error);
+    if (result.status === "fulfilled") {
+      tryAddPosts(result.value.posts);
+    } else {
+      console.error("[related] failed category fetch", result.reason);
     }
   }
 
-  for (const tagSlug of uniqueTagSlugs) {
+  const tagResults = await Promise.allSettled(
+    uniqueTagSlugs.map((tagSlug) =>
+      getRelatedPostsByTagSlug({ slug: tagSlug, first: QUERY_PAGE_SIZE, locale }),
+    ),
+  );
+  for (const result of tagResults) {
     if (picked.length >= MAX_RELATED_POSTS) break;
-    try {
-      const { posts } = await getRelatedPostsByTagSlug({
-        slug: tagSlug,
-        first: QUERY_PAGE_SIZE,
-        locale,
-      });
-      tryAddPosts(posts);
-    } catch (error) {
-      console.error(`[related] failed tag fetch for "${tagSlug}"`, error);
+    if (result.status === "fulfilled") {
+      tryAddPosts(result.value.posts);
+    } else {
+      console.error("[related] failed tag fetch", result.reason);
     }
   }
 
   if (picked.length < MAX_RELATED_POSTS) {
     try {
-      const { posts } = await getLatestPostsForRelated({
-        first: 24,
-        locale,
-      });
+      const { posts } = await getLatestPostsForRelated({ first: 24, locale });
       tryAddPosts(posts);
     } catch (error) {
       console.error("[related] failed latest posts fetch", error);
@@ -117,13 +115,14 @@ export default async function RelatedArticles({
 
   return (
     <section className="mt-14 border-t border-neutral-200/70 pt-8 dark:border-neutral-800/70">
-      <h2 className="mb-5 text-2xl font-semibold tracking-tight">{sectionTitle}</h2>
+      <h2 className="type-title mb-5">{sectionTitle}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16">
         {relatedPosts.map((post) => (
           <div key={getPostKey(post)}>
             <PostCard
               post={{ ...post, href: buildLocalePostHref(locale, post.slug) }}
               priority={false}
+              locale={locale}
             />
           </div>
         ))}

@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_kf1UoU479AiHo8F5kEJ1AyGMX7g3",
+  "orgId": "team_pmedAIwlHy4Rel9bIzarIWg6",
+  "projectName": "simple-deutsch-blog",
+  "settings": {
+    "createdAt": 1762723734773,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": "web",
+    "directoryListing": false,
+    "nodeVersion": "22.x"
+  }
+}

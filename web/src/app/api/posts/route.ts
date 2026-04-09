@@ -14,6 +14,8 @@ import {
   type WPPostCard,
 } from "@/lib/posts";
 
+const MAX_FIRST = 100;
+
 type PageInfo = { hasNextPage: boolean; endCursor: string | null };
 
 export async function GET(req: Request) {
@@ -22,94 +24,36 @@ export async function GET(req: Request) {
   const category = searchParams.get("category");
   const tag = searchParams.get("tag");
   const tagIdRaw = searchParams.get("tagId");
-  const canonicalTagIdRaw = searchParams.get("canonicalTagId");
   const slug = searchParams.get("slug");
-  const first = Number(searchParams.get("first")) || 200;
+  const first = Math.min(Number(searchParams.get("first")) || 50, MAX_FIRST);
   const tagId = tagIdRaw ? Number(tagIdRaw) : NaN;
-  const canonicalTagId = canonicalTagIdRaw ? Number(canonicalTagIdRaw) : NaN;
 
-  // Validate locale (map legacy aliases via assertLocale)
   const validLocale: Locale | undefined = tryParseLocale(lang);
-
-  // When filtering by language, fetch more posts to ensure we get enough after filtering
-  const fetchCount = validLocale ? first * 2 : first;
-
-  console.log(
-    `[API /api/posts] Request: lang="${lang}", category="${category}", tag="${tag}", tagId="${tagIdRaw}", canonicalTagId="${canonicalTagIdRaw}", slug="${slug}", first=${first}, fetchCount=${fetchCount}`,
-  );
 
   try {
     let posts: unknown[] = [];
-    let pageInfo: PageInfo = {
-      hasNextPage: false,
-      endCursor: null,
-    };
+    let pageInfo: PageInfo = { hasNextPage: false, endCursor: null };
 
     if (slug) {
       const post = await getPostBySlug(slug, { locale: validLocale, policy: { type: "DYNAMIC" } });
       posts = post ? [post] : [];
-      console.log(`[API /api/posts] Got ${posts.length} posts for slug "${slug}"`);
     } else if (!Number.isNaN(tagId) && tagId > 0) {
-      const res = await getPostsByTagDatabaseId(tagId, fetchCount, undefined, validLocale);
+      const res = await getPostsByTagDatabaseId(tagId, first, undefined, validLocale);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from tagId "${tagId}" with locale "${lang}"`,
-      );
-
-      if (
-        posts.length === 0 &&
-        !Number.isNaN(canonicalTagId) &&
-        canonicalTagId > 0 &&
-        canonicalTagId !== tagId
-      ) {
-        const fallbackLocalized = await getPostsByTagDatabaseId(
-          canonicalTagId,
-          fetchCount,
-          undefined,
-          validLocale,
-        );
-        posts = fallbackLocalized.posts?.nodes ?? [];
-        pageInfo = fallbackLocalized.posts?.pageInfo ?? pageInfo;
-        console.log(
-          `[API /api/posts] Fallback localized canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
-        );
-
-        if (posts.length === 0) {
-          const fallbackAnyLang = await getPostsByTagDatabaseId(
-            canonicalTagId,
-            fetchCount,
-            undefined,
-            undefined,
-          );
-          posts = fallbackAnyLang.posts?.nodes ?? [];
-          pageInfo = fallbackAnyLang.posts?.pageInfo ?? pageInfo;
-          console.log(
-            `[API /api/posts] Fallback any-language canonicalTagId "${canonicalTagId}" returned ${posts.length} posts`,
-          );
-        }
-      }
     } else if (tag) {
-      const res = await getPostsByTagSlug(tag, fetchCount, undefined, validLocale);
+      const res = await getPostsByTagSlug(tag, first, undefined, validLocale);
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from tag "${tag}" with locale "${lang}"`,
-      );
     } else if (category) {
-      // Try with the specified locale first
       const res = await getPostsPageByCategory({
-        first: fetchCount,
+        first,
         categorySlug: category,
         locale: validLocale,
       });
       posts = res.posts;
       pageInfo = res.pageInfo;
-      console.log(
-        `[API /api/posts] Got ${posts.length} posts from category "${category}" with locale "${lang}"`,
-      );
 
-      // If locale-specific fetch returned nothing but a locale was requested, try without locale filter
       if (posts.length === 0 && validLocale) {
         const fallbackRes = await getPostsPageByCategory({
           first,
@@ -118,20 +62,11 @@ export async function GET(req: Request) {
         });
         posts = fallbackRes.posts;
         pageInfo = fallbackRes.pageInfo;
-        console.log(
-          `[API /api/posts] Fallback: got ${posts.length} posts from category "${category}" (no locale filter)`,
-        );
       }
-    } else if (validLocale) {
-      const res = await getPosts({ first: fetchCount, locale: validLocale });
-      posts = res.posts?.nodes ?? [];
-      pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts for locale "${lang}"`);
     } else {
-      const res = await getPosts({ first: fetchCount });
+      const res = await getPosts({ first, locale: validLocale });
       posts = res.posts?.nodes ?? [];
       pageInfo = res.posts?.pageInfo ?? pageInfo;
-      console.log(`[API /api/posts] Got ${posts.length} posts (no filters)`);
     }
 
     return NextResponse.json({ posts, pageInfo });
@@ -166,7 +101,7 @@ type PostsPage = { posts: WPPostCard[]; pageInfo: PageInfo };
 export async function POST(req: NextRequest) {
   try {
     const {
-      first = 3,
+      first: rawFirst = 3,
       after = null,
       locale,
       mode = "index",
@@ -176,9 +111,7 @@ export async function POST(req: NextRequest) {
       skipIds,
     }: LoadMoreBody = await req.json();
 
-    if (!first || first <= 0) {
-      return NextResponse.json({ message: "Invalid first param" }, { status: 400 });
-    }
+    const first = Math.min(Math.max(Number(rawFirst) || 3, 1), MAX_FIRST);
 
     const validLocale: Locale | undefined = tryParseLocale(locale);
 

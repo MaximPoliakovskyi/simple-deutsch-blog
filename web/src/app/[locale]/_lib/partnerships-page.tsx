@@ -9,6 +9,36 @@ type PartnershipsClientProps = {
 
 const TELEGRAM_LINK = "https://t.me/simpledeutsch";
 
+type ThemeAwareLogoProps = {
+  lightSrc: string;
+  darkSrc: string;
+  alt: string;
+  width: number;
+  height: number;
+  className: string;
+};
+
+function ThemeAwareLogo({ lightSrc, darkSrc, alt, width, height, className }: ThemeAwareLogoProps) {
+  return (
+    <>
+      <Image
+        src={lightSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={`${className} dark:hidden`}
+      />
+      <Image
+        src={darkSrc}
+        alt={alt}
+        width={width}
+        height={height}
+        className={`${className} hidden dark:block`}
+      />
+    </>
+  );
+}
+
 export default function PartnershipsClient({
   contactEmail,
   locale = DEFAULT_LOCALE,
@@ -21,22 +51,23 @@ export default function PartnershipsClient({
       <section className="mx-auto max-w-7xl px-4 pt-24 text-center">
         <SectionText
           title={
-            <h1 className="sd-fade-in-item text-4xl sm:text-5xl md:text-6xl font-semibold leading-[1.1] tracking-tight text-[var(--sd-text)] text-center">
+            <h1 className="type-display sd-fade-in-item text-[var(--sd-text)] text-center">
               {t("partnerships.hero.title")}
             </h1>
           }
         >
-          <div className="sd-fade-in-item text-center" style={{ animationDelay: "90ms" }}>
-            <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-              {t("partnerships.hero.intro")}
-            </p>
+          <div className="sd-fade-in-item text-left" style={{ animationDelay: "90ms" }}>
+            <p className="type-lead text-[var(--sd-text-muted)]">{t("partnerships.hero.intro")}</p>
           </div>
         </SectionText>
       </section>
 
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:pt-10 mb-28">
         <SectionText>
-          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]" style={{ animationDelay: "180ms" }}>
+          <div
+            className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 text-left text-base sm:text-lg leading-[1.78] text-[var(--sd-text-muted)]"
+            style={{ animationDelay: "180ms" }}
+          >
             <p>{t("partnerships.sections.preLogos.p1")}</p>
             <p>{t("partnerships.sections.preLogos.p2")}</p>
             <p>{t("partnerships.sections.preLogos.p3")}</p>
@@ -44,22 +75,17 @@ export default function PartnershipsClient({
         </SectionText>
       </section>
 
-      <section className="relative w-full bg-[#0B0D16] py-32">
-        <div className="absolute inset-x-0 top-0">
-          <div className="mx-auto max-w-7xl px-4 pt-[40px] text-white">
-            <h2 className="sd-fade-in-item text-center text-3xl font-semibold tracking-tight">
-              {t("partnerships.partners.heading")}
-            </h2>
-          </div>
-        </div>
+      <div className="bg-gradient-section -mx-[calc(50vw-50%)] w-screen">
+        <div className="mx-auto max-w-7xl px-4 py-10">
+          <h2 className="type-title sd-fade-in-item text-center text-[var(--sd-text)]">
+            {t("partnerships.partners.heading")}
+          </h2>
 
-        <div className="mx-auto max-w-7xl px-4 text-white">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center justify-items-center gap-16 pt-6 sm:gap-24">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 items-center justify-items-center gap-16 pt-8 sm:gap-24">
             <a
               href="https://la-red.eu/"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit La Red"
               className="sd-fade-in-item group block cursor-pointer"
               style={{ animationDelay: "80ms" }}
             >
@@ -69,7 +95,7 @@ export default function PartnershipsClient({
                   alt="La Red"
                   width={900}
                   height={300}
-                  className="max-h-28 md:max-h-32 w-auto max-w-[380px] object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
+                  className="max-h-28 md:max-h-32 w-auto max-w-[380px] object-contain opacity-80 transition duration-300 group-hover:opacity-100 motion-reduce:transition-none"
                 />
               </div>
             </a>
@@ -78,17 +104,17 @@ export default function PartnershipsClient({
               href="https://www.deutschlandstiftung.net/"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit Deutschlandstiftung Integration"
               className="sd-fade-in-item group block cursor-pointer"
               style={{ animationDelay: "160ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
-                <Image
-                  src="/partnerships_logo/DSI_white_logo.png"
+                <ThemeAwareLogo
+                  lightSrc="/partnerships_logo/DSI_logo.png"
+                  darkSrc="/partnerships_logo/DSI_white_logo.png"
                   alt="Deutschlandstiftung Integration (DSI)"
                   width={1100}
                   height={600}
-                  className="max-h-32 md:max-h-36 w-auto max-w-[480px] object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
+                  className="max-h-32 md:max-h-36 w-auto max-w-[480px] object-contain opacity-80 transition duration-300 group-hover:opacity-100 motion-reduce:transition-none"
                 />
               </div>
             </a>
@@ -97,17 +123,17 @@ export default function PartnershipsClient({
               href="https://www.deutschlandstiftung.net/projekte/fast-track"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit Fast Track"
               className="sd-fade-in-item group block cursor-pointer"
               style={{ animationDelay: "240ms" }}
             >
               <div className="flex h-40 w-full max-w-[420px] items-center justify-center">
-                <Image
-                  src="/partnerships_logo/fast_track_white_logo.png"
+                <ThemeAwareLogo
+                  lightSrc="/partnerships_logo/fast_track_logo.png"
+                  darkSrc="/partnerships_logo/fast_track_white_logo.png"
                   alt="Fast Track"
                   width={900}
                   height={400}
-                  className="max-h-28 md:max-h-32 w-auto object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
+                  className="max-h-28 md:max-h-32 w-auto object-contain opacity-80 transition duration-300 group-hover:opacity-100 motion-reduce:transition-none"
                 />
               </div>
             </a>
@@ -116,7 +142,6 @@ export default function PartnershipsClient({
               href="https://la-red.eu/projekt/nex-ki"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit NexKI"
               className="sd-fade-in-item group block cursor-pointer"
               style={{ animationDelay: "320ms" }}
             >
@@ -126,17 +151,17 @@ export default function PartnershipsClient({
                   alt="NexKI"
                   width={900}
                   height={400}
-                  className="max-h-28 md:max-h-32 w-auto object-contain opacity-90 transition duration-300 group-hover:opacity-100 group-hover:brightness-125 motion-reduce:transition-none"
+                  className="max-h-28 md:max-h-32 w-auto object-contain opacity-80 transition duration-300 group-hover:opacity-100 motion-reduce:transition-none dark:brightness-125"
                 />
               </div>
             </a>
           </div>
         </div>
-      </section>
+      </div>
 
       <section className="mx-auto w-full max-w-7xl px-4 mt-28 pb-20 md:pb-24">
         <SectionText>
-          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-5 text-left text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
+          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-5 text-left text-base sm:text-lg leading-[1.78] text-[var(--sd-text-muted)]">
             <p>{t("partnerships.sections.postLogos.p1")}</p>
             <p>{t("partnerships.sections.postLogos.p2")}</p>
             <p>{t("partnerships.sections.postLogos.p3")}</p>
@@ -150,32 +175,31 @@ export default function PartnershipsClient({
         <SectionText
           className="[&>div>div]:space-y-3 md:[&>div>div]:space-y-3"
           title={
-            <h2 className="sd-fade-in-item text-3xl sm:text-4xl font-semibold text-[var(--sd-text)] text-center">
+            <h2 className="type-title sd-fade-in-item text-[var(--sd-text)] text-center">
               {t("partnerships.cta.title")}
             </h2>
           }
         >
           <div className="sd-fade-in-item text-center" style={{ animationDelay: "80ms" }}>
-            <p className="text-[20px] leading-[1.8] text-[var(--sd-text-muted)]">
-              {t("partnerships.cta.lead")}
-            </p>
+            <p className="type-lead text-[var(--sd-text-muted)]">{t("partnerships.cta.lead")}</p>
           </div>
 
-          <div className="sd-fade-in-item flex flex-wrap items-center justify-center gap-3 pt-2" style={{ animationDelay: "160ms" }}>
+          <div
+            className="sd-fade-in-item flex flex-wrap items-center justify-center gap-3 pt-2"
+            style={{ animationDelay: "160ms" }}
+          >
             <a
               href={TELEGRAM_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full px-5 py-2 text-sm font-medium transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label={t("partnerships.cta.telegramAria")}
+              className="type-button rounded-full px-5 py-2 transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {t("partnerships.cta.telegram")}
             </a>
 
             <a
               href={`mailto:${contactEmail}`}
-              className="rounded-full px-5 py-2 text-sm font-medium transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
-              aria-label={t("partnerships.cta.emailAria")}
+              className="type-button rounded-full px-5 py-2 transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {t("partnerships.cta.email")}
             </a>

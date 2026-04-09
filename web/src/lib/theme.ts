@@ -59,10 +59,7 @@ function clearThemeTransitionArtifacts() {
   activeOverlay = null;
 }
 
-export function runThemeTransition(
-  toggleTheme: () => void,
-  coords?: ThemeTransitionCoords,
-) {
+export function runThemeTransition(toggleTheme: () => void, coords?: ThemeTransitionCoords) {
   if (typeof window === "undefined" || typeof document === "undefined") {
     toggleTheme();
     return;
@@ -115,10 +112,13 @@ export function runThemeTransition(
     });
   }, MOTION.fast + 40);
 
-  const cleanupId = window.setTimeout(() => {
-    if (activeOverlay !== overlay) return;
-    clearThemeTransitionArtifacts();
-  }, MOTION.fast + MOTION.themeVeilOut + 180);
+  const cleanupId = window.setTimeout(
+    () => {
+      if (activeOverlay !== overlay) return;
+      clearThemeTransitionArtifacts();
+    },
+    MOTION.fast + MOTION.themeVeilOut + 180,
+  );
 
   activeTimers = [swapId, cleanupId];
 }

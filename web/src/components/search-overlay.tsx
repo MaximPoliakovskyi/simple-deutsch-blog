@@ -17,9 +17,9 @@ import {
 import { createPortal } from "react-dom";
 import { useI18n } from "@/components/providers";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
-import { MOTION } from "@/lib/motion";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
-import { lockScroll, unlockScroll } from "@/lib/scroll";
+import { MOTION } from "@/lib/motion";
+import { lockSearch, unlockSearch } from "@/lib/search-scroll-lock";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -72,6 +72,9 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const openedPathnameRef = useRef(pathname);
+  const restoreScrollOnCloseRef = useRef(true);
+  const closeTimeoutRef = useRef<number | null>(null);
   const prefersReducedMotion = usePrefersReducedMotion();
   const focusSearchInput = useCallback(() => {
     const input = inputRef.current;
@@ -102,6 +105,11 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const [contentMax, setContentMax] = useState<number | null>(null);
   const CLOSE_MS = MOTION.fast;
   const RESIZE_MS = 260;
+  const clearCloseTimeout = useCallback(() => {
+    if (closeTimeoutRef.current === null) return;
+    window.clearTimeout(closeTimeoutRef.current);
+    closeTimeoutRef.current = null;
+  }, []);
 
   useEffect(() => {
     const should = !loading && (items.length > 0 || (hasSearched && items.length === 0));
@@ -219,19 +227,16 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
   const [show, setShow] = useState(false); // drives enter/exit transitions
   const TRANSITION_MS = prefersReducedMotion ? 0 : MOTION.fast;
 
-  // Lock scroll and trigger **smooth enter animation**
+  // Lock scroll and trigger enter animation on mount
   useEffect(() => {
     setMounted(true);
-    try {
-      lockScroll();
-    } catch {}
+    lockSearch();
 
     if (prefersReducedMotion) {
       setShow(true);
       return () => {
-        try {
-          unlockScroll();
-        } catch {}
+        clearCloseTimeout();
+        unlockSearch({ restoreScroll: restoreScrollOnCloseRef.current });
       };
     }
 
@@ -242,11 +247,10 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
 
     return () => {
       cancelAnimationFrame(id);
-      try {
-        unlockScroll();
-      } catch {}
+      clearCloseTimeout();
+      unlockSearch({ restoreScroll: restoreScrollOnCloseRef.current });
     };
-  }, [prefersReducedMotion]);
+  }, [clearCloseTimeout, prefersReducedMotion]);
 
   const requestClose = useCallback(() => {
     // Collapse results and close panel/backdrop.
@@ -254,13 +258,31 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
     setShow(false);
     if (prefersReducedMotion) {
       onClose();
-      return () => {};
+      return;
     }
-    const t = window.setTimeout(() => onClose(), TRANSITION_MS);
-    return () => {
-      window.clearTimeout(t);
-    };
-  }, [onClose, prefersReducedMotion, TRANSITION_MS]);
+    clearCloseTimeout();
+    closeTimeoutRef.current = window.setTimeout(() => {
+      closeTimeoutRef.current = null;
+      onClose();
+    }, TRANSITION_MS);
+  }, [clearCloseTimeout, onClose, prefersReducedMotion, TRANSITION_MS]);
+
+  const navigateToResult = useCallback(
+    (href: string) => {
+      restoreScrollOnCloseRef.current = false;
+      clearCloseTimeout();
+      router.push(href);
+      onClose();
+    },
+    [clearCloseTimeout, onClose, router],
+  );
+
+  useEffect(() => {
+    if (pathname === openedPathnameRef.current) return;
+    restoreScrollOnCloseRef.current = false;
+    clearCloseTimeout();
+    onClose();
+  }, [clearCloseTimeout, onClose, pathname]);
 
   // Global key handlers
   useEffect(() => {
@@ -393,14 +415,13 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         e.preventDefault();
         const current = items[highlight];
         if (current) {
-          requestClose();
-          router.push(`/posts/${current.slug}`);
+          navigateToResult(`/posts/${current.slug}`);
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [focusSearchInput, items, highlight, router, requestClose, q]);
+  }, [focusSearchInput, items, highlight, navigateToResult, q, requestClose]);
 
   // Ensure highlighted item is scrolled into view
   useEffect(() => {
@@ -467,7 +488,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         // Backdrop: use a single consistent backdrop regardless of how the
         // overlay was opened (keyboard or click). This ensures Ctrl+K and
         // clicking the "Find an article" button look the same.
-        "fixed inset-0 z-100",
+        "fixed inset-0 z-[200]",
         // Respect prefers-reduced-motion by letting OS disable transitions
         "motion-reduce:transition-none",
         show ? "bg-black/70" : "bg-transparent",
@@ -588,10 +609,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
                   <button
                     type="button"
                     onMouseEnter={() => setHighlight(i)}
-                    onClick={() => {
-                      requestClose();
-                      router.push(`/posts/${it.slug}`);
-                    }}
+                    onClick={() => navigateToResult(`/posts/${it.slug}`)}
                     className={cn(
                       "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
                       "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",
@@ -617,7 +635,7 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
                       />
                     )}
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                      <div className="type-ui-label truncate text-neutral-900 dark:text-neutral-100">
                         {it.title}
                       </div>
                       <div
@@ -645,6 +663,6 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         </div>
       </div>
     </div>,
-    document.body,
+    document.getElementById("overlay-root") ?? document.body,
   );
 }

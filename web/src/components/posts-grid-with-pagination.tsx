@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useI18n } from "@/components/providers";
 import type { PostListItem, WPPostCard } from "@/lib/posts";
-import PostCard, { type PostCardPost } from "./cards";
+import PostCard, { type PostCardPost } from "./post-card";
 
 type Post = WPPostCard | PostListItem | PostCardPost;
 
@@ -34,7 +34,7 @@ export default function PostsGridWithPagination({
   pageSize = 3,
   query,
 }: Props) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [posts, setPosts] = useState<Post[]>(() => initialPosts ?? []);
   const [pageInfo, setPageInfo] = useState<{ hasNextPage: boolean; endCursor: string | null }>(
     initialPageInfo ?? { hasNextPage: false, endCursor: null },
@@ -93,11 +93,15 @@ export default function PostsGridWithPagination({
   if (!posts.length) return <div>{t("noPosts")}</div>;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 sd-fade-in-slow">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
-        {posts.map((post, idx) => (
-          <div key={stableKey(post) || (post.slug as string)}>
-            <PostCard post={post} index={idx} />
+        {posts.map((post, index) => (
+          <div
+            key={stableKey(post) || (post.slug as string)}
+            className="sd-fade-in-item"
+            style={{ animationDelay: `${index * 80}ms` }}
+          >
+            <PostCard post={post} locale={locale} />
           </div>
         ))}
       </div>
@@ -110,7 +114,7 @@ export default function PostsGridWithPagination({
         <div className="flex justify-center">
           <button
             type="button"
-            className="mx-auto rounded-full px-5 py-2 text-sm font-medium transition-transform duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
+            className="type-button mx-auto rounded-full px-5 py-2 transition-transform duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
             onClick={loadMore}
             disabled={isLoading}

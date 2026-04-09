@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import PostCard from "@/components/cards";
+import PostCard from "@/components/post-card";
 import SearchBox from "@/components/search-box";
 import { buildSearchMetadataCopy, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import { getSearchPageResults, type WPPostCard } from "@/lib/posts";
@@ -40,7 +40,7 @@ export async function SearchPageContent({
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-4 text-2xl font-semibold">{t.search}</h1>
+      <h1 className="type-display mb-4">{t.search}</h1>
       <SearchBox className="mb-6" autoFocus placeholder={t.searchPlaceholder} />
 
       {!query && (
@@ -51,7 +51,7 @@ export async function SearchPageContent({
 
       {query && posts.length === 0 && (
         <p className="text-neutral-600">
-          No results for <span className="font-medium">"{query}"</span>. Try a different term.
+          No results for <span className="font-semibold">"{query}"</span>. Try a different term.
         </p>
       )}
 
@@ -65,7 +65,7 @@ export async function SearchPageContent({
         <div className="mt-8 flex justify-center">
           <a
             href={`${effectiveLocale === DEFAULT_LOCALE ? "" : `/${effectiveLocale}`}/search?q=${encodeURIComponent(query)}&after=${encodeURIComponent(pageInfo.endCursor ?? "")}`}
-            className="rounded-xl border px-4 py-2 text-sm hover:bg-neutral-100"
+            className="type-button rounded-xl border px-4 py-2 hover:bg-neutral-100"
           >
             {t.loadMore}
           </a>

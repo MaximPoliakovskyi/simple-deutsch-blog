@@ -69,13 +69,18 @@ function isPostDetailPath(strippedPathname: string): boolean {
   return segments.length >= 2 && segments[0] === "posts";
 }
 
+function isLevelDetailPath(strippedPathname: string): boolean {
+  const segments = strippedPathname.split("/").filter(Boolean);
+  return segments.length >= 2 && (segments[0] === "levels" || segments[0] === "tags");
+}
+
 function normalizeTranslatedPath(path: string, targetLocale: Locale): string {
   return withLocalePrefix(parsePathInput(path).pathname, targetLocale);
 }
 
 /**
  * Maps a pathname to its equivalent in the target locale.
- * Handles post detail paths (using translation map) and general routes (prefix swap).
+ * Handles translated detail paths (using translation map) and general routes (prefix swap).
  */
 export function mapPathToLocale(
   pathname: string,
@@ -84,10 +89,13 @@ export function mapPathToLocale(
 ): string {
   const parsed = parsePathInput(pathname);
   const strippedPathname = stripLocalePrefix(parsed.pathname);
+  const postDetail = isPostDetailPath(strippedPathname);
+  const levelDetail = isLevelDetailPath(strippedPathname);
+  const defaultFallbackPath = levelDetail ? `/${targetLocale}/levels` : `/${targetLocale}`;
   const fallbackPathname =
-    parsePathInput(options.fallbackPath ?? `/${targetLocale}`).pathname || `/${targetLocale}`;
+    parsePathInput(options.fallbackPath ?? defaultFallbackPath).pathname || defaultFallbackPath;
 
-  if (isPostDetailPath(strippedPathname)) {
+  if (postDetail || levelDetail) {
     const translatedPath = options.translationMap?.[targetLocale];
     if (!translatedPath) {
       return `${fallbackPathname}${parsed.search}${parsed.hash}`;

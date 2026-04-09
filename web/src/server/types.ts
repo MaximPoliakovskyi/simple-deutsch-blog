@@ -20,9 +20,20 @@ export type Tag = {
   databaseId: number;
   name: string;
   slug: string;
+  levelColor?: string | null;
   description: string | null;
   count: number;
   uri: string;
+  language?: PostLanguage | null;
+  translations?: PostTranslation[] | null;
+};
+
+export type PostTermNode = {
+  id?: string;
+  databaseId?: number;
+  name: string;
+  slug: string;
+  levelColor?: string | null;
 };
 
 export type WPImage = {
@@ -111,8 +122,8 @@ export type PostListItem = {
   featuredImage?: { node?: { sourceUrl?: string | null; altText?: string | null } | null } | null;
   featuredImageUrl?: string | null;
   author?: { node?: { name?: string | null } | null } | null;
-  categories?: { nodes: Array<{ name: string; slug: string }> };
-  tags?: { nodes: Array<{ name: string; slug: string }> };
+  categories?: { nodes: PostTermNode[] };
+  tags?: { nodes: PostTermNode[] };
   language?: PostLanguage | null;
   translations?: PostTranslation[] | null;
   readingMinutes?: number | null;
@@ -142,7 +153,8 @@ export type WPPostCard = {
   featuredImage?: { node?: WPImage | null } | null;
   featuredImageUrl?: string | null;
   author?: { node?: WPAuthor | null } | null;
-  categories?: { nodes: { id?: string; name: string; slug: string }[] };
+  categories?: { nodes: PostTermNode[] };
+  tags?: { nodes: PostTermNode[] };
   language?: PostLanguage | null;
   readingMinutes?: number | null;
   readingWords?: number | null;

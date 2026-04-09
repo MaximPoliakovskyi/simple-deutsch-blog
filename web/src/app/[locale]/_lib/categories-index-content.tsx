@@ -34,7 +34,7 @@ export async function CategoriesIndexContent({ locale }: { locale: Locale }) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-8 text-3xl font-semibold">{t.categoriesHeading}</h1>
+      <h1 className="type-display mb-8">{t.categoriesHeading}</h1>
       {visible.length === 0 ? (
         <p className="text-neutral-600">{t.noCategories}</p>
       ) : (
@@ -50,10 +50,10 @@ export async function CategoriesIndexContent({ locale }: { locale: Locale }) {
                 className="group block"
               >
                 <div className="mb-1 flex items-baseline justify-between">
-                  <h2 className="text-lg font-medium group-hover:underline">
+                  <h2 className="type-heading-4 group-hover:underline">
                     {translateCategory(category.name, category.slug, locale)}
                   </h2>
-                  <span className="text-xs text-neutral-500">
+                  <span className="type-caption text-neutral-500">
                     {formatLocalizedPostCount(countsMap.get(category.slug) ?? 0, locale)}
                   </span>
                 </div>
@@ -66,13 +66,13 @@ export async function CategoriesIndexContent({ locale }: { locale: Locale }) {
                   const final = translated ?? category.description ?? null;
                   if (final) {
                     return (
-                      <p className="line-clamp-3 text-sm text-neutral-600 dark:text-neutral-400">
+                      <p className="line-clamp-3 text-sm leading-7 text-neutral-600 dark:text-neutral-400">
                         {final}
                       </p>
                     );
                   }
                   return (
-                    <p className="text-sm text-neutral-500">
+                    <p className="text-sm leading-7 text-neutral-500">
                       Browse posts in {translateCategory(category.name, category.slug, locale)}.
                     </p>
                   );

@@ -19,7 +19,6 @@ const POST_CARD_FIELDS = /* GraphQL */ `
     title
     date
     excerpt
-    content
     featuredImage {
       node {
         sourceUrl
@@ -212,7 +211,6 @@ export const POSTS_CONNECTION = /* GraphQL */ `
           slug
           title
           excerpt
-          content
           date
           language { code slug locale }
           featuredImage { node { sourceUrl altText } }
@@ -321,6 +319,21 @@ const TAG_FIELDS = /* GraphQL */ `
     description
     count
     uri
+    language {
+      code
+      slug
+      locale
+    }
+    translations {
+      databaseId
+      slug
+      uri
+      language {
+        code
+        slug
+        locale
+      }
+    }
   }
 `;
 
@@ -441,18 +454,6 @@ export const GET_RELATED_LATEST_POSTS = /* GraphQL */ `
         ...PostCardFields
         databaseId
       }
-    }
-  }
-`;
-
-// Lightweight query for homepage initial load - reduced fields for better performance
-export const GET_POSTS_LIGHTWEIGHT = /* GraphQL */ `
-  ${POST_CARD_FIELDS}
-  ${PAGE_INFO_FIELDS}
-  query PostsFeedLightweight($first: Int!, $after: String, $language: LanguageCodeFilterEnum) {
-    posts(first: $first, after: $after, where: { orderby: { field: DATE, order: DESC }, language: $language }) {
-      pageInfo { ...PageInfoFields }
-      nodes { ...PostCardFields }
     }
   }
 `;

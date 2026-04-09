@@ -23,33 +23,3 @@ export function tryParseLocale(value: string | null | undefined): Locale | undef
     return undefined;
   }
 }
-
-// ── Response helpers ─────────────────────────────────────────────────────
-
-type ApiErrorBody = {
-  data: null;
-  error: { code: string; message: string };
-};
-
-/**
- * Returns a typed JSON error response with a consistent shape.
- *
- * @example return apiErrorResponse("Failed to fetch posts", 500);
- */
-export function apiErrorResponse(
-  message: string,
-  status: number,
-  code = "INTERNAL_ERROR",
-): Response {
-  const body: ApiErrorBody = { data: null, error: { code, message } };
-  return Response.json(body, { status });
-}
-
-/**
- * Extracts a human-readable message from an unknown thrown value.
- */
-export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  if (typeof error === "string") return error;
-  return "An unexpected error occurred";
-}
