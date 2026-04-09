@@ -40,6 +40,13 @@ const ru: Record<string, string> = {
     "Реальные истории людей, которые шаг за шагом улучшали свой немецкий — от начинающих до уверенных говорящих. Узнайте, что сработало для них, и вдохновляйтесь практичным, достижимым прогрессом.",
   noCategories: "Категорий не найдено.",
   minRead: "мин чтения",
+  "readingTime.one": "{count} минута чтения",
+  "readingTime.few": "{count} минуты чтения",
+  "readingTime.many": "{count} минут чтения",
+  "readingTime.other": "{count} минут чтения",
+  "readStatus.label": "Статус прочтения",
+  "readStatus.read": "Прочитано",
+  "readStatus.unread": "Не прочитано",
   viewCategoryAria: "Просмотреть категорию",
   /* Post count pluralization (Russian forms) */
   "post.count.one": "пост",

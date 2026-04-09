@@ -1,6 +1,13 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   DEFAULT_LOCALE,
   type Locale,
@@ -54,9 +61,9 @@ export function LocaleProvider({ children, locale: providedLocale }: LocaleProvi
   const [postLangLinks, setPostLangLinks] = useState<PostLangLinks | null>(null);
   const locale = providedLocale ?? DEFAULT_LOCALE;
 
-  // html[lang] is set by the inline script in [locale]/layout.tsx before
-  // hydration; this effect keeps it in sync on soft navigations.
-  useEffect(() => {
+  // Keep html[lang] in sync for hydration and soft navigations without
+  // rendering an inline <script> inside the React tree.
+  useLayoutEffect(() => {
     document.documentElement.lang = locale === "uk" ? "uk" : locale === "ru" ? "ru" : "en";
   }, [locale]);
 

@@ -18,6 +18,9 @@ import { useTransitionNav } from "./route-wrapper";
 const MOBILE_MENU_ITEM_CLASS =
   "block w-full rounded-lg px-2 py-3 text-left !text-base !font-normal !leading-6 !tracking-[var(--tracking-copy)] hover:bg-neutral-200/60 focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:hover:bg-neutral-800/60";
 
+const DESKTOP_NAV_LINK_CLASS =
+  "type-ui-label inline-flex min-h-10 items-center rounded-md px-2 text-neutral-700 transition-colors hover:text-neutral-900 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300 dark:hover:text-neutral-100";
+
 // ---------------------------------------------------------------------------
 // ThemeToggle (formerly theme-toggle.tsx)
 // ---------------------------------------------------------------------------
@@ -484,7 +487,7 @@ export function NavLinks({ mode, buildLocalePath, label, onNavigate }: NavLinksP
               prefetch
               onMouseEnter={() => prefetchIntent(href)}
               onFocus={() => prefetchIntent(href)}
-              className="text-sm text-neutral-700 hover:underline focus-visible:ring-2 focus-visible:ring-[var(--sd-accent)] dark:text-neutral-300"
+              className={DESKTOP_NAV_LINK_CLASS}
             >
               {label(item.key, item.fallback)}
             </Link>
@@ -539,7 +542,7 @@ export function NavigationDesktop({
   tFromProvider,
 }: DesktopProps) {
   return (
-    <div className="hidden items-center gap-6 md:flex">
+    <div className="hidden items-center gap-4 md:flex">
       <NavLinks mode="desktop" buildLocalePath={buildLocalePath} label={label} />
 
       <div className="flex items-center gap-4">

@@ -72,7 +72,7 @@ export const viewport: Viewport = {
 /* biome-disable */
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang={DEFAULT_LOCALE} suppressHydrationWarning>
+    <html lang={DEFAULT_LOCALE} suppressHydrationWarning data-preloader="1">
       <head>
         <meta charSet="UTF-8" />
 

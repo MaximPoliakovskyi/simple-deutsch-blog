@@ -40,6 +40,13 @@ const uk: Record<string, string> = {
     "Реальні історії людей, які крок за кроком покращували свою німецьку — від початківців до впевнених мовців. Дізнайтеся, що допомогло їм, і надихніться практичним, досяжним прогресом.",
   noCategories: "Категорій не знайдено.",
   minRead: "хв читання",
+  "readingTime.one": "{count} хвилина читання",
+  "readingTime.few": "{count} хвилини читання",
+  "readingTime.many": "{count} хвилин читання",
+  "readingTime.other": "{count} хвилин читання",
+  "readStatus.label": "Статус прочитання",
+  "readStatus.read": "Прочитано",
+  "readStatus.unread": "Не прочитано",
   viewCategoryAria: "Переглянути категорію",
   /* Post count pluralization (Ukrainian forms) */
   "post.count.one": "пост",

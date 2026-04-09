@@ -6,6 +6,7 @@ import {
   buildLocalizedHref,
   DEFAULT_LOCALE,
   isLocale,
+  resolveReadingTimeLabel,
   type Locale,
   TRANSLATIONS,
   translateCategory,
@@ -19,6 +20,7 @@ import {
   type PostDetail,
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
+import ReadStatusIndicator from "@/components/read-status-indicator";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
 
 function PostContent({ html, className = "" }: { html: string; className?: string }) {
@@ -202,6 +204,8 @@ export async function renderPostPage({
     paramLang && isLocale(paramLang) ? paramLang : resolvedLocale;
 
   const currentLang = postLanguageFromGraphQL ?? resolvedLocale;
+  const readingLabel = resolveReadingTimeLabel(post.readingMinutes, post.readingText, resolvedLocale);
+  const postReadIdentifier = buildLocalizedHref(resolvedLocale, `/posts/${post.slug}`);
 
   const withLocaleHref = (lang: string, postSlug: string) => `/${lang}/posts/${postSlug}`;
 
@@ -231,7 +235,7 @@ export async function renderPostPage({
       <main className="sd-fade-in-slow mx-auto max-w-7xl px-4 py-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <article className="md:col-span-3" data-reading-target="post">
-            <h1 className="type-display mb-6">{post.title}</h1>
+            <h1 className="type-display type-display-post mb-6">{post.title}</h1>
 
             {showCategories ? (
               <div className="mb-6 flex flex-wrap gap-2">
@@ -253,11 +257,12 @@ export async function renderPostPage({
               </div>
               <div className="text-sm text-gray-600 dark:text-gray-400">
                 <div className="font-semibold text-gray-900 dark:text-gray-100">{authorName}</div>
-                <div className="dark:text-gray-400">
+                <div className="type-ui-label flex flex-wrap items-center gap-x-2 gap-y-1 text-gray-600 dark:text-gray-400">
                   {formattedDate}
-                  {formattedDate && post.readingText ? " · " : ""}
-                  {post.readingText ?? ""}
+                  {formattedDate && readingLabel ? <span aria-hidden>·</span> : null}
+                  {readingLabel ? <span>{readingLabel}</span> : null}
                 </div>
+                <ReadStatusIndicator identifier={postReadIdentifier} markOnMount variant="hidden" />
               </div>
             </div>
 

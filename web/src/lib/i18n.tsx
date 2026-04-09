@@ -198,6 +198,46 @@ export function formatPostCardDate(
   return formatLongDate(value, locale, { timeZone: "UTC" });
 }
 
+export function formatReadingTime(
+  minutes: number | null | undefined,
+  locale: Locale,
+): string | null {
+  if (!Number.isFinite(minutes) || !minutes) {
+    return null;
+  }
+
+  const safeMinutes = Math.max(1, Math.round(minutes));
+  const dictionary = getTranslations(locale);
+
+  if (locale === "en") {
+    return (
+      formatTranslation(dictionary["readingTime.other"], { count: safeMinutes }) ||
+      `${safeMinutes} min read`
+    );
+  }
+
+  const form = getSlavicPluralForm(safeMinutes);
+  return (
+    formatTranslation(dictionary[`readingTime.${form}`], { count: safeMinutes }) ||
+    formatTranslation(dictionary["readingTime.other"], { count: safeMinutes }) ||
+    `${safeMinutes}`
+  );
+}
+
+export function resolveReadingTimeLabel(
+  minutes: number | null | undefined,
+  readingText: string | null | undefined,
+  locale: Locale,
+): string | null {
+  const formatted = formatReadingTime(minutes, locale);
+  if (formatted) {
+    return formatted;
+  }
+
+  const fallback = typeof readingText === "string" ? readingText.trim() : "";
+  return fallback || null;
+}
+
 function makeLookupVariants(value: string | undefined | null) {
   if (!value) {
     return [] as string[];

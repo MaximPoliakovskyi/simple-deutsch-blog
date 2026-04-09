@@ -5,12 +5,6 @@ import Header from "@/components/header";
 import { LocaleProvider } from "@/components/providers";
 import { getRequiredRouteLocale } from "./locale-route";
 
-const HTML_LANG_MAP: Record<string, string> = {
-  en: "en",
-  ru: "ru",
-  uk: "uk",
-};
-
 type Props = {
   children: ReactNode;
   params: Promise<{ locale: string }>;
@@ -26,16 +20,9 @@ type Props = {
 export default async function LocaleRootLayout({ children, params }: Props) {
   const { locale } = await params;
   const validated = getRequiredRouteLocale(locale);
-  const htmlLang = HTML_LANG_MAP[validated] ?? validated;
 
   return (
     <LocaleProvider locale={validated}>
-      {/* Set html[lang] synchronously so it's correct for screen readers before hydration */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `document.documentElement.lang="${htmlLang}";`,
-        }}
-      />
       <Header />
       <ChromeExtrasDeferred />
       <main className="mt-8 md:mt-12">{children}</main>

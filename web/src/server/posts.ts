@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, formatReadingTime, type Locale } from "@/lib/i18n";
 import { CACHE_TAGS } from "@/server/cache";
 import { fetchGraphQL } from "@/server/client";
 import { withWordPressLevelColor, withWordPressLevelColors } from "@/server/level-styles";
@@ -122,29 +122,6 @@ function countWords(text: string): number {
   return matches?.length ?? 0;
 }
 
-function pluralRuUk(value: number): "one" | "few" | "many" {
-  const n10 = value % 10;
-  const n100 = value % 100;
-  if (n10 === 1 && n100 !== 11) return "one";
-  if (n10 >= 2 && n10 <= 4 && (n100 < 12 || n100 > 14)) return "few";
-  return "many";
-}
-
-function formatReadingTime(minutes: number, locale: "en" | "de" | "ru" | "uk"): string {
-  if (locale === "de") return `${minutes} Min. Lesezeit`;
-  if (locale === "ru") {
-    const form = pluralRuUk(minutes);
-    const unit = form === "one" ? "минута" : form === "few" ? "минуты" : "минут";
-    return `${minutes} ${unit} чтения`;
-  }
-  if (locale === "uk") {
-    const form = pluralRuUk(minutes);
-    const unit = form === "one" ? "хвилина" : form === "few" ? "хвилини" : "хвилин";
-    return `${minutes} ${unit} читання`;
-  }
-  return `${minutes} min read`;
-}
-
 /** Computes reading time from raw HTML content, respecting locale-specific WPM. */
 export function calculateReadingTimeFromHtml(
   html: string,
@@ -159,7 +136,10 @@ export function calculateReadingTimeFromHtml(
     minutes,
     words,
     wordsPerMinute,
-    text: formatReadingTime(minutes, normalizedLocale),
+    text:
+      normalizedLocale === "de"
+        ? `${minutes} Min. Lesezeit`
+        : (formatReadingTime(minutes, normalizedLocale) ?? `${minutes}`),
   };
 }
 

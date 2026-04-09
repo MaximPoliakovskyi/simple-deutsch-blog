@@ -40,6 +40,10 @@ const en: Record<string, string> = {
     "Real stories from learners who improved their German step by step — from beginners to confident speakers. Learn what worked for them and get inspired by practical, achievable progress.",
   noCategories: "No categories found.",
   minRead: "min read",
+  "readingTime.other": "{count} min read",
+  "readStatus.label": "Read status",
+  "readStatus.read": "Read",
+  "readStatus.unread": "Unread",
   viewCategoryAria: "View category",
   /* Page titles and not-found */
   backToHome: "Back to Home",

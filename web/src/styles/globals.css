@@ -122,6 +122,17 @@ html {
   scrollbar-gutter: stable;
 }
 
+html[data-preloader="1"] {
+  overflow: hidden;
+  scrollbar-gutter: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html[data-preloader="1"]::-webkit-scrollbar {
+  display: none;
+}
+
 html.search-open {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -496,6 +507,11 @@ figcaption,
   line-height: 1.15;
   letter-spacing: var(--tracking-heading);
   text-wrap: balance;
+}
+
+.type-display-post {
+  font-size: clamp(2.5rem, 1.7rem + 4.4vw, 5rem);
+  line-height: 1.05;
 }
 
 .type-title {

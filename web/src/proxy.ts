@@ -1,33 +1,6 @@
-﻿import type { NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-const SUPPORTED_LOCALES = ["en", "ru", "uk"] as const;
-type SupportedLocale = (typeof SUPPORTED_LOCALES)[number];
-const DEFAULT_LOCALE: SupportedLocale = "en";
-
-/**
- * Parse the Accept-Language header and return the best matching supported locale.
- * Respects q-weight ordering. Only maps 'uk' → 'uk' and 'ru' → 'ru'; everything
- * else falls back to the default ('en').
- */
-function detectLocaleFromHeader(acceptLanguage: string | null): SupportedLocale {
-  if (!acceptLanguage) return DEFAULT_LOCALE;
-
-  const entries = acceptLanguage
-    .split(",")
-    .map((part) => {
-      const [tag, qStr] = part.trim().split(";");
-      const q = qStr?.trim().startsWith("q=") ? parseFloat(qStr.trim().slice(2)) : 1.0;
-      return { base: tag.trim().toLowerCase().slice(0, 2), q: Number.isFinite(q) ? q : 0 };
-    })
-    .sort((a, b) => b.q - a.q);
-
-  for (const { base } of entries) {
-    if (base === "uk") return "uk";
-    if (base === "ru") return "ru";
-  }
-  return DEFAULT_LOCALE;
-}
+import { resolvePreferredLocale } from "@/lib/request-locale";
 
 // Matches paths that already have a 2-letter locale prefix (e.g. /en, /ru, /uk)
 const LOCALE_PREFIX_RE = /^\/[a-z]{2}(\/|$)/i;
@@ -59,10 +32,10 @@ export function proxy(request: NextRequest): NextResponse {
   // Priority: explicit cookie > Accept-Language header > default ('en').
   const rawCookie =
     request.cookies.get("NEXT_LOCALE")?.value ?? request.cookies.get("locale")?.value;
-  const locale: SupportedLocale =
-    rawCookie && (SUPPORTED_LOCALES as readonly string[]).includes(rawCookie)
-      ? (rawCookie as SupportedLocale)
-      : detectLocaleFromHeader(request.headers.get("accept-language"));
+  const locale = resolvePreferredLocale({
+    cookieLocale: rawCookie,
+    acceptLanguage: request.headers.get("accept-language"),
+  });
 
   const url = request.nextUrl.clone();
   url.pathname = pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;

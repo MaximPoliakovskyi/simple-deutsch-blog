@@ -1,6 +1,13 @@
 import Image from "next/image";
 import Link from "next/link";
-import { buildLocalizedHref, formatPostCardDate, type Locale, translateCategory } from "@/lib/i18n";
+import {
+  buildLocalizedHref,
+  formatPostCardDate,
+  type Locale,
+  resolveReadingTimeLabel,
+  translateCategory,
+} from "@/lib/i18n";
+import ReadStatusIndicator from "./read-status-indicator";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -120,6 +127,12 @@ export default function PostCard({
     (c) => !isHiddenCategory(c.name, c.slug),
   );
   const href = post.href ?? buildLocalizedHref(locale, `/posts/${post.slug}`);
+  const readingLabel = resolveReadingTimeLabel(post.readingMinutes, post.readingText, locale);
+  const metaDateText = post.dateText ?? computedDateText;
+  const primaryMetadata = [
+    { key: "date", value: metaDateText },
+    { key: "reading", value: readingLabel },
+  ].filter((item): item is { key: string; value: string } => Boolean(item.value));
 
   return (
     <article
@@ -158,15 +171,28 @@ export default function PostCard({
             )}
           </div>
         </div>
-        {((post.dateText ?? computedDateText) || post.readingText) && (
-          <p className="mt-4 text-sm text-neutral-500 dark:text-neutral-400">
-            {post.dateText ?? computedDateText}{" "}
-            {(post.dateText ?? computedDateText) && post.readingText ? (
-              <span aria-hidden>{"\u00B7"}</span>
-            ) : null}{" "}
-            {post.readingText}
-          </p>
-        )}
+        <div className="type-ui-label mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 leading-6 text-neutral-500 dark:text-neutral-400">
+          {primaryMetadata.length > 0 ? (
+            <span className="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-2 gap-y-1 leading-6">
+              {primaryMetadata.map((item, index) => (
+                <span
+                  key={item.key}
+                  className="inline-flex min-w-0 max-w-full items-baseline gap-2 leading-6"
+                >
+                  {index > 0 ? (
+                    <span aria-hidden className="shrink-0 leading-none">
+                      {"\u00B7"}
+                    </span>
+                  ) : null}
+                  <span className="min-w-0">{item.value}</span>
+                </span>
+              ))}
+            </span>
+          ) : null}
+          <span className="min-w-0 max-w-full leading-6">
+            <ReadStatusIndicator identifier={href} variant="inline" />
+          </span>
+        </div>
         <h3 id={titleId} className="mt-1 type-card-title">
           <span className="transition-colors duration-300 text-[hsl(var(--fg))] group-hover:text-slate-600 group-focus-within:text-slate-600 dark:group-hover:text-slate-300 dark:group-focus-within:text-slate-300">
             {post.title}
