@@ -66,11 +66,7 @@ export async function LevelPageContent({ tag, locale }: { tag: string; locale: L
       <PostLanguageLinksHydrator currentLang={locale} links={languageLinks} />
       <main className="mx-auto max-w-7xl px-4 py-10">
         <h1 className="type-display mb-6">{`${prefix} ${localizedName}`}</h1>
-        {term.description ? (
-          <p className="mb-8 max-w-2xl text-sm leading-7 text-neutral-600 dark:text-neutral-300">
-            {term.description}
-          </p>
-        ) : null}
+        {term.description ? <p>{term.description}</p> : null}
 
         <PostsGridWithPagination
           key={`${lang}-tag-${term.slug}`}

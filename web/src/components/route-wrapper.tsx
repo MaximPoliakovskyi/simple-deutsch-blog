@@ -15,7 +15,12 @@ import {
 } from "react";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
 import { MOTION } from "@/lib/motion";
-import { resetScrollToTop, setManualScrollRestoration } from "@/lib/scroll";
+import {
+  lockScroll,
+  resetScrollToTop,
+  setManualScrollRestoration,
+  unlockScroll,
+} from "@/lib/scroll";
 
 const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
@@ -109,10 +114,19 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
     timersRef.current = [];
   }, []);
 
-  useEffect(() => () => clearTimers(), [clearTimers]);
+  useEffect(
+    () => () => {
+      clearTimers();
+      if (phaseRef.current !== "idle") {
+        unlockScroll();
+      }
+    },
+    [clearTimers],
+  );
 
   const resetToIdle = useCallback(() => {
     clearTimers();
+    unlockScroll();
     phaseRef.current = "idle";
     setPhase("idle");
   }, [clearTimers]);
@@ -128,6 +142,7 @@ export function RouteTransitionProvider({ children }: { children: ReactNode }) {
       const startTime = Date.now();
       phaseRef.current = "entering";
       setPhase("entering");
+      lockScroll();
 
       // Navigate at the midpoint of the enter animation.
       const t1 = window.setTimeout(() => {

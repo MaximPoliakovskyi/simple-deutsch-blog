@@ -1,10 +1,11 @@
 "use client";
 
 import { type TransitionEvent, useCallback, useEffect, useRef, useState } from "react";
+import { lockScroll, unlockScroll } from "@/lib/scroll";
 
-const QUOTE_HOLD_MS = 800;
-const FADE_OUT_MS = 400;
-const QUOTE_FADE_MS = 250;
+const QUOTE_HOLD_MS = 1600;
+const FADE_OUT_MS = 500;
+const QUOTE_FADE_MS = 300;
 
 const QUOTES = [
   "Jede Sprache ist ein Schlüssel zu einer neuen Welt",
@@ -44,10 +45,19 @@ function PreloaderUI({ onFinished }: { onFinished?: () => void }) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
     }
+    unlockScroll();
     document.documentElement.setAttribute("data-preloader", "0");
     onFinished?.();
     setShowPreloader(false);
   }, [onFinished]);
+
+  useEffect(() => {
+    lockScroll();
+    return () => {
+      // Safety cleanup if component unmounts unexpectedly
+      unlockScroll();
+    };
+  }, []);
 
   useEffect(() => {
     if (prefersReducedMotionNow()) {

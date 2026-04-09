@@ -93,10 +93,14 @@ export default function PostsGridWithPagination({
   if (!posts.length) return <div>{t("noPosts")}</div>;
 
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-8 sd-fade-in-slow">
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-8 gap-y-16 py-2">
-        {posts.map((post) => (
-          <div key={stableKey(post) || (post.slug as string)}>
+        {posts.map((post, index) => (
+          <div
+            key={stableKey(post) || (post.slug as string)}
+            className="sd-fade-in-item"
+            style={{ animationDelay: `${index * 80}ms` }}
+          >
             <PostCard post={post} locale={locale} />
           </div>
         ))}
