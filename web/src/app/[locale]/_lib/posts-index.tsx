@@ -25,7 +25,7 @@ export default async function PostsIndex({ locale }: { locale?: Locale }) {
   const mappedPosts = posts.map((post) => ({
     ...post,
     dateText: formatPostCardDate(post.date, effectiveLocale),
-    href: buildLocalizedHref(effectiveLocale, `/posts/${post.slug}`),
+    href: buildLocalizedHref(effectiveLocale, `/articles/${post.slug}`),
     readingText: post.readingText ?? null,
   }));
 

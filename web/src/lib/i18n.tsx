@@ -439,11 +439,11 @@ export function formatLocalizedPostCount(count: number, locale: Locale) {
   const dictionary = getTranslations(locale);
 
   if (locale === "en") {
-    return `${count} ${count === 1 ? "post" : "posts"}`;
+    return `${count} ${count === 1 ? "article" : "articles"}`;
   }
 
   const form = getSlavicPluralForm(count);
-  const fallback = form === "one" ? "пост" : form === "few" ? "пости" : "постів";
+  const fallback = form === "one" ? "стаття" : form === "few" ? "статті" : "статей";
   return `${count} ${dictionary[`post.count.${form}`] ?? fallback}`;
 }
 
@@ -453,7 +453,7 @@ export function buildSearchMetadataCopy(locale: Locale, query?: string | null) {
 
   if (!trimmedQuery) {
     return {
-      description: dictionary["search.meta.description"] ?? "Search posts.",
+      description: dictionary["search.meta.description"] ?? "Search articles.",
       title: dictionary.search ?? "Search",
     };
   }

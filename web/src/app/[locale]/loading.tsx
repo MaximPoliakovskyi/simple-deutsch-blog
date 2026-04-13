@@ -6,8 +6,8 @@
  *   /[locale]/about             — about page
  *   /[locale]/team              — team page
  *   /[locale]/partnerships      — partnerships page
- *   /[locale]/posts             — posts index
- *   /[locale]/posts/[slug]      — individual post
+ *   /[locale]/articles          — posts index
+ *   /[locale]/articles/[slug]   — individual post
  *   /[locale]/categories        — categories index
  *   /[locale]/categories/[cat]  — category page
  *   /[locale]/levels            — levels index

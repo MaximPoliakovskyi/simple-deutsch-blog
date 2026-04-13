@@ -126,7 +126,7 @@ export default function PostCard({
   const categories = (post.categories?.nodes ?? []).filter(
     (c) => !isHiddenCategory(c.name, c.slug),
   );
-  const href = post.href ?? buildLocalizedHref(locale, `/posts/${post.slug}`);
+  const href = post.href ?? buildLocalizedHref(locale, `/articles/${post.slug}`);
   const readingLabel = resolveReadingTimeLabel(post.readingMinutes, post.readingText, locale);
   const metaDateText = post.dateText ?? computedDateText;
   const primaryMetadata = [

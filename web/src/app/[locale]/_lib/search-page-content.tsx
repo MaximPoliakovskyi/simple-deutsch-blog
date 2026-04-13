@@ -45,7 +45,7 @@ export async function SearchPageContent({
 
       {!query && (
         <p className="text-neutral-600">
-          Type to search posts. Try keywords like "grammar", "B1", or "vocabulary".
+          Type to search articles. Try keywords like "grammar", "B1", or "vocabulary".
         </p>
       )}
 

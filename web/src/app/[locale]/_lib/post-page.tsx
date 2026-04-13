@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
+import ReadStatusIndicator from "@/components/read-status-indicator";
 import {
   buildLocalizedHref,
   DEFAULT_LOCALE,
   isLocale,
-  resolveReadingTimeLabel,
   type Locale,
+  resolveReadingTimeLabel,
   TRANSLATIONS,
   translateCategory,
 } from "@/lib/i18n";
@@ -20,7 +21,6 @@ import {
   type PostDetail,
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
-import ReadStatusIndicator from "@/components/read-status-indicator";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
 
 function PostContent({ html, className = "" }: { html: string; className?: string }) {
@@ -46,8 +46,8 @@ function getPostLanguageFromGraphQL(post: PostDetail | null): LanguageSlug | nul
 const buildLocalizedPostPath = (lang: LanguageSlug, slugValue?: string | null) => {
   if (!slugValue) return null;
   const cleanSlug = slugValue.replace(/^\/+/g, "").replace(/\/+$/g, "");
-  // Always return canonical, prefixed routes (avoids middleware redirects like /posts/* -> /en/posts/*).
-  return `/${lang}/posts/${cleanSlug}`;
+  // Always return canonical, prefixed routes (avoids middleware redirects like /posts/* -> /en/articles/*).
+  return `/${lang}/articles/${cleanSlug}`;
 };
 
 function buildPostTranslationMap(
@@ -74,7 +74,12 @@ function buildPostTranslationMap(
             process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de",
           );
           const normalizedPath = parsed.pathname.replace(/\/+$|^\/+/g, "");
-          links[uiLang] = normalizedPath ? `/${normalizedPath}` : null;
+          const canonicalPath = normalizedPath.replace(
+            /^(?:(en|ru|uk)\/)?posts(?=\/|$)/i,
+            (_match, localePrefix: string | undefined) =>
+              localePrefix ? `${localePrefix}/articles` : "articles",
+          );
+          links[uiLang] = canonicalPath ? `/${canonicalPath}` : null;
         } catch (err) {
           console.error("Failed to normalize translation URI", err);
           links[uiLang] = null;
@@ -84,7 +89,7 @@ function buildPostTranslationMap(
   }
 
   if (!links[currentLocale]) {
-    links[currentLocale] = `/${currentLocale}/posts/${post.slug}`;
+    links[currentLocale] = `/${currentLocale}/articles/${post.slug}`;
   }
 
   return links;
@@ -130,13 +135,13 @@ export async function generatePostMetadata({
   const translationMap: LocaleTranslationMap = buildPostTranslationMap(post, resolvedLocale);
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
-  const postUrl = `${siteUrl}/${resolvedLocale}/posts/${slug}`;
+  const postUrl = `${siteUrl}/${resolvedLocale}/articles/${slug}`;
   const ogImage = post.featuredImage?.node?.sourceUrl ?? undefined;
 
   return {
     title,
     description,
-    alternates: buildI18nAlternates(`/posts/${slug}`, resolvedLocale, { translationMap }),
+    alternates: buildI18nAlternates(`/articles/${slug}`, resolvedLocale, { translationMap }),
     openGraph: {
       title,
       description,
@@ -204,10 +209,14 @@ export async function renderPostPage({
     paramLang && isLocale(paramLang) ? paramLang : resolvedLocale;
 
   const currentLang = postLanguageFromGraphQL ?? resolvedLocale;
-  const readingLabel = resolveReadingTimeLabel(post.readingMinutes, post.readingText, resolvedLocale);
-  const postReadIdentifier = buildLocalizedHref(resolvedLocale, `/posts/${post.slug}`);
+  const readingLabel = resolveReadingTimeLabel(
+    post.readingMinutes,
+    post.readingText,
+    resolvedLocale,
+  );
+  const postReadIdentifier = buildLocalizedHref(resolvedLocale, `/articles/${post.slug}`);
 
-  const withLocaleHref = (lang: string, postSlug: string) => `/${lang}/posts/${postSlug}`;
+  const withLocaleHref = (lang: string, postSlug: string) => `/${lang}/articles/${postSlug}`;
 
   // fetch related / more posts for the sidebar â€” LANGUAGE ONLY (no topic/category logic)
   const moreArticles = await fetchMoreArticles(currentLang, post.slug);
@@ -221,7 +230,7 @@ export async function renderPostPage({
     author: { "@type": "Organization", name: "Simple Deutsch" },
     ...(post.date ? { datePublished: post.date } : {}),
     ...(post.featuredImage?.node?.sourceUrl ? { image: post.featuredImage.node.sourceUrl } : {}),
-    url: `${siteUrl}/${resolvedLocale}/posts/${post.slug}`,
+    url: `${siteUrl}/${resolvedLocale}/articles/${post.slug}`,
     inLanguage: resolvedLocale,
   };
 

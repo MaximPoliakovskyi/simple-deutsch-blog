@@ -162,7 +162,11 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
             <span className="mt-1 flex w-full justify-center sm:mt-2">
               <span
                 className="inline-flex items-baseline justify-center whitespace-nowrap text-blue-600"
-                style={{ width: `${stableWidthCh}ch`, minWidth: `${stableWidthCh}ch`, flexShrink: 0 }}
+                style={{
+                  width: `${stableWidthCh}ch`,
+                  minWidth: `${stableWidthCh}ch`,
+                  flexShrink: 0,
+                }}
               >
                 <TypewriterWords
                   words={animatedWords}
@@ -195,7 +199,7 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
 
       <section aria-labelledby={featuredPostsHeadingId} className="flex flex-col gap-8">
         <h2 id={featuredPostsHeadingId} className="sr-only">
-          {t("latestPosts") || "Latest posts"}
+          {t("latestPosts") || "Latest articles"}
         </h2>
 
         {displayedPosts.length === 0 && !isLoading && <div>{t("noPosts")}</div>}

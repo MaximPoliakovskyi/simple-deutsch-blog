@@ -2,7 +2,7 @@
 const en: Record<string, string> = {
   __locale: "en",
   siteTitle: "Simple Deutsch",
-  posts: "Posts",
+  posts: "Articles",
   categories: "Categories",
   tags: "Tags",
   search: "Search",
@@ -33,8 +33,8 @@ const en: Record<string, string> = {
   moreArticles: "More articles",
   relatedArticles: "Related articles",
   noMoreArticles: "No more articles",
-  noPosts: "No posts found.",
-  latestPosts: "Latest posts",
+  noPosts: "No articles found.",
+  latestPosts: "Latest articles",
   successStories: "Success stories",
   successStoriesDescription:
     "Real stories from learners who improved their German step by step — from beginners to confident speakers. Learn what worked for them and get inspired by practical, achievable progress.",
@@ -51,7 +51,7 @@ const en: Record<string, string> = {
   "notFound.title": "Page Not Found",
   "notFound.description": "The page you are looking for does not exist or may have been moved.",
   "notFound.backToHome": "Back to Home",
-  postNotFound: "Post not found",
+  postNotFound: "Article not found",
   categoryNotFound: "Category not found",
   tagNotFound: "Tag not found",
   categoriesHeading: "Categories",

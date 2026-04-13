@@ -13,11 +13,16 @@ export function normalizeReadIdentifier(identifier: string | null | undefined): 
     return null;
   }
 
+  const normalizeLegacyPostsPath = (pathname: string) =>
+    pathname.replace(/^\/(?:(en|ru|uk)\/)?posts(?=\/|$)/i, (_match, locale: string | undefined) =>
+      locale ? `/${locale}/articles` : "/articles",
+    );
+
   try {
     const url = new URL(raw, "https://simple-deutsch.de");
-    return url.pathname.replace(/\/+$/g, "") || "/";
+    return normalizeLegacyPostsPath(url.pathname.replace(/\/+$/g, "") || "/");
   } catch {
-    return raw.replace(/\/+$/g, "") || "/";
+    return normalizeLegacyPostsPath(raw.replace(/\/+$/g, "") || "/");
   }
 }
 
@@ -56,7 +61,7 @@ export function isMarkedRead(identifier: string | null | undefined): boolean {
     return false;
   }
 
-  return Object.prototype.hasOwnProperty.call(readStateMap(), normalized);
+  return Object.hasOwn(readStateMap(), normalized);
 }
 
 export function markAsRead(identifier: string | null | undefined): boolean {
@@ -66,7 +71,7 @@ export function markAsRead(identifier: string | null | undefined): boolean {
   }
 
   const current = readStateMap();
-  if (Object.prototype.hasOwnProperty.call(current, normalized)) {
+  if (Object.hasOwn(current, normalized)) {
     return false;
   }
 

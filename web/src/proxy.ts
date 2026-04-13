@@ -4,6 +4,17 @@ import { resolvePreferredLocale } from "@/lib/request-locale";
 
 // Matches paths that already have a 2-letter locale prefix (e.g. /en, /ru, /uk)
 const LOCALE_PREFIX_RE = /^\/[a-z]{2}(\/|$)/i;
+const LEGACY_POSTS_PREFIX_RE = /^\/(?:(en|ru|uk)\/)?posts(?=\/|$)/i;
+
+function getArticlesPathname(pathname: string): string | null {
+  if (!LEGACY_POSTS_PREFIX_RE.test(pathname)) {
+    return null;
+  }
+
+  return pathname.replace(LEGACY_POSTS_PREFIX_RE, (_match, locale: string | undefined) =>
+    locale ? `/${locale}/articles` : "/articles",
+  );
+}
 
 export function proxy(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
@@ -16,6 +27,13 @@ export function proxy(request: NextRequest): NextResponse {
     /\.[a-z0-9]{1,5}$/i.test(pathname)
   ) {
     return NextResponse.next();
+  }
+
+  const articlesPathname = getArticlesPathname(pathname);
+  if (articlesPathname) {
+    const url = request.nextUrl.clone();
+    url.pathname = articlesPathname;
+    return NextResponse.redirect(url, { status: 301 });
   }
 
   // Already has a locale-like prefix? Let Next.js route it.

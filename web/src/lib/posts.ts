@@ -183,10 +183,10 @@ export function buildLevelTranslationMap(
 
 /**
  * Builds a fully-qualified locale-prefixed href for a single post.
- * @example buildLocalePostHref("ru", "hello") // "/ru/posts/hello"
+ * @example buildLocalePostHref("ru", "hello") // "/ru/articles/hello"
  */
 export function buildLocalePostHref(locale: Locale, slug: string): string {
-  return buildLocalizedHref(locale, `/posts/${slug}`);
+  return buildLocalizedHref(locale, `/articles/${slug}`);
 }
 
 /**

@@ -130,7 +130,7 @@ export default function AboutPage({ locale = DEFAULT_LOCALE }: AboutPageProps) {
 
           <div className="mt-0 flex justify-center">
             <Link
-              href={buildLocalizedHref(locale, "/posts")}
+              href={buildLocalizedHref(locale, "/articles")}
               className="type-button mx-auto rounded-full px-5 py-2 transition duration-200 ease-out transform-gpu hover:scale-[1.03] motion-reduce:transform-none shadow-md hover:shadow-lg disabled:opacity-60 sd-pill focus-visible:outline-2 focus-visible:outline-offset-2"
             >
               {t("about.cta.finalCta")}

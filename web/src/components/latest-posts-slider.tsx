@@ -14,7 +14,7 @@ type Props = {
 
 export default function LatestPostsSlider({
   posts = [],
-  title = "Latest posts",
+  title = "Latest articles",
   locale = "en",
 }: Props) {
   const { scrollerRef, isAtStart, isAtEnd, scrollByOneColumn } = useSliderScroll();

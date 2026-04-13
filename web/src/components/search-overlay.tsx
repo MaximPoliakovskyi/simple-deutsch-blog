@@ -17,7 +17,7 @@ import {
 import { createPortal } from "react-dom";
 import { useI18n } from "@/components/providers";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
-import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
+import { buildLocalizedHref, DEFAULT_LOCALE, type Locale, parseLocaleFromPath } from "@/lib/i18n";
 import { MOTION } from "@/lib/motion";
 import { lockSearch, unlockSearch } from "@/lib/search-scroll-lock";
 
@@ -415,13 +415,13 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
         e.preventDefault();
         const current = items[highlight];
         if (current) {
-          navigateToResult(`/posts/${current.slug}`);
+          navigateToResult(buildLocalizedHref(pathLocale, `/articles/${current.slug}`));
         }
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [focusSearchInput, items, highlight, navigateToResult, q, requestClose]);
+  }, [focusSearchInput, items, highlight, navigateToResult, pathLocale, q, requestClose]);
 
   // Ensure highlighted item is scrolled into view
   useEffect(() => {
@@ -609,7 +609,9 @@ export default function SearchOverlay({ onClose, openMethod: _openMethod }: Sear
                   <button
                     type="button"
                     onMouseEnter={() => setHighlight(i)}
-                    onClick={() => navigateToResult(`/posts/${it.slug}`)}
+                    onClick={() =>
+                      navigateToResult(buildLocalizedHref(pathLocale, `/articles/${it.slug}`))
+                    }
                     className={cn(
                       "flex w-full items-start gap-3 px-3 py-3 text-left rounded-none cursor-pointer",
                       "hover:bg-neutral-50 dark:hover:bg-neutral-800/60",

@@ -446,13 +446,13 @@ export type NavLinkItem = {
 };
 
 export const DESKTOP_NAV_LINKS: readonly NavLinkItem[] = [
-  { key: "posts", fallback: "Posts", path: "/posts" },
+  { key: "posts", fallback: "Articles", path: "/articles" },
   { key: "categories", fallback: "Categories", path: "/categories" },
   { key: "levels", fallback: "Levels", path: "/levels" },
 ];
 
 export const MOBILE_NAV_LINKS: readonly NavLinkItem[] = [
-  { key: "posts", fallback: "Posts", path: "/posts" },
+  { key: "posts", fallback: "Articles", path: "/articles" },
   { key: "categories", fallback: "Categories", path: "/categories" },
   { key: "levels", fallback: "Levels", path: "/levels" },
   { key: "search", fallback: "Search", path: "/search" },

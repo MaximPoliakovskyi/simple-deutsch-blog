@@ -73,7 +73,7 @@ export async function CategoriesIndexContent({ locale }: { locale: Locale }) {
                   }
                   return (
                     <p className="text-sm leading-7 text-neutral-500">
-                      Browse posts in {translateCategory(category.name, category.slug, locale)}.
+                      Browse articles in {translateCategory(category.name, category.slug, locale)}.
                     </p>
                   );
                 })()}

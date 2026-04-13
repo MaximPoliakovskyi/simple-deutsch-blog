@@ -66,7 +66,7 @@ function withLocalePrefix(pathname: string, targetLocale: Locale): string {
 
 function isPostDetailPath(strippedPathname: string): boolean {
   const segments = strippedPathname.split("/").filter(Boolean);
-  return segments.length >= 2 && segments[0] === "posts";
+  return segments.length >= 2 && (segments[0] === "articles" || segments[0] === "posts");
 }
 
 function isLevelDetailPath(strippedPathname: string): boolean {

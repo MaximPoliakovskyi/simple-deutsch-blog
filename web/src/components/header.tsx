@@ -56,7 +56,7 @@ function normalizePathname(pathname: string | null): string {
 }
 
 function isLocalizedPostDetailRoute(pathname: string): boolean {
-  return /^\/(?:(ru|en|uk)\/)?posts\/[^/]+$/i.test(pathname);
+  return /^\/(?:(ru|en|uk)\/)?articles\/[^/]+$/i.test(pathname);
 }
 
 export default function Header() {

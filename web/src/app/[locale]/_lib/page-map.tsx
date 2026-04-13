@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { type Locale, TRANSLATIONS } from "@/lib/i18n";
+import { notFound, permanentRedirect } from "next/navigation";
+import { buildLocalizedHref, type Locale, TRANSLATIONS } from "@/lib/i18n";
 import {
   buildLevelTranslationMap,
   filterWordPressBadgesByLocale,
@@ -42,11 +42,11 @@ export async function generateMappedMetadata({
         title: `${t.about} — ${t.siteTitle}`,
         alternates: buildI18nAlternates("/about", locale),
       };
-    case "posts":
+    case "articles":
       if (rest.length === 0)
         return {
           title: `${t.posts} — ${t.siteTitle}`,
-          alternates: buildI18nAlternates("/posts", locale),
+          alternates: buildI18nAlternates("/articles", locale),
         };
       if (rest.length === 1) {
         return generatePostMetadata({ params: Promise.resolve({ slug: rest[0] }), locale });
@@ -134,10 +134,15 @@ export async function generateMappedMetadata({
 export async function renderMappedPage({ locale, slug, searchParams }: MapInput) {
   const [section, ...rest] = slug;
 
+  if (section === "posts") {
+    const suffix = rest.join("/");
+    permanentRedirect(buildLocalizedHref(locale, suffix ? `/articles/${suffix}` : "/articles"));
+  }
+
   switch (section) {
     case "about":
       return <AboutPage locale={locale} />;
-    case "posts":
+    case "articles":
       if (rest.length === 0) return <PostsIndex locale={locale} />;
       if (rest.length === 1) {
         return renderPostPage({ params: Promise.resolve({ slug: rest[0] }), locale });

@@ -26,8 +26,8 @@ export async function GET() {
     (p: PostNode) => `
     <item>
       <title>${escapeXml(p.title)}</title>
-      <link>${SITE_URL}/en/posts/${p.slug}</link>
-      <guid isPermaLink="true">${SITE_URL}/en/posts/${p.slug}</guid>
+      <link>${SITE_URL}/en/articles/${p.slug}</link>
+      <guid isPermaLink="true">${SITE_URL}/en/articles/${p.slug}</guid>
       <description><![CDATA[${p.excerpt ?? ""}]]></description>
       <pubDate>${new Date(p.date).toUTCString()}</pubDate>
     </item>`,
