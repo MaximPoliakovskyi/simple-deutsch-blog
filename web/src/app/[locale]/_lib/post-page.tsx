@@ -21,7 +21,23 @@ import {
   type PostDetail,
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
+import { getSiteOrigin, toAbsoluteSiteUrl } from "@/lib/site-url";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
+import RelatedArticles from "./related-articles";
+
+type StaticPostMetadata = {
+  description: string;
+  imagePath: string;
+  title: string;
+};
+
+const STATIC_POST_METADATA_BY_SLUG: Record<string, StaticPostMetadata> = {
+  "zipf-law": {
+    title: "1000 Wörter = 80% Deutsch",
+    description: "Warum du nicht alles lernen musst",
+    imagePath: "/og/zipf-law.png",
+  },
+};
 
 function PostContent({ html, className = "" }: { html: string; className?: string }) {
   const classes = [
@@ -34,9 +50,47 @@ function PostContent({ html, className = "" }: { html: string; className?: strin
   return <article className={classes.join(" ")} dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
-import RelatedArticles from "./related-articles";
-
 type LanguageSlug = Locale;
+
+function stripHtml(input: string | null | undefined): string | undefined {
+  if (!input) return undefined;
+
+  const plainText = input
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return plainText || undefined;
+}
+
+function getStaticPostMetadata(slug: string): StaticPostMetadata | null {
+  return STATIC_POST_METADATA_BY_SLUG[slug] ?? null;
+}
+
+function resolvePostDescription(post: PostDetail | null, fallback?: string): string | undefined {
+  return post?.seo?.metaDesc ?? stripHtml(post?.excerpt) ?? fallback;
+}
+
+function resolvePostTitle(post: PostDetail | null, fallback?: string): string {
+  return post?.seo?.title ?? post?.title ?? fallback ?? "Simple Deutsch";
+}
+
+function buildArticleUrl(locale: Locale, slug: string): string {
+  return toAbsoluteSiteUrl(`/${locale}/articles/${slug}`);
+}
+
+function resolveOgImage(post: PostDetail | null, slug: string): string | undefined {
+  const staticMeta = getStaticPostMetadata(slug);
+  return staticMeta
+    ? toAbsoluteSiteUrl(staticMeta.imagePath)
+    : (post?.featuredImage?.node?.sourceUrl ?? undefined);
+}
 
 function getPostLanguageFromGraphQL(post: PostDetail | null): LanguageSlug | null {
   if (!post?.language?.code) return null;
@@ -69,10 +123,7 @@ function buildPostTranslationMap(
 
       if (translation.uri) {
         try {
-          const parsed = new URL(
-            translation.uri,
-            process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de",
-          );
+          const parsed = new URL(translation.uri, getSiteOrigin());
           const normalizedPath = parsed.pathname.replace(/\/+$|^\/+/g, "");
           const canonicalPath = normalizedPath.replace(
             /^(?:(en|ru|uk)\/)?posts(?=\/|$)/i,
@@ -128,15 +179,19 @@ export async function generatePostMetadata({
   const { slug } = await params;
   const resolvedLocale = locale ?? DEFAULT_LOCALE;
   const post = await fetchPost(slug, resolvedLocale);
-  if (!post) return { title: TRANSLATIONS[DEFAULT_LOCALE].postNotFound };
+  const staticMeta = getStaticPostMetadata(slug);
+  const title = resolvePostTitle(post, staticMeta?.title);
+  const description = resolvePostDescription(post, staticMeta?.description);
+  const postUrl = buildArticleUrl(resolvedLocale, slug);
+  const ogImage = resolveOgImage(post, slug);
 
-  const title = post.seo?.title ?? post.title ?? "Simple Deutsch";
-  const description = post.seo?.metaDesc ?? undefined;
-  const translationMap: LocaleTranslationMap = buildPostTranslationMap(post, resolvedLocale);
+  if (!post && !staticMeta) {
+    return { title: TRANSLATIONS[DEFAULT_LOCALE].postNotFound };
+  }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
-  const postUrl = `${siteUrl}/${resolvedLocale}/articles/${slug}`;
-  const ogImage = post.featuredImage?.node?.sourceUrl ?? undefined;
+  const translationMap: LocaleTranslationMap | undefined = post
+    ? buildPostTranslationMap(post, resolvedLocale)
+    : undefined;
 
   return {
     title,
@@ -148,11 +203,20 @@ export async function generatePostMetadata({
       url: postUrl,
       siteName: "Simple Deutsch",
       type: "article",
-      ...(ogImage ? { images: [{ url: ogImage }] } : {}),
-      ...(post.date ? { publishedTime: post.date } : {}),
+      ...(ogImage
+        ? {
+            images: [
+              {
+                url: ogImage,
+                ...(staticMeta ? { width: 1200, height: 630, alt: title } : {}),
+              },
+            ],
+          }
+        : {}),
+      ...(post?.date ? { publishedTime: post.date } : {}),
     },
     twitter: {
-      card: ogImage ? ("summary_large_image" as const) : ("summary" as const),
+      card: "summary_large_image" as const,
       title,
       description,
       ...(ogImage ? { images: [ogImage] } : {}),
@@ -221,16 +285,17 @@ export async function renderPostPage({
   // fetch related / more posts for the sidebar â€” LANGUAGE ONLY (no topic/category logic)
   const moreArticles = await fetchMoreArticles(currentLang, post.slug);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
+  const description = resolvePostDescription(post);
+  const ogImage = resolveOgImage(post, post.slug);
   const blogPostingSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
     headline: post.title,
-    ...(post.seo?.metaDesc ? { description: post.seo.metaDesc } : {}),
+    ...(description ? { description } : {}),
     author: { "@type": "Organization", name: "Simple Deutsch" },
     ...(post.date ? { datePublished: post.date } : {}),
-    ...(post.featuredImage?.node?.sourceUrl ? { image: post.featuredImage.node.sourceUrl } : {}),
-    url: `${siteUrl}/${resolvedLocale}/articles/${post.slug}`,
+    ...(ogImage ? { image: ogImage } : {}),
+    url: buildArticleUrl(resolvedLocale, post.slug),
     inLanguage: resolvedLocale,
   };
 

@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
+import { getSiteOrigin } from "@/lib/site-url";
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
+const BASE_URL = getSiteOrigin();
 const LOCALES = ["en", "ru", "uk"] as const;
 
 const STATIC_ROUTES = [

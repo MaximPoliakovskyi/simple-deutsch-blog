@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DEFAULT_LOCALE, type Locale, parseLocaleFromPath, SUPPORTED_LOCALES } from "@/lib/i18n";
+import { toAbsoluteSiteUrl } from "@/lib/site-url";
 
 export type LocaleTranslationMap = Partial<Record<Locale, string | null>>;
 
@@ -8,25 +9,8 @@ type MapPathToLocaleOptions = {
   translationMap?: LocaleTranslationMap | null;
 };
 
-function getSiteOrigin(): string {
-  const fallback = "http://localhost:3000";
-  const value = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (!value) {
-    return fallback;
-  }
-
-  const normalizedInput = /^https?:\/\//i.test(value) ? value : `https://${value}`;
-
-  try {
-    return new URL(normalizedInput).origin;
-  } catch {
-    return fallback;
-  }
-}
-
 function toAbsoluteUrl(pathname: string): string {
-  const fixedPath = pathname.startsWith("/") ? pathname : `/${pathname}`;
-  return new URL(fixedPath, getSiteOrigin()).toString();
+  return toAbsoluteSiteUrl(pathname);
 }
 
 type ParsedPathInput = {
@@ -98,7 +82,7 @@ export function mapPathToLocale(
   if (postDetail || levelDetail) {
     const translatedPath = options.translationMap?.[targetLocale];
     if (!translatedPath) {
-      return `${fallbackPathname}${parsed.search}${parsed.hash}`;
+      return `${withLocalePrefix(strippedPathname, targetLocale)}${parsed.search}${parsed.hash}`;
     }
 
     return `${normalizeTranslatedPath(translatedPath, targetLocale)}${parsed.search}${parsed.hash}`;

@@ -1,0 +1,125 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="204" y1="64" x2="1012" y2="604" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#080B13"/>
+      <stop offset="0.56" stop-color="#04060D"/>
+      <stop offset="1" stop-color="#020307"/>
+    </linearGradient>
+    <radialGradient id="ambientTop" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 82) rotate(90) scale(226 626)">
+      <stop stop-color="#101B35"/>
+      <stop offset="1" stop-color="#101B35" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientObject" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(604 272) rotate(90) scale(224 262)">
+      <stop stop-color="#8AB4FF" stop-opacity="0.18"/>
+      <stop offset="0.52" stop-color="#5578FF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#5578FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambientBottom" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(600 560) rotate(90) scale(180 460)">
+      <stop stop-color="#091321"/>
+      <stop offset="1" stop-color="#091321" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ringStroke" x1="470" y1="190" x2="748" y2="404" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6FAFF" stop-opacity="0.32"/>
+      <stop offset="0.45" stop-color="#92A9FF" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F6FAFF" stop-opacity="0.28"/>
+    </linearGradient>
+    <linearGradient id="faceMain" x1="522" y1="140" x2="714" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F5F8FF"/>
+      <stop offset="0.38" stop-color="#CFD8F3"/>
+      <stop offset="1" stop-color="#6F7C97"/>
+    </linearGradient>
+    <linearGradient id="faceRight" x1="612" y1="114" x2="742" y2="398" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.38" stop-color="#C4D1F1"/>
+      <stop offset="1" stop-color="#5A6481"/>
+    </linearGradient>
+    <linearGradient id="faceLeft" x1="456" y1="126" x2="616" y2="392" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#C4CCE0"/>
+      <stop offset="0.58" stop-color="#77839D"/>
+      <stop offset="1" stop-color="#31384C"/>
+    </linearGradient>
+    <linearGradient id="faceCore" x1="590" y1="174" x2="636" y2="374" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FDFEFF"/>
+      <stop offset="0.5" stop-color="#BBC6E5"/>
+      <stop offset="1" stop-color="#617190"/>
+    </linearGradient>
+    <linearGradient id="faceLower" x1="520" y1="280" x2="672" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#B5BED8"/>
+      <stop offset="1" stop-color="#364157"/>
+    </linearGradient>
+    <linearGradient id="edgeGlow" x1="526" y1="142" x2="679" y2="368" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.5" stop-color="#B9C8FF"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <filter id="softBlur" x="-120" y="-120" width="1440" height="870" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+    <filter id="shapeGlow" x="364" y="70" width="482" height="432" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="16"/>
+    </filter>
+    <filter id="noise" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed="7" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.08"/>
+      </feComponentTransfer>
+    </filter>
+    <clipPath id="frameClip">
+      <rect width="1200" height="630" rx="0" fill="white"/>
+    </clipPath>
+  </defs>
+  <g clip-path="url(#frameClip)">
+    <rect width="1200" height="630" fill="url(#bg)"/>
+    <rect width="1200" height="630" fill="url(#ambientTop)"/>
+    <rect width="1200" height="630" fill="url(#ambientObject)"/>
+    <rect width="1200" height="630" fill="url(#ambientBottom)"/>
+
+    <g opacity="0.58" filter="url(#softBlur)">
+      <ellipse cx="596" cy="292" rx="122" ry="54" fill="#7A9FFF"/>
+      <ellipse cx="602" cy="304" rx="168" ry="66" fill="#BAC8FF" fill-opacity="0.28"/>
+    </g>
+
+    <ellipse cx="600" cy="350" rx="180" ry="38" fill="#07101F"/>
+    <ellipse cx="600" cy="348" rx="126" ry="20" fill="#0D1830" fill-opacity="0.86"/>
+
+    <g opacity="0.55">
+      <ellipse cx="603" cy="286" rx="168" ry="116" transform="rotate(-12 603 286)" stroke="url(#ringStroke)" stroke-width="1.4"/>
+      <ellipse cx="600" cy="286" rx="122" ry="84" transform="rotate(-12 600 286)" stroke="#CAD6FF" stroke-opacity="0.14" stroke-width="1"/>
+    </g>
+
+    <g filter="url(#shapeGlow)" opacity="0.78">
+      <path d="M598 112L722 208L688 380L600 448L494 380L460 212L598 112Z" fill="#C7D6FF" fill-opacity="0.2"/>
+      <path d="M598 126L682 216L648 350L600 388L548 350L512 214L598 126Z" fill="#EEF4FF" fill-opacity="0.18"/>
+    </g>
+
+    <g>
+      <path d="M598 112L722 208L688 380L600 448L494 380L460 212L598 112Z" fill="#0C111D" fill-opacity="0.32" stroke="#F2F6FF" stroke-opacity="0.18" stroke-width="1"/>
+      <path d="M598 112L722 208L600 262L460 212L598 112Z" fill="url(#faceMain)"/>
+      <path d="M722 208L688 380L600 448L600 262L722 208Z" fill="url(#faceRight)"/>
+      <path d="M460 212L494 380L600 448L600 262L460 212Z" fill="url(#faceLeft)"/>
+      <path d="M566 172L632 172L656 292L600 342L544 292L566 172Z" fill="url(#faceCore)"/>
+      <path d="M544 292L600 342L656 292L642 386L600 418L558 386L544 292Z" fill="url(#faceLower)"/>
+
+      <path d="M598 112L600 448" stroke="url(#edgeGlow)" stroke-opacity="0.9" stroke-width="1.5"/>
+      <path d="M460 212L600 262L722 208" stroke="#FAFCFF" stroke-opacity="0.46" stroke-width="1.25"/>
+      <path d="M494 380L600 448L688 380" stroke="#F5F8FF" stroke-opacity="0.34" stroke-width="1.25"/>
+      <path d="M566 172L632 172" stroke="#FFFFFF" stroke-opacity="0.62" stroke-width="1"/>
+      <path d="M544 292L600 342L656 292" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="1"/>
+    </g>
+
+    <g opacity="0.34">
+      <path d="M752 196L786 220L776 274L742 302L718 278L726 224L752 196Z" fill="#C7D2FF" fill-opacity="0.12" stroke="#DCE5FF" stroke-opacity="0.2"/>
+      <path d="M430 228L454 246L448 288L422 308L406 292L412 250L430 228Z" fill="#C7D2FF" fill-opacity="0.1" stroke="#DCE5FF" stroke-opacity="0.16"/>
+    </g>
+
+    <text x="72" y="70" fill="#BFC7D9" fill-opacity="0.72" font-family="Inter, SF Pro Display, SF Pro Text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="18" font-weight="500" letter-spacing="0">simpledeutsch.com/blog/zipf-law</text>
+
+    <g>
+      <text x="72" y="534" fill="#F7F8FB" font-family="Inter, SF Pro Display, SF Pro Text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="64" font-weight="700" letter-spacing="0">1000 W<tspan dx="-1">ö</tspan>rter = 80% Deutsch</text>
+      <text x="72" y="578" fill="#D6DCE9" fill-opacity="0.9" font-family="Inter, SF Pro Display, SF Pro Text, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="28" font-weight="500" letter-spacing="0">Warum du nicht alles lernen musst</text>
+    </g>
+
+    <rect width="1200" height="630" fill="#E9EFFC" opacity="0.08" filter="url(#noise)"/>
+  </g>
+</svg>

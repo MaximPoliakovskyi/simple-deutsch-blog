@@ -1,9 +1,8 @@
 import { SUPPORTED_LOCALES, TRANSLATIONS } from "@/lib/i18n";
 import { buildI18nAlternates } from "@/lib/seo";
+import { toAbsoluteSiteUrl } from "@/lib/site-url";
 import HomePage from "../home-page";
 import { getOptionalRouteLocale, getRequiredRouteLocale } from "../locale-route";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
 
 const OG_LOCALE_MAP: Record<string, string> = {
   en: "en_US",
@@ -28,7 +27,7 @@ export async function generateMetadata({ params }: Props) {
   const t = TRANSLATIONS[validated];
   const title = t.siteTitle;
   const description = t.heroDescription;
-  const url = `${SITE_URL}/${validated}`;
+  const url = toAbsoluteSiteUrl(`/${validated}`);
 
   return {
     title,

@@ -1,10 +1,11 @@
 import { getPosts } from "@/lib/posts";
+import { getSiteOrigin } from "@/lib/site-url";
 
 // RSS must not be prerendered at build time (it depends on live WPGraphQL).
 // This avoids build failures when the CMS is temporarily unreachable.
 export const dynamic = "force-dynamic";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://simple-deutsch.de";
+const SITE_URL = getSiteOrigin();
 const SITE_TITLE = process.env.NEXT_PUBLIC_SITE_TITLE ?? "Simple Deutsch";
 const SITE_DESCRIPTION =
   process.env.NEXT_PUBLIC_SITE_DESCRIPTION ?? "Einfache, klare Inhalte auf Simple Deutsch.";
