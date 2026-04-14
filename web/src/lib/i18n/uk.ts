@@ -131,6 +131,8 @@ const uk: Record<string, string> = {
   community: "Спільнота",
   about: "Про нас",
   team: "Команда",
+  "team.description":
+    "Не корпорація. Просто люди, яким важливо, щоб вивчення німецької справді мало сенс.",
   careers: "Вакансії",
   press: "Преса",
   imprint: "Юридична інформація",
@@ -271,5 +273,14 @@ const uk: Record<string, string> = {
   "footer.link.privacyPolicy": "Політика конфіденційності",
   "footer.link.termsOfService": "Умови користування",
   "footer.link.cookieSettings": "Налаштування файлів cookie",
+  /* Frequent Word widget */
+  "frequentWord.label": "Слово першого пріоритету",
+  "frequentWord.frequency": "#{rank} у списку",
+  "frequentWord.tooltip": "Слово №{rank} у списку слів першого пріоритету",
+  /* Top Words page */
+  "topWords.title": "Слова першого пріоритету",
+  "topWords.subtitle": "300 ключових слів німецької мови, відібраних за практичною цінністю",
+  "topWords.meta.title": "Слова першого пріоритету — 300 слів",
+  "topWords.meta.description": "300 найнеобхідніших слів німецької мови для учнів будь-якого рівня — від початкового до B2.",
 };
 export default uk;

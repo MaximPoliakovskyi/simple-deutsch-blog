@@ -21,6 +21,7 @@ import PrivacyPage from "./privacy-page";
 import { SearchPageContent, type SearchParams } from "./search-page-content";
 import TeamPageContent, { generateTeamMetadata } from "./team-page";
 import TermsPage from "./terms-page";
+import TopWordsPage from "./top-words-page";
 
 type MapInput = {
   locale: Locale;
@@ -114,11 +115,16 @@ export async function generateMappedMetadata({
         title: `${t["terms.title"]} — ${t.siteTitle}`,
         alternates: buildI18nAlternates("/terms", locale),
       };
+    case "priority-words":
+      return {
+        title: `${t["topWords.meta.title"] ?? t["topWords.title"]} — ${t.siteTitle}`,
+        description: t["topWords.meta.description"] as string | undefined,
+        alternates: buildI18nAlternates("/priority-words", locale),
+      };
     case "search": {
       const sp = (await searchParams) ?? {};
       const query = new URLSearchParams();
-      if (sp.q) query.set("q", sp.q);
-      if (sp.after) query.set("after", sp.after);
+      if (sp.q) query.set("q", sp.q);      if (sp.after) query.set("after", sp.after);
       const suffix = query.toString();
       const path = suffix ? `/search?${suffix}` : "/search";
       return {
@@ -167,6 +173,8 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
       return <PrivacyPage locale={locale} />;
     case "terms":
       return <TermsPage locale={locale} />;
+    case "priority-words":
+      return <TopWordsPage locale={locale} />;
     case "search":
       return (
         <SearchPageContent searchParams={searchParams ?? Promise.resolve({})} locale={locale} />

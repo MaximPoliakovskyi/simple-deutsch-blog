@@ -125,6 +125,8 @@ const en: Record<string, string> = {
   community: "Community",
   about: "About",
   team: "Team",
+  "team.description":
+    "Not a big company. Just people who care about making German learning actually make sense.",
   careers: "Careers",
   press: "Press",
   imprint: "Imprint",
@@ -266,5 +268,14 @@ const en: Record<string, string> = {
   "footer.link.privacyPolicy": "Privacy Policy",
   "footer.link.termsOfService": "Terms of Service",
   "footer.link.cookieSettings": "Cookie Settings",
+  /* Frequent Word widget */
+  "frequentWord.label": "Priority word",
+  "frequentWord.frequency": "#{rank} in the list",
+  "frequentWord.tooltip": "Word #{rank} in the first-priority vocabulary list",
+  /* Top Words page */
+  "topWords.title": "Words of first priority",
+  "topWords.subtitle": "300 essential German words, ranked by practical usefulness",
+  "topWords.meta.title": "Words of First Priority — 300 German Words",
+  "topWords.meta.description": "300 most essential German words for learners at every level, from beginner to B2.",
 };
 export default en;

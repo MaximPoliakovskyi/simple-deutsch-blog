@@ -90,6 +90,21 @@ const nextConfig = {
 
     return config;
   },
+  redirects: async () => {
+    return [
+      // Backward compatibility: old /[locale]/top-words → /[locale]/priority-words
+      {
+        source: "/:locale/top-words",
+        destination: "/:locale/priority-words",
+        permanent: true,
+      },
+      {
+        source: "/:locale/top-words/:path*",
+        destination: "/:locale/priority-words/:path*",
+        permanent: true,
+      },
+    ];
+  },
   headers: async () => {
     return [
       {

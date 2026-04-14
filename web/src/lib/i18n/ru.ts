@@ -130,6 +130,8 @@ const ru: Record<string, string> = {
   community: "Сообщество",
   about: "О проекте",
   team: "Команда",
+  "team.description":
+    "Не корпорация. Просто люди, которым важно, чтобы изучение немецкого действительно имело смысл.",
   careers: "Карьера",
   press: "Пресса",
   imprint: "Выходные данные",
@@ -270,5 +272,14 @@ const ru: Record<string, string> = {
   "footer.link.privacyPolicy": "Политика конфиденциальности",
   "footer.link.termsOfService": "Условия использования",
   "footer.link.cookieSettings": "Настройки файлов cookie",
+  /* Frequent Word widget */
+  "frequentWord.label": "Слово первого приоритета",
+  "frequentWord.frequency": "#{rank} в списке",
+  "frequentWord.tooltip": "Слово №{rank} в списке слов первого приоритета",
+  /* Top Words page */
+  "topWords.title": "Слова первого приоритета",
+  "topWords.subtitle": "300 ключевых немецких слов, отобранных по практической ценности",
+  "topWords.meta.title": "Слова первого приоритета — 300 немецких слов",
+  "topWords.meta.description": "300 самых нужных немецких слов для учеников любого уровня — от начального до B2.",
 };
 export default ru;

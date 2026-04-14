@@ -19,7 +19,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
   en: {
     title: "Our Team",
     description:
-      "Meet the people behind Simple Deutsch, building thoughtful tools and learning support to make German more approachable every day.",
+      TRANSLATIONS.en["team.description"],
     members: [
       {
         name: "Maksym Poliakovskyi",
@@ -41,7 +41,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
   uk: {
     title: "Наша команда",
     description:
-      "Познайомтеся з людьми, які створюють Simple Deutsch, розробляють корисні інструменти та підтримують навчання, щоб німецька ставала доступнішою щодня.",
+      TRANSLATIONS.uk["team.description"],
     members: [
       {
         name: "Максим Полуаковський",
@@ -63,7 +63,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
   ru: {
     title: "Наша команда",
     description:
-      "Познакомьтесь с людьми, которые создают Simple Deutsch, разрабатывают полезные инструменты и поддерживают обучение, чтобы немецкий становился доступнее каждый день.",
+      TRANSLATIONS.ru["team.description"],
     members: [
       {
         name: "Максим Полуаковский",

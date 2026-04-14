@@ -22,6 +22,7 @@ import {
 } from "@/lib/posts";
 import { buildI18nAlternates, type LocaleTranslationMap } from "@/lib/seo";
 import { getSiteOrigin, toAbsoluteSiteUrl } from "@/lib/site-url";
+import FrequentWordWidget from "@/components/frequent-word-widget";
 import PostLanguageLinksHydrator from "./post-language-links-hydrator";
 import RelatedArticles from "./related-articles";
 
@@ -363,19 +364,9 @@ export async function renderPostPage({
 
           <aside className="md:col-span-1">
             <div className="sticky top-20 space-y-6">
-              {/* Promo rounded card (fill sidebar width) */}
-              <div className="sd-card px-6 py-6 w-full text-center">
-                <h3 className="type-heading-4 mb-4 text-gray-900 dark:text-white">
-                  {t.promoHeading}
-                </h3>
-                <div className="flex justify-center">
-                  <a
-                    href="#top"
-                    className="inline-block rounded-full bg-neutral-900 text-white px-6 py-2 text-base"
-                  >
-                    {t.promoCta}
-                  </a>
-                </div>
+              {/* Frequent Word card (fills sidebar width) */}
+              <div className="sd-card px-6 py-6 w-full">
+                <FrequentWordWidget locale={resolvedLocale} articleSlug={post.slug} />
               </div>
 
               {/* More articles (no background/borders, fill sidebar width) */}
