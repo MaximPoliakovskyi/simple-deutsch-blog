@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CookieSettingsButton from "@/components/cookie-settings-button";
 import { normalizeLevelSlug, sortWordPressBadgesByCefr } from "@/lib/cefr";
 import {
   buildLocalizedHref,
@@ -103,8 +104,8 @@ function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
       key: "community",
       title: t["footer.section.community"] ?? "Community",
       items: [
-        { label: "Email", href: "mailto:hello@simpledeutsch.com", external: true },
-        { label: "GitHub", href: "https://github.com/simple-deutsch", external: true },
+        { label: "Email", href: "mailto:hello.simple.deutsch@gmail.com", external: true },
+        { label: "GitHub", href: "https://github.com/MaximPoliakovskyi/simple-deutsch-blog", external: true },
       ],
     },
     {
@@ -114,7 +115,7 @@ function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
         { label: t.imprint ?? "Imprint", href: "/imprint" },
         { label: t["footer.link.privacyPolicy"] ?? "Privacy Policy", href: "/privacy" },
         { label: t["footer.link.termsOfService"] ?? "Terms of Service", href: "/terms" },
-        { label: t["footer.link.cookieSettings"] ?? "Cookie Settings", href: "/cookies" },
+        { label: t["footer.link.cookieSettings"] ?? "Cookie Settings", href: "#consent" },
       ],
     },
   ];
@@ -135,7 +136,7 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
   const currentYear = String(new Date().getFullYear());
 
   return (
-    <footer className="bg-[#FFFFFF] dark:bg-[#0B101E] min-h-[32rem] md:min-h-[28rem]">
+    <footer className="bg-[var(--sd-page-bg)] min-h-[32rem] md:min-h-[28rem]">
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
@@ -152,6 +153,18 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
                     {section.items.map((item) => {
                       const resolvedLabel =
                         item.href === "/impressum" ? dictionary.imprint || item.label : item.label;
+
+                      if (item.href === "#consent") {
+                        return (
+                          <li key={item.label}>
+                            <CookieSettingsButton
+                              label={resolvedLabel}
+                              className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900 cursor-pointer bg-transparent border-0 p-0 text-left"
+                              style={TYPO_STYLE}
+                            />
+                          </li>
+                        );
+                      }
 
                       if (item.external) {
                         return (

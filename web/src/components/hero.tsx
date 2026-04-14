@@ -19,7 +19,7 @@ const HERO_STATIC_LINE_CLASS_NAMES: Record<
 > = {
   en: {
     titleClassName: "",
-    line1ClassName: "block whitespace-nowrap",
+    line1ClassName: "block whitespace-normal text-balance sm:whitespace-nowrap",
     line2ClassName: "block whitespace-normal text-balance min-[430px]:whitespace-nowrap",
   },
   uk: {

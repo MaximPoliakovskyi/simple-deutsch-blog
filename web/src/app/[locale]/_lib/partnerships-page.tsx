@@ -7,7 +7,7 @@ type PartnershipsClientProps = {
   locale?: Locale;
 };
 
-const TELEGRAM_LINK = "https://t.me/simpledeutsch";
+const TELEGRAM_LINK = "https://t.me/Maximiliian";
 
 type ThemeAwareLogoProps = {
   lightSrc: string;
@@ -39,6 +39,29 @@ function ThemeAwareLogo({ lightSrc, darkSrc, alt, width, height, className }: Th
   );
 }
 
+function renderBlock(text: string) {
+  if (!text) return null;
+  const splitIdx = text.indexOf("\n\n");
+  if (splitIdx === -1) {
+    return <p>{text}</p>;
+  }
+  const label = text.slice(0, splitIdx);
+  const items = text.slice(splitIdx + 2).split("\n").filter(Boolean);
+  return (
+    <div className="pt-2 sm:pt-3">
+      <p className="text-[var(--sd-text)]">{label}</p>
+      <div className="mt-3 space-y-2 sm:space-y-2.5">
+        {items.map((item, i) => (
+          <div key={i} className="flex items-start gap-2.5">
+            <span className="shrink-0 min-w-[1rem] opacity-40 select-none">–</span>
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function PartnershipsClient({
   contactEmail,
   locale = DEFAULT_LOCALE,
@@ -65,12 +88,12 @@ export default function PartnershipsClient({
       <section className="mx-auto w-full max-w-7xl px-4 pt-8 md:pt-10 mb-28">
         <SectionText>
           <div
-            className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 text-left text-base sm:text-lg leading-[1.78] text-[var(--sd-text-muted)]"
+            className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 sm:space-y-6 text-left text-base sm:text-lg leading-[1.65] sm:leading-[1.78] text-[var(--sd-text-muted)]"
             style={{ animationDelay: "180ms" }}
           >
-            <p>{t("partnerships.sections.preLogos.p1")}</p>
-            <p>{t("partnerships.sections.preLogos.p2")}</p>
-            <p>{t("partnerships.sections.preLogos.p3")}</p>
+            {renderBlock(t("partnerships.sections.preLogos.p1"))}
+            {renderBlock(t("partnerships.sections.preLogos.p2"))}
+            {renderBlock(t("partnerships.sections.preLogos.p3"))}
           </div>
         </SectionText>
       </section>
@@ -161,12 +184,12 @@ export default function PartnershipsClient({
 
       <section className="mx-auto w-full max-w-7xl px-4 mt-28 pb-20 md:pb-24">
         <SectionText>
-          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-5 text-left text-base sm:text-lg leading-[1.78] text-[var(--sd-text-muted)]">
-            <p>{t("partnerships.sections.postLogos.p1")}</p>
-            <p>{t("partnerships.sections.postLogos.p2")}</p>
-            <p>{t("partnerships.sections.postLogos.p3")}</p>
-            <p>{t("partnerships.sections.postLogos.p4")}</p>
-            <p>{t("partnerships.sections.postLogos.p5")}</p>
+          <div className="sd-fade-in-item mx-auto w-full max-w-[72ch] space-y-4 sm:space-y-6 text-left text-base sm:text-lg leading-[1.65] sm:leading-[1.78] text-[var(--sd-text-muted)]">
+            {renderBlock(t("partnerships.sections.postLogos.p1"))}
+            {renderBlock(t("partnerships.sections.postLogos.p2"))}
+            {renderBlock(t("partnerships.sections.postLogos.p3"))}
+            {renderBlock(t("partnerships.sections.postLogos.p4"))}
+            {renderBlock(t("partnerships.sections.postLogos.p5"))}
           </div>
         </SectionText>
       </section>

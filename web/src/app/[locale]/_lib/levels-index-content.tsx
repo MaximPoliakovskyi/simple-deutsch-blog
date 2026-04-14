@@ -20,7 +20,7 @@ function extractLeadingEmoji(name: string | null | undefined): string | null {
 function localizedBadgeTitle(slug: string | undefined, locale: Locale): string | null {
   const code = normalizeLevelSlug(slug)?.toUpperCase() as CefrLevelCode | undefined;
   if (!code) return null;
-  // getCefrLevelLabel returns e.g. "A1 — Початковий"; strip the "A1 — " prefix to get just the label.
+  // getCefrLevelLabel returns e.g. "A1 - Початковий"; strip the "A1 - " prefix to get just the label.
   const full = getCefrLevelLabel(locale, code);
   const label = full.replace(/^[A-C][12]\s*[—–-]\s*/i, "").trim();
   return `${code} (${label})`;

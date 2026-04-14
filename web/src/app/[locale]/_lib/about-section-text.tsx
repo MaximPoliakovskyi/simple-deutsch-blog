@@ -23,7 +23,7 @@ export default function SectionText({
   return (
     <div className={`w-full flex flex-col items-center ${className ?? ""}`}>
       <div className="w-full max-w-232 mx-auto">
-        <div className="mx-auto w-full max-w-[72ch] text-center md:text-left space-y-6 md:space-y-8">
+        <div className="mx-auto w-full max-w-[72ch] text-left space-y-3 md:space-y-4">
           {title ? (
             typeof title === "string" ? (
               <h2 className="type-title text-[var(--sd-text)] text-center">{title}</h2>
@@ -34,7 +34,7 @@ export default function SectionText({
           ) : null}
 
           {lead ? (
-            <p className="type-lead text-[var(--sd-text-muted)] text-center md:text-left">{lead}</p>
+            <p className="type-lead text-[var(--sd-text-muted)] text-left">{lead}</p>
           ) : null}
 
           {paragraphs && (

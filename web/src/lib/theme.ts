@@ -1,5 +1,6 @@
 "use client";
 
+import { hasConsent } from "./consent";
 import { MOTION } from "./motion";
 
 export type Theme = "light" | "dark";
@@ -41,7 +42,9 @@ export function applyTheme(theme: Theme): void {
   root.classList.toggle("dark", theme === "dark");
 
   try {
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    if (hasConsent("preferences")) {
+      localStorage.setItem(THEME_STORAGE_KEY, theme);
+    }
   } catch {}
 }
 

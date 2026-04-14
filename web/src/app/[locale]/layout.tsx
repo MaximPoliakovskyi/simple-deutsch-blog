@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import ChromeExtrasDeferred from "@/components/chrome-extras-deferred";
+import CookieConsent from "@/components/cookie-consent";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import { LocaleProvider } from "@/components/providers";
@@ -27,6 +28,7 @@ export default async function LocaleRootLayout({ children, params }: Props) {
       <ChromeExtrasDeferred />
       <main className="mt-8 md:mt-12">{children}</main>
       <Footer locale={validated} />
+      <CookieConsent />
     </LocaleProvider>
   );
 }

@@ -1,4 +1,4 @@
-// Locale translations for EN. Add or update keys here.
+﻿// Locale translations for EN. Add or update keys here.
 const en: Record<string, string> = {
   __locale: "en",
   siteTitle: "Simple Deutsch",
@@ -137,58 +137,58 @@ const en: Record<string, string> = {
   "privacy.title": "Privacy Policy",
   "privacy.lastUpdated": "Last updated: {date}",
   "privacy.contact": "For questions about this policy, contact {email}.",
-  "privacy.s1.title": "1. Introduction",
+  "privacy.s1.title": "1. About this policy",
   "privacy.s1.p":
-    "Simple Deutsch provides educational content to help learners study German. This Privacy Policy explains how we collect, use, and protect personal data in connection with our services.",
-  "privacy.s2.title": "2. Scope",
-  "privacy.s2.p":
-    "This policy applies to personal data processed through our website and related services. It does not cover third-party services linked from our site.",
-  "privacy.s3.title": "3. Data We Collect",
-  "privacy.s3.a.title": "Information you provide voluntarily",
+    "Simple Deutsch is a free educational website for learning German. This policy explains what data is collected, why, and how you can control it.",
+  "privacy.s2.title": "2. Operator",
+  "privacy.s2.p": "This website is operated by a private individual. Full details are on the Imprint page.",
+  "privacy.s3.title": "3. Data we collect",
+  "privacy.s3.a.title": "Server logs",
   "privacy.s3.a.p":
-    "Account details, form submissions, feedback, and communications you choose to send us.",
-  "privacy.s3.b.title": "Automatically collected information",
+    "Our hosting provider automatically logs each request: IP address, browser type, requested URL, and response code. These logs are kept for up to 7 days for security monitoring and are then deleted automatically.",
+  "privacy.s3.b.title": "Contact via email",
   "privacy.s3.b.p":
-    "Technical data such as IP address, browser type, device identifiers, and basic usage logs collected for operation and security.",
-  "privacy.s3.c.title": "Analytics and cookies",
+    "If you email us, your message and address are stored only for as long as needed to reply. We do not add you to any mailing list.",
+  "privacy.s3.c.title": "Browser storage (localStorage)",
   "privacy.s3.c.p":
-    "Anonymous analytics and cookies help us understand site usage and improve the experience.",
+    "With your consent we save two items in your browser's localStorage:\n\u2022 sd-theme \u2014 your light/dark theme preference.\n\u2022 sd-read-pages \u2014 a list of article IDs you have read, to show read status indicators.\nNeither item is ever sent to our servers or shared with third parties. You can clear them at any time from your browser settings or via Cookie Settings in the footer.",
   "privacy.s3.d.title": "Sensitive data",
   "privacy.s3.d.p":
-    "We do not knowingly collect sensitive personal data. If such data is provided inadvertently, we will delete it unless retention is required by law.",
-  "privacy.s4.title": "4. Cookies and Analytics",
-  "privacy.s4.a.title": "Functional cookies",
-  "privacy.s4.a.p": "Essential cookies enable site functionality and preferences.",
-  "privacy.s4.b.title": "Performance and analytics",
+    "We do not collect health, financial, political, religious, or other sensitive data.",
+  "privacy.s4.title": "4. Cookies and browser storage",
+  "privacy.s4.a.title": "Strictly necessary",
+  "privacy.s4.a.p":
+    "NEXT_LOCALE \u2014 a session cookie set by the server to remember your language choice. This cookie is essential for the site to work and is set without your consent under legitimate interest.",
+  "privacy.s4.b.title": "Preference storage",
   "privacy.s4.b.p":
-    "We use aggregated analytics to improve content and measure performance. These do not identify you personally.",
-  "privacy.s4.c.title": "Managing cookies",
+    "sd-theme and sd-read-pages (localStorage, see \u00a73 above). These are only stored when you have given consent via the Cookie Settings dialog.",
+  "privacy.s4.c.title": "Analytics and marketing",
   "privacy.s4.c.p":
-    "You can manage or disable cookies via your browser settings; disabling some cookies may affect site features.",
-  "privacy.s5.title": "5. How We Use Data",
+    "We use no analytics cookies, no tracking pixels, no advertising networks, and no social-media scripts. Your browsing on Simple Deutsch is not shared with any third-party analytics or ad platform.",
+  "privacy.s5.title": "5. Legal bases (GDPR)",
   "privacy.s5.p":
-    "- To provide and maintain the site\n- To improve and personalize content\n- To respond to inquiries and support requests\n- To monitor and enhance security and performance",
-  "privacy.s6.title": "6. Data Sharing",
+    "- Server logs: Art. 6(1)(f) \u2014 legitimate interest in security and abuse prevention.\n- Email contact: Art. 6(1)(b) \u2014 necessary to respond to your request.\n- Preference localStorage: Art. 6(1)(a) \u2014 your consent, which you can withdraw at any time.",
+  "privacy.s6.title": "6. Data sharing",
   "privacy.s6.p":
-    "- With service providers who process data on our behalf\n- When required by law or to protect legal rights\n- In aggregated or anonymized form for analysis",
-  "privacy.s7.title": "7. Data Retention",
+    "We share data only with our hosting provider (Hetzner, Germany), who processes server logs as a data processor under a written agreement. We do not sell, rent, or otherwise disclose personal data to any other third party.",
+  "privacy.s7.title": "7. Data retention",
   "privacy.s7.p":
-    "We retain personal data only as long as necessary for the purposes described or to comply with legal obligations.",
-  "privacy.s8.title": "8. Your Rights (EU/EEA)",
+    "Server logs are deleted after 7 days. Email correspondence is deleted once your issue is resolved. localStorage data stays on your device until you clear it or withdraw consent.",
+  "privacy.s8.title": "8. Your rights",
   "privacy.s8.p":
-    "You may have rights to access, correct, restrict, or delete your personal data, and to object to or request portability of data. To exercise rights, contact us at the address below.",
-  "privacy.s9.title": "9. Data Security",
+    "Under GDPR you have the right to access, correct, restrict, or erase your personal data, to object to processing, and to data portability. To exercise these rights or to lodge a complaint, contact us by email (see Imprint).",
+  "privacy.s9.title": "9. Withdrawing consent",
   "privacy.s9.p":
-    "We use administrative, technical, and physical measures to protect personal data but cannot guarantee absolute security.",
-  "privacy.s10.title": "10. International Transfers",
+    "You can change or withdraw your consent at any time via Cookie Settings in the footer. Withdrawing consent removes sd-theme and sd-read-pages from localStorage and stops future writes.",
+  "privacy.s10.title": "10. Data security",
   "privacy.s10.p":
-    "Data may be processed in countries outside your jurisdiction. We take steps to ensure appropriate safeguards are in place.",
-  "privacy.s11.title": "11. Children’s Privacy",
+    "All traffic is encrypted with HTTPS. Server logs are kept for only 7 days. We apply technical and organisational measures proportionate to the low risk profile of this site.",
+  "privacy.s11.title": "11. Children",
   "privacy.s11.p":
-    "Our services are not intended for children under 16. We do not knowingly collect personal data from children; parents should contact us to request deletion.",
-  "privacy.s12.title": "12. Changes to This Policy",
+    "This site is not directed at children under 16. We do not knowingly collect data from children. If a parent or guardian believes their child has provided personal data, please contact us for deletion.",
+  "privacy.s12.title": "12. Changes to this policy",
   "privacy.s12.p":
-    "We may update this policy. Material changes will be indicated by the updated date at the top and, where appropriate, a notice on the site.",
+    "We may update this policy. The date at the top of the page shows when it was last revised. Continued use after a change constitutes acceptance of the updated policy.",
   "privacy.s13.title": "13. Contact",
   "privacy.s13.p": "Contact:",
   /* Terms of Service */
@@ -208,9 +208,9 @@ const en: Record<string, string> = {
   "terms.s4.title": "4. Acceptable Use",
   "terms.s4.p":
     "- Do not use the Service for unlawful purposes\n- Do not attempt to interfere with the security or operation of the Service\n- Do not post content that infringes others' rights or is abusive, hateful, or pornographic",
-  "terms.s5.title": "5. Accounts and User Content",
+  "terms.s5.title": "5. No User Accounts",
   "terms.s5.p":
-    "If you create an account, you are responsible for your credentials and activity. You grant Simple Deutsch a non-exclusive, worldwide license to display content you post on the Service.",
+    "Simple Deutsch does not offer user accounts or user-generated content. The Service is read-only for visitors.",
   "terms.s6.title": "6. Intellectual Property",
   "terms.s6.p":
     "All site content is the property of Simple Deutsch or its licensors and is protected by copyright. You may view and share content for personal, non-commercial use only.",
@@ -268,6 +268,33 @@ const en: Record<string, string> = {
   "footer.link.privacyPolicy": "Privacy Policy",
   "footer.link.termsOfService": "Terms of Service",
   "footer.link.cookieSettings": "Cookie Settings",
+  /* Cookie consent */
+  "consent.banner.title": "We use browser storage",
+  "consent.banner.text":
+    "We can save your theme preference and reading progress in your browser. No analytics, no advertising, no tracking of any kind.",
+  "consent.banner.acceptAll": "Accept all",
+  "consent.banner.rejectAll": "Reject non-essential",
+  "consent.banner.customize": "Customize",
+  "consent.modal.title": "Cookie & storage settings",
+  "consent.modal.intro":
+    "Choose which data we may save in your browser. Essential storage (language cookie) is always active and cannot be turned off.",
+  "consent.modal.save": "Save selection",
+  "consent.modal.acceptAll": "Accept all",
+  "consent.modal.rejectAll": "Reject non-essential",
+  "consent.category.necessary.name": "Necessary",
+  "consent.category.necessary.desc":
+    "NEXT_LOCALE \u2014 language cookie required for the site to work. Cannot be disabled.",
+  "consent.category.preferences.name": "Preferences",
+  "consent.category.preferences.desc":
+    "sd-theme (light/dark theme) and sd-read-pages (reading progress). Stored only on your device \u2014 never sent to our servers.",
+  "consent.category.analytics.name": "Analytics",
+  "consent.category.analytics.desc":
+    "Not currently used. We run no analytics or performance tracking.",
+  "consent.category.marketing.name": "Marketing",
+  "consent.category.marketing.desc":
+    "Not currently used. We show no advertising or marketing content.",
+  "consent.alwaysActive": "Always active",
+  "consent.privacyLink": "Privacy Policy",
   /* Frequent Word widget */
   "frequentWord.label": "Priority word",
   "frequentWord.frequency": "#{rank} in the list",

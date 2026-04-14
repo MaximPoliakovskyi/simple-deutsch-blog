@@ -1,5 +1,6 @@
 const READ_STORAGE_KEY = "sd-read-pages";
 const READ_STATE_EVENT = "sd:read-state-changed";
+import { hasConsent } from "./consent";
 
 type ReadStateMap = Record<string, number>;
 
@@ -48,7 +49,13 @@ function writeStateMap(next: ReadStateMap) {
   if (!canUseStorage()) {
     return;
   }
-
+  // Only persist to storage when the user has granted preferences consent.
+  if (!hasConsent("preferences")) {
+    // Still dispatch the event so in-memory state updates propagate within
+    // the current tab (e.g. the read indicator updates without a reload).
+    window.dispatchEvent(new Event(READ_STATE_EVENT));
+    return;
+  }
   try {
     window.localStorage.setItem(READ_STORAGE_KEY, JSON.stringify(next));
     window.dispatchEvent(new Event(READ_STATE_EVENT));

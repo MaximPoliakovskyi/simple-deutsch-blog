@@ -124,6 +124,12 @@ html {
 
 html[data-preloader="1"] {
   overflow: hidden;
+  /* Compensate for the scrollbar gutter that scrollbar-gutter:stable will
+     claim once this rule is removed, so layout width is the same before
+     and after the preloader ends.  --sb-w is set by the inline head script
+     in layout.tsx before the first paint; 0px fallback covers overlay
+     scrollbar systems (macOS) where no gutter is reserved. */
+  padding-right: var(--sb-w, 0px);
   scrollbar-gutter: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -147,6 +153,12 @@ img[width][height] {
 }
 
 html.scroll-locked {
+  overflow: hidden;
+}
+
+/* Consent modal open: lock scroll. paddingRight compensation is applied via JS
+   in cookie-consent.tsx to replace the scrollbar gutter that overflow:hidden removes. */
+html.consent-open {
   overflow: hidden;
 }
 
@@ -887,14 +899,20 @@ footer {
 
 .rt-overlay__logo {
   width: clamp(138px, 17vw, 220px);
+  /* aspect-ratio locks height = width at any fluid size, preventing a
+     dimension reflow mid-animation that can cause a visible jump. */
+  aspect-ratio: 1 / 1;
   height: auto;
   transform: rotate(0deg);
   transform-origin: center center;
   transition-property: transform;
   transition-duration: 0ms;
   transition-timing-function: var(--rt-ease);
-  will-change: transform;
-  backface-visibility: hidden;
+  /* No will-change here: promoting the logo to its own GPU layer while the
+     parent overlay is also on a promote layer causes sub-pixel compositing
+     drift when both translate and rotate happen simultaneously.  The logo
+     is composited as part of the parent layer instead, which keeps it
+     pixel-perfect during the slide-in/out. */
 }
 
 @media (max-width: 640px) {

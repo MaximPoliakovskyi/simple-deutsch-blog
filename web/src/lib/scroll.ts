@@ -3,6 +3,7 @@ const DEBUG_SCROLL = process.env.NEXT_PUBLIC_DEBUG_SCROLL === "1";
 type StyleSnapshot = {
   htmlOverflow: string;
   htmlOverscrollBehavior: string;
+  htmlPaddingRight: string;
 };
 
 let lockCount = 0;
@@ -30,14 +31,24 @@ function captureSnapshot() {
   snapshot = {
     htmlOverflow: docEl.style.overflow,
     htmlOverscrollBehavior: docEl.style.overscrollBehavior,
+    htmlPaddingRight: docEl.style.paddingRight,
   };
 }
 
 function applyLockStyles() {
   const docEl = document.documentElement;
+  // Measure the scrollbar gutter width BEFORE setting overflow:hidden.
+  // On systems with classic (non-overlay) scrollbars, scrollbar-gutter:stable
+  // reserves this space permanently. overflow:hidden removes both the scrollbar
+  // and its gutter, causing a layout shift. Compensating with paddingRight
+  // keeps the content width stable throughout the lock/unlock cycle.
+  const scrollbarWidth = Math.max(0, window.innerWidth - docEl.clientWidth);
   docEl.classList.add("scroll-locked");
   docEl.style.overflow = "hidden";
   docEl.style.overscrollBehavior = "none";
+  if (scrollbarWidth > 0) {
+    docEl.style.paddingRight = `${scrollbarWidth}px`;
+  }
 }
 
 function restoreStyles() {
@@ -55,9 +66,11 @@ function restoreStyles() {
   if (snapshot) {
     docEl.style.overflow = snapshot.htmlOverflow;
     docEl.style.overscrollBehavior = snapshot.htmlOverscrollBehavior;
+    docEl.style.paddingRight = snapshot.htmlPaddingRight;
   } else {
     docEl.style.overflow = "";
     docEl.style.overscrollBehavior = "";
+    docEl.style.paddingRight = "";
   }
 
   snapshot = null;

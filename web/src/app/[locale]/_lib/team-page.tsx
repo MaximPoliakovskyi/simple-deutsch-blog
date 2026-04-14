@@ -44,7 +44,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
       TRANSLATIONS.uk["team.description"],
     members: [
       {
-        name: "Максим Полуаковський",
+        name: "Максим Поляковський",
         role: "Засновник і розробник",
         image: "/team/maksym.jpg",
       },
@@ -66,7 +66,7 @@ const TEAM_COPY: Record<Locale, TeamCopy> = {
       TRANSLATIONS.ru["team.description"],
     members: [
       {
-        name: "Максим Полуаковский",
+        name: "Максим Поляковский",
         role: "Основатель и разработчик",
         image: "/team/maksym.jpg",
       },

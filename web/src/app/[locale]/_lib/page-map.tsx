@@ -164,7 +164,7 @@ export async function renderMappedPage({ locale, slug, searchParams }: MapInput)
       if (rest.length === 1) return <LevelPageContent locale={locale} tag={rest[0]} />;
       break;
     case "partnerships":
-      return <PartnershipsClient contactEmail="partnerships@simple-deutsch.de" locale={locale} />;
+      return <PartnershipsClient contactEmail="hello.simple.deutsch@gmail.com" locale={locale} />;
     case "team":
       return <TeamPageContent locale={locale} />;
     case "imprint":

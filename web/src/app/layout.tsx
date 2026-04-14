@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Nunito } from "next/font/google";
 import type { ReactNode } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ChunkErrorRecovery } from "@/components/chrome-extras";
 import InitialPreloader from "@/components/preloader";
 import { AppFadeWrapper, RouteTransitionProvider } from "@/components/route-wrapper";
@@ -20,15 +21,21 @@ const nunito = Nunito({
 const THEME_INIT_SCRIPT = `
 (() => {
   try {
-    const key = "sd-theme";
-    const stored = localStorage.getItem(key);
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = stored === "dark" || stored === "light" ? stored : (prefersDark ? "dark" : "light");
+    let theme = prefersDark ? "dark" : "light";
+    // Only read persisted theme when preferences consent has been given.
+    try {
+      const raw = localStorage.getItem("sd-consent");
+      if (raw) {
+        const c = JSON.parse(raw);
+        if (c && c.v === 1 && c.categories && c.categories.preferences === true) {
+          const stored = localStorage.getItem("sd-theme");
+          if (stored === "dark" || stored === "light") theme = stored;
+        }
+      }
+    } catch (_) {}
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
-    // Seed the two most critical CSS variables inline so the preloader
-    // background is opaque from the very first paint — before globals.css
-    // has been fetched and parsed (especially important on slow connections).
     if (theme === "dark") {
       root.style.setProperty("--bg", "222 47% 8%");
       root.style.setProperty("--fg", "210 15% 96%");
@@ -39,6 +46,23 @@ const THEME_INIT_SCRIPT = `
   } catch (_) {}
 })();
 `;
+
+// Measures the native scrollbar width once, before the first paint, and stores
+// it as --sb-w on <html>. The preloader CSS reads this to compensate for the
+// gutter space that scrollbar-gutter:stable will claim once the preloader ends,
+// so content width is identical before and after the preloader transition.
+// Uses a self-sized helper element so the measurement is independent of the
+// page's own overflow state (which is already overflow:hidden during preload).
+const SCROLLBAR_WIDTH_SCRIPT = `(function(){
+  try{
+    var d=document.createElement("div");
+    d.style.cssText="position:fixed;top:0;left:-9999px;width:100px;height:100px;overflow:scroll;visibility:hidden;pointer-events:none";
+    document.documentElement.appendChild(d);
+    var w=Math.max(0,d.offsetWidth-d.clientWidth);
+    d.parentNode.removeChild(d);
+    if(w>0)document.documentElement.style.setProperty("--sb-w",w+"px");
+  }catch(e){}
+})();`;
 
 const SCROLL_RESTORATION_SCRIPT = `
 (() => {
@@ -92,6 +116,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         <link rel="dns-prefetch" href="https://cms.simple-deutsch.de" />
 
+        <script dangerouslySetInnerHTML={{ __html: SCROLLBAR_WIDTH_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SCROLL_RESTORATION_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
@@ -111,6 +136,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </RouteTransitionProvider>
         {/* biome-ignore lint/correctness/useUniqueElementIds: Stable singleton overlay mount point. */}
         <div id="overlay-root" />
+        <SpeedInsights />
       </body>
     </html>
   );
