@@ -13,12 +13,6 @@ import type { TypewriterWordsProps } from "./typewriter-words";
 // Inlined from hero-content.ts and hero-styles.ts (deleted)
 // ---------------------------------------------------------------------------
 
-const HERO_KEYWORDS: Record<string, string[]> = {
-  en: ["work", "travel", "life", "goals"],
-  uk: ["роботи", "подорожей", "навчання", "мрій"],
-  ru: ["работы", "путешествий", "учёбы", "мечты"],
-};
-
 const HERO_STATIC_LINE_CLASS_NAMES: Record<
   string,
   { titleClassName: string; line1ClassName: string; line2ClassName: string }
@@ -66,10 +60,9 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
   const [isLoading, setIsLoading] = useState(false);
   const cacheRef = useRef<Map<string, WPPostCard[]>>(new Map([["all", initialPosts]]));
   const requestIdRef = useRef(0);
-  const animatedWords = useMemo(
-    () => HERO_KEYWORDS[uiLocale as string] || HERO_KEYWORDS.en,
-    [uiLocale],
-  );
+  const animatedWords = useMemo(() => t("heroAnimatedWords").split("|"), [t]);
+  const heroDescriptionLines = useMemo(() => t("heroDescription").split("\n"), [t]);
+  const promoCta = t("promoCta");
   const stableWidthCh = useMemo(
     () => Math.max(...animatedWords.map((word) => word.length)) + 1.5,
     [animatedWords],
@@ -184,10 +177,20 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
         </div>
 
         <p className={HERO_DESCRIPTION_CLASS_NAME}>
-          {t("heroDescription")}{" "}
-          <a className="inline text-blue-600 underline" href="#top">
-            {t("promoCta")}
-          </a>
+          {heroDescriptionLines.map((line, index) => (
+            <span key={line}>
+              {index > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
+          {promoCta ? (
+            <>
+              {" "}
+              <a className="inline text-blue-600 underline" href="#top">
+                {promoCta}
+              </a>
+            </>
+          ) : null}
         </p>
 
         <CategoryPills
@@ -237,3 +240,4 @@ export default function HeroWithFilters({ categories, initialPosts, pageSize = 6
     </>
   );
 }
+

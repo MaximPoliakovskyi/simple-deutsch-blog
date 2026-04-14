@@ -22,12 +22,13 @@ const en: Record<string, string> = {
   resources: "Resources",
   company: "Company",
   legalContact: "Legal & contact",
-  heroLine1: "Master German",
-  heroLine2: "with real skills for",
+  heroLine1: "Learn German in a way",
+  heroLine2: "that lets you actually ",
+  heroAnimatedWords: "speak|understand|work|live",
   heroDescription:
-    "Interactive lessons, real-world exercises, and clear progress tracking — learn German at your pace.",
+    "Not courses. Not memorization. Not chaos.\nA system that shows you how to learn a language and actually get results.",
   promoHeading: "Start speaking German today",
-  promoCta: "Begin a free lesson",
+  promoCta: "",
   tableOfContents: "Table of Contents:",
   noHeadings: "No headings found in this article.",
   moreArticles: "More articles",
@@ -37,7 +38,7 @@ const en: Record<string, string> = {
   latestPosts: "Latest articles",
   successStories: "Success stories",
   successStoriesDescription:
-    "Real stories from learners who improved their German step by step — from beginners to confident speakers. Learn what worked for them and get inspired by practical, achievable progress.",
+    "Real stories from learners who improved their German step by step - from beginners to confident speakers. Learn what worked for them and get inspired by practical, achievable progress.",
   noCategories: "No categories found.",
   minRead: "min read",
   "readingTime.other": "{count} min read",
@@ -58,14 +59,14 @@ const en: Record<string, string> = {
   categoryLabel: "Category:",
   tagsHeading: "Tags",
   tagsDescription:
-    "Tags indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
+    "Tags indicate the language level of each article according to the CEFR scale - from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
   tagLabel: "Tag:",
 
   /* Levels (UI rename for tags) */
   levels: "Levels",
   levelsHeading: "Levels",
   levelsDescription:
-    "Levels indicate the language level of each article according to the CEFR scale — from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
+    "Levels indicate the language level of each article according to the CEFR scale - from A1 (beginner) to C2 (near-native). Use them to find content that matches your German level.",
   levelLabel: "Level:",
   levelNotFound: "Level not found",
   "level.titlePrefix": "Level:",
