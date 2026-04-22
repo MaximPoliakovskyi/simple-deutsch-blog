@@ -1,56 +1,9 @@
-import { getPosts } from "@/lib/posts";
-import { getSiteOrigin } from "@/lib/site-url";
-
-// RSS must not be prerendered at build time (it depends on live WPGraphQL).
-// This avoids build failures when the CMS is temporarily unreachable.
-export const dynamic = "force-dynamic";
-
-const SITE_URL = getSiteOrigin();
-const SITE_TITLE = process.env.NEXT_PUBLIC_SITE_TITLE ?? "Simple Deutsch";
-const SITE_DESCRIPTION =
-  process.env.NEXT_PUBLIC_SITE_DESCRIPTION ?? "Einfache, klare Inhalte auf Simple Deutsch.";
-
-type PostNode = { slug: string; title: string; excerpt: string | null; date: string };
-
-function escapeXml(s: string) {
-  return s
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&apos;");
-}
+﻿export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const { posts } = await getPosts({ first: 30 });
-  const items = posts.nodes.map(
-    (p: PostNode) => `
-    <item>
-      <title>${escapeXml(p.title)}</title>
-      <link>${SITE_URL}/en/articles/${p.slug}</link>
-      <guid isPermaLink="true">${SITE_URL}/en/articles/${p.slug}</guid>
-      <description><![CDATA[${p.excerpt ?? ""}]]></description>
-      <pubDate>${new Date(p.date).toUTCString()}</pubDate>
-    </item>`,
-  );
-
-  const rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>${escapeXml(SITE_TITLE)}</title>
-    <link>${SITE_URL}</link>
-    <atom:link href="${SITE_URL}/rss.xml" rel="self" type="application/rss+xml" />
-    <description>${escapeXml(SITE_DESCRIPTION)}</description>
-    <language>en</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-${items.join("\n")}
-  </channel>
-</rss>`;
-
-  return new Response(rss, {
-    headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
-      "Cache-Control": "public, s-maxage=900, stale-while-revalidate=59",
-    },
+  const xml = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Feed</title></channel></rss>`;
+  return new Response(xml, {
+    headers: { "Content-Type": "application/rss+xml; charset=utf-8" },
   });
 }
+

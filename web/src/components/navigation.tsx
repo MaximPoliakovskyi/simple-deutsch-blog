@@ -300,138 +300,7 @@ function LanguageDropdown({ currentLocale, buildHref, t, routeLocale }: Language
   );
 }
 
-// ---------------------------------------------------------------------------
-// SearchButton (formerly search-button.tsx)
-// ---------------------------------------------------------------------------
 
-import SearchOverlay from "./search-overlay";
-
-type OpenMethod = "click" | "keyboard" | undefined;
-
-let _searchListenerAttached = false;
-const _openCallbacks = new Set<() => boolean>();
-let _searchModulePromise: Promise<unknown> | null = null;
-
-function _onGlobalSearchShortcut(e: KeyboardEvent) {
-  if (!((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")) return;
-  for (const tryOpen of _openCallbacks) {
-    if (tryOpen()) {
-      e.preventDefault();
-      return;
-    }
-  }
-}
-
-function _ensureShortcutListener() {
-  if (_searchListenerAttached || typeof window === "undefined") return;
-  window.addEventListener("keydown", _onGlobalSearchShortcut);
-  _searchListenerAttached = true;
-}
-
-function _maybeDetachShortcutListener() {
-  if (!_searchListenerAttached || _openCallbacks.size > 0 || typeof window === "undefined") return;
-  window.removeEventListener("keydown", _onGlobalSearchShortcut);
-  _searchListenerAttached = false;
-}
-
-function _preloadSearchOverlay() {
-  if (_searchModulePromise) return;
-  // Always attach a no-op .catch() so a chunk-load failure never becomes an
-  // unhandled promise rejection.  ChunkErrorRecovery (chrome-extras.tsx)
-  // monitors `window.unhandledrejection` and calls window.location.replace()
-  // when it sees a ChunkLoadError — that is the full-page reload the user
-  // observes when hovering the search button.
-  _searchModulePromise = import("./search-overlay").catch(() => {
-    // Allow retry on the next hover/focus by resetting the promise slot.
-    _searchModulePromise = null;
-  });
-}
-
-function SearchButton({
-  className = "",
-  variant = "default",
-  ariaLabel = "Find an article",
-}: {
-  className?: string;
-  variant?: "default" | "icon";
-  ariaLabel?: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const [openMethod, setOpenMethod] = useState<OpenMethod>(undefined);
-
-  useEffect(() => {
-    const openFromKeyboard = () => {
-      const btn = buttonRef.current;
-      if (!btn) return false;
-      if (btn.offsetParent === null) return false;
-      _preloadSearchOverlay();
-      setOpenMethod("keyboard");
-      setOpen(true);
-      return true;
-    };
-    _openCallbacks.add(openFromKeyboard);
-    _ensureShortcutListener();
-    return () => {
-      _openCallbacks.delete(openFromKeyboard);
-      _maybeDetachShortcutListener();
-    };
-  }, []);
-
-  return (
-    <>
-      <button
-        ref={buttonRef}
-        type="button"
-        onClick={() => {
-          _preloadSearchOverlay();
-          setOpenMethod("click");
-          setOpen(true);
-        }}
-        onFocus={_preloadSearchOverlay}
-        className={[
-          "flex text-sm focus:outline-none",
-          variant === "icon"
-            ? "items-center justify-center w-9.5 h-9.5 rounded-full p-0"
-            : "items-center gap-2 rounded-full px-5 py-2",
-          variant === "icon"
-            ? "transition transform-gpu duration-200 ease-out hover:scale-[1.03]"
-            : "transition transform-gpu duration-200 ease-out hover:scale-[1.02]",
-          "shadow-sm hover:shadow-md disabled:opacity-60 cursor-pointer sd-pill",
-          "focus-visible:outline-2 focus-visible:outline-offset-2",
-          className,
-        ].join(" ")}
-        style={{ outlineColor: "oklch(0.371 0 0)", borderColor: "transparent" }}
-        aria-label={variant === "icon" ? ariaLabel : undefined}
-        title={`${ariaLabel} (Ctrl+K)`}
-      >
-        <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M11 4a7 7 0 015.29 11.71l3.5 3.5-1.41 1.41-3.5-3.5A7 7 0 1111 4zm0 2a5 5 0 100 10 5 5 0 000-10z"
-            fill="currentColor"
-          />
-        </svg>
-        {variant === "default" && <span>{ariaLabel}</span>}
-      </button>
-      {open && (
-        <SearchOverlay
-          onClose={() => {
-            setOpen(false);
-            setOpenMethod(undefined);
-            requestAnimationFrame(() => {
-              try {
-                buttonRef.current?.focus({ preventScroll: true });
-              } catch {
-                buttonRef.current?.focus();
-              }
-            });
-          }}
-          openMethod={openMethod}
-        />
-      )}
-    </>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // nav-config types and constants (formerly nav-config.ts)
@@ -455,7 +324,6 @@ export const MOBILE_NAV_LINKS: readonly NavLinkItem[] = [
   { key: "posts", fallback: "Articles", path: "/articles" },
   { key: "categories", fallback: "Categories", path: "/categories" },
   { key: "levels", fallback: "Levels", path: "/levels" },
-  { key: "search", fallback: "Search", path: "/search" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -546,7 +414,6 @@ export function NavigationDesktop({
       <NavLinks mode="desktop" buildLocalePath={buildLocalePath} label={label} />
 
       <div className="flex items-center gap-4">
-        <SearchButton variant="default" ariaLabel={label("searchPlaceholder", "Find an article")} />
         <div className="relative">
           <LanguageDropdown
             currentLocale={currentLocale}
@@ -602,7 +469,6 @@ export function NavigationMobileControls({
 }: MobileControlsProps) {
   return (
     <div className="flex items-center gap-2 md:hidden">
-      <SearchButton ariaLabel={label("searchPlaceholder", "Find an article")} variant="icon" />
       <div className="relative">
         <LanguageDropdown
           currentLocale={currentLocale}

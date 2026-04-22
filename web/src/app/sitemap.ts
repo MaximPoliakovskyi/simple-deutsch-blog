@@ -6,12 +6,6 @@ const LOCALES = ["en", "ru", "uk"] as const;
 
 const STATIC_ROUTES = [
   "/about",
-  "/articles",
-  "/categories",
-  "/levels",
-  "/search",
-  "/partnerships",
-  "/team",
   "/privacy",
   "/terms",
   "/imprint",

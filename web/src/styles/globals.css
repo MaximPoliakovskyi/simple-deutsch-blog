@@ -1119,6 +1119,15 @@ html.dark [data-slider-scope][data-slider-scope] .group:focus-within h3 * {
   }
 }
 
+@keyframes phrase-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* Typewriter cursor blink — moved from per-component <style jsx> to the
    static bundle so the keyframe is parsed once, not re-injected per render. */
 

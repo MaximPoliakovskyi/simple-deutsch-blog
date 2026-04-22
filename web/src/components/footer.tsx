@@ -1,16 +1,6 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import CookieSettingsButton from "@/components/cookie-settings-button";
-import { normalizeLevelSlug, sortWordPressBadgesByCefr } from "@/lib/cefr";
-import {
-  buildLocalizedHref,
-  type CefrLevelCode,
-  DEFAULT_LOCALE,
-  getCefrLevelLabel,
-  type Locale,
-  TRANSLATIONS,
-  translateCategory,
-} from "@/lib/i18n";
-import { getLocaleAwareTaxonomySlug, getWordPressLevelBadges } from "@/lib/posts";
+import { buildLocalizedHref, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 
 const TYPO_STYLE = {
   fontSize: "var(--text-base)",
@@ -18,84 +8,21 @@ const TYPO_STYLE = {
 };
 
 type LinkItem = { label: string; href: string; external?: boolean };
-type SectionKey = "categories" | "levels" | "platform" | "community" | "legal";
-type Section = { key: SectionKey; title: string; items: LinkItem[] };
-const FOOTER_LEVEL_SLUGS = ["a1", "a2", "b1", "b2", "c1", "c2"] as const;
-type FooterLevelSlug = (typeof FOOTER_LEVEL_SLUGS)[number];
+type Section = { key: string; title: string; items: LinkItem[] };
 
 function prefixHrefForLocale(href: string, locale: Locale) {
   if (!href || !href.startsWith("/")) return href;
   return buildLocalizedHref(locale, href);
 }
 
-function toCefrLevelCode(level: FooterLevelSlug): CefrLevelCode {
-  return level.toUpperCase() as CefrLevelCode;
-}
-
-function buildFooterLevelFallbackItems(locale: Locale): LinkItem[] {
-  return FOOTER_LEVEL_SLUGS.map((level) => ({
-    label: getCefrLevelLabel(locale, toCefrLevelCode(level)),
-    href: `/levels/${getLocaleAwareTaxonomySlug(level, locale)}`,
-  }));
-}
-
-function buildFooterLevelItems(
-  locale: Locale,
-  badges: Array<{ slug?: string | null; name?: string | null }>,
-): LinkItem[] {
-  const itemsByLevel = new Map<FooterLevelSlug, LinkItem>();
-
-  for (const badge of sortWordPressBadgesByCefr(badges)) {
-    const level = normalizeLevelSlug(badge.slug) ?? normalizeLevelSlug(badge.name);
-    if (!level || !badge.slug) continue;
-    const footerLevel = level as FooterLevelSlug;
-    if (itemsByLevel.has(footerLevel)) continue;
-    itemsByLevel.set(footerLevel, {
-      label: getCefrLevelLabel(locale, toCefrLevelCode(footerLevel)),
-      href: `/levels/${footerLevel}`,
-    });
-  }
-
-  if (itemsByLevel.size === FOOTER_LEVEL_SLUGS.length) {
-    return FOOTER_LEVEL_SLUGS.map((level) => itemsByLevel.get(level)).filter(
-      (item): item is LinkItem => Boolean(item),
-    );
-  }
-
-  return buildFooterLevelFallbackItems(locale);
-}
-
-const CATEGORY_SLUGS = [
-  "speaking-pronunciation",
-  "exercises-practice",
-  "grammar",
-  "success-stories",
-  "tips-motivation",
-  "vocabulary",
-] as const;
-
-function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
+function buildSections(locale: Locale): Section[] {
   const t = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
-
   return [
-    {
-      key: "categories",
-      title: t.categories ?? "Categories",
-      items: CATEGORY_SLUGS.map((slug) => ({
-        label: translateCategory(null, slug, locale),
-        href: `/categories/${slug}`,
-      })),
-    },
-    {
-      key: "levels",
-      title: t.levels ?? "Levels",
-      items: levelItems,
-    },
     {
       key: "platform",
       title: t["footer.section.platform"] ?? "Platform",
       items: [
-        { label: t["footer.link.aboutProject"] ?? "About the project", href: "/about" },
+        { label: t["footer.link.aboutProject"] ?? "About", href: "/about" },
         { label: t.team ?? "Team", href: "/team" },
         { label: t["footer.link.partnerships"] ?? "Partnerships", href: "/partnerships" },
       ],
@@ -104,8 +31,8 @@ function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
       key: "community",
       title: t["footer.section.community"] ?? "Community",
       items: [
-        { label: "Email", href: "mailto:hello.simple.deutsch@gmail.com", external: true },
-        { label: "GitHub", href: "https://github.com/MaximPoliakovskyi/simple-deutsch-blog", external: true },
+        { label: "Email", href: "mailto:hello@example.com", external: true },
+        { label: "GitHub", href: "https://github.com", external: true },
       ],
     },
     {
@@ -121,22 +48,16 @@ function buildSections(locale: Locale, levelItems: LinkItem[]): Section[] {
   ];
 }
 
-export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const dictionary = TRANSLATIONS[locale] ?? TRANSLATIONS[DEFAULT_LOCALE];
-  const levelItems = buildFooterLevelItems(
-    locale,
-    await getWordPressLevelBadges(locale).catch(() => []),
-  );
-  const sections = buildSections(locale, levelItems).filter(
-    (section) => section.key === "levels" || section.items.length > 0,
-  );
+  const sections = buildSections(locale);
   const copyrightTemplate =
     dictionary["footer.copyright"] ||
-    "(c) {year} Simple Deutsch. All rights reserved. German-language learning platform.";
+    "(c) {year} Simple Deutsch. All rights reserved.";
   const currentYear = String(new Date().getFullYear());
 
   return (
-    <footer className="bg-[var(--sd-page-bg)] min-h-[32rem] md:min-h-[28rem]">
+    <footer className="bg-[var(--sd-page-bg)] min-h-[20rem] md:min-h-[16rem]">
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8 pt-12 pb-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-8 gap-x-8">
@@ -151,21 +72,17 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
                 <div className="mt-3">
                   <ul className="space-y-2 list-none p-0 m-0 leading-relaxed">
                     {section.items.map((item) => {
-                      const resolvedLabel =
-                        item.href === "/impressum" ? dictionary.imprint || item.label : item.label;
-
                       if (item.href === "#consent") {
                         return (
                           <li key={item.label}>
                             <CookieSettingsButton
-                              label={resolvedLabel}
+                              label={item.label}
                               className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900 cursor-pointer bg-transparent border-0 p-0 text-left"
                               style={TYPO_STYLE}
                             />
                           </li>
                         );
                       }
-
                       if (item.external) {
                         return (
                           <li key={item.label}>
@@ -175,12 +92,11 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
                               rel="noopener noreferrer"
                               style={TYPO_STYLE}
                             >
-                              {resolvedLabel}
+                              {item.label}
                             </a>
                           </li>
                         );
                       }
-
                       return (
                         <li key={item.label}>
                           <Link
@@ -188,7 +104,7 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
                             className="font-normal hover:underline text-slate-700 dark:text-[rgba(255,255,255,0.7)] dark:hover:text-[rgba(255,255,255,0.9)] hover:text-slate-900"
                             style={TYPO_STYLE}
                           >
-                            {resolvedLabel}
+                            {item.label}
                           </Link>
                         </li>
                       );
@@ -200,7 +116,6 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
           </div>
         </div>
       </div>
-
       <div>
         <div className="mx-auto w-full max-w-7xl px-4 lg:px-8">
           <div className="h-px w-full bg-black/10 dark:bg-white/10" />
@@ -212,3 +127,4 @@ export default async function Footer({ locale = DEFAULT_LOCALE }: { locale?: Loc
     </footer>
   );
 }
+

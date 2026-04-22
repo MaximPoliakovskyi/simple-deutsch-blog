@@ -1,5 +1,4 @@
 import { cookies, headers } from "next/headers";
-import StatusPage from "@/components/status-page";
 import { assertLocale, DEFAULT_LOCALE, type Locale, TRANSLATIONS } from "@/lib/i18n";
 
 function cookieValueFromHeader(rawCookieHeader: string | null, key: string) {
@@ -29,22 +28,6 @@ async function resolveLocaleFromCookies() {
   }
 }
 
-const NotFoundIcon = (
-  <svg
-    className="h-6 w-6"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <circle cx="12" cy="12" r="10" className="opacity-40" />
-    <line x1="4" y1="4" x2="20" y2="20" />
-  </svg>
-);
-
 export default async function NotFound({ locale }: { locale?: string } = {}) {
   let maybeLang = locale;
   if (maybeLang) {
@@ -59,12 +42,11 @@ export default async function NotFound({ locale }: { locale?: string } = {}) {
   const t = TRANSLATIONS[lang] ?? TRANSLATIONS[DEFAULT_LOCALE];
 
   return (
-    <StatusPage
-      icon={NotFoundIcon}
-      code="404"
-      title={t["notFound.title"]}
-      message={t["notFound.description"]}
-      actions={[{ type: "link", href: `/${lang}`, label: t["notFound.backToHome"] }]}
-    />
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+      <p style={{ fontSize: "3rem", fontWeight: 700, margin: 0 }}>404</p>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 600, margin: "0.5rem 0" }}>{t["notFound.title"]}</h1>
+      <p style={{ opacity: 0.7, marginBottom: "1.5rem" }}>{t["notFound.description"]}</p>
+      <a href={`/${lang}`} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.375rem", border: "1px solid currentColor", textDecoration: "none", color: "inherit" }}>{t["notFound.backToHome"]}</a>
+    </div>
   );
 }

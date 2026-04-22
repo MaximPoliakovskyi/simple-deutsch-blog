@@ -1,7 +1,5 @@
 // app/global-error.tsx
 "use client";
-
-import StatusPage from "@/components/status-page";
 /**
  * TURBOPACK CSS CHUNK FIX:
  * Do NOT import globals.css here. Importing the same CSS in both layout.tsx and
@@ -39,19 +37,13 @@ export default function GlobalError({
             '"Nunito", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         }}
       >
-        <StatusPage
-          code="Fehler"
-          title="App-Fehler"
-          message={message}
-          actions={[
-            { type: "button", onClick: () => reset(), label: "Neu laden" },
-            { type: "link", href: `/${DEFAULT_LOCALE}`, label: "Zur Startseite" },
-          ]}
-        >
-          {!isDev && error.digest ? (
-            <p className="mt-4 text-xs opacity-70">Error ID: {error.digest}</p>
-          ) : null}
-        </StatusPage>
+        <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+          <p style={{ fontSize: "3rem", fontWeight: 700, margin: 0 }}>Fehler</p>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 600, margin: "0.5rem 0" }}>App-Fehler</h1>
+          <p style={{ opacity: 0.7, marginBottom: "1.5rem" }}>{message}</p>
+          {!isDev && error.digest ? <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>Error ID: {error.digest}</p> : null}
+          <button type="button" onClick={() => reset()} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.375rem", border: "1px solid currentColor", background: "transparent", cursor: "pointer" }}>Neu laden</button>
+        </div>
       </body>
     </html>
   );

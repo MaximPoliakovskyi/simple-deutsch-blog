@@ -1,6 +1,4 @@
 export * from "./client";
-export * from "./posts";
-export * from "./queries";
 export type {
   Connection,
   NextInit,

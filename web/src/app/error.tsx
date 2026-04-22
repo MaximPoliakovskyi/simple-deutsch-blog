@@ -1,9 +1,6 @@
 // app/error.tsx
 "use client";
 
-import StatusPage from "@/components/status-page";
-import { DEFAULT_LOCALE } from "@/lib/i18n";
-
 export default function AppError({
   error,
   reset,
@@ -15,18 +12,14 @@ export default function AppError({
   const message = isDev ? error.message : "Something went wrong. Please try again.";
 
   return (
-    <StatusPage
-      code="Error"
-      title="Unexpected Error"
-      message={message}
-      actions={[
-        { type: "button", onClick: () => reset(), label: "Try again" },
-        { type: "link", href: `/${DEFAULT_LOCALE}`, label: "Back to home" },
-      ]}
-    >
-      {!isDev && error.digest ? (
-        <p className="mt-4 text-xs opacity-70">Error ID: {error.digest}</p>
-      ) : null}
-    </StatusPage>
+    <div style={{ minHeight: "60vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem", textAlign: "center" }}>
+      <p style={{ fontSize: "3rem", fontWeight: 700, margin: 0 }}>Error</p>
+      <h1 style={{ fontSize: "1.5rem", fontWeight: 600, margin: "0.5rem 0" }}>Unexpected Error</h1>
+      <p style={{ opacity: 0.7, marginBottom: "1.5rem" }}>{message}</p>
+      {!isDev && error.digest ? <p style={{ fontSize: "0.75rem", opacity: 0.5 }}>Error ID: {error.digest}</p> : null}
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
+        <button type="button" onClick={() => reset()} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.375rem", border: "1px solid currentColor", background: "transparent", cursor: "pointer" }}>Try again</button>
+      </div>
+    </div>
   );
 }

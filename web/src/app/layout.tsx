@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Nunito } from "next/font/google";
+import { Geist_Mono, Inter, Nunito, Space_Mono } from "next/font/google";
 import type { ReactNode } from "react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { ChunkErrorRecovery } from "@/components/chrome-extras";
@@ -16,6 +16,30 @@ const nunito = Nunito({
   display: "optional",
   preload: true,
   fallback: ["system-ui", "sans-serif"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  display: "optional",
+  preload: false,
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["600"],
+  display: "optional",
+  preload: false,
+});
+
+const spaceMono = Space_Mono({
+  variable: "--font-space-mono",
+  subsets: ["latin"],
+  weight: ["400"],
+  display: "optional",
+  preload: false,
 });
 
 const THEME_INIT_SCRIPT = `
@@ -123,6 +147,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body
         className={[
           nunito.variable,
+          inter.variable,
+          geistMono.variable,
+          spaceMono.variable,
           "min-h-dvh antialiased bg-[hsl(var(--bg))] text-[hsl(var(--fg))]",
         ].join(" ")}
       >
